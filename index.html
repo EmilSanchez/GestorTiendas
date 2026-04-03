@@ -1,0 +1,2772 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MercaManager v1 — Control Operativo ML</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   VARIABLES Y RESET
+   ============================================================ */
+:root {
+  --bg:        #0f1117;
+  --bg2:       #161820;
+  --bg3:       #1e2029;
+  --border:    #2a2d3a;
+  --border2:   #333647;
+  --text:      #e8eaf0;
+  --text2:     #9499b0;
+  --text3:     #5c6080;
+
+  --blue:      #4a90e2;
+  --blue-dim:  #1e3a5f;
+  --green:     #3ecf8e;
+  --green-dim: #0d3325;
+  --yellow:    #f5c842;
+  --yellow-dim:#3a2f0a;
+  --orange:    #f07830;
+  --orange-dim:#3a1f0a;
+  --red:       #e05252;
+  --red-dim:   #3a1010;
+  --purple:    #a78bfa;
+  --purple-dim:#2a1f50;
+  --teal:      #38bdf8;
+  --teal-dim:  #0a2a3a;
+
+  --radius:    10px;
+  --radius-lg: 16px;
+  --shadow:    0 4px 24px rgba(0,0,0,0.4);
+  --transition: 0.18s cubic-bezier(.4,0,.2,1);
+
+  --sidebar-w: 240px;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 14px; scroll-behavior: smooth; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  display: flex;
+  overflow: hidden;
+}
+
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
+
+/* ============================================================
+   SIDEBAR
+   ============================================================ */
+#sidebar {
+  width: var(--sidebar-w);
+  min-height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform var(--transition);
+}
+
+.sidebar-logo {
+  padding: 24px 20px 20px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-logo .logo-mark {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.logo-icon {
+  width: 34px; height: 34px;
+  background: linear-gradient(135deg, var(--blue), var(--purple));
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.logo-text { font-size: 15px; font-weight: 700; letter-spacing: -0.3px; }
+.logo-sub { font-size: 10px; color: var(--text3); font-family: 'DM Mono', monospace; margin-top: 1px; }
+
+.sidebar-section { padding: 16px 12px 4px; }
+.sidebar-section-label {
+  font-size: 9px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.2px; color: var(--text3); padding: 0 8px 6px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--radius);
+  cursor: pointer; transition: all var(--transition);
+  color: var(--text2); font-size: 13px; font-weight: 500;
+  margin-bottom: 1px; position: relative;
+}
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active {
+  background: linear-gradient(90deg, #1e3a5f 0%, #1a2a4a 100%);
+  color: var(--blue);
+}
+.nav-item.active::before {
+  content: '';
+  position: absolute; left: 0; top: 20%; bottom: 20%;
+  width: 3px; background: var(--blue); border-radius: 0 3px 3px 0;
+}
+.nav-item .nav-icon { font-size: 15px; width: 20px; text-align: center; }
+.nav-badge {
+  margin-left: auto; background: var(--red); color: #fff;
+  font-size: 10px; font-weight: 700; padding: 1px 6px;
+  border-radius: 99px; min-width: 18px; text-align: center;
+}
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 16px 12px;
+  border-top: 1px solid var(--border);
+}
+.sidebar-version {
+  font-size: 10px; color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  padding: 0 8px;
+}
+
+/* ============================================================
+   MAIN CONTENT
+   ============================================================ */
+#main {
+  margin-left: var(--sidebar-w);
+  flex: 1;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.topbar {
+  background: var(--bg2);
+  border-bottom: 1px solid var(--border);
+  padding: 0 28px;
+  height: 58px;
+  display: flex; align-items: center; gap: 16px;
+  position: sticky; top: 0; z-index: 50;
+}
+.topbar-title { font-size: 16px; font-weight: 700; flex: 1; }
+.topbar-subtitle { font-size: 12px; color: var(--text3); margin-top: 1px; }
+
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.topbar-date {
+  font-size: 11px; color: var(--text3);
+  font-family: 'DM Mono', monospace;
+  background: var(--bg3); padding: 5px 10px; border-radius: 6px;
+}
+
+#page-content {
+  padding: 24px 28px;
+  flex: 1;
+}
+
+/* ============================================================
+   BOTONES
+   ============================================================ */
+.btn {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 8px 16px; border-radius: var(--radius);
+  font-size: 13px; font-weight: 600; cursor: pointer;
+  border: none; transition: all var(--transition); font-family: inherit;
+}
+.btn-primary { background: var(--blue); color: #fff; }
+.btn-primary:hover { background: #5a9ff5; transform: translateY(-1px); }
+.btn-success { background: var(--green); color: #0a2a1a; }
+.btn-success:hover { background: #52e0a2; }
+.btn-danger { background: var(--red); color: #fff; }
+.btn-danger:hover { background: #f06666; }
+.btn-ghost {
+  background: transparent; color: var(--text2);
+  border: 1px solid var(--border2);
+}
+.btn-ghost:hover { background: var(--bg3); color: var(--text); }
+.btn-sm { padding: 5px 11px; font-size: 12px; }
+.btn-icon { padding: 7px; width: 34px; height: 34px; justify-content: center; }
+
+/* ============================================================
+   CARDS / PANELS
+   ============================================================ */
+.card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+}
+.card-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 13px; font-weight: 700; color: var(--text); }
+.card-subtitle { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+/* Stat Cards */
+.stat-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  position: relative;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+.stat-card:hover { border-color: var(--border2); }
+.stat-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.stat-card.blue::before   { background: var(--blue); }
+.stat-card.green::before  { background: var(--green); }
+.stat-card.yellow::before { background: var(--yellow); }
+.stat-card.red::before    { background: var(--red); }
+.stat-card.orange::before { background: var(--orange); }
+.stat-card.purple::before { background: var(--purple); }
+.stat-card.teal::before   { background: var(--teal); }
+
+.stat-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; font-weight: 600; }
+.stat-value { font-size: 22px; font-weight: 700; margin: 6px 0 2px; letter-spacing: -0.5px; }
+.stat-value.blue   { color: var(--blue); }
+.stat-value.green  { color: var(--green); }
+.stat-value.yellow { color: var(--yellow); }
+.stat-value.red    { color: var(--red); }
+.stat-value.orange { color: var(--orange); }
+.stat-value.purple { color: var(--purple); }
+.stat-value.teal   { color: var(--teal); }
+.stat-delta { font-size: 11px; color: var(--text3); }
+.stat-icon {
+  position: absolute; top: 16px; right: 16px;
+  font-size: 20px; opacity: 0.15;
+}
+
+/* ============================================================
+   TABLAS
+   ============================================================ */
+.table-wrap { overflow-x: auto; border-radius: var(--radius-lg); border: 1px solid var(--border); }
+table { width: 100%; border-collapse: collapse; }
+thead th {
+  background: var(--bg3); color: var(--text3);
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.8px; padding: 11px 14px;
+  text-align: left; white-space: nowrap;
+  border-bottom: 1px solid var(--border);
+}
+tbody tr {
+  border-bottom: 1px solid var(--border);
+  transition: background var(--transition);
+}
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: var(--bg3); }
+tbody td {
+  padding: 11px 14px; font-size: 12.5px; color: var(--text);
+  vertical-align: middle;
+}
+.td-mono { font-family: 'DM Mono', monospace; font-size: 11px; }
+.td-dim { color: var(--text3); }
+
+/* ============================================================
+   BADGES / ESTADOS
+   ============================================================ */
+.badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 99px;
+  font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+.badge::before { content: '•'; font-size: 8px; }
+
+.badge-entregado   { background: var(--green-dim);  color: var(--green);  }
+.badge-pendiente   { background: var(--yellow-dim); color: var(--yellow); }
+.badge-en_camino   { background: var(--teal-dim);   color: var(--teal);   }
+.badge-cancelado   { background: var(--red-dim);    color: var(--red);    }
+.badge-problema    { background: var(--orange-dim); color: var(--orange); }
+.badge-devuelto    { background: var(--purple-dim); color: var(--purple); }
+.badge-reclamado   { background: var(--red-dim);    color: var(--red);    }
+.badge-inventario  { background: var(--border);     color: var(--text2);  }
+.badge-resuelto    { background: var(--green-dim);  color: var(--green);  }
+.badge-gasto       { background: var(--orange-dim); color: var(--orange); }
+.badge-perdida     { background: var(--red-dim);    color: var(--red);    }
+.badge-novedad     { background: var(--yellow-dim); color: var(--yellow); }
+
+/* ============================================================
+   FILTROS
+   ============================================================ */
+.filters-bar {
+  display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
+  background: var(--bg2); border: 1px solid var(--border);
+  padding: 14px 16px; border-radius: var(--radius-lg);
+  margin-bottom: 18px;
+}
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-label { font-size: 11px; color: var(--text3); font-weight: 600; white-space: nowrap; }
+
+input, select, textarea {
+  background: var(--bg3); border: 1px solid var(--border2);
+  color: var(--text); border-radius: 8px;
+  padding: 8px 12px; font-size: 13px; font-family: inherit;
+  transition: border-color var(--transition);
+  outline: none;
+}
+input:focus, select:focus, textarea:focus { border-color: var(--blue); }
+input::placeholder { color: var(--text3); }
+select option { background: var(--bg3); }
+
+.search-input { min-width: 200px; }
+
+/* ============================================================
+   MODAL
+   ============================================================ */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(4px);
+  z-index: 200;
+  display: none; align-items: center; justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.open { display: flex; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 680px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow);
+  animation: modalIn 0.2s ease;
+}
+.modal-lg { max-width: 860px; }
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.96) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px; border-bottom: 1px solid var(--border);
+}
+.modal-title { font-size: 16px; font-weight: 700; }
+.modal-close {
+  width: 30px; height: 30px; border-radius: 6px;
+  background: var(--bg3); border: none; color: var(--text2);
+  font-size: 16px; cursor: pointer; display: flex;
+  align-items: center; justify-content: center;
+  transition: all var(--transition);
+}
+.modal-close:hover { background: var(--red-dim); color: var(--red); }
+.modal-body { padding: 24px; }
+.modal-footer {
+  padding: 16px 24px; border-top: 1px solid var(--border);
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+
+/* ============================================================
+   FORMULARIOS
+   ============================================================ */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-full { grid-column: 1 / -1; }
+.form-group { display: flex; flex-direction: column; gap: 6px; }
+.form-label { font-size: 11px; font-weight: 600; color: var(--text2); text-transform: uppercase; letter-spacing: 0.5px; }
+.form-input { width: 100%; }
+.form-section { 
+  grid-column: 1 / -1;
+  font-size: 10px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1px; color: var(--text3);
+  padding: 12px 0 4px; border-top: 1px solid var(--border);
+  margin-top: 4px;
+}
+.form-calc {
+  background: var(--bg3); border-radius: 8px; padding: 14px 16px;
+  grid-column: 1 / -1;
+}
+.form-calc-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text3); margin-bottom: 10px; }
+.calc-row { display: flex; justify-content: space-between; align-items: center; padding: 3px 0; }
+.calc-row-total { border-top: 1px solid var(--border2); margin-top: 6px; padding-top: 8px; font-weight: 700; }
+.calc-label { font-size: 12px; color: var(--text2); }
+.calc-value { font-size: 12px; font-family: 'DM Mono', monospace; }
+.calc-value.positive { color: var(--green); }
+.calc-value.negative { color: var(--red); }
+.calc-value.neutral  { color: var(--text); }
+
+/* ============================================================
+   ALERTAS PANEL
+   ============================================================ */
+.alert-item {
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border); margin-bottom: 8px;
+  transition: border-color var(--transition);
+}
+.alert-item:hover { border-color: var(--border2); }
+.alert-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.alert-dot.red    { background: var(--red); box-shadow: 0 0 6px var(--red); }
+.alert-dot.yellow { background: var(--yellow); box-shadow: 0 0 6px var(--yellow); }
+.alert-dot.orange { background: var(--orange); box-shadow: 0 0 6px var(--orange); }
+.alert-body { flex: 1; }
+.alert-title { font-size: 12.5px; font-weight: 600; }
+.alert-sub   { font-size: 11px; color: var(--text3); margin-top: 2px; }
+.alert-action { font-size: 11px; color: var(--blue); cursor: pointer; }
+.alert-action:hover { text-decoration: underline; }
+
+/* ============================================================
+   CONCILIACION
+   ============================================================ */
+.concil-card {
+  background: var(--bg3); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px;
+}
+.concil-header {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px;
+}
+.concil-venta-id { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--text3); }
+.concil-total { font-size: 18px; font-weight: 700; }
+.concil-events { display: flex; flex-direction: column; gap: 4px; }
+.concil-event {
+  display: flex; justify-content: space-between;
+  font-size: 11.5px; padding: 3px 0;
+  border-bottom: 1px dashed var(--border);
+}
+.concil-event:last-child { border-bottom: none; }
+
+/* ============================================================
+   CIERRE MENSUAL
+   ============================================================ */
+.cierre-row {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 9px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px;
+}
+.cierre-row:last-child { border-bottom: none; }
+.cierre-row.total { font-weight: 700; font-size: 15px; padding-top: 14px; }
+.cierre-row.indented { padding-left: 16px; color: var(--text2); font-size: 12px; }
+
+/* ============================================================
+   LAYOUT GRIDS
+   ============================================================ */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.grid-left-wide { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+.mb-4  { margin-bottom: 4px; }
+.mb-8  { margin-bottom: 8px; }
+.mb-16 { margin-bottom: 16px; }
+.mb-24 { margin-bottom: 24px; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+.flex-gap { display: flex; gap: 10px; align-items: center; }
+
+/* ============================================================
+   TIENDAS COLORES
+   ============================================================ */
+.tienda-dot {
+  width: 10px; height: 10px; border-radius: 50%; display: inline-block;
+}
+.tienda-tag {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 11.5px; font-weight: 600;
+}
+
+/* ============================================================
+   EMPTY STATE
+   ============================================================ */
+.empty-state {
+  text-align: center; padding: 60px 20px; color: var(--text3);
+}
+.empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
+.empty-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
+.empty-sub { font-size: 12px; }
+
+/* ============================================================
+   PROGRESS BAR
+   ============================================================ */
+.progress { background: var(--bg3); border-radius: 99px; height: 6px; overflow: hidden; }
+.progress-bar { height: 100%; border-radius: 99px; transition: width 0.4s ease; }
+
+/* ============================================================
+   TOOLTIP
+   ============================================================ */
+[data-tooltip] { position: relative; cursor: help; }
+[data-tooltip]:hover::after {
+  content: attr(data-tooltip);
+  position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%);
+  background: var(--bg3); color: var(--text); border: 1px solid var(--border2);
+  border-radius: 6px; padding: 5px 10px; font-size: 11px;
+  white-space: nowrap; z-index: 999; margin-bottom: 6px;
+  pointer-events: none;
+}
+
+/* ============================================================
+   RESPONSIVE
+   ============================================================ */
+@media (max-width: 900px) {
+  :root { --sidebar-w: 0px; }
+  #sidebar { transform: translateX(-240px); }
+  #sidebar.open { transform: translateX(0); width: 240px; }
+  #main { margin-left: 0; }
+  .grid-2, .grid-3, .grid-left-wide { grid-template-columns: 1fr; }
+  .form-grid, .form-grid-3 { grid-template-columns: 1fr; }
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  #page-content { padding: 16px; }
+}
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+.text-right  { text-align: right; }
+.text-center { text-align: center; }
+.font-mono   { font-family: 'DM Mono', monospace; }
+.fw-700      { font-weight: 700; }
+.color-green { color: var(--green); }
+.color-red   { color: var(--red); }
+.color-yellow{ color: var(--yellow); }
+.color-blue  { color: var(--blue); }
+.color-text2 { color: var(--text2); }
+.hidden      { display: none !important; }
+
+/* Secciones de página */
+.page-section { display: none; }
+.page-section.active { display: block; }
+
+/* Tabla action buttons */
+.actions-cell { display: flex; gap: 5px; }
+
+/* Tag numero de venta */
+.venta-id-tag {
+  font-family: 'DM Mono', monospace; font-size: 10px;
+  color: var(--blue); background: var(--blue-dim);
+  padding: 2px 7px; border-radius: 5px;
+}
+
+/* Margen negativo highlight */
+.loss-row td { color: var(--red) !important; }
+.loss-row { background: rgba(224,82,82,0.03); }
+
+/* Tab interno */
+.tabs { display: flex; gap: 4px; margin-bottom: 20px; }
+.tab {
+  padding: 7px 16px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  cursor: pointer; color: var(--text2); transition: all var(--transition);
+  border: 1px solid transparent;
+}
+.tab:hover { color: var(--text); background: var(--bg3); }
+.tab.active { background: var(--blue-dim); color: var(--blue); border-color: var(--blue-dim); }
+
+/* Indicador de salud financiera */
+.health-indicator {
+  display: flex; align-items: center; gap: 10px;
+  padding: 12px 16px; border-radius: var(--radius);
+  background: var(--bg3); border: 1px solid var(--border);
+  margin-bottom: 8px;
+}
+.health-label { font-size: 12px; flex: 1; }
+.health-pct   { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; }
+</style>
+</head>
+<body>
+
+<!-- ============================================================
+     SIDEBAR
+     ============================================================ -->
+<nav id="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <div class="logo-icon">📦</div>
+      <div>
+        <div class="logo-text">MercaManager</div>
+        <div class="logo-sub">v1.0 · BETA</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Principal</div>
+    <div class="nav-item active" data-page="dashboard">
+      <span class="nav-icon">📊</span> Dashboard
+    </div>
+    <div class="nav-item" data-page="alertas" id="nav-alertas">
+      <span class="nav-icon">🔔</span> Alertas
+      <span class="nav-badge" id="alertas-count">0</span>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Operación</div>
+    <div class="nav-item" data-page="tiendas">
+      <span class="nav-icon">🏪</span> Tiendas
+    </div>
+    <div class="nav-item" data-page="ventas">
+      <span class="nav-icon">💰</span> Ventas
+    </div>
+    <div class="nav-item" data-page="eventos">
+      <span class="nav-icon">⚡</span> Eventos / Novedades
+    </div>
+    <div class="nav-item" data-page="conciliacion">
+      <span class="nav-icon">🔁</span> Conciliación
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Análisis</div>
+    <div class="nav-item" data-page="cierre">
+      <span class="nav-icon">📅</span> Cierre Mensual
+    </div>
+    <div class="nav-item" data-page="reportes">
+      <span class="nav-icon">📈</span> Reportes
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-section-label">Sistema</div>
+    <div class="nav-item" data-page="config">
+      <span class="nav-icon">⚙️</span> Configuración
+    </div>
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="sidebar-version">localStorage · Firebase ready</div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     MAIN
+     ============================================================ -->
+<div id="main">
+
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div>
+      <div class="topbar-title" id="topbar-title">Dashboard</div>
+    </div>
+    <div class="topbar-actions">
+      <div class="topbar-date" id="today-date"></div>
+      <button class="btn btn-primary btn-sm" id="btn-nueva-venta">+ Nueva Venta</button>
+    </div>
+  </div>
+
+  <!-- PAGE CONTENT -->
+  <div id="page-content">
+
+    <!-- ====================================================
+         DASHBOARD
+         ==================================================== -->
+    <section class="page-section active" id="page-dashboard">
+      <div class="stat-grid" id="stats-grid"></div>
+
+      <div class="grid-left-wide">
+        <!-- Tabla ventas recientes -->
+        <div>
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Ventas Recientes</div>
+                <div class="card-subtitle">Últimas 10 operaciones registradas</div>
+              </div>
+              <button class="btn btn-ghost btn-sm" onclick="navigate('ventas')">Ver todas →</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>ID / Tienda</th>
+                    <th>Producto</th>
+                    <th>Ingreso</th>
+                    <th>Ganancia Real</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody id="dashboard-ventas-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Panel lateral -->
+        <div style="display:flex;flex-direction:column;gap:16px;">
+          <!-- Resumen por tienda -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">Por Tienda</div>
+            </div>
+            <div id="dashboard-tiendas-resumen"></div>
+          </div>
+
+          <!-- Alertas rápidas -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">⚠️ Alertas Activas</div>
+            </div>
+            <div id="dashboard-alertas-mini"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Salud financiera -->
+      <div class="card mb-24" style="margin-top:20px;">
+        <div class="card-header">
+          <div class="card-title">Indicadores de Salud Financiera del Mes</div>
+        </div>
+        <div id="salud-financiera"></div>
+      </div>
+    </section>
+
+    <!-- ====================================================
+         ALERTAS
+         ==================================================== -->
+    <section class="page-section" id="page-alertas">
+      <div class="mb-16 flex-between">
+        <div style="color:var(--text2);font-size:13px;">Revisión de pendientes y riesgos operativos</div>
+        <button class="btn btn-ghost btn-sm" onclick="renderAlertas()">🔄 Actualizar</button>
+      </div>
+      <div id="alertas-container"></div>
+    </section>
+
+    <!-- ====================================================
+         TIENDAS
+         ==================================================== -->
+    <section class="page-section" id="page-tiendas">
+      <div class="flex-between mb-16">
+        <div class="color-text2" style="font-size:13px;">Gestión de tiendas Mercado Libre</div>
+        <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
+      </div>
+      <div id="tiendas-grid" class="grid-3"></div>
+    </section>
+
+    <!-- ====================================================
+         VENTAS
+         ==================================================== -->
+    <section class="page-section" id="page-ventas">
+      <div class="filters-bar">
+        <input class="search-input" type="text" placeholder="🔍 Buscar por producto, cliente, ID..." id="venta-search">
+        <div class="filter-group">
+          <span class="filter-label">Tienda</span>
+          <select id="venta-filter-tienda"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Estado</span>
+          <select id="venta-filter-estado">
+            <option value="">Todos</option>
+            <option>entregado</option><option>pendiente</option>
+            <option>en_camino</option><option>cancelado</option>
+            <option>problema</option><option>devuelto</option>
+            <option>reclamado</option><option>inventario</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Novedad</span>
+          <select id="venta-filter-novedad">
+            <option value="">Todas</option>
+            <option value="true">Con novedad</option>
+            <option value="false">Sin novedad</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Mes</span>
+          <input type="month" id="venta-filter-mes" style="padding:7px 10px;">
+        </div>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="clearVentaFilters()">✕ Limpiar</button>
+          <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tienda</th>
+              <th>Fecha</th>
+              <th>Producto</th>
+              <th>Precio Venta</th>
+              <th>Costo Total</th>
+              <th>G. Estimada</th>
+              <th>G. Real</th>
+              <th>Margen</th>
+              <th>Estado</th>
+              <th>Novedad</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="ventas-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:10px;font-size:11px;color:var(--text3);" id="ventas-count-label"></div>
+    </section>
+
+    <!-- ====================================================
+         EVENTOS
+         ==================================================== -->
+    <section class="page-section" id="page-eventos">
+      <div class="filters-bar">
+        <input class="search-input" type="text" placeholder="🔍 Buscar descripción, venta..." id="evento-search">
+        <div class="filter-group">
+          <span class="filter-label">Tipo</span>
+          <select id="evento-filter-tipo">
+            <option value="">Todos</option>
+            <option value="gasto">Gasto</option>
+            <option value="problema">Problema</option>
+            <option value="perdida">Pérdida Posterior</option>
+            <option value="devolucion">Devolución</option>
+            <option value="reclamo">Reclamo</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Estado</span>
+          <select id="evento-filter-estado">
+            <option value="">Todos</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="en_gestion">En gestión</option>
+            <option value="resuelto">Resuelto</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Tienda</span>
+          <select id="evento-filter-tienda"><option value="">Todas</option></select>
+        </div>
+        <div style="margin-left:auto;">
+          <button class="btn btn-primary btn-sm" onclick="openModalEvento()">+ Nuevo Evento</button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Tipo</th>
+              <th>Categoría</th>
+              <th>Tienda</th>
+              <th>Venta Rel.</th>
+              <th>Descripción</th>
+              <th>Valor</th>
+              <th>Impacto</th>
+              <th>Estado</th>
+              <th>Mes Impacto</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="eventos-tbody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ====================================================
+         CONCILIACIÓN
+         ==================================================== -->
+    <section class="page-section" id="page-conciliacion">
+      <div class="mb-16" style="color:var(--text2);font-size:13px;">
+        Vista unificada: cada venta con todos sus eventos asociados y resultado financiero real.
+      </div>
+      <div class="filters-bar">
+        <div class="filter-group">
+          <span class="filter-label">Tienda</span>
+          <select id="concil-filter-tienda"><option value="">Todas</option></select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Resultado</span>
+          <select id="concil-filter-resultado">
+            <option value="">Todos</option>
+            <option value="positivo">Positivo</option>
+            <option value="negativo">Negativo</option>
+            <option value="critico">Crítico (&lt;5%)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Mes</span>
+          <input type="month" id="concil-filter-mes" style="padding:7px 10px;">
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="renderConciliacion()">🔄 Recalcular</button>
+      </div>
+      <div id="conciliacion-container"></div>
+    </section>
+
+    <!-- ====================================================
+         CIERRE MENSUAL
+         ==================================================== -->
+    <section class="page-section" id="page-cierre">
+      <div class="filters-bar">
+        <div class="filter-group">
+          <span class="filter-label">Mes / Año</span>
+          <input type="month" id="cierre-mes" style="padding:7px 10px;">
+        </div>
+        <div class="filter-group">
+          <span class="filter-label">Tienda</span>
+          <select id="cierre-tienda"><option value="all">Consolidado</option></select>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="renderCierre()">📊 Calcular Cierre</button>
+      </div>
+
+      <div id="cierre-container" class="grid-2" style="margin-top:20px;"></div>
+    </section>
+
+    <!-- ====================================================
+         REPORTES
+         ==================================================== -->
+    <section class="page-section" id="page-reportes">
+      <div class="tabs">
+        <div class="tab active" data-tab="reporte-tiendas">Por Tienda</div>
+        <div class="tab" data-tab="reporte-productos">Productos</div>
+        <div class="tab" data-tab="reporte-problemas">Problemas</div>
+        <div class="tab" data-tab="reporte-mensual">Tendencia</div>
+      </div>
+      <div id="reporte-tiendas" class="tab-content"></div>
+      <div id="reporte-productos" class="tab-content hidden"></div>
+      <div id="reporte-problemas" class="tab-content hidden"></div>
+      <div id="reporte-mensual" class="tab-content hidden"></div>
+    </section>
+
+    <!-- ====================================================
+         CONFIGURACIÓN
+         ==================================================== -->
+    <section class="page-section" id="page-config">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><div class="card-title">🗄️ Datos Locales</div></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:16px;">Actualmente usando localStorage. Los datos persisten en este navegador.</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="exportData()">⬇ Exportar JSON</button>
+            <button class="btn btn-ghost btn-sm" onclick="importData()">⬆ Importar JSON</button>
+            <button class="btn btn-danger btn-sm" onclick="resetData()">🗑 Reset Demo Data</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">🔥 Firebase (Futuro)</div></div>
+          <p style="font-size:12px;color:var(--text2);margin-bottom:12px;">Estructura lista para conectar Firestore. Colecciones: tiendas, ventas, eventos, cierres_mensuales, configuracion</p>
+          <div style="background:var(--bg3);border-radius:8px;padding:12px;">
+            <code style="font-size:10px;color:var(--text3);font-family:'DM Mono',monospace;">
+              db.collection('ventas')<br>
+              db.collection('eventos')<br>
+              db.collection('tiendas')<br>
+              db.collection('cierres_mensuales')
+            </code>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Estadísticas del Sistema</div></div>
+          <div id="config-stats"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">ℹ️ Acerca de</div></div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;">
+            <b>MercaManager v1.0</b><br>
+            Mini ERP operativo para tiendas Mercado Libre.<br><br>
+            Módulos: Dashboard · Tiendas · Ventas · Eventos<br>
+            Conciliación · Cierre Mensual · Reportes · Alertas<br><br>
+            <span style="color:var(--text3);">Datos en localStorage · Firebase ready</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /page-content -->
+</div><!-- /main -->
+
+<!-- ============================================================
+     MODAL: NUEVA VENTA
+     ============================================================ -->
+<div class="modal-overlay" id="modal-venta">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-venta-title">Nueva Venta</div>
+      <button class="modal-close" onclick="closeModal('modal-venta')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <!-- Identificación -->
+        <div class="form-section">IDENTIFICACIÓN</div>
+        <div class="form-group">
+          <label class="form-label">ID Venta (ML o Custom) *</label>
+          <input class="form-input" type="text" id="v-id-externo" placeholder="Ej: #2001234567">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tienda *</label>
+          <select class="form-input" id="v-tienda"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de Venta *</label>
+          <input class="form-input" type="date" id="v-fecha">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha Entrega Estimada</label>
+          <input class="form-input" type="date" id="v-fecha-entrega-est">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha Entrega Real</label>
+          <input class="form-input" type="date" id="v-fecha-entrega-real">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado *</label>
+          <select class="form-input" id="v-estado" onchange="recalcVenta()">
+            <option value="pendiente">Pendiente</option>
+            <option value="en_camino">En Camino</option>
+            <option value="entregado">Entregado</option>
+            <option value="cancelado">Cancelado</option>
+            <option value="problema">Problema</option>
+            <option value="devuelto">Devuelto</option>
+            <option value="reclamado">Reclamado</option>
+            <option value="inventario">Inventario</option>
+          </select>
+        </div>
+
+        <!-- Producto -->
+        <div class="form-section">PRODUCTO</div>
+        <div class="form-group">
+          <label class="form-label">Producto *</label>
+          <input class="form-input" type="text" id="v-producto" placeholder="Nombre del producto">
+        </div>
+        <div class="form-group">
+          <label class="form-label">SKU / Referencia</label>
+          <input class="form-input" type="text" id="v-sku" placeholder="REF-001">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cantidad *</label>
+          <input class="form-input" type="number" id="v-cantidad" value="1" min="1" onchange="recalcVenta()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Cliente</label>
+          <input class="form-input" type="text" id="v-cliente" placeholder="Nombre cliente">
+        </div>
+
+        <!-- Financiero -->
+        <div class="form-section">FINANCIERO</div>
+        <div class="form-group">
+          <label class="form-label">Precio de Venta ($) *</label>
+          <input class="form-input" type="number" id="v-precio" placeholder="0" onchange="recalcVenta()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Costo del Producto ($)</label>
+          <input class="form-input" type="number" id="v-costo-prod" placeholder="0" onchange="recalcVenta()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Costo Envío Cobrado ($) <small style="color:var(--text3)">(lo que pagó el cliente)</small></label>
+          <input class="form-input" type="number" id="v-envio-cobrado" placeholder="0" onchange="recalcVenta()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Costo Envío Real ($) <small style="color:var(--text3)">(lo que pagaste tú)</small></label>
+          <input class="form-input" type="number" id="v-envio-real" placeholder="0" onchange="recalcVenta()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comisión ML ($)</label>
+          <input class="form-input" type="number" id="v-comision" placeholder="0" onchange="recalcVenta()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Impuestos / Retenciones ($)</label>
+          <input class="form-input" type="number" id="v-impuestos" placeholder="0" onchange="recalcVenta()">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Otros Descuentos ($)</label>
+          <input class="form-input" type="number" id="v-descuentos" placeholder="0" onchange="recalcVenta()">
+        </div>
+
+        <!-- Logística -->
+        <div class="form-section">LOGÍSTICA</div>
+        <div class="form-group">
+          <label class="form-label">Transportadora</label>
+          <input class="form-input" type="text" id="v-transportadora" placeholder="Ej: Coordinadora, TCC">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Guía ML</label>
+          <input class="form-input" type="text" id="v-guia-ml">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Guía Transportadora Local</label>
+          <input class="form-input" type="text" id="v-guia-local">
+        </div>
+
+        <!-- Cálculo automático -->
+        <div class="form-calc" id="form-calc-venta">
+          <div class="form-calc-title">⚡ Cálculo Automático — Ganancia Estimada</div>
+          <div class="calc-row"><span class="calc-label">Precio de Venta</span><span class="calc-value neutral" id="calc-precio">$0</span></div>
+          <div class="calc-row"><span class="calc-label">+ Envío Cobrado</span><span class="calc-value neutral" id="calc-envio-c">$0</span></div>
+          <div class="calc-row"><span class="calc-label">= Ingreso Bruto</span><span class="calc-value neutral" id="calc-ingreso">$0</span></div>
+          <div class="calc-row"><span class="calc-label">- Costo Producto</span><span class="calc-value negative" id="calc-costo-p">$0</span></div>
+          <div class="calc-row"><span class="calc-label">- Envío Real (tu costo)</span><span class="calc-value negative" id="calc-envio-r">$0</span></div>
+          <div class="calc-row"><span class="calc-label">- Comisión ML</span><span class="calc-value negative" id="calc-comision">$0</span></div>
+          <div class="calc-row"><span class="calc-label">- Impuestos</span><span class="calc-value negative" id="calc-impuestos">$0</span></div>
+          <div class="calc-row"><span class="calc-label">- Otros Descuentos</span><span class="calc-value negative" id="calc-descuentos">$0</span></div>
+          <div class="calc-row calc-row-total">
+            <span class="calc-label fw-700">GANANCIA ESTIMADA</span>
+            <span class="calc-value fw-700 positive" id="calc-ganancia">$0</span>
+          </div>
+          <div class="calc-row">
+            <span class="calc-label">Margen %</span>
+            <span class="calc-value neutral" id="calc-margen">0%</span>
+          </div>
+        </div>
+
+        <!-- Notas -->
+        <div class="form-group form-full">
+          <label class="form-label">Observaciones</label>
+          <textarea class="form-input" id="v-observaciones" rows="2" placeholder="Notas adicionales sobre esta venta..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-venta')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVenta()">💾 Guardar Venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: TIENDA
+     ============================================================ -->
+<div class="modal-overlay" id="modal-tienda">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Nueva Tienda</div>
+      <button class="modal-close" onclick="closeModal('modal-tienda')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Nombre de la Tienda *</label>
+          <input class="form-input" type="text" id="t-nombre" placeholder="Ej: MiTienda_Oficial">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Responsable</label>
+          <input class="form-input" type="text" id="t-responsable">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Color Identificativo</label>
+          <input class="form-input" type="color" id="t-color" value="#4a90e2" style="height:40px;padding:4px;">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Comisión ML Default (%)</label>
+          <input class="form-input" type="number" id="t-comision" value="13" placeholder="13">
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Observaciones</label>
+          <textarea class="form-input" id="t-obs" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tienda')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTienda()">💾 Guardar Tienda</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: EVENTO
+     ============================================================ -->
+<div class="modal-overlay" id="modal-evento">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-evento-title">Nuevo Evento / Novedad</div>
+      <button class="modal-close" onclick="closeModal('modal-evento')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Tipo de Evento *</label>
+          <select class="form-input" id="e-tipo" onchange="updateEventoCategorias()">
+            <option value="gasto">💸 Gasto</option>
+            <option value="problema">⚠️ Problema</option>
+            <option value="perdida">📉 Pérdida Posterior</option>
+            <option value="devolucion">↩️ Devolución</option>
+            <option value="reclamo">🚨 Reclamo</option>
+            <option value="cancelacion">❌ Cancelación</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Categoría *</label>
+          <select class="form-input" id="e-categoria"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha del Evento *</label>
+          <input class="form-input" type="date" id="e-fecha">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Fecha de Impacto (cierre) *</label>
+          <input class="form-input" type="date" id="e-fecha-impacto">
+          <small style="color:var(--text3);font-size:10px;">Mes al que se imputa este costo</small>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tienda *</label>
+          <select class="form-input" id="e-tienda"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Venta Relacionada</label>
+          <select class="form-input" id="e-venta">
+            <option value="">Sin venta asociada</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Valor ($) *</label>
+          <input class="form-input" type="number" id="e-valor" placeholder="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label">¿Afecta Ganancia?</label>
+          <select class="form-input" id="e-afecta">
+            <option value="true">Sí, descuenta de ganancia</option>
+            <option value="false">No</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado</label>
+          <select class="form-input" id="e-estado">
+            <option value="pendiente">Pendiente</option>
+            <option value="en_gestion">En Gestión</option>
+            <option value="resuelto">Resuelto</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Responsable</label>
+          <input class="form-input" type="text" id="e-responsable">
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Descripción Detallada *</label>
+          <textarea class="form-input" id="e-descripcion" rows="3" placeholder="Describe el problema o gasto con el máximo detalle posible..."></textarea>
+        </div>
+        <div class="form-group form-full">
+          <label class="form-label">Observaciones Finales</label>
+          <textarea class="form-input" id="e-observaciones" rows="2"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-evento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEvento()">💾 Guardar Evento</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================================
+     MODAL: DETALLE VENTA
+     ============================================================ -->
+<div class="modal-overlay" id="modal-detalle-venta">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <div class="modal-title" id="detalle-title">Detalle de Venta</div>
+      <button class="modal-close" onclick="closeModal('modal-detalle-venta')">✕</button>
+    </div>
+    <div class="modal-body" id="detalle-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('modal-detalle-venta')">Cerrar</button>
+      <button class="btn btn-primary btn-sm" id="detalle-btn-evento">+ Registrar Evento</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   MERCAMANAGER v1 — JavaScript Principal
+   Estructura preparada para migrar a Firebase Firestore
+   ============================================================ */
+
+// ============================================================
+// CONSTANTES Y CONFIGURACIÓN
+// ============================================================
+const ESTADOS_VENTA = ['pendiente','en_camino','entregado','cancelado','problema','devuelto','reclamado','inventario'];
+const TIPOS_EVENTO = {
+  gasto:       ['Transporte','Empaque','Publicidad','Comisión extra','Gasto administrativo','Otro'],
+  problema:    ['Producto dañado','Error de precio','Error publicación','Error inventario','Cliente no recibió','Envío extra','Otro'],
+  perdida:     ['Costo no anotado','Diferencia precio','Inventario faltante','Pérdida logística','Descuento asumido','Otro'],
+  devolucion:  ['Devolución voluntaria','Devolución por falla','Devolución ML','Otro'],
+  reclamo:     ['Reclamo abierto','Mediación ML','Pago de reclamo','Otro'],
+  cancelacion: ['Cliente canceló','Sin stock','Error publicación','Cancelado ML','Otro']
+};
+
+const fmt = (v) => {
+  if (v === null || v === undefined || isNaN(v)) return '$0';
+  return '$' + Number(v).toLocaleString('es-CO', {minimumFractionDigits:0, maximumFractionDigits:0});
+};
+const fmtPct = (v) => (isNaN(v) ? '0%' : v.toFixed(1) + '%');
+const uid = () => 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
+
+// ============================================================
+// CAPA DE DATOS — localStorage (reemplazar por Firebase calls)
+// ============================================================
+const DB = {
+  get: (key) => {
+    try { return JSON.parse(localStorage.getItem('mm_' + key)) || []; }
+    catch(e) { return []; }
+  },
+  set: (key, val) => localStorage.setItem('mm_' + key, JSON.stringify(val)),
+  
+  getTiendas:  () => DB.get('tiendas'),
+  getVentas:   () => DB.get('ventas'),
+  getEventos:  () => DB.get('eventos'),
+  getCierres:  () => DB.get('cierres'),
+
+  saveTiendas: (d) => DB.set('tiendas', d),
+  saveVentas:  (d) => DB.set('ventas', d),
+  saveEventos: (d) => DB.set('eventos', d),
+  saveCierres: (d) => DB.set('cierres', d),
+  
+  // Agrega o actualiza por id
+  upsertVenta: (v) => {
+    let arr = DB.getVentas();
+    const idx = arr.findIndex(x => x.id === v.id);
+    if (idx >= 0) arr[idx] = v; else arr.push(v);
+    DB.saveVentas(arr);
+  },
+  upsertEvento: (e) => {
+    let arr = DB.getEventos();
+    const idx = arr.findIndex(x => x.id === e.id);
+    if (idx >= 0) arr[idx] = e; else arr.push(e);
+    DB.saveEventos(arr);
+  },
+  upsertTienda: (t) => {
+    let arr = DB.getTiendas();
+    const idx = arr.findIndex(x => x.id === t.id);
+    if (idx >= 0) arr[idx] = t; else arr.push(t);
+    DB.saveTiendas(arr);
+  },
+  deleteVenta: (id) => DB.saveVentas(DB.getVentas().filter(v => v.id !== id)),
+  deleteEvento:(id) => DB.saveEventos(DB.getEventos().filter(e => e.id !== id)),
+};
+
+// ============================================================
+// CÁLCULOS DE NEGOCIO (Funciones puras — reutilizables con Firebase)
+// ============================================================
+
+/** Calcula ganancia estimada de una venta (solo con campos de la venta) */
+function calcGananciaEstimada(v) {
+  const cant = parseFloat(v.cantidad) || 1;
+  const precio    = parseFloat(v.precio_venta) || 0;
+  const envioC    = parseFloat(v.envio_cobrado) || 0;
+  const costoProd = parseFloat(v.costo_producto) || 0;
+  const envioReal = parseFloat(v.envio_real) || 0;
+  const comision  = parseFloat(v.comision) || 0;
+  const impuestos = parseFloat(v.impuestos) || 0;
+  const desctos   = parseFloat(v.descuentos) || 0;
+
+  const ingresoBruto = (precio * cant) + envioC;
+  const costoTotal   = (costoProd * cant) + envioReal + comision + impuestos + desctos;
+  const ganancia     = ingresoBruto - costoTotal;
+  const margen       = ingresoBruto > 0 ? (ganancia / ingresoBruto) * 100 : 0;
+
+  return { ingresoBruto, costoTotal, ganancia, margen };
+}
+
+/** Calcula ganancia REAL: estimada - todos los eventos negativos asociados */
+function calcGananciaReal(ventaId) {
+  const venta   = DB.getVentas().find(v => v.id === ventaId);
+  if (!venta) return null;
+  const eventos = DB.getEventos().filter(e => e.venta_id === ventaId && e.afecta_ganancia === true);
+  const { ganancia, ingresoBruto, costoTotal } = calcGananciaEstimada(venta);
+  const totalEventos = eventos.reduce((s, e) => s + (parseFloat(e.valor) || 0), 0);
+  const gananciaReal = ganancia - totalEventos;
+  const margenReal   = ingresoBruto > 0 ? (gananciaReal / ingresoBruto) * 100 : 0;
+  return { gananciaEstimada: ganancia, totalEventos, gananciaReal, margenReal, ingresoBruto, costoTotal, eventos };
+}
+
+/** Verifica si una venta tiene novedades sin resolver */
+function tieneNovedadPendiente(ventaId) {
+  return DB.getEventos().some(e => e.venta_id === ventaId && e.estado !== 'resuelto');
+}
+
+/** Calcula cierre mensual para mes dado y tiendaId ('all' para consolidado) */
+function calcCierre(mes, tiendaId) {
+  // mes = "2025-01"
+  const ventas  = DB.getVentas().filter(v => {
+    const matchMes = v.fecha_venta && v.fecha_venta.startsWith(mes);
+    const matchTienda = tiendaId === 'all' || v.tienda_id === tiendaId;
+    return matchMes && matchTienda;
+  });
+
+  const eventos = DB.getEventos().filter(e => {
+    const matchMes = (e.fecha_impacto || e.fecha).startsWith(mes);
+    const matchTienda = tiendaId === 'all' || e.tienda_id === tiendaId;
+    return matchMes && matchTienda;
+  });
+
+  let ventasBrutas = 0, ingresosReales = 0, costoProductos = 0;
+  let costoEnvios = 0, gananciasEstimadas = 0;
+  let canceladas = 0, devueltas = 0;
+
+  ventas.forEach(v => {
+    const c = calcGananciaEstimada(v);
+    ventasBrutas      += parseFloat(v.precio_venta) || 0;
+    ingresosReales    += c.ingresoBruto;
+    costoProductos    += (parseFloat(v.costo_producto)||0) * (parseFloat(v.cantidad)||1);
+    costoEnvios       += parseFloat(v.envio_real) || 0;
+    gananciasEstimadas+= c.ganancia;
+    if (v.estado === 'cancelado') canceladas++;
+    if (v.estado === 'devuelto')  devueltas++;
+  });
+
+  const eventosNeg = eventos.filter(e => e.afecta_ganancia);
+  const totalEventos = eventosNeg.reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
+  const gastos    = eventos.filter(e => e.tipo === 'gasto').reduce((s,e) => s+(parseFloat(e.valor)||0),0);
+  const perdidas  = eventos.filter(e => e.tipo === 'perdida').reduce((s,e) => s+(parseFloat(e.valor)||0),0);
+  const devoluciones = eventos.filter(e => e.tipo === 'devolucion').reduce((s,e) => s+(parseFloat(e.valor)||0),0);
+  const reclamos  = eventos.filter(e => e.tipo === 'reclamo').reduce((s,e) => s+(parseFloat(e.valor)||0),0);
+
+  const utilidadReal = gananciasEstimadas - totalEventos;
+  const diferencia   = utilidadReal - gananciasEstimadas;
+  const margenReal   = ingresosReales > 0 ? (utilidadReal/ingresosReales)*100 : 0;
+
+  return {
+    ventasBrutas, ingresosReales, costoProductos, costoEnvios,
+    gananciasEstimadas, totalEventos, gastos, perdidas, devoluciones, reclamos,
+    utilidadReal, diferencia, margenReal,
+    totalVentas: ventas.length, canceladas, devueltas,
+    eventosPendientes: eventos.filter(e=>e.estado==='pendiente').length
+  };
+}
+
+// ============================================================
+// DATOS DEMO
+// ============================================================
+function loadDemoData() {
+  const tiendas = [
+    { id: 't1', nombre: 'TechStore_Oficial', responsable: 'Carlos M.', color: '#4a90e2', estado: 'activa', comision_default: 13, observaciones: 'Tienda principal tecnología' },
+    { id: 't2', nombre: 'HomeStyle_CO',      responsable: 'Ana G.',   color: '#3ecf8e', estado: 'activa', comision_default: 15, observaciones: 'Hogar y decoración' },
+    { id: 't3', nombre: 'ModaRapida_Shop',   responsable: 'Jorge L.', color: '#f07830', estado: 'activa', comision_default: 18, observaciones: 'Ropa y accesorios' },
+  ];
+
+  const hoy = new Date();
+  const mes = hoy.toISOString().slice(0,7);
+  const dia = (n) => {
+    const d = new Date(hoy);
+    d.setDate(d.getDate() - n);
+    return d.toISOString().slice(0,10);
+  };
+
+  const ventas = [
+    { id:'v1', id_externo:'#2001234560', tienda_id:'t1', fecha_venta:dia(2), fecha_entrega_est:dia(-3), fecha_entrega_real:'', cliente:'Pedro Sánchez', producto:'Teclado Mecánico RGB', sku:'TEC-001', cantidad:1, precio_venta:180000, costo_producto:95000, envio_cobrado:8000, envio_real:12000, comision:23400, impuestos:0, descuentos:0, transportadora:'Coordinadora', guia_ml:'ML1234', guia_local:'', estado:'en_camino', observaciones:'Cliente urgente' },
+    { id:'v2', id_externo:'#2001234561', tienda_id:'t1', fecha_venta:dia(5), fecha_entrega_est:dia(-2), fecha_entrega_real:dia(1), cliente:'María López', producto:'Mouse Inalámbrico', sku:'MOU-002', cantidad:2, precio_venta:65000, costo_producto:28000, envio_cobrado:0, envio_real:9000, comision:8450, impuestos:0, descuentos:0, transportadora:'TCC', guia_ml:'ML5678', guia_local:'TCC-9090', estado:'entregado', observaciones:'' },
+    { id:'v3', id_externo:'#2001234562', tienda_id:'t2', fecha_venta:dia(3), fecha_entrega_est:dia(-1), fecha_entrega_real:'', cliente:'Roberto Castro', producto:'Lámpara LED Escritorio', sku:'LAM-010', cantidad:1, precio_venta:95000, costo_producto:42000, envio_cobrado:6000, envio_real:14000, comision:12350, impuestos:0, descuentos:0, transportadora:'Servientrega', guia_ml:'ML9911', guia_local:'', estado:'problema', observaciones:'Paquete reportado dañado' },
+    { id:'v4', id_externo:'#2001234563', tienda_id:'t2', fecha_venta:dia(8), fecha_entrega_est:dia(0), fecha_entrega_real:dia(2), cliente:'Luz Marina D.', producto:'Set Organizadores Cocina', sku:'ORG-005', cantidad:3, precio_venta:45000, costo_producto:18000, envio_cobrado:0, envio_real:11000, comision:5850, impuestos:0, descuentos:2000, transportadora:'Coordinadora', guia_ml:'ML3344', guia_local:'COO-6677', estado:'entregado', observaciones:'' },
+    { id:'v5', id_externo:'#2001234564', tienda_id:'t3', fecha_venta:dia(1), fecha_entrega_est:dia(-4), fecha_entrega_real:'', cliente:'Andrés Villa', producto:'Camiseta Polo Premium', sku:'POL-030', cantidad:2, precio_venta:55000, costo_producto:22000, envio_cobrado:5000, envio_real:8000, comision:7150, impuestos:0, descuentos:0, transportadora:'Interrapidísimo', guia_ml:'ML7788', guia_local:'', estado:'cancelado', observaciones:'Cliente canceló antes del despacho' },
+    { id:'v6', id_externo:'#2001234565', tienda_id:'t1', fecha_venta:dia(10), fecha_entrega_est:dia(3), fecha_entrega_real:dia(4), cliente:'Carmen Rueda', producto:'Hub USB-C 7 Puertos', sku:'HUB-003', cantidad:1, precio_venta:120000, costo_producto:58000, envio_cobrado:0, envio_real:10000, comision:15600, impuestos:0, descuentos:0, transportadora:'Coordinadora', guia_ml:'ML0011', guia_local:'COO-1122', estado:'entregado', observaciones:'' },
+    { id:'v7', id_externo:'#2001234566', tienda_id:'t3', fecha_venta:dia(6), fecha_entrega_est:dia(-1), fecha_entrega_real:'', cliente:'Felipe Torres', producto:'Jean Skinny Mujer', sku:'JEN-015', cantidad:1, precio_venta:78000, costo_producto:32000, envio_cobrado:7000, envio_real:9500, comision:10140, impuestos:0, descuentos:0, transportadora:'TCC', guia_ml:'ML4455', guia_local:'', estado:'pendiente', observaciones:'Esperando confirmación talla' },
+    { id:'v8', id_externo:'#2001234567', tienda_id:'t2', fecha_venta:dia(4), fecha_entrega_est:dia(-2), fecha_entrega_real:dia(0), cliente:'Gloria Herrera', producto:'Espejo Decorativo Nórdico', sku:'ESP-022', cantidad:1, precio_venta:135000, costo_producto:65000, envio_cobrado:0, envio_real:18000, comision:17550, impuestos:0, descuentos:0, transportadora:'Servientrega', guia_ml:'ML6699', guia_local:'SER-3344', estado:'devuelto', observaciones:'Cliente dijo que llegó rajado' },
+  ];
+
+  const eventos = [
+    { id:'e1', venta_id:'v3', tienda_id:'t2', fecha:''+dia(1), fecha_impacto:''+dia(1), tipo:'problema', categoria:'Producto dañado', descripcion:'El paquete llegó con la lámpara rota según fotos del cliente. Aún sin resolución.', valor:95000, afecta_ganancia:false, estado:'en_gestion', responsable:'Ana G.', observaciones:'Esperando gestión con transportadora' },
+    { id:'e2', venta_id:'v8', tienda_id:'t2', fecha:''+dia(0), fecha_impacto:''+dia(0), tipo:'devolucion', categoria:'Devolución por falla', descripcion:'Espejo llegó rajado. Se procesó devolución. Costo de recolección asumido por tienda.', valor:22000, afecta_ganancia:true, estado:'resuelto', responsable:'Ana G.', observaciones:'Recolección pagada a Servientrega' },
+    { id:'e3', venta_id:'v2', tienda_id:'t1', fecha:''+dia(2), fecha_impacto:''+dia(2), tipo:'gasto', categoria:'Empaque', descripcion:'Empaque reforzado adicional solicitado por el cliente para el mouse.', valor:3500, afecta_ganancia:true, estado:'resuelto', responsable:'Carlos M.', observaciones:'' },
+    { id:'e4', venta_id:'v5', tienda_id:'t3', fecha:''+dia(1), fecha_impacto:''+dia(1), tipo:'perdida', categoria:'Costo no anotado', descripcion:'Venta cancelada pero ya se había despachado. Tocó asumir costo de devolución.', valor:15000, afecta_ganancia:true, estado:'pendiente', responsable:'Jorge L.', observaciones:'Solicitar reembolso a ML' },
+    { id:'e5', venta_id:'v6', tienda_id:'t1', fecha:''+dia(5), fecha_impacto:''+dia(5), tipo:'gasto', categoria:'Comisión extra', descripcion:'Comisión adicional ML por venta en campaña especial.', valor:4800, afecta_ganancia:true, estado:'resuelto', responsable:'Carlos M.', observaciones:'' },
+    { id:'e6', venta_id:'', tienda_id:'t1', fecha:''+dia(3), fecha_impacto:''+dia(3), tipo:'gasto', categoria:'Publicidad', descripcion:'Pauta en ML Ads para semana del teclado mecánico.', valor:35000, afecta_ganancia:true, estado:'resuelto', responsable:'Carlos M.', observaciones:'Campaña 3 días' },
+  ];
+
+  DB.saveTiendas(tiendas);
+  DB.saveVentas(ventas);
+  DB.saveEventos(eventos);
+}
+
+// ============================================================
+// NAVEGACIÓN
+// ============================================================
+const PAGE_TITLES = {
+  dashboard: 'Dashboard', alertas: 'Alertas & Seguimiento',
+  tiendas: 'Tiendas', ventas: 'Ventas',
+  eventos: 'Eventos / Novedades', conciliacion: 'Conciliación',
+  cierre: 'Cierre Mensual', reportes: 'Reportes', config: 'Configuración'
+};
+
+function navigate(page) {
+  document.querySelectorAll('.page-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const section = document.getElementById('page-' + page);
+  if (section) section.classList.add('active');
+  const navItem = document.querySelector(`[data-page="${page}"]`);
+  if (navItem) navItem.classList.add('active');
+  document.getElementById('topbar-title').textContent = PAGE_TITLES[page] || page;
+  renderPage(page);
+}
+
+function renderPage(page) {
+  switch(page) {
+    case 'dashboard':    renderDashboard(); break;
+    case 'alertas':      renderAlertas(); break;
+    case 'tiendas':      renderTiendas(); break;
+    case 'ventas':       renderVentas(); break;
+    case 'eventos':      renderEventos(); break;
+    case 'conciliacion': renderConciliacion(); break;
+    case 'cierre':       renderCierreInit(); break;
+    case 'reportes':     renderReportes(); break;
+    case 'config':       renderConfig(); break;
+  }
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const ventas  = DB.getVentas();
+  const eventos = DB.getEventos();
+  const tiendas = DB.getTiendas();
+  const mes     = new Date().toISOString().slice(0,7);
+
+  const ventasMes = ventas.filter(v => v.fecha_venta && v.fecha_venta.startsWith(mes));
+  let totalIngreso=0, totalGanEst=0, totalGanReal=0;
+  let entregadas=0, pendientes=0, canceladas=0, conProblema=0, devueltas=0;
+
+  ventasMes.forEach(v => {
+    const c = calcGananciaEstimada(v);
+    totalIngreso += c.ingresoBruto;
+    totalGanEst  += c.ganancia;
+    const ev = DB.getEventos().filter(e => e.venta_id === v.id && e.afecta_ganancia);
+    totalGanReal += c.ganancia - ev.reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+    if (v.estado === 'entregado')  entregadas++;
+    if (v.estado === 'pendiente' || v.estado === 'en_camino') pendientes++;
+    if (v.estado === 'cancelado')  canceladas++;
+    if (v.estado === 'problema')   conProblema++;
+    if (v.estado === 'devuelto')   devueltas++;
+  });
+
+  const totalGastos = eventos.filter(e => e.tipo==='gasto' && (e.fecha_impacto||e.fecha).startsWith(mes))
+    .reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+  const totalPerdidas = eventos.filter(e => (e.tipo==='perdida'||e.tipo==='devolucion'||e.tipo==='reclamo') && (e.fecha_impacto||e.fecha).startsWith(mes))
+    .reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+
+  // Stats
+  const stats = [
+    { label: 'Ventas del Mes', value: ventasMes.length, cls:'blue', icon:'🛒', delta:'' },
+    { label: 'Ingresos Brutos', value: fmt(totalIngreso), cls:'teal', icon:'💵', delta:'' },
+    { label: 'Ganancia Estimada', value: fmt(totalGanEst), cls:'green', icon:'📈', delta:'' },
+    { label: 'Ganancia Real', value: fmt(totalGanReal), cls: totalGanReal < totalGanEst ? 'orange':'green', icon:'✅', delta: totalGanReal < totalGanEst ? `−${fmt(totalGanEst-totalGanReal)} vs estimada`:'' },
+    { label: 'Gastos del Mes', value: fmt(totalGastos), cls:'yellow', icon:'💸', delta:'' },
+    { label: 'Pérdidas / Dev.', value: fmt(totalPerdidas), cls:'red', icon:'📉', delta:'' },
+    { label: 'Entregadas', value: entregadas, cls:'green', icon:'✅', delta:'' },
+    { label: 'Pendientes', value: pendientes, cls:'yellow', icon:'⏳', delta:'' },
+    { label: 'Canceladas', value: canceladas, cls:'red', icon:'❌', delta:'' },
+    { label: 'Con Problema', value: conProblema, cls:'orange', icon:'⚠️', delta:'' },
+  ];
+
+  document.getElementById('stats-grid').innerHTML = stats.map(s => `
+    <div class="stat-card ${s.cls}">
+      <div class="stat-icon">${s.icon}</div>
+      <div class="stat-label">${s.label}</div>
+      <div class="stat-value ${s.cls}">${s.value}</div>
+      ${s.delta ? `<div class="stat-delta">${s.delta}</div>` : ''}
+    </div>
+  `).join('');
+
+  // Tabla ventas recientes
+  const recientes = [...ventas].sort((a,b)=>b.fecha_venta?.localeCompare(a.fecha_venta||'')||0).slice(0,10);
+  document.getElementById('dashboard-ventas-tbody').innerHTML = recientes.map(v => {
+    const tienda = tiendas.find(t=>t.id===v.tienda_id);
+    const c = calcGananciaEstimada(v);
+    const evs = DB.getEventos().filter(e=>e.venta_id===v.id&&e.afecta_ganancia);
+    const gr  = c.ganancia - evs.reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+    const isLoss = gr < 0;
+    return `<tr class="${isLoss?'loss-row':''}">
+      <td><span class="venta-id-tag">${v.id_externo||v.id}</span><br>
+        <span class="tienda-tag" style="margin-top:3px;display:flex;">
+          <span class="tienda-dot" style="background:${tienda?.color||'#999'}"></span>
+          <span style="font-size:10px;color:var(--text3)">${tienda?.nombre||'?'}</span>
+        </span>
+      </td>
+      <td>${v.producto}</td>
+      <td class="td-mono">${fmt(c.ingresoBruto)}</td>
+      <td class="td-mono ${isLoss?'color-red':'color-green'}">${fmt(gr)}</td>
+      <td><span class="badge badge-${v.estado}">${v.estado}</span></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="5" class="text-center td-dim">Sin ventas registradas</td></tr>';
+
+  // Resumen por tienda
+  document.getElementById('dashboard-tiendas-resumen').innerHTML = tiendas.map(t => {
+    const tv = ventasMes.filter(v=>v.tienda_id===t.id);
+    const ti = tv.reduce((s,v)=>s+calcGananciaEstimada(v).ingresoBruto,0);
+    return `<div class="health-indicator">
+      <span class="tienda-dot" style="background:${t.color}"></span>
+      <span class="health-label">${t.nombre}<br><small style="color:var(--text3)">${tv.length} ventas</small></span>
+      <span class="health-pct color-green">${fmt(ti)}</span>
+    </div>`;
+  }).join('') || '<div class="empty-state"><div class="empty-icon">🏪</div><div class="empty-sub">Sin tiendas</div></div>';
+
+  // Alertas mini
+  const alertas = getAlertas().slice(0,3);
+  document.getElementById('dashboard-alertas-mini').innerHTML = alertas.map(a => `
+    <div class="alert-item">
+      <div class="alert-dot ${a.color}"></div>
+      <div class="alert-body">
+        <div class="alert-title">${a.title}</div>
+        <div class="alert-sub">${a.sub}</div>
+      </div>
+    </div>
+  `).join('') || '<div style="font-size:12px;color:var(--text3);padding:8px 0">✅ Sin alertas activas</div>';
+
+  // Salud financiera
+  const margen = totalIngreso > 0 ? (totalGanReal/totalIngreso)*100 : 0;
+  const pctPerd = totalGanEst > 0 ? (totalPerdidas/totalGanEst)*100 : 0;
+  const pctEntregadas = ventasMes.length > 0 ? (entregadas/ventasMes.length)*100 : 0;
+
+  document.getElementById('salud-financiera').innerHTML = `
+    <div class="grid-3">
+      ${indicadorSalud('Margen Neto Real', margen, 20, 10, '%')}
+      ${indicadorSalud('Pérdidas vs Ganancia Estimada', pctPerd, 5, 15, '%', true)}
+      ${indicadorSalud('Tasa de Entrega', pctEntregadas, 80, 60, '%')}
+    </div>
+  `;
+}
+
+function indicadorSalud(label, valor, ok, warn, sfx, invertido=false) {
+  let color = 'var(--green)', status = '✅ Saludable';
+  if (!invertido) {
+    if (valor < warn)  { color='var(--red)';    status='🔴 Crítico'; }
+    else if (valor<ok) { color='var(--yellow)'; status='⚠️ Atención'; }
+  } else {
+    if (valor > warn)  { color='var(--red)';    status='🔴 Crítico'; }
+    else if (valor>ok) { color='var(--yellow)'; status='⚠️ Atención'; }
+  }
+  const pct = Math.min(100, Math.max(0, invertido ? 100-valor : valor));
+  return `<div class="card">
+    <div style="font-size:12px;font-weight:600;margin-bottom:8px;">${label}</div>
+    <div style="font-size:24px;font-weight:700;color:${color};margin-bottom:6px;">${valor.toFixed(1)}${sfx}</div>
+    <div class="progress"><div class="progress-bar" style="width:${pct}%;background:${color}"></div></div>
+    <div style="font-size:11px;margin-top:6px;">${status}</div>
+  </div>`;
+}
+
+// ============================================================
+// ALERTAS
+// ============================================================
+function getAlertas() {
+  const ventas  = DB.getVentas();
+  const eventos = DB.getEventos();
+  const alertas = [];
+
+  // Ventas con problema sin resolver
+  const problemas = ventas.filter(v=>v.estado==='problema');
+  if (problemas.length) alertas.push({ color:'red', icon:'⚠️',
+    title: `${problemas.length} venta(s) con problema activo`,
+    sub: problemas.map(v=>v.id_externo||v.id).join(', '),
+    action: () => navigate('ventas') });
+
+  // Eventos pendientes
+  const evPend = eventos.filter(e=>e.estado==='pendiente');
+  if (evPend.length) alertas.push({ color:'orange', icon:'⏳',
+    title: `${evPend.length} evento(s) / novedad(es) sin resolver`,
+    sub: 'Revisar módulo Eventos para gestionar',
+    action: () => navigate('eventos') });
+
+  // Ventas devueltas con costo no registrado
+  const devueltas = ventas.filter(v=>v.estado==='devuelto');
+  const devConEv  = devueltas.filter(v=>!eventos.some(e=>e.venta_id===v.id&&e.tipo==='devolucion'));
+  if (devConEv.length) alertas.push({ color:'orange', icon:'↩️',
+    title: `${devConEv.length} devolución(es) sin evento registrado`,
+    sub: 'Registra el costo de devolución para el cierre real',
+    action: () => navigate('eventos') });
+
+  // Ventas en camino sin actualizar hace >5 días
+  const hoy = new Date();
+  const enCamino = ventas.filter(v => {
+    if (v.estado !== 'en_camino') return false;
+    const d = new Date(v.fecha_venta);
+    return (hoy - d) / 86400000 > 5;
+  });
+  if (enCamino.length) alertas.push({ color:'yellow', icon:'🚚',
+    title: `${enCamino.length} venta(s) "en camino" por más de 5 días`,
+    sub: 'Verificar estado en transportadora',
+    action: () => navigate('ventas') });
+
+  // Ventas canceladas con costo asumido
+  const cancelConEv = ventas.filter(v=>v.estado==='cancelado').filter(v=>!eventos.some(e=>e.venta_id===v.id));
+  if (cancelConEv.length) alertas.push({ color:'yellow', icon:'❌',
+    title: `${cancelConEv.length} cancelación(es) sin análisis de costo`,
+    sub: '¿Hubo costos de envío o empaque ya asumidos?',
+    action: () => navigate('eventos') });
+
+  // Ventas entregadas con ganancia real negativa
+  const conPerdida = ventas.filter(v=>{
+    if(v.estado!=='entregado') return false;
+    const r = calcGananciaReal(v.id);
+    return r && r.gananciaReal < 0;
+  });
+  if (conPerdida.length) alertas.push({ color:'red', icon:'📉',
+    title: `${conPerdida.length} venta(s) ENTREGADA(s) con pérdida real`,
+    sub: 'Detectadas por eventos negativos asociados — revisar conciliación',
+    action: () => navigate('conciliacion') });
+
+  return alertas;
+}
+
+function renderAlertas() {
+  const alertas = getAlertas();
+  const count = alertas.length;
+  document.getElementById('alertas-count').textContent = count;
+
+  if (!count) {
+    document.getElementById('alertas-container').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">✅</div>
+        <div class="empty-title">Sin alertas activas</div>
+        <div class="empty-sub">Tu operación está al día</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('alertas-container').innerHTML = alertas.map(a => `
+    <div class="alert-item" style="cursor:pointer" onclick="(${a.action.toString()})()">
+      <div class="alert-dot ${a.color}"></div>
+      <div class="alert-body">
+        <div class="alert-title">${a.icon} ${a.title}</div>
+        <div class="alert-sub">${a.sub}</div>
+      </div>
+      <div class="alert-action">Ir al módulo →</div>
+    </div>
+  `).join('');
+}
+
+// ============================================================
+// TIENDAS
+// ============================================================
+function renderTiendas() {
+  const tiendas = DB.getTiendas();
+  const ventas  = DB.getVentas();
+
+  if (!tiendas.length) {
+    document.getElementById('tiendas-grid').innerHTML = `
+      <div class="empty-state" style="grid-column:1/-1">
+        <div class="empty-icon">🏪</div>
+        <div class="empty-title">Sin tiendas registradas</div>
+        <div class="empty-sub">Crea tu primera tienda para empezar</div>
+      </div>`;
+    return;
+  }
+
+  document.getElementById('tiendas-grid').innerHTML = tiendas.map(t => {
+    const tv = ventas.filter(v=>v.tienda_id===t.id);
+    const ing = tv.reduce((s,v)=>s+calcGananciaEstimada(v).ingresoBruto,0);
+    const gan = tv.map(v=>{
+      const c = calcGananciaEstimada(v);
+      const ev = DB.getEventos().filter(e=>e.venta_id===v.id&&e.afecta_ganancia).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+      return c.ganancia - ev;
+    }).reduce((a,b)=>a+b,0);
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;">
+        <div style="width:40px;height:40px;border-radius:10px;background:${t.color}22;border:2px solid ${t.color};display:flex;align-items:center;justify-content:center;font-size:20px;">🏪</div>
+        <div>
+          <div style="font-weight:700;font-size:14px;">${t.nombre}</div>
+          <div style="font-size:11px;color:var(--text3);">${t.responsable} · Comisión ${t.comision_default}%</div>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;">
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Ventas</div><div style="font-weight:700;font-size:18px;">${tv.length}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Ingresos</div><div style="font-weight:700;font-size:14px;color:var(--teal)">${fmt(ing)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Ganancia Real</div><div style="font-weight:700;font-size:14px;color:${gan>=0?'var(--green)':'var(--red)'}">${fmt(gan)}</div></div>
+        <div><div style="font-size:10px;color:var(--text3);text-transform:uppercase;">Estado</div><span class="badge badge-${t.estado==='activa'?'entregado':'cancelado'}">${t.estado}</span></div>
+      </div>
+      ${t.observaciones?`<div style="font-size:11px;color:var(--text3);margin-bottom:10px;">${t.observaciones}</div>`:''}
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost btn-sm" onclick="editTienda('${t.id}')">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleTienda('${t.id}')">${t.estado==='activa'?'⏸ Pausar':'▶ Activar'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let editingTiendaId = null;
+function openModalTienda(id) {
+  editingTiendaId = id || null;
+  if (id) {
+    const t = DB.getTiendas().find(x=>x.id===id);
+    if (t) {
+      document.getElementById('t-nombre').value = t.nombre;
+      document.getElementById('t-responsable').value = t.responsable;
+      document.getElementById('t-color').value = t.color;
+      document.getElementById('t-comision').value = t.comision_default;
+      document.getElementById('t-obs').value = t.observaciones||'';
+    }
+  } else {
+    ['t-nombre','t-responsable','t-obs'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('t-color').value='#4a90e2';
+    document.getElementById('t-comision').value='13';
+  }
+  openModal('modal-tienda');
+}
+
+function saveTienda() {
+  const nombre = document.getElementById('t-nombre').value.trim();
+  if (!nombre) { alert('El nombre de la tienda es requerido.'); return; }
+  const t = {
+    id: editingTiendaId || uid(),
+    nombre,
+    responsable: document.getElementById('t-responsable').value.trim(),
+    color: document.getElementById('t-color').value,
+    comision_default: parseFloat(document.getElementById('t-comision').value)||13,
+    observaciones: document.getElementById('t-obs').value.trim(),
+    estado: 'activa',
+    fecha_creacion: new Date().toISOString()
+  };
+  if (editingTiendaId) {
+    const arr = DB.getTiendas();
+    const idx = arr.findIndex(x=>x.id===editingTiendaId);
+    if (idx>=0) { t.estado = arr[idx].estado; arr[idx]=t; DB.saveTiendas(arr); }
+  } else { DB.upsertTienda(t); }
+  closeModal('modal-tienda');
+  populateTiendaSelects();
+  renderTiendas();
+}
+
+function editTienda(id) { openModalTienda(id); }
+
+function toggleTienda(id) {
+  const arr = DB.getTiendas();
+  const t = arr.find(x=>x.id===id);
+  if (t) { t.estado = t.estado==='activa'?'inactiva':'activa'; DB.saveTiendas(arr); renderTiendas(); }
+}
+
+// ============================================================
+// VENTAS
+// ============================================================
+let editingVentaId = null;
+
+function openModalVenta(id) {
+  editingVentaId = id || null;
+  document.getElementById('modal-venta-title').textContent = id ? 'Editar Venta' : 'Nueva Venta';
+
+  // Llenar select de tiendas
+  const tiendas = DB.getTiendas();
+  document.getElementById('v-tienda').innerHTML = tiendas.map(t=>
+    `<option value="${t.id}">${t.nombre}</option>`).join('');
+
+  const today = new Date().toISOString().slice(0,10);
+
+  if (id) {
+    const v = DB.getVentas().find(x=>x.id===id);
+    if (v) {
+      document.getElementById('v-id-externo').value = v.id_externo||'';
+      document.getElementById('v-tienda').value     = v.tienda_id||'';
+      document.getElementById('v-fecha').value      = v.fecha_venta||today;
+      document.getElementById('v-fecha-entrega-est').value  = v.fecha_entrega_est||'';
+      document.getElementById('v-fecha-entrega-real').value = v.fecha_entrega_real||'';
+      document.getElementById('v-estado').value     = v.estado||'pendiente';
+      document.getElementById('v-producto').value   = v.producto||'';
+      document.getElementById('v-sku').value        = v.sku||'';
+      document.getElementById('v-cantidad').value   = v.cantidad||1;
+      document.getElementById('v-cliente').value    = v.cliente||'';
+      document.getElementById('v-precio').value     = v.precio_venta||0;
+      document.getElementById('v-costo-prod').value = v.costo_producto||0;
+      document.getElementById('v-envio-cobrado').value = v.envio_cobrado||0;
+      document.getElementById('v-envio-real').value = v.envio_real||0;
+      document.getElementById('v-comision').value   = v.comision||0;
+      document.getElementById('v-impuestos').value  = v.impuestos||0;
+      document.getElementById('v-descuentos').value = v.descuentos||0;
+      document.getElementById('v-transportadora').value = v.transportadora||'';
+      document.getElementById('v-guia-ml').value    = v.guia_ml||'';
+      document.getElementById('v-guia-local').value = v.guia_local||'';
+      document.getElementById('v-observaciones').value = v.observaciones||'';
+    }
+  } else {
+    ['v-id-externo','v-producto','v-sku','v-cliente','v-transportadora','v-guia-ml','v-guia-local','v-observaciones'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('v-fecha').value = today;
+    document.getElementById('v-fecha-entrega-est').value = '';
+    document.getElementById('v-fecha-entrega-real').value = '';
+    document.getElementById('v-estado').value = 'pendiente';
+    document.getElementById('v-cantidad').value = 1;
+    ['v-precio','v-costo-prod','v-envio-cobrado','v-envio-real','v-comision','v-impuestos','v-descuentos'].forEach(i=>document.getElementById(i).value=0);
+  }
+  recalcVenta();
+  openModal('modal-venta');
+}
+
+function recalcVenta() {
+  const precio     = parseFloat(document.getElementById('v-precio').value)||0;
+  const cant       = parseFloat(document.getElementById('v-cantidad').value)||1;
+  const envioC     = parseFloat(document.getElementById('v-envio-cobrado').value)||0;
+  const costoProd  = parseFloat(document.getElementById('v-costo-prod').value)||0;
+  const envioReal  = parseFloat(document.getElementById('v-envio-real').value)||0;
+  const comision   = parseFloat(document.getElementById('v-comision').value)||0;
+  const impuestos  = parseFloat(document.getElementById('v-impuestos').value)||0;
+  const descuentos = parseFloat(document.getElementById('v-descuentos').value)||0;
+
+  const ingresoBruto = precio * cant + envioC;
+  const costoTotal   = costoProd * cant + envioReal + comision + impuestos + descuentos;
+  const ganancia     = ingresoBruto - costoTotal;
+  const margen       = ingresoBruto > 0 ? (ganancia / ingresoBruto) * 100 : 0;
+
+  document.getElementById('calc-precio').textContent    = fmt(precio * cant);
+  document.getElementById('calc-envio-c').textContent   = fmt(envioC);
+  document.getElementById('calc-ingreso').textContent   = fmt(ingresoBruto);
+  document.getElementById('calc-costo-p').textContent   = '−'+fmt(costoProd*cant);
+  document.getElementById('calc-envio-r').textContent   = '−'+fmt(envioReal);
+  document.getElementById('calc-comision').textContent  = '−'+fmt(comision);
+  document.getElementById('calc-impuestos').textContent = '−'+fmt(impuestos);
+  document.getElementById('calc-descuentos').textContent= '−'+fmt(descuentos);
+
+  const ganEl = document.getElementById('calc-ganancia');
+  ganEl.textContent = fmt(ganancia);
+  ganEl.className = 'calc-value fw-700 ' + (ganancia >= 0 ? 'positive' : 'negative');
+  document.getElementById('calc-margen').textContent = fmtPct(margen);
+}
+
+function saveVenta() {
+  const producto = document.getElementById('v-producto').value.trim();
+  const precio   = parseFloat(document.getElementById('v-precio').value)||0;
+  const tienda   = document.getElementById('v-tienda').value;
+  if (!producto) { alert('El nombre del producto es requerido.'); return; }
+  if (!precio)   { alert('El precio de venta es requerido.'); return; }
+  if (!tienda)   { alert('Selecciona una tienda.'); return; }
+
+  const v = {
+    id: editingVentaId || uid(),
+    id_externo:        document.getElementById('v-id-externo').value.trim(),
+    tienda_id:         tienda,
+    fecha_venta:       document.getElementById('v-fecha').value,
+    fecha_entrega_est: document.getElementById('v-fecha-entrega-est').value,
+    fecha_entrega_real:document.getElementById('v-fecha-entrega-real').value,
+    estado:            document.getElementById('v-estado').value,
+    cliente:           document.getElementById('v-cliente').value.trim(),
+    producto:          producto,
+    sku:               document.getElementById('v-sku').value.trim(),
+    cantidad:          parseFloat(document.getElementById('v-cantidad').value)||1,
+    precio_venta:      precio,
+    costo_producto:    parseFloat(document.getElementById('v-costo-prod').value)||0,
+    envio_cobrado:     parseFloat(document.getElementById('v-envio-cobrado').value)||0,
+    envio_real:        parseFloat(document.getElementById('v-envio-real').value)||0,
+    comision:          parseFloat(document.getElementById('v-comision').value)||0,
+    impuestos:         parseFloat(document.getElementById('v-impuestos').value)||0,
+    descuentos:        parseFloat(document.getElementById('v-descuentos').value)||0,
+    transportadora:    document.getElementById('v-transportadora').value.trim(),
+    guia_ml:           document.getElementById('v-guia-ml').value.trim(),
+    guia_local:        document.getElementById('v-guia-local').value.trim(),
+    observaciones:     document.getElementById('v-observaciones').value.trim(),
+    fecha_registro:    new Date().toISOString(),
+  };
+  DB.upsertVenta(v);
+  closeModal('modal-venta');
+  renderVentas();
+  updateAlertasBadge();
+}
+
+function renderVentas() {
+  const tiendas = DB.getTiendas();
+  let ventas    = DB.getVentas();
+
+  // Filtros
+  const search   = document.getElementById('venta-search')?.value?.toLowerCase()||'';
+  const fTienda  = document.getElementById('venta-filter-tienda')?.value||'';
+  const fEstado  = document.getElementById('venta-filter-estado')?.value||'';
+  const fNovedad = document.getElementById('venta-filter-novedad')?.value||'';
+  const fMes     = document.getElementById('venta-filter-mes')?.value||'';
+
+  if (search)   ventas = ventas.filter(v => (v.producto+v.cliente+v.id_externo+v.sku).toLowerCase().includes(search));
+  if (fTienda)  ventas = ventas.filter(v => v.tienda_id === fTienda);
+  if (fEstado)  ventas = ventas.filter(v => v.estado === fEstado);
+  if (fMes)     ventas = ventas.filter(v => v.fecha_venta?.startsWith(fMes));
+  if (fNovedad) ventas = ventas.filter(v => String(tieneNovedadPendiente(v.id)) === fNovedad);
+
+  ventas.sort((a,b)=>(b.fecha_venta||'').localeCompare(a.fecha_venta||''));
+
+  document.getElementById('ventas-count-label').textContent = `Mostrando ${ventas.length} venta(s)`;
+
+  document.getElementById('ventas-tbody').innerHTML = ventas.map(v => {
+    const tienda = tiendas.find(t=>t.id===v.tienda_id);
+    const c = calcGananciaEstimada(v);
+    const r = calcGananciaReal(v.id);
+    const gr = r?.gananciaReal ?? c.ganancia;
+    const margenReal = r?.margenReal ?? c.margen;
+    const novedad = tieneNovedadPendiente(v.id);
+    const isLoss  = gr < 0;
+
+    return `<tr class="${isLoss?'loss-row':''}">
+      <td><span class="venta-id-tag">${v.id_externo||v.id}</span></td>
+      <td><span class="tienda-tag">
+        <span class="tienda-dot" style="background:${tienda?.color||'#999'}"></span>
+        ${tienda?.nombre||'?'}
+      </span></td>
+      <td class="td-dim">${v.fecha_venta||'—'}</td>
+      <td>
+        <div style="font-weight:600;">${v.producto}</div>
+        <div style="font-size:10px;color:var(--text3);">${v.sku||''} · x${v.cantidad}</div>
+      </td>
+      <td class="td-mono">${fmt(v.precio_venta * (v.cantidad||1))}</td>
+      <td class="td-mono td-dim">${fmt(c.costoTotal)}</td>
+      <td class="td-mono">${fmt(c.ganancia)}</td>
+      <td class="td-mono ${isLoss?'color-red':'color-green'}" style="font-weight:700">${fmt(gr)}</td>
+      <td class="td-mono" style="color:${margenReal<10?'var(--red)':margenReal<20?'var(--yellow)':'var(--green)'}">${fmtPct(margenReal)}</td>
+      <td><span class="badge badge-${v.estado}">${v.estado}</span></td>
+      <td>${novedad?'<span class="badge badge-novedad">⚠️ Novedad</span>':'<span style="color:var(--text3);font-size:11px;">—</span>'}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')">👁</button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')">✏️</button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Agregar evento" onclick="openModalEvento('${v.id}')">⚡</button>
+          <button class="btn btn-danger btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="12" class="text-center td-dim" style="padding:40px">Sin ventas. Registra tu primera venta.</td></tr>';
+}
+
+function deleteVenta(id) {
+  if (!confirm('¿Eliminar esta venta? También se perderán sus eventos asociados.')) return;
+  DB.deleteVenta(id);
+  DB.saveEventos(DB.getEventos().filter(e=>e.venta_id!==id));
+  renderVentas();
+  updateAlertasBadge();
+}
+
+function clearVentaFilters() {
+  ['venta-search','venta-filter-mes'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  ['venta-filter-tienda','venta-filter-estado','venta-filter-novedad'].forEach(id=>{
+    const el = document.getElementById(id); if(el) el.value='';
+  });
+  renderVentas();
+}
+
+// ============================================================
+// DETALLE VENTA (Modal)
+// ============================================================
+function verDetalleVenta(id) {
+  const v = DB.getVentas().find(x=>x.id===id);
+  if (!v) return;
+  const tienda = DB.getTiendas().find(t=>t.id===v.tienda_id);
+  const r = calcGananciaReal(id);
+  const eventos = DB.getEventos().filter(e=>e.venta_id===id);
+  const c = calcGananciaEstimada(v);
+
+  document.getElementById('detalle-title').textContent = `Venta ${v.id_externo||v.id} — ${v.producto}`;
+  document.getElementById('detalle-btn-evento').onclick = () => {
+    closeModal('modal-detalle-venta');
+    openModalEvento(id);
+  };
+
+  document.getElementById('detalle-body').innerHTML = `
+    <div class="grid-2" style="margin-bottom:20px;">
+      <div>
+        <div class="form-calc-title" style="margin-bottom:10px;">DATOS DE LA VENTA</div>
+        ${detalleRow('Tienda', `<span class="tienda-tag"><span class="tienda-dot" style="background:${tienda?.color||'#999'}"></span>${tienda?.nombre||'?'}</span>`)}
+        ${detalleRow('ID Externo', v.id_externo||'—')}
+        ${detalleRow('Producto', v.producto)}
+        ${detalleRow('SKU', v.sku||'—')}
+        ${detalleRow('Cantidad', v.cantidad)}
+        ${detalleRow('Cliente', v.cliente||'—')}
+        ${detalleRow('Fecha Venta', v.fecha_venta||'—')}
+        ${detalleRow('Estado', `<span class="badge badge-${v.estado}">${v.estado}</span>`)}
+        ${detalleRow('Transportadora', v.transportadora||'—')}
+        ${detalleRow('Guía ML', v.guia_ml||'—')}
+      </div>
+      <div>
+        <div class="form-calc-title" style="margin-bottom:10px;">ANÁLISIS FINANCIERO</div>
+        <div class="form-calc">
+          <div class="calc-row"><span class="calc-label">Ingreso Bruto</span><span class="calc-value neutral">${fmt(c.ingresoBruto)}</span></div>
+          <div class="calc-row"><span class="calc-label">Costo Total Venta</span><span class="calc-value negative">−${fmt(c.costoTotal)}</span></div>
+          <div class="calc-row calc-row-total"><span class="calc-label">Ganancia Estimada</span><span class="calc-value ${c.ganancia>=0?'positive':'negative'}">${fmt(c.ganancia)}</span></div>
+          ${r ? `
+          <div class="calc-row" style="margin-top:10px;"><span class="calc-label">Eventos Negativos</span><span class="calc-value negative">−${fmt(r.totalEventos)}</span></div>
+          <div class="calc-row calc-row-total"><span class="calc-label fw-700">GANANCIA REAL</span><span class="calc-value fw-700 ${r.gananciaReal>=0?'positive':'negative'}">${fmt(r.gananciaReal)}</span></div>
+          <div class="calc-row"><span class="calc-label">Margen Real</span><span class="calc-value">${fmtPct(r.margenReal)}</span></div>
+          ` : ''}
+        </div>
+      </div>
+    </div>
+    ${eventos.length ? `
+    <div class="form-calc-title" style="margin-bottom:10px;">EVENTOS ASOCIADOS (${eventos.length})</div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Valor</th><th>Impacta</th><th>Estado</th><th>Descripción</th></tr></thead>
+        <tbody>
+          ${eventos.map(e=>`
+            <tr>
+              <td class="td-dim">${e.fecha}</td>
+              <td><span class="badge badge-${e.tipo}">${e.tipo}</span></td>
+              <td>${e.categoria}</td>
+              <td class="td-mono color-red">−${fmt(e.valor)}</td>
+              <td>${e.afecta_ganancia?'<span class="badge badge-problema">Sí</span>':'—'}</td>
+              <td><span class="badge badge-${e.estado}">${e.estado}</span></td>
+              <td style="max-width:200px;font-size:11px;">${e.descripcion}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>` : '<div style="color:var(--text3);font-size:12px;padding:10px 0;">Sin eventos asociados a esta venta.</div>'}
+    ${v.observaciones ? `<div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--text2);">📝 ${v.observaciones}</div>` : ''}
+  `;
+  openModal('modal-detalle-venta');
+}
+
+function detalleRow(label, val) {
+  return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
+    <span style="color:var(--text3);">${label}</span>
+    <span>${val}</span>
+  </div>`;
+}
+
+// ============================================================
+// EVENTOS
+// ============================================================
+let editingEventoId = null;
+
+function openModalEvento(ventaId, eventoId) {
+  editingEventoId = eventoId || null;
+  document.getElementById('modal-evento-title').textContent = eventoId ? 'Editar Evento' : 'Nuevo Evento / Novedad';
+
+  const tiendas = DB.getTiendas();
+  const ventas  = DB.getVentas();
+  const today   = new Date().toISOString().slice(0,10);
+
+  document.getElementById('e-tienda').innerHTML = tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
+  document.getElementById('e-venta').innerHTML  = '<option value="">Sin venta asociada</option>' +
+    ventas.map(v=>`<option value="${v.id}">${v.id_externo||v.id} — ${v.producto}</option>`).join('');
+
+  if (eventoId) {
+    const e = DB.getEventos().find(x=>x.id===eventoId);
+    if (e) {
+      document.getElementById('e-tipo').value         = e.tipo;
+      document.getElementById('e-fecha').value        = e.fecha;
+      document.getElementById('e-fecha-impacto').value= e.fecha_impacto||e.fecha;
+      document.getElementById('e-tienda').value       = e.tienda_id||'';
+      document.getElementById('e-venta').value        = e.venta_id||'';
+      document.getElementById('e-valor').value        = e.valor||0;
+      document.getElementById('e-afecta').value       = String(e.afecta_ganancia);
+      document.getElementById('e-estado').value       = e.estado||'pendiente';
+      document.getElementById('e-responsable').value  = e.responsable||'';
+      document.getElementById('e-descripcion').value  = e.descripcion||'';
+      document.getElementById('e-observaciones').value= e.observaciones||'';
+    }
+  } else {
+    document.getElementById('e-tipo').value          = 'gasto';
+    document.getElementById('e-fecha').value         = today;
+    document.getElementById('e-fecha-impacto').value = today;
+    document.getElementById('e-valor').value         = 0;
+    document.getElementById('e-afecta').value        = 'true';
+    document.getElementById('e-estado').value        = 'pendiente';
+    document.getElementById('e-responsable').value   = '';
+    document.getElementById('e-descripcion').value   = '';
+    document.getElementById('e-observaciones').value = '';
+    if (ventaId) {
+      document.getElementById('e-venta').value = ventaId;
+      const v = DB.getVentas().find(x=>x.id===ventaId);
+      if (v) document.getElementById('e-tienda').value = v.tienda_id;
+    }
+  }
+  updateEventoCategorias();
+  openModal('modal-evento');
+}
+
+function updateEventoCategorias() {
+  const tipo = document.getElementById('e-tipo').value;
+  const cats = TIPOS_EVENTO[tipo] || ['Otro'];
+  document.getElementById('e-categoria').innerHTML = cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function saveEvento() {
+  const desc  = document.getElementById('e-descripcion').value.trim();
+  const valor = parseFloat(document.getElementById('e-valor').value)||0;
+  if (!desc)  { alert('La descripción es requerida.'); return; }
+  if (!valor) { alert('El valor del evento debe ser mayor a 0.'); return; }
+
+  const e = {
+    id:              editingEventoId || uid(),
+    tipo:            document.getElementById('e-tipo').value,
+    categoria:       document.getElementById('e-categoria').value,
+    fecha:           document.getElementById('e-fecha').value,
+    fecha_impacto:   document.getElementById('e-fecha-impacto').value,
+    tienda_id:       document.getElementById('e-tienda').value,
+    venta_id:        document.getElementById('e-venta').value,
+    valor,
+    afecta_ganancia: document.getElementById('e-afecta').value === 'true',
+    estado:          document.getElementById('e-estado').value,
+    responsable:     document.getElementById('e-responsable').value.trim(),
+    descripcion:     desc,
+    observaciones:   document.getElementById('e-observaciones').value.trim(),
+    fecha_registro:  new Date().toISOString(),
+  };
+  DB.upsertEvento(e);
+  closeModal('modal-evento');
+  renderEventos();
+  updateAlertasBadge();
+}
+
+function renderEventos() {
+  const tiendas = DB.getTiendas();
+  const ventas  = DB.getVentas();
+  let eventos   = DB.getEventos();
+
+  const search  = document.getElementById('evento-search')?.value?.toLowerCase()||'';
+  const fTipo   = document.getElementById('evento-filter-tipo')?.value||'';
+  const fEstado = document.getElementById('evento-filter-estado')?.value||'';
+  const fTienda = document.getElementById('evento-filter-tienda')?.value||'';
+
+  if (search)  eventos = eventos.filter(e=>(e.descripcion+e.categoria).toLowerCase().includes(search));
+  if (fTipo)   eventos = eventos.filter(e=>e.tipo===fTipo);
+  if (fEstado) eventos = eventos.filter(e=>e.estado===fEstado);
+  if (fTienda) eventos = eventos.filter(e=>e.tienda_id===fTienda);
+
+  eventos.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+
+  document.getElementById('eventos-tbody').innerHTML = eventos.map(e => {
+    const tienda = tiendas.find(t=>t.id===e.tienda_id);
+    const venta  = ventas.find(v=>v.id===e.venta_id);
+    return `<tr>
+      <td class="td-dim">${e.fecha}</td>
+      <td><span class="badge badge-${e.tipo}">${e.tipo}</span></td>
+      <td style="font-size:12px;">${e.categoria}</td>
+      <td><span class="tienda-tag">
+        <span class="tienda-dot" style="background:${tienda?.color||'#999'}"></span>
+        <span style="font-size:11px;">${tienda?.nombre||'?'}</span>
+      </span></td>
+      <td>${venta ? `<span class="venta-id-tag">${venta.id_externo||venta.id}</span>` : '<span class="td-dim">—</span>'}</td>
+      <td style="max-width:200px;font-size:11.5px;">${e.descripcion}</td>
+      <td class="td-mono color-red" style="font-weight:700;">−${fmt(e.valor)}</td>
+      <td>${e.afecta_ganancia?'<span class="badge badge-problema">Descuenta</span>':'<span class="td-dim">No</span>'}</td>
+      <td><span class="badge badge-${e.estado}">${e.estado}</span></td>
+      <td class="td-mono td-dim">${(e.fecha_impacto||e.fecha).slice(0,7)}</td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-ghost btn-icon btn-sm" onclick="openModalEvento(null,'${e.id}')">✏️</button>
+          ${e.estado!=='resuelto'?`<button class="btn btn-success btn-icon btn-sm" title="Marcar resuelto" onclick="resolverEvento('${e.id}')">✅</button>`:''}
+          <button class="btn btn-danger btn-icon btn-sm" onclick="deleteEvento('${e.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="11" class="text-center td-dim" style="padding:40px">Sin eventos registrados.</td></tr>';
+}
+
+function resolverEvento(id) {
+  const arr = DB.getEventos();
+  const e = arr.find(x=>x.id===id);
+  if (e) {
+    e.estado = 'resuelto';
+    e.fecha_resolucion = new Date().toISOString().slice(0,10);
+    DB.saveEventos(arr);
+    renderEventos();
+    updateAlertasBadge();
+  }
+}
+
+function deleteEvento(id) {
+  if (!confirm('¿Eliminar este evento?')) return;
+  DB.deleteEvento(id);
+  renderEventos();
+  updateAlertasBadge();
+}
+
+// ============================================================
+// CONCILIACIÓN
+// ============================================================
+function renderConciliacion() {
+  const tiendas = DB.getTiendas();
+  const fTienda = document.getElementById('concil-filter-tienda')?.value||'';
+  const fResultado = document.getElementById('concil-filter-resultado')?.value||'';
+  const fMes = document.getElementById('concil-filter-mes')?.value||'';
+
+  let ventas = DB.getVentas();
+  if (fTienda) ventas = ventas.filter(v=>v.tienda_id===fTienda);
+  if (fMes)    ventas = ventas.filter(v=>v.fecha_venta?.startsWith(fMes));
+
+  const resultados = ventas.map(v=>{
+    const r = calcGananciaReal(v.id);
+    return { v, r };
+  });
+
+  const filtrados = resultados.filter(({r}) => {
+    if (!fResultado) return true;
+    if (fResultado === 'positivo') return r?.gananciaReal >= 0;
+    if (fResultado === 'negativo') return r?.gananciaReal < 0;
+    if (fResultado === 'critico')  return r?.margenReal < 5;
+    return true;
+  });
+
+  filtrados.sort((a,b)=>(a.r?.gananciaReal??0)-(b.r?.gananciaReal??0));
+
+  if (!filtrados.length) {
+    document.getElementById('conciliacion-container').innerHTML = `
+      <div class="empty-state"><div class="empty-icon">🔁</div><div class="empty-title">Sin datos para conciliar</div></div>`;
+    return;
+  }
+
+  document.getElementById('conciliacion-container').innerHTML = filtrados.map(({v, r}) => {
+    const tienda = tiendas.find(t=>t.id===v.tienda_id);
+    const gr = r?.gananciaReal ?? calcGananciaEstimada(v).ganancia;
+    const isLoss = gr < 0;
+    const diff = r ? r.gananciaEstimada - gr : 0;
+
+    return `<div class="concil-card" style="border-color:${isLoss?'var(--red-dim)':diff>0?'var(--yellow-dim)':'var(--border)'}">
+      <div class="concil-header">
+        <div>
+          <span class="venta-id-tag">${v.id_externo||v.id}</span>
+          <span class="tienda-tag" style="margin-left:8px;">
+            <span class="tienda-dot" style="background:${tienda?.color||'#999'}"></span>
+            <span style="font-size:11px;">${tienda?.nombre||'?'}</span>
+          </span>
+          <span class="badge badge-${v.estado}" style="margin-left:8px;">${v.estado}</span>
+          <div style="font-size:13px;font-weight:600;margin-top:4px;">${v.producto} <span style="color:var(--text3);font-weight:400;">x${v.cantidad}</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:11px;color:var(--text3);">Ganancia Real</div>
+          <div class="concil-total ${isLoss?'color-red':'color-green'}">${fmt(gr)}</div>
+          <div style="font-size:11px;color:var(--text3);">Margen: ${fmtPct(r?.margenReal??0)}</div>
+        </div>
+      </div>
+      <div class="concil-events">
+        <div class="concil-event">
+          <span style="color:var(--text2);">💵 Ingreso Bruto</span>
+          <span class="color-green font-mono">${fmt(r?.ingresoBruto??0)}</span>
+        </div>
+        <div class="concil-event">
+          <span style="color:var(--text2);">📦 Costo Total (venta)</span>
+          <span class="color-red font-mono">−${fmt(r?.costoTotal??0)}</span>
+        </div>
+        <div class="concil-event" style="font-weight:600;">
+          <span>= Ganancia Estimada</span>
+          <span class="font-mono">${fmt(r?.gananciaEstimada??0)}</span>
+        </div>
+        ${r && r.eventos.length ? r.eventos.map(e=>`
+          <div class="concil-event" style="color:var(--red);padding-left:12px;">
+            <span>⚡ ${e.tipo} · ${e.categoria} <span style="font-size:10px;color:var(--text3)">[${e.estado}]</span></span>
+            <span class="font-mono">−${fmt(e.valor)}</span>
+          </div>`).join('') : ''}
+        <div class="concil-event" style="font-weight:700;border-top:1px solid var(--border2);margin-top:6px;padding-top:8px;">
+          <span>= Ganancia Real</span>
+          <span class="font-mono ${isLoss?'color-red':'color-green'}">${fmt(gr)}</span>
+        </div>
+        ${diff > 0 ? `<div style="font-size:11px;color:var(--yellow);margin-top:4px;">⚠️ Diferencia vs estimada: −${fmt(diff)}</div>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// CIERRE MENSUAL
+// ============================================================
+function renderCierreInit() {
+  const hoy = new Date();
+  const mesActual = hoy.toISOString().slice(0,7);
+  document.getElementById('cierre-mes').value = mesActual;
+
+  const tiendas = DB.getTiendas();
+  const select  = document.getElementById('cierre-tienda');
+  select.innerHTML = '<option value="all">📊 Consolidado General</option>' +
+    tiendas.map(t=>`<option value="${t.id}">🏪 ${t.nombre}</option>`).join('');
+
+  renderCierre();
+}
+
+function renderCierre() {
+  const mes     = document.getElementById('cierre-mes').value;
+  const tiendaId = document.getElementById('cierre-tienda').value;
+  if (!mes) { alert('Selecciona un mes.'); return; }
+
+  const tiendas = DB.getTiendas();
+  const con = document.getElementById('cierre-container');
+
+  if (tiendaId === 'all') {
+    // Cierre por tienda
+    con.innerHTML = tiendas.map(t => renderCierreCard(mes, t.id, t.nombre, t.color)).join('') +
+      renderCierreCard(mes, 'all', 'CONSOLIDADO GENERAL', '#a78bfa', true);
+  } else {
+    const t = tiendas.find(x=>x.id===tiendaId);
+    con.innerHTML = renderCierreCard(mes, tiendaId, t?.nombre||'Tienda', t?.color||'#999', true);
+  }
+}
+
+function renderCierreCard(mes, tiendaId, nombre, color, full=false) {
+  const c = calcCierre(mes, tiendaId);
+  const margenColor = c.margenReal > 20 ? 'var(--green)' : c.margenReal > 10 ? 'var(--yellow)' : 'var(--red)';
+
+  return `<div class="card" style="${full?'grid-column:1/-1':''}border-top:3px solid ${color};">
+    <div class="card-header">
+      <div>
+        <div class="card-title" style="color:${color}">${nombre}</div>
+        <div class="card-subtitle">Cierre ${mes} · ${c.totalVentas} venta(s)</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:22px;font-weight:700;color:${margenColor}">${fmtPct(c.margenReal)}</div>
+        <div style="font-size:11px;color:var(--text3)">margen real</div>
+      </div>
+    </div>
+
+    <div class="cierre-row">
+      <span>💵 Ingresos Brutos</span>
+      <span class="font-mono color-green" style="font-weight:700">${fmt(c.ingresosReales)}</span>
+    </div>
+    <div class="cierre-row indented">
+      <span>↳ Costos de Producto</span>
+      <span class="font-mono color-red">−${fmt(c.costoProductos)}</span>
+    </div>
+    <div class="cierre-row indented">
+      <span>↳ Costos de Envío</span>
+      <span class="font-mono color-red">−${fmt(c.costoEnvios)}</span>
+    </div>
+    <div class="cierre-row" style="font-weight:600;">
+      <span>= Ganancia Estimada Acumulada</span>
+      <span class="font-mono">${fmt(c.gananciasEstimadas)}</span>
+    </div>
+    <div class="cierre-row indented">
+      <span>↳ Gastos Adicionales</span>
+      <span class="font-mono color-red">−${fmt(c.gastos)}</span>
+    </div>
+    <div class="cierre-row indented">
+      <span>↳ Pérdidas Posteriores</span>
+      <span class="font-mono color-red">−${fmt(c.perdidas)}</span>
+    </div>
+    <div class="cierre-row indented">
+      <span>↳ Devoluciones</span>
+      <span class="font-mono color-red">−${fmt(c.devoluciones)}</span>
+    </div>
+    <div class="cierre-row indented">
+      <span>↳ Reclamos</span>
+      <span class="font-mono color-red">−${fmt(c.reclamos)}</span>
+    </div>
+    <div class="cierre-row total">
+      <span>✅ UTILIDAD REAL NETA</span>
+      <span class="font-mono" style="color:${c.utilidadReal>=0?'var(--green)':'var(--red)'};font-size:18px;">${fmt(c.utilidadReal)}</span>
+    </div>
+    <div style="margin-top:14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3)">Ventas</div>
+        <div style="font-weight:700;">${c.totalVentas}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3)">Canceladas</div>
+        <div style="font-weight:700;color:var(--red)">${c.canceladas}</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:10px;color:var(--text3)">Eventos Pend.</div>
+        <div style="font-weight:700;color:var(--yellow)">${c.eventosPendientes}</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ============================================================
+// REPORTES
+// ============================================================
+function renderReportes() {
+  renderReporteTiendas();
+  renderReporteProductos();
+  renderReporteProblemas();
+  renderReporteMensual();
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c=>c.classList.add('hidden'));
+      tab.classList.add('active');
+      const target = tab.dataset.tab;
+      document.getElementById(target)?.classList.remove('hidden');
+    });
+  });
+}
+
+function renderReporteTiendas() {
+  const tiendas = DB.getTiendas();
+  const ventas  = DB.getVentas();
+
+  const rows = tiendas.map(t => {
+    const tv = ventas.filter(v=>v.tienda_id===t.id);
+    const entregadas  = tv.filter(v=>v.estado==='entregado').length;
+    const canceladas  = tv.filter(v=>v.estado==='cancelado').length;
+    const conProblema = tv.filter(v=>v.estado==='problema').length;
+    let ingreso=0, ganEst=0, ganReal=0;
+    tv.forEach(v=>{
+      const c = calcGananciaEstimada(v);
+      ingreso  += c.ingresoBruto;
+      ganEst   += c.ganancia;
+      const r   = calcGananciaReal(v.id);
+      ganReal  += r?.gananciaReal ?? c.ganancia;
+    });
+    const margen = ingreso>0?(ganReal/ingreso)*100:0;
+    return { t, tv:tv.length, entregadas, canceladas, conProblema, ingreso, ganEst, ganReal, margen };
+  }).sort((a,b)=>b.ganReal-a.ganReal);
+
+  document.getElementById('reporte-tiendas').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Tienda</th><th>Ventas</th><th>Entregadas</th><th>Canceladas</th><th>Problemas</th>
+          <th>Ingresos</th><th>G. Estimada</th><th>G. Real</th><th>Margen Real</th>
+        </tr></thead>
+        <tbody>
+          ${rows.map(r=>`<tr>
+            <td><span class="tienda-tag"><span class="tienda-dot" style="background:${r.t.color}"></span>${r.t.nombre}</span></td>
+            <td>${r.tv}</td>
+            <td class="color-green">${r.entregadas}</td>
+            <td class="color-red">${r.canceladas}</td>
+            <td class="color-yellow">${r.conProblema}</td>
+            <td class="td-mono">${fmt(r.ingreso)}</td>
+            <td class="td-mono">${fmt(r.ganEst)}</td>
+            <td class="td-mono ${r.ganReal>=0?'color-green':'color-red'}" style="font-weight:700">${fmt(r.ganReal)}</td>
+            <td class="td-mono" style="color:${r.margen>20?'var(--green)':r.margen>10?'var(--yellow)':'var(--red)'}">${fmtPct(r.margen)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderReporteProductos() {
+  const ventas = DB.getVentas();
+  const mapa = {};
+  ventas.forEach(v => {
+    const k = v.producto;
+    if (!mapa[k]) mapa[k] = { producto:k, sku:v.sku, ventas:0, ingreso:0, ganReal:0 };
+    mapa[k].ventas++;
+    const c = calcGananciaEstimada(v);
+    mapa[k].ingreso += c.ingresoBruto;
+    const r = calcGananciaReal(v.id);
+    mapa[k].ganReal += r?.gananciaReal ?? c.ganancia;
+  });
+
+  const rows = Object.values(mapa).sort((a,b)=>b.ganReal-a.ganReal);
+
+  document.getElementById('reporte-productos').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Producto</th><th>SKU</th><th>Ventas</th><th>Ingreso Total</th><th>Ganancia Real Total</th><th>Alerta</th></tr></thead>
+        <tbody>
+          ${rows.map(r=>`<tr class="${r.ganReal<0?'loss-row':''}">
+            <td style="font-weight:600;">${r.producto}</td>
+            <td class="td-mono td-dim">${r.sku||'—'}</td>
+            <td>${r.ventas}</td>
+            <td class="td-mono">${fmt(r.ingreso)}</td>
+            <td class="td-mono ${r.ganReal>=0?'color-green':'color-red'}" style="font-weight:700">${fmt(r.ganReal)}</td>
+            <td>${r.ganReal<0?'<span class="badge badge-problema">⚠️ Pérdida neta</span>':''}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderReporteProblemas() {
+  const eventos = DB.getEventos().filter(e=>e.tipo==='problema'||e.tipo==='perdida'||e.tipo==='devolucion'||e.tipo==='reclamo');
+  const tiendas = DB.getTiendas();
+  const ventas  = DB.getVentas();
+  const totalPerdida = eventos.filter(e=>e.afecta_ganancia).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+  const pendientes   = eventos.filter(e=>e.estado==='pendiente').length;
+
+  document.getElementById('reporte-problemas').innerHTML = `
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="stat-card red"><div class="stat-label">Total Eventos Negativos</div><div class="stat-value red">${eventos.length}</div></div>
+      <div class="stat-card orange"><div class="stat-label">Pendientes</div><div class="stat-value orange">${pendientes}</div></div>
+      <div class="stat-card red"><div class="stat-label">Impacto Total</div><div class="stat-value red">${fmt(totalPerdida)}</div></div>
+      <div class="stat-card green"><div class="stat-label">Resueltos</div><div class="stat-value green">${eventos.filter(e=>e.estado==='resuelto').length}</div></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Tipo</th><th>Tienda</th><th>Venta</th><th>Categoría</th><th>Valor</th><th>Estado</th></tr></thead>
+        <tbody>
+          ${eventos.sort((a,b)=>a.estado.localeCompare(b.estado)).map(e=>{
+            const t = tiendas.find(x=>x.id===e.tienda_id);
+            const v = ventas.find(x=>x.id===e.venta_id);
+            return `<tr>
+              <td class="td-dim">${e.fecha}</td>
+              <td><span class="badge badge-${e.tipo}">${e.tipo}</span></td>
+              <td><span style="font-size:11px;">${t?.nombre||'?'}</span></td>
+              <td>${v?`<span class="venta-id-tag">${v.id_externo||v.id}</span>`:'—'}</td>
+              <td style="font-size:12px;">${e.categoria}</td>
+              <td class="td-mono color-red">−${fmt(e.valor)}</td>
+              <td><span class="badge badge-${e.estado}">${e.estado}</span></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>`;
+}
+
+function renderReporteMensual() {
+  // Últimos 4 meses
+  const meses = [];
+  for (let i=3;i>=0;i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth()-i);
+    meses.push(d.toISOString().slice(0,7));
+  }
+  const data = meses.map(m => {
+    const c = calcCierre(m,'all');
+    return { mes:m, ...c };
+  });
+
+  document.getElementById('reporte-mensual').innerHTML = `
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Mes</th><th>Ventas</th><th>Ingresos</th><th>G. Estimada</th><th>Eventos Neg.</th><th>Utilidad Real</th><th>Margen</th></tr></thead>
+        <tbody>
+          ${data.map(d=>`<tr>
+            <td style="font-weight:600;">${d.mes}</td>
+            <td>${d.totalVentas}</td>
+            <td class="td-mono">${fmt(d.ingresosReales)}</td>
+            <td class="td-mono">${fmt(d.gananciasEstimadas)}</td>
+            <td class="td-mono color-red">−${fmt(d.totalEventos)}</td>
+            <td class="td-mono ${d.utilidadReal>=0?'color-green':'color-red'}" style="font-weight:700">${fmt(d.utilidadReal)}</td>
+            <td class="td-mono" style="color:${d.margenReal>20?'var(--green)':d.margenReal>10?'var(--yellow)':'var(--red)'}">${fmtPct(d.margenReal)}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <div style="margin-top:20px;padding:14px;background:var(--bg3);border-radius:10px;font-size:12px;color:var(--text2);">
+      💡 La diferencia entre <b>Ganancia Estimada</b> y <b>Utilidad Real</b> representa el total de eventos negativos (gastos, pérdidas, devoluciones, reclamos) imputados al período.
+    </div>`;
+}
+
+// ============================================================
+// CONFIGURACIÓN
+// ============================================================
+function renderConfig() {
+  const ventas  = DB.getVentas();
+  const eventos = DB.getEventos();
+  const tiendas = DB.getTiendas();
+  document.getElementById('config-stats').innerHTML = `
+    <div class="cierre-row"><span>Tiendas</span><span class="font-mono">${tiendas.length}</span></div>
+    <div class="cierre-row"><span>Ventas</span><span class="font-mono">${ventas.length}</span></div>
+    <div class="cierre-row"><span>Eventos / Novedades</span><span class="font-mono">${eventos.length}</span></div>
+    <div class="cierre-row"><span>Eventos Pendientes</span><span class="font-mono color-yellow">${eventos.filter(e=>e.estado==='pendiente').length}</span></div>
+    <div class="cierre-row"><span>Espacio localStorage (aprox)</span><span class="font-mono">${Math.round(JSON.stringify(localStorage).length/1024)} KB</span></div>
+  `;
+}
+
+function exportData() {
+  const data = { tiendas: DB.getTiendas(), ventas: DB.getVentas(), eventos: DB.getEventos(), exportado: new Date().toISOString() };
+  const blob = new Blob([JSON.stringify(data,null,2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `mercamanager_backup_${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file'; input.accept = '.json';
+  input.onchange = e => {
+    const reader = new FileReader();
+    reader.onload = ev => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (data.tiendas) DB.saveTiendas(data.tiendas);
+        if (data.ventas)  DB.saveVentas(data.ventas);
+        if (data.eventos) DB.saveEventos(data.eventos);
+        alert('Datos importados correctamente.');
+        init();
+      } catch(err) { alert('Error al importar: ' + err.message); }
+    };
+    reader.readAsText(e.target.files[0]);
+  };
+  input.click();
+}
+
+function resetData() {
+  if (!confirm('¿Resetear todos los datos a los datos de demostración? Esto eliminará tus datos actuales.')) return;
+  loadDemoData();
+  alert('Datos de demo cargados.');
+  init();
+}
+
+// ============================================================
+// UTILIDADES DE MODAL Y UI
+// ============================================================
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+function populateTiendaSelects() {
+  const tiendas = DB.getTiendas();
+  ['venta-filter-tienda','evento-filter-tienda','concil-filter-tienda','cierre-tienda'].forEach(sid => {
+    const el = document.getElementById(sid);
+    if (!el) return;
+    const firstOpt = sid==='cierre-tienda'?'<option value="all">📊 Consolidado General</option>':'<option value="">Todas</option>';
+    el.innerHTML = firstOpt + tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
+  });
+}
+
+function updateAlertasBadge() {
+  const count = getAlertas().length;
+  document.getElementById('alertas-count').textContent = count;
+}
+
+// ============================================================
+// EVENT LISTENERS
+// ============================================================
+function bindEvents() {
+  // Navegación sidebar
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.addEventListener('click', () => navigate(item.dataset.page));
+  });
+
+  // Botón nueva venta en topbar
+  document.getElementById('btn-nueva-venta').addEventListener('click', () => openModalVenta());
+
+  // Cerrar modales al click en overlay
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) overlay.classList.remove('open');
+    });
+  });
+
+  // Filtros ventas en tiempo real
+  ['venta-search','venta-filter-tienda','venta-filter-estado','venta-filter-novedad','venta-filter-mes'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', renderVentas);
+    document.getElementById(id)?.addEventListener('input',  renderVentas);
+  });
+
+  // Filtros eventos
+  ['evento-search','evento-filter-tipo','evento-filter-estado','evento-filter-tienda'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', renderEventos);
+    document.getElementById(id)?.addEventListener('input',  renderEventos);
+  });
+
+  // Filtros conciliación
+  ['concil-filter-tienda','concil-filter-resultado','concil-filter-mes'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', renderConciliacion);
+  });
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  // Cargar demo si no hay datos
+  if (!DB.getTiendas().length) loadDemoData();
+
+  // Fecha hoy en topbar
+  const hoy = new Date();
+  document.getElementById('today-date').textContent =
+    hoy.toLocaleDateString('es-CO', { weekday:'short', year:'numeric', month:'short', day:'numeric' });
+
+  // Poblar selects
+  populateTiendaSelects();
+
+  // Eventos UI
+  bindEvents();
+
+  // Renderizar página inicial
+  navigate('dashboard');
+
+  // Badge alertas
+  updateAlertasBadge();
+}
+
+// Arrancar app
+document.addEventListener('DOMContentLoaded', init);
+
+/*
+  ============================================================
+  NOTAS PARA MIGRACIÓN A FIREBASE
+  ============================================================
+  1. Reemplaza las funciones en el objeto DB con llamadas a Firestore:
+     - DB.getVentas()   → getDocs(collection(db, 'ventas'))
+     - DB.upsertVenta() → setDoc(doc(db, 'ventas', v.id), v)
+     - DB.deleteVenta() → deleteDoc(doc(db, 'ventas', id))
+
+  2. Agrega autenticación Firebase Auth antes de init()
+
+  3. Para adjuntar evidencias usa Firebase Storage
+
+  4. Para usuarios por rol, usa Firestore rules + custom claims
+
+  5. Colecciones sugeridas en Firestore:
+     /tiendas/{id}
+     /ventas/{id}
+     /eventos/{id}
+     /cierres_mensuales/{mes_tiendaId}
+     /configuracion/default
+  ============================================================
+*/
+</script>
+</body>
+</html>
