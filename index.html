@@ -303,6 +303,12 @@ input[readonly]{background:#f5f8f8;color:var(--text2);}
 /* Tabla sticky header */
 thead{position:sticky;top:0;z-index:1;}
 
+/* ── VALIDACIÓN ENVÍO ── */
+#envio-validacion-box{transition:border-color .2s;}
+#envio-validacion-box:focus-within{border-color:var(--teal);}
+.fin-fuente-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;
+  font-size:11px;font-weight:600;background:var(--teal-bg);color:var(--teal-dark);border:1px solid #b8d8d8;}
+
 @media(max-width:860px){
   :root{--sidebar-w:0px;}
   #sidebar{transform:translateX(-210px);}
@@ -336,10 +342,11 @@ thead{position:sticky;top:0;z-index:1;}
     <div class="nav-item" data-page="tiendas"><span class="ni">🏪</span>Tiendas</div>
     <div class="nav-item" data-page="ventas"><span class="ni">🛒</span>Ventas</div>
     <div class="nav-item" data-page="problemas"><span class="ni">⚠️</span>Problemas</div>
+    <div class="nav-item" data-page="finanzas"><span class="ni">💳</span>Finanzas</div>
   </div>
 
   <div class="sb-bottom">
-    <div class="sb-ver">localStorage · v3.0</div>
+    <div class="sb-ver">localStorage · v5.0</div>
   </div>
 </nav>
 
@@ -496,6 +503,48 @@ thead{position:sticky;top:0;z-index:1;}
       <div id="problemas-container"></div>
     </section>
 
+    <!-- ══════════════ FINANZAS ══════════════ -->
+    <section class="page-section" id="page-finanzas">
+      <div class="frow mb16">
+        <div class="c-dim" style="font-size:12px;">Control de saldos, pagos y gastos operativos del mes</div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" onclick="renderFinanzas()">🔄 Actualizar</button>
+        <button class="btn btn-primary btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
+      </div>
+
+      <!-- Saldos actuales -->
+      <div class="stat-grid" id="fin-saldos" style="margin-bottom:16px;"></div>
+
+      <!-- Membresía Centris -->
+      <div class="card mb16" style="margin-bottom:14px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">📦 Membresía Centris</div>
+            <div class="card-sub">Pago mensual del software de gestión de tiendas</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openModalMembresia()">✏️ Registrar pago</button>
+        </div>
+        <div id="fin-membresia"></div>
+      </div>
+
+      <!-- Movimientos del mes -->
+      <div class="g2">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">📋 Movimientos del mes</div>
+            <div>
+              <select id="fin-filtro-mes" style="font-size:11px;padding:3px 8px;" onchange="renderFinanzas()"></select>
+            </div>
+          </div>
+          <div id="fin-movimientos"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><div class="card-title">📊 Resumen por fuente</div></div>
+          <div id="fin-por-fuente"></div>
+        </div>
+      </div>
+    </section>
+
   </div><!-- /page-content -->
 </div><!-- /main -->
 
@@ -549,8 +598,9 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="fg">
           <label class="fl2">Tipo de envío *</label>
           <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
+            <option value="ml">Logística ML (incluida)</option>
             <option value="servientrega">Servientrega</option>
-            <option value="aguachica">Aguachica / Local</option>
+            <option value="aguachica" selected>Aguachica / Local</option>
           </select>
         </div>
         <div class="fg">
@@ -593,7 +643,52 @@ thead{position:sticky;top:0;z-index:1;}
         </div>
       </div>
 
-      <!-- CAJA DE RESULTADO -->
+      <div class="fsec">💳 Fuente de financiación <small style="font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;"> — ¿con qué se pagó la compra?</small></div>
+      <div class="grid3">
+        <div class="fg">
+          <label class="fl2">Método de pago *</label>
+          <select id="v-fuente-pago" onchange="recalcFuente()">
+            <option value="">— Seleccionar —</option>
+            <option value="mercadopago">💳 Mercado Pago</option>
+            <option value="bancolombia">🏦 Bancolombia</option>
+            <option value="nequi">📱 Nequi</option>
+            <option value="daviplata">📱 Daviplata</option>
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="tarjeta_credito">💳 Tarjeta de crédito</option>
+            <option value="otro">🔄 Otro</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor pagado (COP$)</label>
+          <input type="number" id="v-monto-pago" placeholder="0" step="1" oninput="recalcFuente()">
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;" id="v-fuente-saldo-info"></div>
+        </div>
+        <div class="fg">
+          <label class="fl2">Referencia / Concepto</label>
+          <input type="text" id="v-ref-pago" placeholder="Ej: compra Amazon #123">
+        </div>
+      </div>
+
+      <div class="fsec">✅ Validación de envío <small style="font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;"> — confirmar valor real al llegar</small></div>
+      <div style="background:#fffbf0;border:1px solid #ffe08a;border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;" id="envio-validacion-box">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
+          <div class="fg" style="margin:0;">
+            <label class="fl2">Valor estimado envío (COP$)</label>
+            <input type="number" id="v-envio-estimado" placeholder="0" step="1" readonly style="background:#f5f8f8;">
+          </div>
+          <div class="fg" style="margin:0;">
+            <label class="fl2">Valor real confirmado (COP$) <small class="c-dim">— al llegar</small></label>
+            <input type="number" id="v-envio-real" placeholder="Pendiente…" step="1" oninput="recalcValidacionEnvio()">
+          </div>
+          <div>
+            <label class="fl2">Estado validación</label>
+            <div id="envio-validacion-estado" style="margin-top:4px;">
+              <span style="font-size:11px;color:var(--yellow);font-weight:600;">⏳ Pendiente de confirmar</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;" id="envio-validacion-diff"></div>
+      </div>
       <div class="calc-box">
         <div class="calc-box-title">⚡ Resultado automático</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
@@ -736,6 +831,106 @@ thead{position:sticky;top:0;z-index:1;}
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL: MOVIMIENTO FINANCIERO ═══════════════════ -->
+<div class="overlay" id="modal-movimiento">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-title" id="mov-title">Nuevo Movimiento</div>
+      <button class="mclose" onclick="closeModal('modal-movimiento')">✕</button>
+    </div>
+    <div class="mc">
+      <div class="grid2">
+        <div class="fg">
+          <label class="fl2">Fecha</label>
+          <input type="date" id="mov-fecha">
+        </div>
+        <div class="fg">
+          <label class="fl2">Tipo *</label>
+          <select id="mov-tipo">
+            <option value="ingreso">⬆️ Ingreso</option>
+            <option value="egreso" selected>⬇️ Egreso / Gasto</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Fuente / Cuenta *</label>
+          <select id="mov-fuente">
+            <option value="mercadopago">💳 Mercado Pago</option>
+            <option value="bancolombia">🏦 Bancolombia</option>
+            <option value="nequi">📱 Nequi</option>
+            <option value="daviplata">📱 Daviplata</option>
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="tarjeta_credito">💳 Tarjeta de crédito</option>
+            <option value="otro">🔄 Otro</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor (COP$) *</label>
+          <input type="number" id="mov-valor" placeholder="0" step="1">
+        </div>
+        <div class="fg span2">
+          <label class="fl2">Concepto *</label>
+          <input type="text" id="mov-concepto" placeholder="Ej: Pago Amazon, recarga MP, comisión ML...">
+        </div>
+        <div class="fg span2">
+          <label class="fl2">Notas</label>
+          <textarea id="mov-notas" rows="2" style="width:100%;resize:none;" placeholder="Observaciones adicionales..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-movimiento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMovimiento()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: MEMBRESÍA CENTRIS ═══════════════════ -->
+<div class="overlay" id="modal-membresia">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-title">📦 Pago Membresía Centris</div>
+      <button class="mclose" onclick="closeModal('modal-membresia')">✕</button>
+    </div>
+    <div class="mc">
+      <div style="background:var(--teal-bg);border:1px solid #b8d8d8;border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--teal-dark);">
+        ℹ️ Registra el pago mensual del software Centris para el manejo de tus tiendas ML.
+      </div>
+      <div class="grid2">
+        <div class="fg">
+          <label class="fl2">Mes correspondiente</label>
+          <input type="month" id="mem-mes">
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor pagado (COP$) *</label>
+          <input type="number" id="mem-valor" placeholder="0" step="1">
+        </div>
+        <div class="fg">
+          <label class="fl2">Pagado con</label>
+          <select id="mem-fuente">
+            <option value="mercadopago">💳 Mercado Pago</option>
+            <option value="bancolombia">🏦 Bancolombia</option>
+            <option value="nequi">📱 Nequi</option>
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="tarjeta_credito">💳 Tarjeta de crédito</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Fecha de pago</label>
+          <input type="date" id="mem-fecha">
+        </div>
+        <div class="fg span2">
+          <label class="fl2">Observaciones</label>
+          <input type="text" id="mem-obs" placeholder="Ej: Plan pro, descuento aplicado...">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-membresia')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMembresia()">💾 Guardar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════
 //  MERCAMANAGER v3 — JavaScript
@@ -754,18 +949,28 @@ const mes  = () => new Date().toISOString().slice(0,7);
 // ── BASE DE DATOS (localStorage) ──
 const DB = {
   g: k  => { try{ return JSON.parse(localStorage.getItem('mm3_'+k))||[]; }catch(e){return [];} },
+  gObj: k => { try{ return JSON.parse(localStorage.getItem('mm3_'+k))||{}; }catch(e){return {};} },
   s: (k,v) => localStorage.setItem('mm3_'+k, JSON.stringify(v)),
-  tiendas:   () => DB.g('tiendas'),
-  ventas:    () => DB.g('ventas'),
-  problemas: () => DB.g('problemas'),
-  saveTiendas:   d => DB.s('tiendas',d),
-  saveVentas:    d => DB.s('ventas',d),
-  saveProblemas: d => DB.s('problemas',d),
-  upsertTienda: t => { const a=DB.tiendas(); const i=a.findIndex(x=>x.id===t.id); i>=0?a[i]=t:a.push(t); DB.saveTiendas(a); },
-  upsertVenta:  v => { const a=DB.ventas();  const i=a.findIndex(x=>x.id===v.id); i>=0?a[i]=v:a.push(v); DB.saveVentas(a);  },
+  tiendas:    () => DB.g('tiendas'),
+  ventas:     () => DB.g('ventas'),
+  problemas:  () => DB.g('problemas'),
+  movimientos:() => DB.g('movimientos'),
+  membresias: () => DB.g('membresias'),
+  saldos:     () => DB.gObj('saldos'),
+  saveTiendas:    d => DB.s('tiendas',d),
+  saveVentas:     d => DB.s('ventas',d),
+  saveProblemas:  d => DB.s('problemas',d),
+  saveMovimientos:d => DB.s('movimientos',d),
+  saveMembresias: d => DB.s('membresias',d),
+  saveSaldos:     d => DB.s('saldos',d),
+  upsertTienda:   t => { const a=DB.tiendas(); const i=a.findIndex(x=>x.id===t.id); i>=0?a[i]=t:a.push(t); DB.saveTiendas(a); },
+  upsertVenta:    v => { const a=DB.ventas();  const i=a.findIndex(x=>x.id===v.id); i>=0?a[i]=v:a.push(v); DB.saveVentas(a);  },
   upsertProblema: p => { const a=DB.problemas(); const i=a.findIndex(x=>x.id===p.id); i>=0?a[i]=p:a.push(p); DB.saveProblemas(a); },
-  deleteVenta: id => DB.saveVentas(DB.ventas().filter(v=>v.id!==id)),
+  upsertMovimiento: m => { const a=DB.movimientos(); const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); DB.saveMovimientos(a); },
+  upsertMembresia: m => { const a=DB.membresias(); const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); DB.saveMembresias(a); },
+  deleteVenta:    id => DB.saveVentas(DB.ventas().filter(v=>v.id!==id)),
   deleteProblema: id => DB.saveProblemas(DB.problemas().filter(p=>p.id!==id)),
+  deleteMovimiento: id => DB.saveMovimientos(DB.movimientos().filter(m=>m.id!==id)),
 };
 
 // ── TRM AUTOMÁTICO ──
@@ -867,10 +1072,16 @@ function calcVenta(v) {
   // Costo producto: siempre USD × TRM (Amazon)
   const costoCOP = costoUsd * trm;
 
-  // Envío: en USD×TRM solo si Servientrega, de lo contrario ya es COP
-  const envioIntCOP = (v.envio_tipo === 'servientrega')
-    ? envioVal * trm
-    : envioVal;
+  // Envío: si está validado usar el real, si no el estimado
+  // Para Servientrega el valor guardado es en USD, para otros ya es COP
+  let envioIntCOP;
+  if(v.envio_validado && v.envio_real_cop > 0) {
+    envioIntCOP = v.envio_real_cop;
+  } else if(v.envio_tipo === 'servientrega') {
+    envioIntCOP = envioVal * trm;
+  } else {
+    envioIntCOP = envioVal;
+  }
 
   const totalVenta  = precioCOP * udes;
   const totalCostos = (costoCOP * udes) + envioIntCOP + envioExtra;
@@ -890,7 +1101,218 @@ const PAGES = {
   tiendas:    { title:'Tiendas', icon:'🏪' },
   ventas:     { title:'Ventas', icon:'🛒' },
   problemas:  { title:'Problemas', icon:'⚠️' },
+  finanzas:   { title:'Finanzas', icon:'💳' },
 };
+
+// ── HELPERS DE FUENTE DE PAGO ──
+const FUENTES_LABEL = {
+  mercadopago:'Mercado Pago', bancolombia:'Bancolombia', nequi:'Nequi',
+  daviplata:'Daviplata', efectivo:'Efectivo', tarjeta_credito:'Tarjeta crédito', otro:'Otro'
+};
+const FUENTES_ICON = {
+  mercadopago:'💳', bancolombia:'🏦', nequi:'📱', daviplata:'📱',
+  efectivo:'💵', tarjeta_credito:'💳', otro:'🔄'
+};
+
+function getSaldoFuente(fuente) {
+  const saldos = DB.saldos();
+  return parseFloat(saldos[fuente]) || 0;
+}
+
+function recalcFuente() {
+  const fuente = gv('v-fuente-pago');
+  const monto  = parseFloat(gv('v-monto-pago')) || 0;
+  const el     = document.getElementById('v-fuente-saldo-info');
+  if(!el) return;
+  if(!fuente) { el.innerHTML=''; return; }
+  const saldo  = getSaldoFuente(fuente);
+  const icon   = FUENTES_ICON[fuente]||'💳';
+  const label  = FUENTES_LABEL[fuente]||fuente;
+  const resto  = saldo - monto;
+  el.innerHTML = `${icon} Saldo ${label}: <b>${fmt(saldo)}</b>`
+    + (monto > 0 ? ` → Quedarían: <b style="color:${resto<0?'var(--red)':'var(--green)'};">${fmt(resto)}</b>` : '');
+}
+
+function recalcValidacionEnvio() {
+  const estimado = parseFloat(gv('v-envio-estimado')) || 0;
+  const real     = parseFloat(gv('v-envio-real'))     || 0;
+  const estEl    = document.getElementById('envio-validacion-estado');
+  const diffEl   = document.getElementById('envio-validacion-diff');
+  if(!real) {
+    if(estEl) estEl.innerHTML = '<span style="font-size:11px;color:var(--yellow);font-weight:600;">⏳ Pendiente de confirmar</span>';
+    if(diffEl) diffEl.innerHTML = '';
+    return;
+  }
+  const diff = real - estimado;
+  const ok   = Math.abs(diff) < 500;
+  if(estEl) estEl.innerHTML = ok
+    ? '<span style="font-size:11px;color:var(--green);font-weight:600;">✅ Validado</span>'
+    : `<span style="font-size:11px;color:${diff>0?'var(--red)':'var(--teal)'};font-weight:600;">${diff>0?'⬆️ Mayor al estimado':'⬇️ Menor al estimado'}</span>`;
+  if(diffEl) diffEl.innerHTML = ok
+    ? 'El valor real coincide con el estimado.'
+    : `Diferencia: <b style="color:${diff>0?'var(--red)':'var(--teal)'};">${diff>0?'+':''}${fmt(diff)}</b> — el costo real se usará para el cálculo de ganancia.`;
+}
+
+// ── MÓDULO FINANZAS ──
+function renderFinanzas() {
+  const movs    = DB.movimientos();
+  const mems    = DB.membresias();
+  const saldos  = DB.saldos();
+
+  // Poblar selector de mes
+  const mesEl = document.getElementById('fin-filtro-mes');
+  if(mesEl && !mesEl.innerHTML) {
+    const meses = Array.from({length:6},(_,i)=>{ const d=new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7); });
+    mesEl.innerHTML = meses.map(m=>`<option value="${m}" ${m===mes()?'selected':''}>${m}</option>`).join('');
+  }
+  const mesAct = mesEl?.value || mes();
+
+  // ── Saldos ──
+  const fuentes = ['mercadopago','bancolombia','nequi','daviplata','efectivo','tarjeta_credito'];
+  document.getElementById('fin-saldos').innerHTML = fuentes.map(f=>{
+    const s = parseFloat(saldos[f])||0;
+    return `<div class="stat-card ${s<0?'red':s===0?'yellow':'green'}" style="cursor:pointer;" onclick="openModalSaldo('${f}')">
+      <div class="stat-icon">${FUENTES_ICON[f]}</div>
+      <div class="stat-label">${FUENTES_LABEL[f]}</div>
+      <div class="stat-value ${s<0?'red':s===0?'yellow':'green'}">${fmt(s)}</div>
+      <div class="stat-delta">Click para editar saldo</div>
+    </div>`;
+  }).join('');
+
+  // ── Membresía Centris ──
+  const memMes = mems.filter(m=>m.mes===mesAct);
+  const memEl  = document.getElementById('fin-membresia');
+  if(memMes.length) {
+    const m = memMes[memMes.length-1];
+    memEl.innerHTML = `<div style="display:flex;align-items:center;gap:12px;padding:8px 0;">
+      <span style="font-size:22px;">✅</span>
+      <div style="flex:1;">
+        <div style="font-size:13px;font-weight:700;color:var(--green);">Pagado — ${fmt(m.valor)}</div>
+        <div style="font-size:11px;color:var(--text3);">${m.fecha} · ${FUENTES_ICON[m.fuente]||''} ${FUENTES_LABEL[m.fuente]||m.fuente}${m.obs?' · '+m.obs:''}</div>
+      </div>
+      <button class="btn btn-danger btn-sm btn-icon" onclick="deleteMembresia('${m.id}')">🗑</button>
+    </div>`;
+  } else {
+    memEl.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+      <span style="font-size:22px;opacity:.3;">📦</span>
+      <div style="font-size:12px;color:var(--yellow);font-weight:600;">⚠️ Sin pago registrado para ${mesAct}</div>
+    </div>`;
+  }
+
+  // ── Movimientos del mes ──
+  const movMes = movs.filter(m=>m.fecha?.startsWith(mesAct)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const movEl  = document.getElementById('fin-movimientos');
+  if(!movMes.length) {
+    movEl.innerHTML = '<div class="empty-state" style="padding:24px;"><div class="empty-icon">📋</div><div class="empty-title">Sin movimientos</div></div>';
+  } else {
+    movEl.innerHTML = `<div style="max-height:360px;overflow-y:auto;">${movMes.map(m=>`
+      <div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
+        <span style="font-size:16px;">${m.tipo==='ingreso'?'⬆️':'⬇️'}</span>
+        <div style="flex:1;">
+          <div style="font-size:12px;font-weight:600;">${m.concepto}</div>
+          <div style="font-size:10px;color:var(--text3);">${m.fecha} · ${FUENTES_ICON[m.fuente]||''} ${FUENTES_LABEL[m.fuente]||m.fuente}</div>
+        </div>
+        <span class="mono fw7" style="color:${m.tipo==='ingreso'?'var(--green)':'var(--red)'};">
+          ${m.tipo==='ingreso'?'+':'−'}${fmt(m.valor)}
+        </span>
+        <button class="btn btn-danger btn-icon btn-sm" onclick="deleteMovimiento('${m.id}')">🗑</button>
+      </div>`).join('')}
+    </div>
+    <div style="padding:8px 0;font-size:11px;color:var(--text3);display:flex;justify-content:space-between;">
+      <span>Total ingresos: <b style="color:var(--green);">${fmt(movMes.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.valor,0))}</b></span>
+      <span>Total egresos: <b style="color:var(--red);">${fmt(movMes.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.valor,0))}</b></span>
+    </div>`;
+  }
+
+  // ── Resumen por fuente ──
+  const porFuente = {};
+  movMes.forEach(m=>{ if(!porFuente[m.fuente]) porFuente[m.fuente]={ing:0,egr:0}; if(m.tipo==='ingreso') porFuente[m.fuente].ing+=m.valor; else porFuente[m.fuente].egr+=m.valor; });
+  const fEl = document.getElementById('fin-por-fuente');
+  const fKeys = Object.keys(porFuente);
+  fEl.innerHTML = fKeys.length ? fKeys.map(f=>{
+    const d = porFuente[f];
+    const net = d.ing - d.egr;
+    return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
+        <span style="font-size:12px;font-weight:600;">${FUENTES_ICON[f]} ${FUENTES_LABEL[f]||f}</span>
+        <span class="mono fw7" style="color:${net>=0?'var(--green)':'var(--red)'};">${net>=0?'+':''}${fmt(net)}</span>
+      </div>
+      <div style="font-size:10px;color:var(--text3);display:flex;gap:12px;">
+        <span>⬆️ Ingresos: ${fmt(d.ing)}</span>
+        <span>⬇️ Egresos: ${fmt(d.egr)}</span>
+      </div>
+    </div>`;
+  }).join('') : '<div class="c-dim" style="font-size:12px;padding:16px 0;text-align:center;">Sin movimientos este mes</div>';
+}
+
+function openModalMovimiento(id) {
+  const mov = id ? DB.movimientos().find(x=>x.id===id) : null;
+  document.getElementById('mov-title').textContent = mov ? 'Editar Movimiento' : 'Nuevo Movimiento';
+  sv('mov-fecha', mov?.fecha||hoy());
+  sv('mov-tipo',  mov?.tipo||'egreso');
+  sv('mov-fuente',mov?.fuente||'mercadopago');
+  sv('mov-valor', mov?.valor||'');
+  sv('mov-concepto', mov?.concepto||'');
+  sv('mov-notas', mov?.notas||'');
+  document.getElementById('modal-movimiento')._editId = id||null;
+  openModal('modal-movimiento');
+}
+
+function saveMovimiento() {
+  const valor   = parseFloat(gv('mov-valor'))||0;
+  const concepto= gv('mov-concepto').trim();
+  if(!valor)    { alert('Ingresa el valor del movimiento.'); return; }
+  if(!concepto) { alert('Ingresa un concepto.'); return; }
+  const id = document.getElementById('modal-movimiento')._editId || uid();
+  DB.upsertMovimiento({ id, fecha:gv('mov-fecha'), tipo:gv('mov-tipo'),
+    fuente:gv('mov-fuente'), valor, concepto, notas:gv('mov-notas'), fecha_registro:new Date().toISOString() });
+  closeModal('modal-movimiento');
+  renderFinanzas();
+}
+
+function deleteMovimiento(id) {
+  if(!confirm('¿Eliminar este movimiento?')) return;
+  DB.deleteMovimiento(id);
+  renderFinanzas();
+}
+
+function openModalMembresia() {
+  sv('mem-mes', mes()); sv('mem-valor',''); sv('mem-fuente','mercadopago');
+  sv('mem-fecha', hoy()); sv('mem-obs','');
+  openModal('modal-membresia');
+}
+
+function saveMembresia() {
+  const valor = parseFloat(gv('mem-valor'))||0;
+  if(!valor) { alert('Ingresa el valor de la membresía.'); return; }
+  DB.upsertMembresia({ id:uid(), mes:gv('mem-mes'), valor, fuente:gv('mem-fuente'),
+    fecha:gv('mem-fecha'), obs:gv('mem-obs'), fecha_registro:new Date().toISOString() });
+  // También registrar como movimiento egreso automáticamente
+  DB.upsertMovimiento({ id:uid(), fecha:gv('mem-fecha'), tipo:'egreso',
+    fuente:gv('mem-fuente'), valor, concepto:`Membresía Centris ${gv('mem-mes')}`,
+    notas:gv('mem-obs'), fecha_registro:new Date().toISOString() });
+  closeModal('modal-membresia');
+  renderFinanzas();
+}
+
+function deleteMembresia(id) {
+  if(!confirm('¿Eliminar este pago de membresía?')) return;
+  const mems = DB.membresias().filter(m=>m.id!==id);
+  DB.saveMembresias(mems);
+  renderFinanzas();
+}
+
+function openModalSaldo(fuente) {
+  const actual = getSaldoFuente(fuente);
+  const nuevo  = prompt(`${FUENTES_ICON[fuente]} ${FUENTES_LABEL[fuente]}\nSaldo actual: ${fmt(actual)}\n\nIngresa el nuevo saldo (COP$):`, actual||'');
+  if(nuevo===null) return;
+  const val = parseFloat(nuevo);
+  if(isNaN(val)) { alert('Valor inválido'); return; }
+  const saldos = DB.saldos();
+  saldos[fuente] = val;
+  DB.saveSaldos(saldos);
+  renderFinanzas();
+}
 
 function navigate(page) {
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
@@ -911,6 +1333,7 @@ function render(page) {
     case 'tiendas':    renderTiendas();    break;
     case 'ventas':     renderVentas();     break;
     case 'problemas':  renderProblemas();  break;
+    case 'finanzas':   renderFinanzas();   break;
   }
 }
 
@@ -1219,19 +1642,28 @@ function openModalVenta(id) {
       sv('v-fecha', v.fecha_venta||hoy()); sv('v-fecha-entrega', v.fecha_entrega||'');
       sv('v-cliente', v.cliente||''); sv('v-tel', v.telefono||'');
       sv('v-producto', v.producto||''); sv('v-udes', v.udes||1);
-      sv('v-envio-tipo', v.envio_tipo||'ml'); sv('v-envio-extra', v.envio_extra||0);
-      // precio_cop es el campo principal; fallback: precio_usd * trm para ventas antiguas
+      sv('v-envio-tipo', v.envio_tipo||'aguachica'); sv('v-envio-extra', v.envio_extra||0);
       const trm = v.trm || TRM_ACTUAL;
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
       sv('v-cop-venta', copVenta || '');
       sv('v-trm', trm);
       sv('v-costo-usd', v.costo_usd||''); sv('v-envio-int-usd', v.envio_int_usd||'');
+      // Financiación
+      sv('v-fuente-pago', v.fuente_pago||''); sv('v-monto-pago', v.monto_pago||'');
+      sv('v-ref-pago', v.ref_pago||'');
+      // Validación envío
+      sv('v-envio-estimado', v.envio_estimado_cop||'');
+      sv('v-envio-real', v.envio_real_cop||'');
+      recalcValidacionEnvio();
     }
   } else {
-    ['v-id','v-cliente','v-tel','v-producto','v-costo-usd','v-envio-int-usd','v-cop-venta'].forEach(i=>sv(i,''));
+    ['v-id','v-cliente','v-tel','v-producto','v-costo-usd','v-envio-int-usd','v-cop-venta',
+     'v-fuente-pago','v-monto-pago','v-ref-pago','v-envio-real'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-fecha-entrega',''); sv('v-udes',1);
-    sv('v-envio-tipo','ml'); sv('v-envio-extra',0);
+    sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
     sv('v-trm', TRM_ACTUAL);
+    sv('v-envio-estimado','');
+    recalcValidacionEnvio();
   }
   recalcVenta();
   openModal('modal-venta');
@@ -1299,6 +1731,18 @@ function recalcVenta() {
   const elCostoCop = document.getElementById('v-costo-cop');
   if(elCostoCop) elCostoCop.value = costoCOP > 0 ? Math.round(costoCOP) : '';
 
+  // Sincronizar campo envío estimado (readonly)
+  const elEstimado = document.getElementById('v-envio-estimado');
+  if(elEstimado) elEstimado.value = envioIntCOP > 0 ? Math.round(envioIntCOP) : '';
+
+  // Sugerir monto de pago = costo producto + envío (si no se ha llenado)
+  const elMonto = document.getElementById('v-monto-pago');
+  if(elMonto && !elMonto.value && (costoCOP+envioIntCOP) > 0) {
+    // Solo sugerir, no sobreescribir si ya tiene valor
+  }
+
+  recalcFuente();
+
   // Desglose TRM
   actualizarDesglloseTRM();
 
@@ -1332,29 +1776,60 @@ function saveVenta() {
   if(!tienda)    { alert('Selecciona una tienda.'); return; }
   if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
 
-  const trm = parseFloat(gv('v-trm')) || TRM_ACTUAL;
+  const trm       = parseFloat(gv('v-trm')) || TRM_ACTUAL;
+  const envioTipo = gv('v-envio-tipo');
+  const envioVal  = parseFloat(gv('v-envio-int-usd'))||0;
+  const envioReal = parseFloat(gv('v-envio-real'))||0;
+
+  // Calcular envio en COP según tipo
+  const envioEstimadoCOP = envioTipo==='servientrega' ? envioVal*trm : envioVal;
+  const envioFinalCOP    = envioReal > 0 ? envioReal : envioEstimadoCOP;
+
+  const fuentePago = gv('v-fuente-pago');
+  const montoPago  = parseFloat(gv('v-monto-pago'))||0;
+  const costoUsd   = parseFloat(gv('v-costo-usd'))||0;
+  const costoCOP   = costoUsd * trm;
 
   DB.upsertVenta({
-    id:           _editVentaId || uid(),
-    id_ml:        gv('v-id').trim(),
-    tienda_id:    tienda,
-    fecha_venta:  gv('v-fecha'),
-    fecha_entrega:gv('v-fecha-entrega'),
-    cliente:      gv('v-cliente').trim(),
-    telefono:     gv('v-tel').trim(),
+    id:            _editVentaId || uid(),
+    id_ml:         gv('v-id').trim(),
+    tienda_id:     tienda,
+    fecha_venta:   gv('v-fecha'),
+    fecha_entrega: gv('v-fecha-entrega'),
+    cliente:       gv('v-cliente').trim(),
+    telefono:      gv('v-tel').trim(),
     producto,
-    udes:         parseFloat(gv('v-udes'))||1,
-    envio_tipo:   gv('v-envio-tipo'),
-    envio_extra:  parseFloat(gv('v-envio-extra'))||0,
-    precio_cop:   copVenta,
-    precio_usd:   trm > 0 ? copVenta / trm : 0,  // referencial
+    udes:          parseFloat(gv('v-udes'))||1,
+    envio_tipo:    envioTipo,
+    envio_extra:   parseFloat(gv('v-envio-extra'))||0,
+    precio_cop:    copVenta,
+    precio_usd:    trm > 0 ? copVenta / trm : 0,
     trm,
-    precio_venta: copVenta,
-    costo_usd:    parseFloat(gv('v-costo-usd'))||0,
-    envio_int_usd:parseFloat(gv('v-envio-int-usd'))||0,  // COP si ML/Aguachica, USD si Servientrega
-    estado:       'pendiente',
+    precio_venta:  copVenta,
+    costo_usd:     costoUsd,
+    envio_int_usd: envioVal,          // valor ingresado (USD si servientrega, COP si otro)
+    envio_estimado_cop: envioEstimadoCOP,
+    envio_real_cop:     envioReal,    // 0 = pendiente validación
+    envio_validado:     envioReal > 0,
+    // Financiación
+    fuente_pago:   fuentePago,
+    monto_pago:    montoPago,
+    ref_pago:      gv('v-ref-pago').trim(),
+    estado:        'pendiente',
     fecha_registro: new Date().toISOString(),
   });
+
+  // Registrar egreso automático si se indicó fuente de pago
+  if(fuentePago && montoPago > 0) {
+    DB.upsertMovimiento({
+      id: uid(), fecha: gv('v-fecha'), tipo:'egreso',
+      fuente: fuentePago, valor: montoPago,
+      concepto: `Compra: ${producto.slice(0,40)}`,
+      notas: `Venta ${gv('v-id')||'—'} · costo $${costoUsd} USD`,
+      fecha_registro: new Date().toISOString(),
+    });
+  }
+
   closeModal('modal-venta');
   renderVentas();
   updateAlertaBadge();
@@ -1410,6 +1885,10 @@ function renderVentas() {
       <td style="font-size:11px;text-align:center;">
         <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'pendiente':'entregado'}">${envioLabel}</span>
         ${v.envio_extra>0?`<div class="mono" style="font-size:9px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
+        ${(v.envio_tipo==='aguachica'||v.envio_tipo==='servientrega') && !v.envio_validado && v.envio_int_usd > 0
+          ? `<div style="margin-top:2px;"><button class="btn btn-sm" style="font-size:9px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">⚠️ Validar</button></div>`
+          : v.envio_validado ? `<div style="font-size:9px;color:var(--green);margin-top:2px;">✅ Validado</div>` : ''
+        }
       </td>
       <td>
         <select style="font-size:11px;padding:3px 5px;border-radius:var(--radius);"
@@ -1440,6 +1919,34 @@ function deleteVenta(id) {
   if(!confirm('¿Eliminar esta venta?')) return;
   DB.deleteVenta(id);
   renderVentas(); updateAlertaBadge();
+}
+
+function openValidarEnvio(id) {
+  const v = DB.ventas().find(x=>x.id===id);
+  if(!v) return;
+  const trm = v.trm || TRM_ACTUAL;
+  const estimado = v.envio_estimado_cop || (v.envio_tipo==='servientrega' ? (v.envio_int_usd||0)*trm : v.envio_int_usd||0);
+  const real = parseFloat(prompt(
+    `✅ Validar envío — ${v.producto?.slice(0,30)}\n`
+    + `Tipo: ${v.envio_tipo==='aguachica'?'Aguachica':'Servientrega'}\n`
+    + `Valor estimado: ${fmt(estimado)}\n\n`
+    + `Ingresa el valor REAL del envío confirmado en Centris (COP$):`,
+    estimado || ''
+  ));
+  if(isNaN(real) || real === null) return;
+  const ventas = DB.ventas();
+  const vv = ventas.find(x=>x.id===id);
+  if(vv) {
+    vv.envio_real_cop  = real;
+    vv.envio_validado  = true;
+    vv.envio_estimado_cop = estimado;
+    DB.saveVentas(ventas);
+    renderVentas();
+    const diff = real - estimado;
+    if(Math.abs(diff) >= 500) {
+      alert(`Envío validado ✅\nDiferencia vs estimado: ${diff>=0?'+':''}${fmt(diff)}\nEsta diferencia ya se aplicó al cálculo de ganancia.`);
+    }
+  }
 }
 
 function clearVentaFilters() {
@@ -1723,25 +2230,69 @@ function populateSelects() {
 // ── DATOS DEMO ──
 function loadDemo() {
   const tiendas = [
-    { id:'t1', nombre:'SATARDSHOP',    responsable:'Diego',  color:'#2a7a7b', estado:'activa' },
-    { id:'t2', nombre:'MiTienda_Santi', responsable:'Santi', color:'#5c6bc0', estado:'activa' },
+    { id:'t1', nombre:'SATARDSHOP',     responsable:'Diego',  color:'#2a7a7b', estado:'activa' },
+    { id:'t2', nombre:'MiTienda_Santi', responsable:'Santi',  color:'#5c6bc0', estado:'activa' },
     { id:'t3', nombre:'ModaFast_CO',    responsable:'Daniel', color:'#e57c23', estado:'activa' },
   ];
   const d = (n) => { const x=new Date(); x.setDate(x.getDate()-n); return x.toISOString().slice(0,10); };
-  const trm = TRM_ACTUAL||4000;
+  const trm = TRM_ACTUAL || 3800;
   const ventas = [
-    { id:'v1',id_ml:'2000015788963928',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:d(-2),cliente:'Pedro García',telefono:'3001234567',producto:'Oxiclean Polvo Quitamanchas 5 Lbs',udes:1,precio_cop:22.5*trm,precio_usd:22.5,trm,costo_usd:8.0,envio_int_usd:5.49,envio_extra:0,envio_tipo:'ml',estado:'entregado',precio_venta:22.5*trm,fecha_registro:new Date().toISOString() },
-    { id:'v2',id_ml:'2000015794128036',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:'',cliente:'María López',telefono:'3109876543',producto:'Vasagle Mesa Auxiliar Alta 3 Niveles',udes:1,precio_cop:85.0*trm,precio_usd:85.0,trm,costo_usd:38.0,envio_int_usd:14.15,envio_extra:0,envio_tipo:'servientrega',estado:'en_camino',precio_venta:85.0*trm,fecha_registro:new Date().toISOString() },
-    { id:'v3',id_ml:'2000015801707076',tienda_id:'t2',fecha_venta:d(3),fecha_entrega:d(-1),cliente:'Carlos Rueda',telefono:'3154445566',producto:'Herbalista Té De Hierbas Viral 2 Oz',udes:2,precio_cop:12.0*trm,precio_usd:12.0,trm,costo_usd:4.5,envio_int_usd:0.13,envio_extra:8000,envio_tipo:'aguachica',estado:'entregado',precio_venta:12.0*trm,fecha_registro:new Date().toISOString() },
-    { id:'v4',id_ml:'2000015812811546',tienda_id:'t2',fecha_venta:d(1),fecha_entrega:'',cliente:'Ana Herrera',telefono:'3002223344',producto:'Cascade Power Dry Abrillantador Lavavajillas 16 Fl',udes:1,precio_cop:18.5*trm,precio_usd:18.5,trm,costo_usd:7.0,envio_int_usd:1.19,envio_extra:0,envio_tipo:'ml',estado:'pendiente',precio_venta:18.5*trm,fecha_registro:new Date().toISOString() },
-    { id:'v5',id_ml:'2000015822334455',tienda_id:'t3',fecha_venta:d(5),fecha_entrega:d(1),cliente:'Jorge Torres',telefono:'3178889900',producto:'Camiseta Polo Premium Hombre',udes:2,precio_cop:35.0*trm,precio_usd:35.0,trm,costo_usd:15.0,envio_int_usd:3.5,envio_extra:12000,envio_tipo:'servientrega',estado:'problema',precio_venta:35.0*trm,fecha_registro:new Date().toISOString() },
+    { id:'v1',id_ml:'2000015788963928',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:d(-2),
+      cliente:'Pedro García',telefono:'3001234567',producto:'Oxiclean Polvo Quitamanchas 5 Lbs',
+      udes:1,precio_cop:89000,precio_usd:89000/trm,trm,costo_usd:8.0,
+      envio_int_usd:12000,envio_estimado_cop:12000,envio_real_cop:12000,envio_validado:true,
+      envio_extra:0,envio_tipo:'aguachica',estado:'entregado',precio_venta:89000,
+      fuente_pago:'mercadopago',monto_pago:Math.round(8.0*trm)+12000,
+      fecha_registro:new Date().toISOString() },
+    { id:'v2',id_ml:'2000015794128036',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:'',
+      cliente:'María López',telefono:'3109876543',producto:'Vasagle Mesa Auxiliar Alta 3 Niveles',
+      udes:1,precio_cop:340000,precio_usd:340000/trm,trm,costo_usd:38.0,
+      envio_int_usd:14.15,envio_estimado_cop:Math.round(14.15*trm),envio_real_cop:0,envio_validado:false,
+      envio_extra:0,envio_tipo:'servientrega',estado:'en_camino',precio_venta:340000,
+      fuente_pago:'bancolombia',monto_pago:Math.round(38.0*trm),
+      fecha_registro:new Date().toISOString() },
+    { id:'v3',id_ml:'2000015801707076',tienda_id:'t2',fecha_venta:d(3),fecha_entrega:d(-1),
+      cliente:'Carlos Rueda',telefono:'3154445566',producto:'Herbalista Té De Hierbas Viral 2 Oz',
+      udes:2,precio_cop:50000,precio_usd:50000/trm,trm,costo_usd:4.5,
+      envio_int_usd:9000,envio_estimado_cop:9000,envio_real_cop:9500,envio_validado:true,
+      envio_extra:0,envio_tipo:'aguachica',estado:'entregado',precio_venta:50000,
+      fuente_pago:'nequi',monto_pago:Math.round(4.5*trm)+9000,
+      fecha_registro:new Date().toISOString() },
+    { id:'v4',id_ml:'2000015812811546',tienda_id:'t2',fecha_venta:d(1),fecha_entrega:'',
+      cliente:'Ana Herrera',telefono:'3002223344',producto:'Cascade Power Dry Abrillantador 16 Fl',
+      udes:1,precio_cop:72000,precio_usd:72000/trm,trm,costo_usd:7.0,
+      envio_int_usd:8500,envio_estimado_cop:8500,envio_real_cop:0,envio_validado:false,
+      envio_extra:0,envio_tipo:'aguachica',estado:'pendiente',precio_venta:72000,
+      fuente_pago:'mercadopago',monto_pago:Math.round(7.0*trm)+8500,
+      fecha_registro:new Date().toISOString() },
+    { id:'v5',id_ml:'2000015822334455',tienda_id:'t3',fecha_venta:d(5),fecha_entrega:d(1),
+      cliente:'Jorge Torres',telefono:'3178889900',producto:'Camiseta Polo Premium Hombre',
+      udes:2,precio_cop:145000,precio_usd:145000/trm,trm,costo_usd:15.0,
+      envio_int_usd:12.5,envio_estimado_cop:Math.round(12.5*trm),envio_real_cop:0,envio_validado:false,
+      envio_extra:0,envio_tipo:'servientrega',estado:'problema',precio_venta:145000,
+      fuente_pago:'efectivo',monto_pago:Math.round(15.0*trm),
+      fecha_registro:new Date().toISOString() },
   ];
   const problemas = [
-    { id:'p1',venta_id:'v5',id_ml_venta:'2000015822334455',producto:'Camiseta Polo Premium Hombre',tienda_id:'t3',fecha:d(3),tipo:'producto_danado',tipo_label:'Producto dañado',descripcion:'El cliente reportó que llegó una camiseta con el cuello roto y manchada.',solucion:'Se abrió caso en ML. Esperando resolución de mediación.',estado:'abierto',valor_perdida:0,fecha_registro:new Date().toISOString() },
+    { id:'p1',venta_id:'v5',id_ml_venta:'2000015822334455',producto:'Camiseta Polo Premium Hombre',
+      tienda_id:'t3',fecha:d(3),tipo:'producto_danado',tipo_label:'Producto dañado',
+      descripcion:'El cliente reportó que llegó una camiseta con el cuello roto y manchada.',
+      solucion:'Se abrió caso en ML. Esperando resolución de mediación.',
+      estado:'abierto',valor_perdida:0,fecha_registro:new Date().toISOString() },
   ];
-  DB.saveTiendas(tiendas);
-  DB.saveVentas(ventas);
-  DB.saveProblemas(problemas);
+  // Saldos de demostración
+  const saldos = { mercadopago:450000, bancolombia:1200000, nequi:85000, daviplata:0, efectivo:150000, tarjeta_credito:0 };
+  // Movimientos de demostración
+  const movs = [
+    { id:'m1',fecha:d(5),tipo:'egreso',fuente:'mercadopago',valor:Math.round(8.0*trm)+12000,concepto:'Compra: Oxiclean Polvo Quitamanchas',notas:'Venta 2000015788963928',fecha_registro:new Date().toISOString() },
+    { id:'m2',fecha:d(4),tipo:'ingreso',fuente:'mercadopago',valor:89000,concepto:'Pago ML — Oxiclean 5 Lbs',notas:'',fecha_registro:new Date().toISOString() },
+    { id:'m3',fecha:d(3),tipo:'egreso',fuente:'bancolombia',valor:Math.round(38.0*trm),concepto:'Compra: Vasagle Mesa Auxiliar',notas:'',fecha_registro:new Date().toISOString() },
+  ];
+  const mems = [
+    { id:'mem1',mes:mes(),valor:89000,fuente:'mercadopago',fecha:d(1),obs:'Plan Pro · 3 tiendas',fecha_registro:new Date().toISOString() },
+  ];
+  DB.saveTiendas(tiendas); DB.saveVentas(ventas); DB.saveProblemas(problemas);
+  DB.saveMovimientos(movs); DB.saveMembresias(mems); DB.saveSaldos(saldos);
 }
 
 // ── INIT ──
