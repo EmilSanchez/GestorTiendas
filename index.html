@@ -548,7 +548,7 @@ thead{position:sticky;top:0;z-index:1;}
         </div>
         <div class="fg">
           <label class="fl2">Tipo de envío *</label>
-          <select id="v-envio-tipo" onchange="recalcVenta()">
+          <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
             <option value="ml">Logística ML (incluida)</option>
             <option value="servientrega">Servientrega</option>
             <option value="aguachica">Aguachica / Local</option>
@@ -562,23 +562,22 @@ thead{position:sticky;top:0;z-index:1;}
 
       <div class="fsec">💵 Precio y Conversión</div>
       <div class="grid3">
-        <div class="fg">
-          <label class="fl2">Precio en que se vendió (USD$) *</label>
-          <input type="number" id="v-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
+        <div class="fg span2">
+          <label class="fl2">Precio de venta (COP$) *
+            <small class="c-dim"> — lo que te depositó ML</small>
+          </label>
+          <input type="number" id="v-cop-venta" placeholder="0" step="1" oninput="recalcVenta()">
         </div>
         <div class="fg">
           <label class="fl2">TRM del día (COP x USD)
             <span id="trm-auto-badge" style="font-size:9px;background:var(--teal-bg);color:var(--teal);padding:1px 5px;border-radius:3px;margin-left:4px;">AUTO</span>
           </label>
-          <input type="number" id="v-trm" placeholder="Cargando..." oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">Precio COP (calculado)</label>
-          <input type="number" id="v-cop-calc" readonly style="font-weight:700;color:var(--teal);">
+          <input type="number" id="v-trm" placeholder="Cargando..." oninput="recalcVenta();actualizarDesglloseTRM()">
+          <div id="trm-desglose" style="font-size:10px;color:var(--text3);margin-top:3px;"></div>
         </div>
         <div class="fg">
           <label class="fl2">Costo del producto (USD$) *
-            <small class="c-dim"> — lo que te costó a ti</small>
+            <small class="c-dim"> — comprado en Amazon</small>
           </label>
           <input type="number" id="v-costo-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
         </div>
@@ -587,10 +586,11 @@ thead{position:sticky;top:0;z-index:1;}
           <input type="number" id="v-costo-cop" readonly>
         </div>
         <div class="fg">
-          <label class="fl2">Envío internacional (USD$)
-            <small class="c-dim"> — flete desde EE.UU.</small>
+          <label class="fl2" id="lbl-envio-int">Envío internacional (COP$)
+            <small class="c-dim" id="lbl-envio-int-sub"> — flete local</small>
           </label>
-          <input type="number" id="v-envio-int-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
+          <input type="number" id="v-envio-int-usd" placeholder="0" step="1" oninput="recalcVenta()">
+          <div id="envio-int-desglose" style="font-size:10px;color:var(--text3);margin-top:2px;display:none;"></div>
         </div>
       </div>
 
@@ -604,8 +604,10 @@ thead{position:sticky;top:0;z-index:1;}
             <div class="cr total"><span class="cr-label">= TOTAL VENTA</span><span class="cr-val neu" id="c-total-venta">$0</span></div>
           </div>
           <div>
-            <div class="cr"><span class="cr-label">− Costo producto (COP)</span><span class="cr-val neg" id="c-costo">$0</span></div>
-            <div class="cr"><span class="cr-label">− Envío internacional (COP)</span><span class="cr-val neg" id="c-envio-int">$0</span></div>
+            <div class="cr"><span class="cr-label">− Costo producto (USD × TRM)</span><span class="cr-val neg" id="c-costo">$0</span></div>
+            <div class="cr" style="font-size:10px;color:var(--text3);padding:1px 0;border-bottom:none;" id="c-costo-desglose"></div>
+            <div class="cr"><span class="cr-label" id="c-lbl-envio-int">− Envío internacional (COP)</span><span class="cr-val neg" id="c-envio-int">$0</span></div>
+            <div class="cr" style="font-size:10px;color:var(--text3);padding:1px 0;border-bottom:none;" id="c-envio-int-desglose"></div>
             <div class="cr"><span class="cr-label">− Envío extra local</span><span class="cr-val neg" id="c-envio-extra">$0</span></div>
             <div class="cr total"><span class="cr-label">= TOTAL COSTOS</span><span class="cr-val neg" id="c-total-costos">$0</span></div>
           </div>
@@ -768,37 +770,71 @@ const DB = {
 };
 
 // ── TRM AUTOMÁTICO ──
-let TRM_ACTUAL = 4000; // fallback
+let TRM_ACTUAL  = 3800; // fallback
+let TRM_BASE    = 3800; // dólar oficial sin margen
 let TRM_CARGADO = false;
 
 async function cargarTRM() {
-  const elText = document.getElementById('trm-text');
+  const elText  = document.getElementById('trm-text');
   const elInput = document.getElementById('v-trm');
-  try {
-    // API pública de tipo de cambio — usa ExchangeRate-API (gratuita, sin key)
-    const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
-    const d = await r.json();
-    const base = Math.round(d.rates.COP);
-    TRM_ACTUAL = base + 150; // +150 pesos según tu lógica de negocio
-    TRM_CARGADO = true;
-    if(elText) elText.textContent = `TRM: ${fmt(TRM_ACTUAL)} (+$150)`;
-    if(elInput && !elInput.value) elInput.value = TRM_ACTUAL;
-    document.getElementById('trm-auto-badge').textContent = '✓ AUTO';
-  } catch(e) {
-    // Fallback: intentar con otra API
+
+  const MARGEN = 150; // margen operativo fijo
+
+  // Intentamos varias fuentes en orden de confiabilidad
+  const fuentes = [
+    // 1. Frankfurter (Banco Central Europeo — muy preciso, actualizado diario)
+    async () => {
+      const r = await fetch('https://api.frankfurter.app/latest?from=USD&to=COP');
+      const d = await r.json();
+      return Math.round(d.rates.COP);
+    },
+    // 2. ExchangeRate-API (respaldo)
+    async () => {
+      const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+      const d = await r.json();
+      return Math.round(d.rates.COP);
+    },
+    // 3. Open Exchange Rates (respaldo secundario)
+    async () => {
+      const r = await fetch('https://open.er-api.com/v6/latest/USD');
+      const d = await r.json();
+      return Math.round(d.rates.COP);
+    },
+  ];
+
+  for(const fn of fuentes) {
     try {
-      const r2 = await fetch('https://open.er-api.com/v6/latest/USD');
-      const d2 = await r2.json();
-      const base = Math.round(d2.rates.COP);
-      TRM_ACTUAL = base + 150;
-      TRM_CARGADO = true;
-      if(elText) elText.textContent = `TRM: ${fmt(TRM_ACTUAL)} (+$150)`;
-      if(elInput && !elInput.value) elInput.value = TRM_ACTUAL;
-    } catch(e2) {
-      if(elText) elText.textContent = `TRM manual (falló auto)`;
-      if(elInput && !elInput.value) elInput.value = TRM_ACTUAL;
-    }
+      const base = await fn();
+      if(base > 3000 && base < 8000) { // rango válido COP
+        TRM_BASE   = base;
+        TRM_ACTUAL = base + MARGEN;
+        TRM_CARGADO = true;
+        if(elText) elText.textContent = `TRM: ${fmt(TRM_ACTUAL)} (+$${MARGEN})`;
+        if(elInput && !elInput.value) elInput.value = TRM_ACTUAL;
+        const badge = document.getElementById('trm-auto-badge');
+        if(badge) badge.textContent = '✓ AUTO';
+        actualizarDesglloseTRM();
+        return;
+      }
+    } catch(e) { /* siguiente fuente */ }
   }
+
+  // Todas fallaron — modo manual
+  if(elText) elText.textContent = `TRM manual (sin conexión)`;
+  if(elInput && !elInput.value) elInput.value = TRM_ACTUAL;
+  const badge = document.getElementById('trm-auto-badge');
+  if(badge) { badge.textContent = '⚠ MANUAL'; badge.style.background='var(--yellow-bg)'; badge.style.color='var(--yellow)'; }
+  actualizarDesglloseTRM();
+}
+
+function actualizarDesglloseTRM() {
+  const el = document.getElementById('trm-desglose');
+  if(!el) return;
+  const trm  = parseFloat(document.getElementById('v-trm')?.value) || TRM_ACTUAL;
+  const base = TRM_BASE || (trm - 150);
+  const margen = trm - base;
+  el.innerHTML = `<span style="color:var(--text2);">Dólar oficial: <b>${fmt(base)}</b></span>`
+    + `<span style="margin-left:6px;color:var(--teal);">+ $${margen.toLocaleString('es-CO')} margen = <b style="color:var(--teal-dark)">${fmt(trm)}</b></span>`;
 }
 
 // ── CÁLCULO DE GANANCIA ──
@@ -816,20 +852,32 @@ async function cargarTRM() {
  */
 function calcVenta(v) {
   const udes       = parseFloat(v.udes)         || 1;
-  const usd        = parseFloat(v.precio_usd)   || 0;
   const trm        = parseFloat(v.trm)          || TRM_ACTUAL;
   const costoUsd   = parseFloat(v.costo_usd)    || 0;
-  const envioIntUs = parseFloat(v.envio_int_usd)|| 0;
+  const envioVal   = parseFloat(v.envio_int_usd)|| 0;
   const envioExtra = parseFloat(v.envio_extra)  || 0;
 
-  const precioCOP  = usd * trm;
-  const costoCOP   = costoUsd * trm;
-  const envioIntCOP= envioIntUs * trm;
+  // precio_cop es el campo principal. Para ventas antiguas: precio_usd × trm
+  let precioCOP;
+  if(v.precio_cop && parseFloat(v.precio_cop) > 0) {
+    precioCOP = parseFloat(v.precio_cop);
+  } else {
+    precioCOP = (parseFloat(v.precio_usd) || 0) * trm;
+  }
+
+  // Costo producto: siempre USD × TRM (Amazon)
+  const costoCOP = costoUsd * trm;
+
+  // Envío: en USD×TRM solo si Servientrega, de lo contrario ya es COP
+  const envioIntCOP = (v.envio_tipo === 'servientrega')
+    ? envioVal * trm
+    : envioVal;
 
   const totalVenta  = precioCOP * udes;
   const totalCostos = (costoCOP * udes) + envioIntCOP + envioExtra;
   const ganancia    = totalVenta - totalCostos;
   const margen      = totalVenta > 0 ? (ganancia / totalVenta) * 100 : 0;
+  const usd         = trm > 0 ? precioCOP / trm : 0;
 
   return { udes, usd, trm, precioCOP, costoCOP, envioIntCOP, envioExtra,
            totalVenta, totalCostos, ganancia, margen };
@@ -1173,11 +1221,15 @@ function openModalVenta(id) {
       sv('v-cliente', v.cliente||''); sv('v-tel', v.telefono||'');
       sv('v-producto', v.producto||''); sv('v-udes', v.udes||1);
       sv('v-envio-tipo', v.envio_tipo||'ml'); sv('v-envio-extra', v.envio_extra||0);
-      sv('v-usd', v.precio_usd||''); sv('v-trm', v.trm||TRM_ACTUAL);
+      // precio_cop es el campo principal; fallback: precio_usd * trm para ventas antiguas
+      const trm = v.trm || TRM_ACTUAL;
+      const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
+      sv('v-cop-venta', copVenta || '');
+      sv('v-trm', trm);
       sv('v-costo-usd', v.costo_usd||''); sv('v-envio-int-usd', v.envio_int_usd||'');
     }
   } else {
-    ['v-id','v-cliente','v-tel','v-producto','v-costo-usd','v-envio-int-usd','v-usd'].forEach(i=>sv(i,''));
+    ['v-id','v-cliente','v-tel','v-producto','v-costo-usd','v-envio-int-usd','v-cop-venta'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-fecha-entrega',''); sv('v-udes',1);
     sv('v-envio-tipo','ml'); sv('v-envio-extra',0);
     sv('v-trm', TRM_ACTUAL);
@@ -1187,54 +1239,99 @@ function openModalVenta(id) {
 }
 
 function recalcVenta() {
-  const usd      = parseFloat(gv('v-usd'))         || 0;
-  const trm      = parseFloat(gv('v-trm'))          || TRM_ACTUAL;
-  const costoUsd = parseFloat(gv('v-costo-usd'))    || 0;
-  const envIntU  = parseFloat(gv('v-envio-int-usd'))|| 0;
-  const envExtra = parseFloat(gv('v-envio-extra'))  || 0;
-  const udes     = parseFloat(gv('v-udes'))          || 1;
+  const copVenta   = parseFloat(gv('v-cop-venta'))    || 0;
+  const trm        = parseFloat(gv('v-trm'))           || TRM_ACTUAL;
+  const costoUsd   = parseFloat(gv('v-costo-usd'))     || 0;
+  const envioVal   = parseFloat(gv('v-envio-int-usd')) || 0;
+  const envExtra   = parseFloat(gv('v-envio-extra'))   || 0;
+  const udes       = parseFloat(gv('v-udes'))           || 1;
+  const envTipo    = gv('v-envio-tipo');
 
-  const precioCOP = usd * trm;
-  const costoCOP  = costoUsd * trm;
-  const envIntCOP = envIntU * trm;
-  const totalV    = precioCOP * udes;
-  const totalC    = (costoCOP * udes) + envIntCOP + envExtra;
-  const gan       = totalV - totalC;
-  const mar       = totalV > 0 ? (gan/totalV)*100 : 0;
+  // Costo producto: siempre en USD × TRM (comprado en Amazon)
+  const costoCOP = costoUsd * trm;
 
-  // Readonly calculados
-  const elCop = document.getElementById('v-cop-calc');
-  if(elCop) elCop.value = precioCOP > 0 ? Math.round(precioCOP) : '';
+  // Envío internacional: en USD×TRM solo si es Servientrega, de lo contrario el valor ya es COP
+  let envioIntCOP = 0;
+  let envioEsUSD  = false;
+  if(envTipo === 'servientrega') {
+    envioIntCOP = envioVal * trm;  // el valor ingresado es en USD
+    envioEsUSD  = true;
+  } else {
+    envioIntCOP = envioVal;        // el valor ingresado ya es COP
+    envioEsUSD  = false;
+  }
+
+  const totalV = copVenta * udes;
+  const totalC = (costoCOP * udes) + envioIntCOP + envExtra;
+  const gan    = totalV - totalC;
+  const mar    = totalV > 0 ? (gan/totalV)*100 : 0;
+
+  // Actualizar label del campo de envío en el formulario
+  const lblEnvio    = document.getElementById('lbl-envio-int');
+  const lblEnvioSub = document.getElementById('lbl-envio-int-sub');
+  const envInputEl  = document.getElementById('v-envio-int-usd');
+  const envDesglEl  = document.getElementById('envio-int-desglose');
+  if(lblEnvio) {
+    if(envioEsUSD) {
+      lblEnvio.childNodes[0].textContent = 'Envío Servientrega (USD$) ';
+      if(lblEnvioSub) lblEnvioSub.textContent = ' — se convierte con TRM';
+      if(envInputEl) { envInputEl.step='0.01'; envInputEl.placeholder='0.00'; }
+      if(envDesglEl && envioVal>0) {
+        envDesglEl.style.display='block';
+        envDesglEl.innerHTML=`USD $${envioVal.toFixed(2)} × ${fmt(trm)} = <b>${fmt(envioIntCOP)}</b>`;
+      } else if(envDesglEl) { envDesglEl.style.display='none'; }
+    } else {
+      lblEnvio.childNodes[0].textContent = 'Envío internacional (COP$) ';
+      if(lblEnvioSub) lblEnvioSub.textContent = ' — flete en pesos';
+      if(envInputEl) { envInputEl.step='1'; envInputEl.placeholder='0'; }
+      if(envDesglEl) envDesglEl.style.display='none';
+    }
+  }
+
+  // Actualizar label en calc-box
+  const cLblEnvio = document.getElementById('c-lbl-envio-int');
+  if(cLblEnvio) cLblEnvio.textContent = envioEsUSD ? '− Envío Servientrega (USD × TRM)' : '− Envío internacional (COP)';
+  const cEnvioDesgl = document.getElementById('c-envio-int-desglose');
+  if(cEnvioDesgl && envioEsUSD && envioVal>0) {
+    cEnvioDesgl.innerHTML=`<span style="padding-left:8px;">USD $${envioVal.toFixed(2)} × ${fmt(trm)} TRM</span>`;
+  } else if(cEnvioDesgl) { cEnvioDesgl.innerHTML=''; }
+
+  // Costo producto readonly
   const elCostoCop = document.getElementById('v-costo-cop');
   if(elCostoCop) elCostoCop.value = costoCOP > 0 ? Math.round(costoCOP) : '';
 
-  // Cuadro resultado
-  st('c-precio',    fmt(precioCOP));
-  st('c-udes',      `× ${udes}`);
-  st('c-total-venta', fmt(totalV));
-  st('c-costo',     '−'+fmt(costoCOP*udes));
-  st('c-envio-int', '−'+fmt(envIntCOP));
-  st('c-envio-extra','−'+fmt(envExtra));
-  st('c-total-costos','−'+fmt(totalC));
-  st('c-rv-total',  fmt(totalV));
-  st('c-rv-gan',    fmt(gan));
-  st('c-rv-margen', 'Margen: '+fmtP(mar));
+  // Desglose TRM
+  actualizarDesglloseTRM();
 
-  const ganEl = document.getElementById('c-rv-gan');
-  const cardEl= document.getElementById('rc-gan-card');
-  if(ganEl) ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)';
-  if(cardEl) {
-    cardEl.className = 'result-card ' + (gan >= 0 ? 'rc-gan' : 'rc-neg');
-  }
+  // Cuadro resultado
+  st('c-precio',      fmt(copVenta));
+  st('c-udes',        `× ${udes}`);
+  st('c-total-venta', fmt(totalV));
+  st('c-costo',       '−'+fmt(costoCOP*udes));
+  const desglEl = document.getElementById('c-costo-desglose');
+  if(desglEl && costoUsd > 0) {
+    desglEl.innerHTML = `<span style="padding-left:8px;color:var(--text3);">USD $${costoUsd.toFixed(2)} × ${fmt(trm)} TRM</span>`;
+  } else if(desglEl) { desglEl.innerHTML=''; }
+  st('c-envio-int',   '−'+fmt(envioIntCOP));
+  st('c-envio-extra', '−'+fmt(envExtra));
+  st('c-total-costos','−'+fmt(totalC));
+  st('c-rv-total',    fmt(totalV));
+  st('c-rv-gan',      fmt(gan));
+  st('c-rv-margen',   'Margen: '+fmtP(mar));
+
+  const ganEl  = document.getElementById('c-rv-gan');
+  const cardEl = document.getElementById('rc-gan-card');
+  if(ganEl)  ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)';
+  if(cardEl) cardEl.className  = 'result-card ' + (gan >= 0 ? 'rc-gan' : 'rc-neg');
 }
 
 function saveVenta() {
   const producto = gv('v-producto').trim();
   const tienda   = gv('v-tienda');
-  const usd      = parseFloat(gv('v-usd')) || 0;
-  if(!producto) { alert('El nombre del producto es requerido.'); return; }
-  if(!tienda)   { alert('Selecciona una tienda.'); return; }
-  if(!usd)      { alert('Ingresa el precio de venta en USD.'); return; }
+  const copVenta = parseFloat(gv('v-cop-venta')) || 0;
+  if(!producto)  { alert('El nombre del producto es requerido.'); return; }
+  if(!tienda)    { alert('Selecciona una tienda.'); return; }
+  if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
 
   const trm = parseFloat(gv('v-trm')) || TRM_ACTUAL;
 
@@ -1250,11 +1347,12 @@ function saveVenta() {
     udes:         parseFloat(gv('v-udes'))||1,
     envio_tipo:   gv('v-envio-tipo'),
     envio_extra:  parseFloat(gv('v-envio-extra'))||0,
-    precio_usd:   usd,
+    precio_cop:   copVenta,
+    precio_usd:   trm > 0 ? copVenta / trm : 0,  // referencial
     trm,
-    precio_venta: usd * trm,  // alias para compatibilidad
+    precio_venta: copVenta,
     costo_usd:    parseFloat(gv('v-costo-usd'))||0,
-    envio_int_usd:parseFloat(gv('v-envio-int-usd'))||0,
+    envio_int_usd:parseFloat(gv('v-envio-int-usd'))||0,  // COP si ML/Aguachica, USD si Servientrega
     estado:       'pendiente',
     fecha_registro: new Date().toISOString(),
   });
@@ -1633,11 +1731,11 @@ function loadDemo() {
   const d = (n) => { const x=new Date(); x.setDate(x.getDate()-n); return x.toISOString().slice(0,10); };
   const trm = TRM_ACTUAL||4000;
   const ventas = [
-    { id:'v1',id_ml:'2000015788963928',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:d(-2),cliente:'Pedro García',telefono:'3001234567',producto:'Oxiclean Polvo Quitamanchas 5 Lbs',udes:1,precio_usd:22.5,trm,costo_usd:8.0,envio_int_usd:5.49,envio_extra:0,envio_tipo:'ml',estado:'entregado',precio_venta:22.5*trm,fecha_registro:new Date().toISOString() },
-    { id:'v2',id_ml:'2000015794128036',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:'',cliente:'María López',telefono:'3109876543',producto:'Vasagle Mesa Auxiliar Alta 3 Niveles',udes:1,precio_usd:85.0,trm,costo_usd:38.0,envio_int_usd:14.15,envio_extra:0,envio_tipo:'servientrega',estado:'en_camino',precio_venta:85.0*trm,fecha_registro:new Date().toISOString() },
-    { id:'v3',id_ml:'2000015801707076',tienda_id:'t2',fecha_venta:d(3),fecha_entrega:d(-1),cliente:'Carlos Rueda',telefono:'3154445566',producto:'Herbalista Té De Hierbas Viral 2 Oz',udes:2,precio_usd:12.0,trm,costo_usd:4.5,envio_int_usd:0.13,envio_extra:8000,envio_tipo:'aguachica',estado:'entregado',precio_venta:12.0*trm,fecha_registro:new Date().toISOString() },
-    { id:'v4',id_ml:'2000015812811546',tienda_id:'t2',fecha_venta:d(1),fecha_entrega:'',cliente:'Ana Herrera',telefono:'3002223344',producto:'Cascade Power Dry Abrillantador Lavavajillas 16 Fl',udes:1,precio_usd:18.5,trm,costo_usd:7.0,envio_int_usd:1.19,envio_extra:0,envio_tipo:'ml',estado:'pendiente',precio_venta:18.5*trm,fecha_registro:new Date().toISOString() },
-    { id:'v5',id_ml:'2000015822334455',tienda_id:'t3',fecha_venta:d(5),fecha_entrega:d(1),cliente:'Jorge Torres',telefono:'3178889900',producto:'Camiseta Polo Premium Hombre',udes:2,precio_usd:35.0,trm,costo_usd:15.0,envio_int_usd:3.5,envio_extra:12000,envio_tipo:'servientrega',estado:'problema',precio_venta:35.0*trm,fecha_registro:new Date().toISOString() },
+    { id:'v1',id_ml:'2000015788963928',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:d(-2),cliente:'Pedro García',telefono:'3001234567',producto:'Oxiclean Polvo Quitamanchas 5 Lbs',udes:1,precio_cop:22.5*trm,precio_usd:22.5,trm,costo_usd:8.0,envio_int_usd:5.49,envio_extra:0,envio_tipo:'ml',estado:'entregado',precio_venta:22.5*trm,fecha_registro:new Date().toISOString() },
+    { id:'v2',id_ml:'2000015794128036',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:'',cliente:'María López',telefono:'3109876543',producto:'Vasagle Mesa Auxiliar Alta 3 Niveles',udes:1,precio_cop:85.0*trm,precio_usd:85.0,trm,costo_usd:38.0,envio_int_usd:14.15,envio_extra:0,envio_tipo:'servientrega',estado:'en_camino',precio_venta:85.0*trm,fecha_registro:new Date().toISOString() },
+    { id:'v3',id_ml:'2000015801707076',tienda_id:'t2',fecha_venta:d(3),fecha_entrega:d(-1),cliente:'Carlos Rueda',telefono:'3154445566',producto:'Herbalista Té De Hierbas Viral 2 Oz',udes:2,precio_cop:12.0*trm,precio_usd:12.0,trm,costo_usd:4.5,envio_int_usd:0.13,envio_extra:8000,envio_tipo:'aguachica',estado:'entregado',precio_venta:12.0*trm,fecha_registro:new Date().toISOString() },
+    { id:'v4',id_ml:'2000015812811546',tienda_id:'t2',fecha_venta:d(1),fecha_entrega:'',cliente:'Ana Herrera',telefono:'3002223344',producto:'Cascade Power Dry Abrillantador Lavavajillas 16 Fl',udes:1,precio_cop:18.5*trm,precio_usd:18.5,trm,costo_usd:7.0,envio_int_usd:1.19,envio_extra:0,envio_tipo:'ml',estado:'pendiente',precio_venta:18.5*trm,fecha_registro:new Date().toISOString() },
+    { id:'v5',id_ml:'2000015822334455',tienda_id:'t3',fecha_venta:d(5),fecha_entrega:d(1),cliente:'Jorge Torres',telefono:'3178889900',producto:'Camiseta Polo Premium Hombre',udes:2,precio_cop:35.0*trm,precio_usd:35.0,trm,costo_usd:15.0,envio_int_usd:3.5,envio_extra:12000,envio_tipo:'servientrega',estado:'problema',precio_venta:35.0*trm,fecha_registro:new Date().toISOString() },
   ];
   const problemas = [
     { id:'p1',venta_id:'v5',id_ml_venta:'2000015822334455',producto:'Camiseta Polo Premium Hombre',tienda_id:'t3',fecha:d(3),tipo:'producto_danado',tipo_label:'Producto dañado',descripcion:'El cliente reportó que llegó una camiseta con el cuello roto y manchada.',solucion:'Se abrió caso en ML. Esperando resolución de mediación.',estado:'abierto',valor_perdida:0,fecha_registro:new Date().toISOString() },
@@ -1670,8 +1768,9 @@ async function init() {
   // Botón nueva venta topbar
   document.getElementById('btn-nueva-venta').addEventListener('click',()=>openModalVenta());
 
-  // Cerrar modales al click en overlay
+  // Cerrar modales al click en overlay — excepto modal-venta (registro de ventas)
   document.querySelectorAll('.overlay').forEach(o=>{
+    if(o.id === 'modal-venta') return; // no cerrar al hacer clic afuera
     o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
   });
 
