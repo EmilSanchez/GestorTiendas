@@ -503,11 +503,37 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="c-dim" style="font-size:12px;">Control de saldos, pagos y gastos operativos del mes</div>
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" onclick="renderFinanzas()">🔄 Actualizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalNuevaBilletera()">+ Billetera</button>
         <button class="btn btn-primary btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
       </div>
 
       <!-- Saldos actuales -->
       <div class="stat-grid" id="fin-saldos" style="margin-bottom:16px;"></div>
+
+      <!-- Resumen envíos del mes -->
+      <div class="card mb16" style="margin-bottom:14px;" id="fin-envios-card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🚚 Envíos del mes</div>
+            <div class="card-sub" id="fin-envios-sub">Total pagado en envíos este mes</div>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;">
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Validados</div>
+              <div id="fin-envios-validados" style="font-size:18px;font-weight:700;color:var(--green);">$0</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Pendientes (est.)</div>
+              <div id="fin-envios-pendientes" style="font-size:18px;font-weight:700;color:var(--yellow);">$0</div>
+            </div>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Total envíos</div>
+              <div id="fin-envios-total" style="font-size:22px;font-weight:700;color:var(--teal);">$0</div>
+            </div>
+          </div>
+        </div>
+        <div id="fin-envios-detalle" style="font-size:11px;color:var(--text3);"></div>
+      </div>
 
       <!-- Membresía Centris -->
       <div class="card mb16" style="margin-bottom:14px;">
@@ -613,10 +639,10 @@ thead{position:sticky;top:0;z-index:1;}
         </div>
         <div class="fg">
           <label class="fl2">TRM del día (COP x USD)
-            <span id="trm-auto-badge" style="font-size:9px;background:var(--teal-bg);color:var(--teal);padding:1px 5px;border-radius:3px;margin-left:4px;">AUTO</span>
+            <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span>
           </label>
-          <input type="number" id="v-trm" placeholder="Cargando..." oninput="recalcVenta();actualizarDesglloseTRM()">
-          <div id="trm-desglose" style="font-size:10px;color:var(--text3);margin-top:3px;"></div>
+          <input type="number" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()">
+          <div id="trm-desglose" style="font-size:10px;color:var(--text3);margin-top:3px;">Ingresa el TRM manualmente según la tasa del día</div>
         </div>
         <div class="fg">
           <label class="fl2">Costo del producto (USD$) *
@@ -655,13 +681,13 @@ thead{position:sticky;top:0;z-index:1;}
           </select>
         </div>
         <div class="fg">
-          <label class="fl2">Valor pagado (COP$)</label>
+          <label class="fl2">Valor pagado en Amazon (COP$) <small class="c-dim">— costo real pagado</small></label>
           <input type="number" id="v-monto-pago" placeholder="0" step="1" oninput="recalcFuente()">
           <div style="font-size:10px;color:var(--text3);margin-top:2px;" id="v-fuente-saldo-info"></div>
         </div>
         <div class="fg">
-          <label class="fl2">Referencia / Concepto</label>
-          <input type="text" id="v-ref-pago" placeholder="Ej: compra Amazon #123">
+          <label class="fl2">Referencia <small class="c-dim">— N° de venta #ID</small></label>
+          <input type="text" id="v-ref-pago" placeholder="Ej: #2000015788963928">
         </div>
       </div>
 
@@ -935,6 +961,36 @@ thead{position:sticky;top:0;z-index:1;}
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL: NUEVA BILLETERA ═══════════════════ -->
+<div class="overlay" id="modal-billetera">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-title">Nueva Billetera / Cuenta</div>
+      <button class="mclose" onclick="closeModal('modal-billetera')">✕</button>
+    </div>
+    <div class="mc">
+      <div class="grid2">
+        <div class="fg span2">
+          <label class="fl2">Nombre de la billetera *</label>
+          <input type="text" id="bw-nombre" placeholder="Ej: Wompi, PayU, Bancolombia Ahorro...">
+        </div>
+        <div class="fg">
+          <label class="fl2">Ícono (emoji)</label>
+          <input type="text" id="bw-icono" placeholder="💳" maxlength="4" style="font-size:20px;text-align:center;">
+        </div>
+        <div class="fg">
+          <label class="fl2">Saldo inicial (COP$)</label>
+          <input type="number" id="bw-saldo" placeholder="0" step="1">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-billetera')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNuevaBilletera()">💾 Agregar Billetera</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // ═══════════════════════════════════════════════════════
 //  MERCAMANAGER v3 — JavaScript
@@ -975,6 +1031,8 @@ const DB = {
   deleteVenta:    id => DB.saveVentas(DB.ventas().filter(v=>v.id!==id)),
   deleteProblema: id => DB.saveProblemas(DB.problemas().filter(p=>p.id!==id)),
   deleteMovimiento: id => DB.saveMovimientos(DB.movimientos().filter(m=>m.id!==id)),
+  billeteras:     () => DB.g('billeteras'),
+  saveBilleteras: d => DB.s('billeteras',d),
 };
 
 // ── TRM AUTOMÁTICO ──
@@ -984,25 +1042,20 @@ let TRM_CARGADO = false;
 
 async function cargarTRM() {
   const elText  = document.getElementById('trm-text');
-  const elInput = document.getElementById('v-trm');
 
-  const MARGEN = 150; // margen operativo fijo
+  const MARGEN = 150;
 
-  // Intentamos varias fuentes en orden de confiabilidad
   const fuentes = [
-    // 1. Frankfurter (Banco Central Europeo — muy preciso, actualizado diario)
     async () => {
       const r = await fetch('https://api.frankfurter.app/latest?from=USD&to=COP');
       const d = await r.json();
       return Math.round(d.rates.COP);
     },
-    // 2. ExchangeRate-API (respaldo)
     async () => {
       const r = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
       const d = await r.json();
       return Math.round(d.rates.COP);
     },
-    // 3. Open Exchange Rates (respaldo secundario)
     async () => {
       const r = await fetch('https://open.er-api.com/v6/latest/USD');
       const d = await r.json();
@@ -1013,36 +1066,22 @@ async function cargarTRM() {
   for(const fn of fuentes) {
     try {
       const base = await fn();
-      if(base > 3000 && base < 8000) { // rango válido COP
+      if(base > 3000 && base < 8000) {
         TRM_BASE   = base;
         TRM_ACTUAL = base + MARGEN;
         TRM_CARGADO = true;
-        if(elText) elText.textContent = `TRM: ${fmt(TRM_ACTUAL)} (+$${MARGEN})`;
-        if(elInput && !elInput.value) elInput.value = TRM_ACTUAL;
-        const badge = document.getElementById('trm-auto-badge');
-        if(badge) badge.textContent = '✓ AUTO';
-        actualizarDesglloseTRM();
+        if(elText) elText.textContent = `TRM ref: ${fmt(TRM_ACTUAL)}`;
+        // NO llenamos el campo v-trm automáticamente; el usuario lo ingresa
         return;
       }
-    } catch(e) { /* siguiente fuente */ }
+    } catch(e) {}
   }
 
-  // Todas fallaron — modo manual
-  if(elText) elText.textContent = `TRM manual (sin conexión)`;
-  if(elInput && !elInput.value) elInput.value = TRM_ACTUAL;
-  const badge = document.getElementById('trm-auto-badge');
-  if(badge) { badge.textContent = '⚠ MANUAL'; badge.style.background='var(--yellow-bg)'; badge.style.color='var(--yellow)'; }
-  actualizarDesglloseTRM();
+  if(elText) elText.textContent = `TRM (sin conexión)`;
 }
 
 function actualizarDesglloseTRM() {
-  const el = document.getElementById('trm-desglose');
-  if(!el) return;
-  const trm  = parseFloat(document.getElementById('v-trm')?.value) || TRM_ACTUAL;
-  const base = TRM_BASE || (trm - 150);
-  const margen = trm - base;
-  el.innerHTML = `<span style="color:var(--text2);">Dólar oficial: <b>${fmt(base)}</b></span>`
-    + `<span style="margin-left:6px;color:var(--teal);">+ $${margen.toLocaleString('es-CO')} margen = <b style="color:var(--teal-dark)">${fmt(trm)}</b></span>`;
+  // Mantener por compatibilidad, ya no muestra desglose auto
 }
 
 // ── CÁLCULO DE GANANCIA ──
@@ -1160,6 +1199,7 @@ function renderFinanzas() {
   const movs    = DB.movimientos();
   const mems    = DB.membresias();
   const saldos  = DB.saldos();
+  const bwExtra = DB.billeteras(); // billeteras personalizadas
 
   // Poblar selector de mes
   const mesEl = document.getElementById('fin-filtro-mes');
@@ -1169,17 +1209,37 @@ function renderFinanzas() {
   }
   const mesAct = mesEl?.value || mes();
 
-  // ── Saldos ──
-  const fuentes = ['mercadopago','bancolombia','nequi','daviplata','efectivo','tarjeta_credito'];
-  document.getElementById('fin-saldos').innerHTML = fuentes.map(f=>{
-    const s = parseFloat(saldos[f])||0;
-    return `<div class="stat-card ${s<0?'red':s===0?'yellow':'green'}" style="cursor:pointer;" onclick="openModalSaldo('${f}')">
-      <div class="stat-icon">${FUENTES_ICON[f]}</div>
-      <div class="stat-label">${FUENTES_LABEL[f]}</div>
+  // ── Saldos — fuentes base + billeteras personalizadas ──
+  const fuentesBase = ['mercadopago','bancolombia','nequi','daviplata','efectivo','tarjeta_credito'];
+  const fuentesTodas = [
+    ...fuentesBase.map(f=>({ key:f, label:FUENTES_LABEL[f], icon:FUENTES_ICON[f] })),
+    ...bwExtra.map(b=>({ key:b.id, label:b.nombre, icon:b.icono||'💳', custom:true, id:b.id })),
+  ];
+  document.getElementById('fin-saldos').innerHTML = fuentesTodas.map(f=>{
+    const s = parseFloat(saldos[f.key])||0;
+    return `<div class="stat-card ${s<0?'red':s===0?'yellow':'green'}" style="cursor:pointer;" onclick="openModalSaldo('${f.key}')">
+      <div class="stat-icon">${f.icon}</div>
+      <div class="stat-label">${f.label}</div>
       <div class="stat-value ${s<0?'red':s===0?'yellow':'green'}">${fmt(s)}</div>
-      <div class="stat-delta">Click para editar saldo</div>
+      <div class="stat-delta">${f.custom?`<button class="btn btn-danger btn-sm" style="font-size:9px;padding:1px 5px;margin-top:2px;" onclick="event.stopPropagation();deleteBilletera('${f.id}')">🗑 Eliminar</button>`:'Click para editar saldo'}</div>
     </div>`;
   }).join('');
+
+  // ── Envíos del mes ──
+  const ventasMes = DB.ventas().filter(v=>v.fecha_venta?.startsWith(mesAct));
+  const enviosValidados = ventasMes.filter(v=>v.envio_validado).reduce((s,v)=>s+(v.envio_real_cop||0),0);
+  const enviosPendientes = ventasMes.filter(v=>!v.envio_validado && v.envio_int_usd>0)
+    .reduce((s,v)=>s+(v.envio_estimado_cop||v.envio_int_usd||0),0);
+  const enviosTotal = enviosValidados + enviosPendientes;
+  const enviosCount = ventasMes.filter(v=>v.envio_int_usd>0).length;
+  document.getElementById('fin-envios-validados').textContent = fmt(enviosValidados);
+  document.getElementById('fin-envios-pendientes').textContent = fmt(enviosPendientes);
+  document.getElementById('fin-envios-total').textContent = fmt(enviosTotal);
+  document.getElementById('fin-envios-sub').textContent = `${enviosCount} envío(s) registrado(s) en ${mesAct}`;
+  document.getElementById('fin-envios-detalle').innerHTML = enviosCount
+    ? `<span style="color:var(--green);">✅ ${ventasMes.filter(v=>v.envio_validado).length} validados</span>
+       <span style="margin-left:12px;color:var(--yellow);">⏳ ${ventasMes.filter(v=>!v.envio_validado&&v.envio_int_usd>0).length} pendientes de confirmar</span>`
+    : '<span style="color:var(--text3);">Sin envíos registrados este mes</span>';
 
   // ── Membresía Centris ──
   const memMes = mems.filter(m=>m.mes===mesAct);
@@ -1236,7 +1296,7 @@ function renderFinanzas() {
     const net = d.ing - d.egr;
     return `<div style="padding:8px 0;border-bottom:1px solid var(--border);">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px;">
-        <span style="font-size:12px;font-weight:600;">${FUENTES_ICON[f]} ${FUENTES_LABEL[f]||f}</span>
+        <span style="font-size:12px;font-weight:600;">${FUENTES_ICON[f]||'💳'} ${FUENTES_LABEL[f]||f}</span>
         <span class="mono fw7" style="color:${net>=0?'var(--green)':'var(--red)'};">${net>=0?'+':''}${fmt(net)}</span>
       </div>
       <div style="font-size:10px;color:var(--text3);display:flex;gap:12px;">
@@ -1245,6 +1305,61 @@ function renderFinanzas() {
       </div>
     </div>`;
   }).join('') : '<div class="c-dim" style="font-size:12px;padding:16px 0;text-align:center;">Sin movimientos este mes</div>';
+}
+
+// ── BILLETERAS PERSONALIZADAS ──
+function openModalNuevaBilletera() {
+  sv('bw-nombre',''); sv('bw-icono','💳'); sv('bw-saldo','');
+  openModal('modal-billetera');
+}
+function saveNuevaBilletera() {
+  const nombre = gv('bw-nombre').trim();
+  if(!nombre){ alert('El nombre es requerido.'); return; }
+  const icono  = gv('bw-icono').trim() || '💳';
+  const saldo  = parseFloat(gv('bw-saldo')) || 0;
+  const id     = 'bw_' + uid();
+  const bws    = DB.billeteras();
+  bws.push({ id, nombre, icono, fecha:hoy() });
+  DB.saveBilleteras(bws);
+  // Guardar saldo inicial
+  const saldos = DB.saldos();
+  saldos[id] = saldo;
+  DB.saveSaldos(saldos);
+  // Agregar a FUENTES_LABEL e ICON para movimientos
+  FUENTES_LABEL[id] = nombre;
+  FUENTES_ICON[id]  = icono;
+  closeModal('modal-billetera');
+  renderFinanzas();
+  // Actualizar selects de fuente de pago en modal venta y movimiento
+  actualizarSelectsFuente();
+}
+function deleteBilletera(id) {
+  const bws = DB.billeteras();
+  const bw  = bws.find(x=>x.id===id);
+  if(!bw) return;
+  if(!confirm(`¿Eliminar la billetera "${bw.nombre}"? El saldo se perderá.`)) return;
+  DB.saveBilleteras(bws.filter(x=>x.id!==id));
+  const saldos = DB.saldos();
+  delete saldos[id];
+  DB.saveSaldos(saldos);
+  delete FUENTES_LABEL[id];
+  delete FUENTES_ICON[id];
+  renderFinanzas();
+  actualizarSelectsFuente();
+}
+function actualizarSelectsFuente() {
+  const bws = DB.billeteras();
+  const baseOpts = [
+    ['mercadopago','💳 Mercado Pago'],['bancolombia','🏦 Bancolombia'],
+    ['nequi','📱 Nequi'],['daviplata','📱 Daviplata'],
+    ['efectivo','💵 Efectivo'],['tarjeta_credito','💳 Tarjeta de crédito'],['otro','🔄 Otro'],
+  ];
+  const extraOpts = bws.map(b=>[b.id, `${b.icono||'💳'} ${b.nombre}`]);
+  const allOpts   = [...baseOpts, ...extraOpts].map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+  ['v-fuente-pago','mov-fuente'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){ const cur=el.value; el.innerHTML=`<option value="">— Seleccionar —</option>`+allOpts; el.value=cur; }
+  });
 }
 
 function openModalMovimiento(id) {
@@ -1488,6 +1603,19 @@ function toggleEstadoTienda(id) {
   }
 }
 
+function deleteTienda(id) {
+  const t = DB.tiendas().find(x=>x.id===id);
+  if(!t) return;
+  const ventasAsociadas = DB.ventas().filter(v=>v.tienda_id===id).length;
+  const msg = ventasAsociadas > 0
+    ? `⚠️ La tienda "${t.nombre}" tiene ${ventasAsociadas} venta(s) asociada(s).\n¿Seguro que deseas eliminarla? Las ventas no se borrarán.`
+    : `¿Eliminar la tienda "${t.nombre}"?`;
+  if(!confirm(msg)) return;
+  DB.saveTiendas(DB.tiendas().filter(x=>x.id!==id));
+  populateSelects();
+  renderTiendas();
+}
+
 function editarMPSaldo(tiendaId) {
   const saldos = DB.saldos();
   const mpKey  = 'mercadopago_' + tiendaId;
@@ -1552,6 +1680,7 @@ function renderTiendas() {
           ${isActive?'⏸ Desactivar':'▶️ Activar'}
         </button>
         <button class="btn btn-ghost btn-sm" onclick="editarMPSaldo('${t.id}')">💰 Saldo MP</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTienda('${t.id}')">🗑 Eliminar</button>
       </div>
     </div>`;
   }).join('');
@@ -1592,7 +1721,7 @@ function openModalVenta(id) {
      'v-fuente-pago','v-monto-pago','v-ref-pago','v-envio-real'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-fecha-entrega',''); sv('v-udes',1);
     sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
-    sv('v-trm', TRM_ACTUAL);
+    sv('v-trm', '');  // TRM vacío — el usuario lo ingresa manualmente
     sv('v-envio-estimado','');
     recalcValidacionEnvio();
   }
@@ -1872,9 +2001,15 @@ function renderVentas() {
       <td style="font-size:11px;text-align:center;">
         <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'pendiente':'entregado'}">${envioLabel}</span>
         ${v.envio_extra>0?`<div class="mono" style="font-size:9px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
-        ${(v.envio_tipo==='aguachica'||v.envio_tipo==='servientrega') && !v.envio_validado && v.envio_int_usd > 0
-          ? `<div style="margin-top:2px;"><button class="btn btn-sm" style="font-size:9px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">⚠️ Validar</button></div>`
-          : v.envio_validado ? `<div style="font-size:9px;color:var(--green);margin-top:2px;">✅ Validado</div>` : ''
+        ${(v.envio_tipo==='aguachica'||v.envio_tipo==='servientrega') && v.envio_int_usd > 0
+          ? v.envio_validado
+            ? `<div style="margin-top:2px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--green);">✅ ${fmt(v.envio_real_cop||v.envio_estimado_cop)}</div>`
+            : `<div style="margin-top:2px;">
+                <button class="btn btn-sm" style="font-size:9px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">
+                  ⚠️ ${fmt(v.envio_estimado_cop||v.envio_int_usd)}
+                </button>
+               </div>`
+          : ''
         }
       </td>
       <td>
@@ -2291,6 +2426,12 @@ function loadDemo() {
 
 // ── INIT ──
 async function init() {
+  // Cargar billeteras personalizadas en maps globales
+  DB.billeteras().forEach(b=>{
+    FUENTES_LABEL[b.id] = b.nombre;
+    FUENTES_ICON[b.id]  = b.icono||'💳';
+  });
+
   // Cargar TRM primero
   await cargarTRM();
 
@@ -2299,7 +2440,7 @@ async function init() {
 
   // Fecha en topbar
   document.getElementById('trm-display').title =
-    'Tipo de cambio USD/COP actualizado automáticamente (+$150 margen operativo)';
+    'TRM de referencia — ingresa el valor manualmente al registrar ventas';
 
   // Poblar selects
   populateSelects();
@@ -2316,6 +2457,12 @@ async function init() {
   document.querySelectorAll('.overlay').forEach(o=>{
     if(o.id === 'modal-venta') return; // no cerrar al hacer clic afuera
     o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); });
+  });
+
+  // Auto-rellenar referencia con ID de venta
+  document.getElementById('v-id')?.addEventListener('input', function(){
+    const refEl = document.getElementById('v-ref-pago');
+    if(refEl && !refEl.value) refEl.value = this.value ? '#' + this.value : '';
   });
 
   // Filtros ventas live
