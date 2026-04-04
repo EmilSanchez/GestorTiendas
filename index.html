@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MeLi Manager</title>
+<title>Meli Manager — Control de Ventas ML</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ==============================================
-   MERCAMANAGER v6 — Tipografía y paleta renovada
+   MELI MANAGER v6 — Tipografía y paleta renovada
    ============================================== */
 :root {
   --teal:        #00897b;
@@ -335,7 +335,7 @@ thead{position:sticky;top:0;z-index:1;}
   <div class="sb-logo">
     <div class="sb-logo-icon">📦</div>
     <div>
-      <div class="sb-logo-name">MeLi Manager</div>
+      <div class="sb-logo-name">Meli Manager</div>
       <div class="sb-logo-sub">Control ML</div>
     </div>
   </div>
@@ -511,24 +511,33 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="card-header">
           <div>
             <div class="card-title">🚚 Envíos del mes</div>
-            <div class="card-sub" id="fin-envios-sub">Total pagado en envíos este mes</div>
+            <div class="card-sub" id="fin-envios-sub">Desglosado por transportadora</div>
           </div>
-          <div style="display:flex;gap:16px;align-items:center;">
-            <div style="text-align:right;">
-              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Validados</div>
-              <div id="fin-envios-validados" style="font-size:18px;font-weight:700;color:var(--green);">$0</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Pendientes (est.)</div>
-              <div id="fin-envios-pendientes" style="font-size:18px;font-weight:700;color:var(--yellow);">$0</div>
-            </div>
-            <div style="text-align:right;">
-              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Total envíos</div>
-              <div id="fin-envios-total" style="font-size:22px;font-weight:700;color:var(--teal);">$0</div>
-            </div>
+          <div style="text-align:right;">
+            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Total envíos</div>
+            <div id="fin-envios-total" style="font-size:22px;font-weight:700;color:var(--teal);">$0</div>
           </div>
         </div>
-        <div id="fin-envios-detalle" style="font-size:11px;color:var(--text3);"></div>
+        <!-- Bloques por transportadora -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+          <!-- Aguachica -->
+          <div style="background:#f0f9f8;border:1px solid #b8d8d8;border-radius:var(--radius-lg);padding:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;">🏍 Aguachica</span>
+              <span id="fin-env-ag-total" style="font-size:16px;font-weight:700;color:var(--teal);">$0</span>
+            </div>
+            <div id="fin-env-ag-detalle" style="font-size:11px;color:var(--text2);max-height:160px;overflow-y:auto;"></div>
+          </div>
+          <!-- Servientrega -->
+          <div style="background:#f5f0ff;border:1px solid #d8c8f0;border-radius:var(--radius-lg);padding:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <span style="font-size:11px;font-weight:700;color:#6a3ec2;text-transform:uppercase;letter-spacing:.5px;">📦 Servientrega</span>
+              <span id="fin-env-sv-total" style="font-size:16px;font-weight:700;color:#6a3ec2;">$0</span>
+            </div>
+            <div id="fin-env-sv-detalle" style="font-size:11px;color:var(--text2);max-height:160px;overflow-y:auto;"></div>
+          </div>
+        </div>
+        <div id="fin-envios-detalle" style="font-size:11px;color:var(--text3);padding-top:4px;border-top:1px dashed var(--border);"></div>
       </div>
 
       <!-- Membresía Centris -->
@@ -993,7 +1002,7 @@ thead{position:sticky;top:0;z-index:1;}
 
 <script>
 // ═══════════════════════════════════════════════════════
-//  MERCAMANAGER v3 — JavaScript
+//  MELI MANAGER v3 — JavaScript
 //  Diseño Centris · Firebase Firestore · TRM automático
 // ═══════════════════════════════════════════════════════
 
@@ -1321,20 +1330,60 @@ async function renderFinanzas() {
     </div>`;
   }).join('');
 
-  // ── Envíos del mes ──
+  // ── Envíos del mes — desglosado por transportadora ──
   const ventasMes = (await DB.ventas()).filter(v=>v.fecha_venta?.startsWith(mesAct));
-  const enviosValidados = ventasMes.filter(v=>v.envio_validado).reduce((s,v)=>s+(v.envio_real_cop||0),0);
-  const enviosPendientes = ventasMes.filter(v=>!v.envio_validado && v.envio_int_usd>0)
-    .reduce((s,v)=>s+(v.envio_estimado_cop||v.envio_int_usd||0),0);
-  const enviosTotal = enviosValidados + enviosPendientes;
-  const enviosCount = ventasMes.filter(v=>v.envio_int_usd>0).length;
-  document.getElementById('fin-envios-validados').textContent = fmt(enviosValidados);
-  document.getElementById('fin-envios-pendientes').textContent = fmt(enviosPendientes);
+  const tiendas__ = await DB.tiendas();
+  const _tNombre  = (id) => tiendas__.find(x=>x.id===id)?.nombre || id;
+
+  // Separar por tipo
+  const vAg = ventasMes.filter(v=>v.envio_tipo==='aguachica'    && v.envio_int_usd>0);
+  const vSv = ventasMes.filter(v=>v.envio_tipo==='servientrega' && v.envio_int_usd>0);
+
+  // Calcular valor efectivo de cada venta (real si validado, estimado si no)
+  const _envVal = v => v.envio_validado ? (v.envio_real_cop||0) : (v.envio_estimado_cop||v.envio_int_usd||0);
+
+  const totalAg = vAg.reduce((s,v)=>s+_envVal(v), 0);
+  const totalSv = vSv.reduce((s,v)=>s+_envVal(v), 0);
+  const enviosTotal = totalAg + totalSv;
+  const enviosCount = vAg.length + vSv.length;
+
   document.getElementById('fin-envios-total').textContent = fmt(enviosTotal);
-  document.getElementById('fin-envios-sub').textContent = `${enviosCount} envío(s) registrado(s) en ${mesAct}`;
+  document.getElementById('fin-env-ag-total').textContent = fmt(totalAg);
+  document.getElementById('fin-env-sv-total').textContent = fmt(totalSv);
+  document.getElementById('fin-envios-sub').textContent   = `${enviosCount} envío(s) en ${mesAct}`;
+
+  // Fila de detalle por venta
+  const _filaEnvio = v => {
+    const val   = _envVal(v);
+    const est   = v.envio_estimado_cop || v.envio_int_usd || 0;
+    const badge = v.envio_validado
+      ? `<span style="color:var(--green);font-weight:700;">✅ ${fmt(val)}</span>`
+      : `<span style="color:var(--yellow);font-weight:700;">⏳ ~${fmt(est)}</span>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;
+              padding:4px 0;border-bottom:1px dashed #e0eaea;">
+      <div>
+        <div style="font-weight:600;font-size:11px;">${v.producto?.slice(0,32)||'—'}</div>
+        <div style="color:var(--text3);font-size:10px;">${_tNombre(v.tienda_id)} · ${v.fecha_venta||''}</div>
+      </div>
+      ${badge}
+    </div>`;
+  };
+
+  const agHTML = vAg.length
+    ? vAg.map(_filaEnvio).join('')
+    : '<div style="color:var(--text3);padding:4px 0;">Sin envíos Aguachica</div>';
+  const svHTML = vSv.length
+    ? vSv.map(_filaEnvio).join('')
+    : '<div style="color:var(--text3);padding:4px 0;">Sin envíos Servientrega</div>';
+
+  document.getElementById('fin-env-ag-detalle').innerHTML = agHTML;
+  document.getElementById('fin-env-sv-detalle').innerHTML = svHTML;
+
+  const validados  = ventasMes.filter(v=>v.envio_validado && v.envio_int_usd>0).length;
+  const pendientes = ventasMes.filter(v=>!v.envio_validado && v.envio_int_usd>0).length;
   document.getElementById('fin-envios-detalle').innerHTML = enviosCount
-    ? `<span style="color:var(--green);">✅ ${ventasMes.filter(v=>v.envio_validado).length} validados</span>
-       <span style="margin-left:12px;color:var(--yellow);">⏳ ${ventasMes.filter(v=>!v.envio_validado&&v.envio_int_usd>0).length} pendientes de confirmar</span>`
+    ? `<span style="color:var(--green);">✅ ${validados} validado(s)</span>
+       <span style="margin-left:14px;color:var(--yellow);">⏳ ${pendientes} pendiente(s) de confirmar</span>`
     : '<span style="color:var(--text3);">Sin envíos registrados este mes</span>';
 
   // ── Membresía Centris ──
@@ -2459,7 +2508,7 @@ function showSpinner(msg='Cargando...') {
   }
   el.innerHTML = `<div style="font-size:38px;animation:pulse 1.5s infinite;">🔥</div>
     <div style="font-size:14px;font-weight:700;color:#00897b;">${msg}</div>
-    <div style="font-size:11px;color:#8aabaa;">MercaManager</div>`;
+    <div style="font-size:11px;color:#8aabaa;">Meli Manager</div>`;
 }
 function hideSpinner() {
   const el = document.getElementById('_fb_spinner');
