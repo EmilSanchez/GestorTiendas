@@ -4,157 +4,167 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MercaManager — Control de Ventas ML</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 /* ==============================================
-   PALETA CENTRIS: teal oscuro + blanco + grises
+   MERCAMANAGER v6 — Tipografía y paleta renovada
    ============================================== */
 :root {
-  --teal:        #2a7a7b;
-  --teal-dark:   #1d5e5f;
-  --teal-light:  #3a9a9b;
-  --teal-bg:     #e8f4f4;
-  --sidebar-bg:  #1a2a2b;
-  --sidebar-item:#243536;
+  --teal:        #00897b;
+  --teal-dark:   #00695c;
+  --teal-light:  #26a69a;
+  --teal-bg:     #e0f2f1;
+  --sidebar-bg:  #0f1f1e;
+  --sidebar-item:#1a3332;
   --white:       #ffffff;
-  --bg:          #f2f4f5;
+  --bg:          #f0f4f4;
   --card:        #ffffff;
-  --border:      #dde3e5;
-  --text:        #1c2b2c;
-  --text2:       #506162;
-  --text3:       #9aadae;
-  --green:       #1e7e4b;
-  --green-bg:    #d4edda;
-  --red:         #a01c28;
-  --red-bg:      #f8d7da;
-  --yellow:      #856404;
-  --yellow-bg:   #fff3cd;
+  --border:      #d8e4e3;
+  --text:        #0d2020;
+  --text2:       #476060;
+  --text3:       #8aabaa;
+  --green:       #1b7e4a;
+  --green-bg:    #d1f0e0;
+  --red:         #b0202e;
+  --red-bg:      #fde8ea;
+  --yellow:      #7d5c00;
+  --yellow-bg:   #fff8e1;
   --orange:      #8a4000;
-  --orange-bg:   #ffe5cc;
-  --radius:      4px;
-  --radius-lg:   6px;
-  --shadow:      0 1px 3px rgba(0,0,0,0.08);
-  --sidebar-w:   210px;
+  --orange-bg:   #fff3e0;
+  --radius:      6px;
+  --radius-lg:   10px;
+  --shadow:      0 2px 8px rgba(0,137,123,0.07), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:   0 4px 16px rgba(0,137,123,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  --sidebar-w:   218px;
+  --font:        'DM Sans', system-ui, sans-serif;
+  --font-mono:   'DM Mono', 'Courier New', monospace;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:14px}
-body{font-family:"Segoe UI",system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
+body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:#bcc8c9;border-radius:3px}
+::-webkit-scrollbar-thumb{background:#9abfbe;border-radius:3px}
 
 /* ── SIDEBAR ── */
 #sidebar{
   width:var(--sidebar-w);background:var(--sidebar-bg);
   display:flex;flex-direction:column;flex-shrink:0;
   position:fixed;top:0;left:0;bottom:0;z-index:100;
+  border-right:1px solid rgba(255,255,255,0.05);
 }
 .sb-logo{
-  padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.07);
-  display:flex;align-items:center;gap:10px;
+  padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;gap:11px;
 }
 .sb-logo-icon{
-  width:36px;height:36px;border-radius:8px;
-  background:var(--teal);display:flex;align-items:center;justify-content:center;
-  font-size:18px;flex-shrink:0;
+  width:38px;height:38px;border-radius:10px;
+  background:linear-gradient(135deg,var(--teal),var(--teal-dark));
+  display:flex;align-items:center;justify-content:center;
+  font-size:19px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,137,123,.35);
 }
-.sb-logo-name{font-size:13px;font-weight:700;color:#fff;line-height:1.2;}
-.sb-logo-sub{font-size:9px;color:rgba(255,255,255,0.35);text-transform:uppercase;letter-spacing:.8px;}
+.sb-logo-name{font-size:14px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.2px;}
+.sb-logo-sub{font-size:9px;color:rgba(255,255,255,0.30);text-transform:uppercase;letter-spacing:1px;margin-top:1px;}
 
 .sb-section{padding:16px 10px 2px;}
-.sb-section-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:1.2px;color:rgba(255,255,255,0.28);padding:0 8px 6px;}
+.sb-section-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:rgba(255,255,255,0.22);padding:0 9px 6px;}
 .nav-item{
-  display:flex;align-items:center;gap:9px;padding:8px 10px;
-  border-radius:var(--radius);cursor:pointer;margin-bottom:1px;
-  color:rgba(255,255,255,0.6);font-size:12.5px;transition:background .12s,color .12s;
+  display:flex;align-items:center;gap:9px;padding:8px 11px;
+  border-radius:8px;cursor:pointer;margin-bottom:2px;
+  color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;transition:background .15s,color .15s;
 }
-.nav-item:hover{background:rgba(255,255,255,0.07);color:#fff;}
-.nav-item.active{background:var(--teal);color:#fff;font-weight:600;}
-.nav-item .ni{font-size:14px;width:18px;text-align:center;opacity:.8;}
-.nb{margin-left:auto;background:#c0392b;color:#fff;font-size:9px;font-weight:700;
+.nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.9);}
+.nav-item.active{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(0,137,123,.3);}
+.nav-item .ni{font-size:14px;width:18px;text-align:center;}
+.nb{margin-left:auto;background:#e53935;color:#fff;font-size:9px;font-weight:700;
     padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
-.sb-bottom{margin-top:auto;padding:12px 14px;border-top:1px solid rgba(255,255,255,0.07);}
-.sb-ver{font-size:9px;color:rgba(255,255,255,0.25);text-transform:uppercase;letter-spacing:.5px;}
+.sb-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);}
+.sb-ver{font-size:9px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-mono);}
 
 /* ── MAIN ── */
 #main{margin-left:var(--sidebar-w);flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
 
 .topbar{
   background:var(--white);border-bottom:1px solid var(--border);
-  padding:0 24px;height:52px;display:flex;align-items:center;gap:12px;
-  position:sticky;top:0;z-index:50;
+  padding:0 26px;height:56px;display:flex;align-items:center;gap:12px;
+  position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,137,123,.06);
 }
-.topbar-icon{font-size:18px;margin-right:2px;}
-.topbar-title{font-size:15px;font-weight:700;color:var(--text);flex:1;}
+.topbar-icon{font-size:19px;margin-right:2px;}
+.topbar-title{font-size:16px;font-weight:700;color:var(--text);flex:1;letter-spacing:-.2px;}
 .topbar-sub{font-size:11px;color:var(--text3);margin-top:1px;}
 .topbar-right{display:flex;align-items:center;gap:8px;}
 .trm-badge{
-  display:flex;align-items:center;gap:5px;font-size:11px;
+  display:flex;align-items:center;gap:6px;font-size:11.5px;
   background:var(--teal-bg);color:var(--teal-dark);font-weight:600;
-  padding:4px 10px;border-radius:var(--radius);border:1px solid #b8d8d8;
+  padding:5px 12px;border-radius:20px;border:1px solid rgba(0,137,123,.2);
 }
-.trm-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);}
+.trm-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-#page-content{padding:20px 24px;flex:1;}
+#page-content{padding:22px 26px;flex:1;}
 
 /* ── BOTONES ── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:var(--radius);
-     font-size:12.5px;font-weight:500;cursor:pointer;border:1px solid transparent;font-family:inherit;transition:background .12s;}
-.btn-primary{background:var(--teal);color:#fff;border-color:var(--teal-dark);}
-.btn-primary:hover{background:var(--teal-dark);}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:8px;
+     font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .15s;letter-spacing:-.1px;}
+.btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;border-color:var(--teal-dark);box-shadow:0 2px 6px rgba(0,137,123,.3);}
+.btn-primary:hover{background:linear-gradient(135deg,var(--teal-light),var(--teal));box-shadow:0 3px 10px rgba(0,137,123,.4);}
 .btn-success{background:#198754;color:#fff;border-color:#157347;}
 .btn-success:hover{background:#157347;}
 .btn-danger{background:#dc3545;color:#fff;border-color:#b02a37;}
 .btn-danger:hover{background:#b02a37;}
 .btn-ghost{background:var(--white);color:var(--text2);border:1px solid var(--border);}
-.btn-ghost:hover{background:var(--bg);}
-.btn-sm{padding:4px 9px;font-size:11.5px;}
-.btn-icon{padding:4px;width:26px;height:26px;justify-content:center;}
+.btn-ghost:hover{background:var(--bg);border-color:#b8d0cf;}
+.btn-sm{padding:5px 10px;font-size:11.5px;}
+.btn-icon{padding:4px;width:28px;height:28px;justify-content:center;border-radius:6px;}
 
 /* ── CARDS ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;box-shadow:var(--shadow);}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid var(--border);}
-.card-title{font-size:13px;font-weight:700;color:var(--text);}
-.card-sub{font-size:11px;color:var(--text3);margin-top:1px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
+.card-title{font-size:13.5px;font-weight:700;color:var(--text);letter-spacing:-.1px;}
+.card-sub{font-size:11px;color:var(--text3);margin-top:2px;}
 
 /* ── STAT CARDS ── */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:12px;margin-bottom:20px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
 .stat-card{
   background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:14px 16px;position:relative;overflow:hidden;box-shadow:var(--shadow);
+  padding:16px 18px;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .15s;
 }
-.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
-.stat-card.teal::before{background:var(--teal);}
-.stat-card.green::before{background:#198754;}
-.stat-card.red::before{background:#dc3545;}
-.stat-card.yellow::before{background:#d4a017;}
-.stat-card.orange::before{background:#c0620a;}
-.stat-label{font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
-.stat-value{font-size:19px;font-weight:700;margin:4px 0 2px;}
+.stat-card:hover{box-shadow:var(--shadow-md);}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
+.stat-card.teal::before{background:linear-gradient(90deg,var(--teal),var(--teal-light));}
+.stat-card.green::before{background:linear-gradient(90deg,#198754,#2dc679);}
+.stat-card.red::before{background:linear-gradient(90deg,#dc3545,#e8606e);}
+.stat-card.yellow::before{background:linear-gradient(90deg,#d4a017,#f0c040);}
+.stat-card.orange::before{background:linear-gradient(90deg,#c0620a,#e07a30);}
+.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
+.stat-value{font-size:20px;font-weight:700;margin:5px 0 3px;letter-spacing:-.5px;}
 .stat-value.teal{color:var(--teal);}
 .stat-value.green{color:#198754;}
 .stat-value.red{color:#842029;}
 .stat-value.yellow{color:#856404;}
-.stat-delta{font-size:10px;color:var(--text3);}
-.stat-icon{position:absolute;top:12px;right:12px;font-size:18px;opacity:.1;}
+.stat-delta{font-size:10.5px;color:var(--text3);}
+.stat-icon{position:absolute;top:14px;right:14px;font-size:20px;opacity:.09;}
 
 /* ── TABLAS ── */
 .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);}
 table{width:100%;border-collapse:collapse;}
 thead th{
-  background:#f7fafa;color:var(--text2);font-size:10.5px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.5px;padding:9px 11px;
+  background:#f3f8f8;color:var(--text2);font-size:10.5px;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;padding:10px 12px;
   text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);
 }
-tbody tr{border-bottom:1px solid #f0f4f4;transition:background .1s;}
+tbody tr{border-bottom:1px solid #edf3f3;transition:background .1s;}
 tbody tr:last-child{border-bottom:none;}
-tbody tr:hover td{background:#f5fafa;}
-tbody td{padding:8px 11px;font-size:12.5px;color:var(--text);background:var(--white);vertical-align:middle;}
-.td-mono{font-family:"Courier New",monospace;font-size:11.5px;}
+tbody tr:hover td{background:#f4fafa;}
+tbody td{padding:9px 12px;font-size:12.5px;color:var(--text);background:var(--white);vertical-align:middle;}
+.td-mono{font-family:var(--font-mono);font-size:11.5px;}
 .td-dim{color:var(--text3);}
 
 /* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:3px;
+.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;
        font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
 .badge::before{content:'●';font-size:7px;}
 .badge-entregado{background:var(--green-bg);color:var(--green);}
@@ -177,12 +187,12 @@ tbody td{padding:8px 11px;font-size:12.5px;color:var(--text);background:var(--wh
 .fl{font-size:11px;color:var(--text2);font-weight:500;white-space:nowrap;}
 input,select,textarea{
   background:var(--white);border:1px solid var(--border);color:var(--text);
-  border-radius:var(--radius);padding:6px 10px;font-size:12.5px;font-family:inherit;outline:none;
-  transition:border-color .12s;
+  border-radius:var(--radius);padding:7px 10px;font-size:12.5px;font-family:var(--font);outline:none;
+  transition:border-color .15s,box-shadow .15s;
 }
-input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(42,122,123,.15);}
+input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,137,123,.12);}
 input::placeholder{color:var(--text3);}
-input[readonly]{background:#f5f8f8;color:var(--text2);}
+input[readonly]{background:#f3f7f7;color:var(--text2);}
 
 /* ── MODAL ── */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
@@ -228,7 +238,7 @@ input[readonly]{background:#f5f8f8;color:var(--text2);}
 .cr:last-child{border-bottom:none;}
 .cr.total{border-top:2px solid #b8d8d8;border-bottom:none;margin-top:6px;padding-top:8px;font-weight:700;}
 .cr-label{color:var(--text2);}
-.cr-val{font-family:"Courier New",monospace;font-size:12px;}
+.cr-val{font-family:var(--font-mono);font-size:12px;}
 .cr-val.pos{color:var(--green);}
 .cr-val.neg{color:var(--red);}
 .cr-val.neu{color:var(--text);}
@@ -257,7 +267,7 @@ input[readonly]{background:#f5f8f8;color:var(--text2);}
 .page-section.active{display:block;}
 .hidden{display:none!important;}
 .text-center{text-align:center;}
-.mono{font-family:"Courier New",monospace;}
+.mono{font-family:var(--font-mono);}
 .fw6{font-weight:600;}
 .fw7{font-weight:700;}
 .c-green{color:var(--green);}
@@ -270,9 +280,9 @@ input[readonly]{background:#f5f8f8;color:var(--text2);}
 .frow{display:flex;align-items:center;gap:8px;}
 .spacer{flex:1;}
 
-.venta-id{font-family:"Courier New",monospace;font-size:10px;
+.venta-id{font-family:var(--font-mono);font-size:10px;
           color:var(--teal);background:var(--teal-bg);
-          padding:1px 6px;border-radius:var(--radius);border:1px solid #b8d8d8;}
+          padding:2px 7px;border-radius:20px;border:1px solid rgba(0,137,123,.2);}
 .tienda-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .actions-cell{display:flex;gap:4px;}
 .loss-row td{background:#fff8f8!important;color:#842029!important;}
@@ -332,21 +342,19 @@ thead{position:sticky;top:0;z-index:1;}
 
   <div class="sb-section">
     <div class="sb-section-label">Principal</div>
-    <div class="nav-item active" data-page="dashboard"><span class="ni">📊</span>Resumen</div>
-    <div class="nav-item" data-page="ganancias"><span class="ni">💰</span>Ganancias</div>
+    <div class="nav-item active" data-page="ventas"><span class="ni">🛒</span>Ventas & Ganancias</div>
     <div class="nav-item" data-page="alertas" id="nav-alertas"><span class="ni">🔔</span>Alertas<span class="nb" id="alertas-count">0</span></div>
   </div>
 
   <div class="sb-section">
     <div class="sb-section-label">Operación</div>
     <div class="nav-item" data-page="tiendas"><span class="ni">🏪</span>Tiendas</div>
-    <div class="nav-item" data-page="ventas"><span class="ni">🛒</span>Ventas</div>
     <div class="nav-item" data-page="problemas"><span class="ni">⚠️</span>Problemas</div>
     <div class="nav-item" data-page="finanzas"><span class="ni">💳</span>Finanzas</div>
   </div>
 
   <div class="sb-bottom">
-    <div class="sb-ver">localStorage · v5.0</div>
+    <div class="sb-ver">v6.0 · localStorage</div>
   </div>
 </nav>
 
@@ -372,79 +380,45 @@ thead{position:sticky;top:0;z-index:1;}
   <div id="page-content">
 
     <!-- ══════════════ DASHBOARD ══════════════ -->
-    <section class="page-section active" id="page-dashboard">
-      <div class="stat-grid" id="stats-grid"></div>
-      <div class="g-lw">
-        <div>
-          <div class="card">
-            <div class="card-header">
-              <div>
-                <div class="card-title">Ventas recientes</div>
-                <div class="card-sub">Últimas 8 operaciones</div>
-              </div>
-              <button class="btn btn-ghost btn-sm" onclick="navigate('ventas')">Ver todas →</button>
-            </div>
-            <div class="table-wrap">
-              <table>
-                <thead><tr>
-                  <th>ID Venta</th><th>Tienda</th><th>Producto</th>
-                  <th>Total</th><th>Ganancia</th><th>Estado</th>
-                </tr></thead>
-                <tbody id="dash-ventas"></tbody>
-              </table>
-            </div>
+    <!-- ══════════════ VENTAS & GANANCIAS (FUSIONADO) ══════════════ -->
+    <section class="page-section active" id="page-ventas">
+
+      <!-- Banner total ganancia todas las tiendas -->
+      <div id="vg-banner" style="
+        background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 60%,var(--teal-light) 100%);
+        border-radius:var(--radius-lg);padding:18px 24px;margin-bottom:18px;
+        display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+        box-shadow:0 4px 20px rgba(0,137,123,.25);color:#fff;
+      ">
+        <div style="flex:1;min-width:180px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:.7;margin-bottom:4px;">Ganancia neta total — todas las tiendas</div>
+          <div id="vg-total-gan" style="font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;">$0</div>
+          <div id="vg-total-sub" style="font-size:11px;opacity:.65;margin-top:4px;">mes actual</div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="text-align:center;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Ingresos brutos</div>
+            <div id="vg-total-ing" style="font-size:16px;font-weight:700;">$0</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total costos</div>
+            <div id="vg-total-cos" style="font-size:16px;font-weight:700;opacity:.8;">$0</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Margen global</div>
+            <div id="vg-total-mar" style="font-size:16px;font-weight:700;">0%</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Ventas del mes</div>
+            <div id="vg-total-cnt" style="font-size:16px;font-weight:700;">0</div>
           </div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:14px;">
-          <div class="card">
-            <div class="card-header"><div class="card-title">Por tienda (mes actual)</div></div>
-            <div id="dash-tiendas"></div>
-          </div>
-          <div class="card">
-            <div class="card-header"><div class="card-title">⚠️ Alertas activas</div></div>
-            <div id="dash-alertas"></div>
-          </div>
-        </div>
       </div>
-    </section>
 
-    <!-- ══════════════ GANANCIAS ══════════════ -->
-    <section class="page-section" id="page-ganancias">
-      <div class="stat-grid" id="gan-stats"></div>
-      <div class="g2" style="margin-top:0;">
-        <div class="card">
-          <div class="card-header"><div class="card-title">Ganancia por tienda — mes actual</div></div>
-          <div id="gan-por-tienda"></div>
-        </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">Resumen mensual acumulado</div></div>
-          <div id="gan-mensual"></div>
-        </div>
-      </div>
-    </section>
+      <!-- Ganancia por tienda (compacto) -->
+      <div id="vg-por-tienda" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;"></div>
 
-    <!-- ══════════════ ALERTAS ══════════════ -->
-    <section class="page-section" id="page-alertas">
-      <div class="frow mb12">
-        <div class="c-dim" style="font-size:12px;">Pendientes y riesgos operativos detectados automáticamente</div>
-        <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" onclick="renderAlertas()">🔄 Actualizar</button>
-      </div>
-      <div id="alertas-container"></div>
-    </section>
-
-    <!-- ══════════════ TIENDAS ══════════════ -->
-    <section class="page-section" id="page-tiendas">
-      <div class="frow mb16">
-        <div class="c-dim" style="font-size:12px;">Tiendas registradas en Mercado Libre</div>
-        <div class="spacer"></div>
-        <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
-      </div>
-      <div class="g3" id="tiendas-grid"></div>
-    </section>
-
-    <!-- ══════════════ VENTAS ══════════════ -->
-    <section class="page-section" id="page-ventas">
+      <!-- Filtros -->
       <div class="filters-bar">
         <input type="text" placeholder="🔍 Buscar ID, producto, cliente..." id="vf-search" style="min-width:200px;">
         <span class="fl">Tienda</span>
@@ -475,6 +449,26 @@ thead{position:sticky;top:0;z-index:1;}
         </table>
       </div>
       <div style="margin-top:8px;font-size:11px;color:var(--text3);" id="ventas-count"></div>
+    </section>
+
+    <!-- ══════════════ ALERTAS ══════════════ -->
+    <section class="page-section" id="page-alertas">
+      <div class="frow mb12">
+        <div class="c-dim" style="font-size:12px;">Pendientes y riesgos operativos detectados automáticamente</div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" onclick="renderAlertas()">🔄 Actualizar</button>
+      </div>
+      <div id="alertas-container"></div>
+    </section>
+
+    <!-- ══════════════ TIENDAS ══════════════ -->
+    <section class="page-section" id="page-tiendas">
+      <div class="frow mb16">
+        <div class="c-dim" style="font-size:12px;">Tiendas registradas en Mercado Libre</div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
+      </div>
+      <div class="g3" id="tiendas-grid"></div>
     </section>
 
     <!-- ══════════════ PROBLEMAS ══════════════ -->
@@ -644,6 +638,8 @@ thead{position:sticky;top:0;z-index:1;}
       </div>
 
       <div class="fsec">💳 Fuente de financiación <small style="font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;"> — ¿con qué se pagó la compra?</small></div>
+      <!-- Indicador en tiempo real del costo total -->
+      <div id="v-costo-realtime" style="margin-bottom:10px;"></div>
       <div class="grid3">
         <div class="fg">
           <label class="fl2">Método de pago *</label>
@@ -738,7 +734,15 @@ thead{position:sticky;top:0;z-index:1;}
       <div class="grid2">
         <div class="fg span2"><label class="fl2">Nombre de la tienda *</label><input type="text" id="t-nombre" placeholder="Ej: SATARDSHOP"></div>
         <div class="fg"><label class="fl2">Responsable</label><input type="text" id="t-resp" placeholder="Nombre del encargado"></div>
-        <div class="fg"><label class="fl2">Color identificativo</label><input type="color" id="t-color" value="#2a7a7b" style="height:36px;padding:3px;"></div>
+        <div class="fg"><label class="fl2">Color identificativo</label><input type="color" id="t-color" value="#00897b" style="height:36px;padding:3px;"></div>
+        <div class="fg">
+          <label class="fl2">Estado de la tienda</label>
+          <select id="t-estado">
+            <option value="activa">🟢 Activa</option>
+            <option value="inactiva">🔴 Inactiva</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl2">Plataforma Mercado Pago</label><input type="text" id="t-mp-cuenta" placeholder="Ej: @satardshop" title="Cuenta ML asociada"></div>
         <div class="fg span2"><label class="fl2">Observaciones</label><textarea id="t-obs" rows="2" style="width:100%;resize:none;"></textarea></div>
       </div>
     </div>
@@ -1095,11 +1099,9 @@ function calcVenta(v) {
 
 // ── NAVEGACIÓN ──
 const PAGES = {
-  dashboard: { title:'Resumen', icon:'📊' },
-  ganancias:  { title:'Ganancias', icon:'💰' },
+  ventas:     { title:'Ventas & Ganancias', icon:'🛒' },
   alertas:    { title:'Alertas', icon:'🔔' },
   tiendas:    { title:'Tiendas', icon:'🏪' },
-  ventas:     { title:'Ventas', icon:'🛒' },
   problemas:  { title:'Problemas', icon:'⚠️' },
   finanzas:   { title:'Finanzas', icon:'💳' },
 };
@@ -1327,182 +1329,63 @@ function navigate(page) {
 
 function render(page) {
   switch(page) {
-    case 'dashboard':  renderDashboard();  break;
-    case 'ganancias':  renderGanancias();  break;
+    case 'ventas':     renderVentasGanancias(); break;
     case 'alertas':    renderAlertas();    break;
     case 'tiendas':    renderTiendas();    break;
-    case 'ventas':     renderVentas();     break;
     case 'problemas':  renderProblemas();  break;
     case 'finanzas':   renderFinanzas();   break;
   }
 }
 
-// ── DASHBOARD ──
-function renderDashboard() {
+// ── VENTAS & GANANCIAS (FUSIONADO) ──
+function renderVentasGanancias() {
+  // Actualizar banner de ganancias totales
   const ventas   = DB.ventas();
   const tiendas  = DB.tiendas();
   const m        = mes();
   const ventasMes = ventas.filter(v=>v.fecha_venta?.startsWith(m));
 
-  let totalVenta=0, totalGan=0, totalCostos=0;
-  let entregadas=0, pendientes=0, canceladas=0, conProblema=0;
-
-  ventasMes.forEach(v=>{
-    const c = calcVenta(v);
-    totalVenta  += c.totalVenta;
-    totalGan    += c.ganancia;
-    totalCostos += c.totalCostos;
-    if(v.estado==='entregado')  entregadas++;
-    if(v.estado==='pendiente'||v.estado==='en_camino') pendientes++;
-    if(v.estado==='cancelado')  canceladas++;
-    if(v.estado==='problema')   conProblema++;
-  });
-
-  const probAbiertos = DB.problemas().filter(p=>p.estado==='abierto').length;
-
-  document.getElementById('stats-grid').innerHTML = [
-    { l:'Ventas del mes',     v:ventasMes.length, cls:'teal',  icon:'🛒' },
-    { l:'Ingresos brutos',    v:fmt(totalVenta),  cls:'teal',  icon:'💵' },
-    { l:'Ganancia neta',      v:fmt(totalGan),    cls: totalGan>=0?'green':'red', icon:'💰' },
-    { l:'Costos totales',     v:fmt(totalCostos), cls:'yellow',icon:'📦' },
-    { l:'Entregadas',         v:entregadas,       cls:'green', icon:'✅' },
-    { l:'Pendientes',         v:pendientes,       cls:'yellow',icon:'⏳' },
-    { l:'Canceladas',         v:canceladas,       cls:'red',   icon:'❌' },
-    { l:'Problemas abiertos', v:probAbiertos,     cls:probAbiertos>0?'red':'green', icon:'⚠️' },
-  ].map(s=>`<div class="stat-card ${s.cls}">
-    <div class="stat-icon">${s.icon}</div>
-    <div class="stat-label">${s.l}</div>
-    <div class="stat-value ${s.cls}">${s.v}</div>
-  </div>`).join('');
-
-  // Ventas recientes
-  const recientes = [...ventas].sort((a,b)=>(b.fecha_venta||'').localeCompare(a.fecha_venta||'')).slice(0,8);
-  document.getElementById('dash-ventas').innerHTML = recientes.map(v=>{
-    const t = tiendas.find(x=>x.id===v.tienda_id);
-    const c = calcVenta(v);
-    const isLoss = c.ganancia < 0;
-    return `<tr class="${isLoss?'loss-row':''}">
-      <td><span class="venta-id">${v.id_ml||v.id}</span></td>
-      <td><span style="display:flex;align-items:center;gap:5px;">
-        <span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>
-        <span style="font-size:11px;">${t?.nombre||'?'}</span>
-      </span></td>
-      <td style="font-size:12px;">${v.producto||'—'}</td>
-      <td class="td-mono">${fmt(c.totalVenta)}</td>
-      <td class="td-mono ${isLoss?'c-red':'c-green'}" style="font-weight:700">${fmt(c.ganancia)}</td>
-      <td><span class="badge badge-${v.estado||'pendiente'}">${v.estado||'pendiente'}</span></td>
-    </tr>`;
-  }).join('')||'<tr><td colspan="6" class="text-center c-dim" style="padding:30px">Sin ventas</td></tr>';
-
-  // Por tienda
-  document.getElementById('dash-tiendas').innerHTML = tiendas.map(t=>{
-    const tv = ventasMes.filter(v=>v.tienda_id===t.id);
-    const g  = tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
-    const ing= tv.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
-    return `<div style="display:flex;align-items:center;gap:8px;padding:7px 0;border-bottom:1px solid var(--border);">
-      <span class="tienda-dot" style="background:${t.color}"></span>
-      <span style="font-size:12px;flex:1;font-weight:600;">${t.nombre}</span>
-      <span style="font-size:11px;color:var(--text2);">${tv.length} v.</span>
-      <span class="mono" style="font-size:11.5px;font-weight:700;color:${g>=0?'var(--green)':'var(--red)'};">${fmt(g)}</span>
-    </div>`;
-  }).join('')||'<div class="c-dim" style="font-size:12px;padding:8px 0;">Sin tiendas registradas</div>';
-
-  // Alertas mini
-  const alerts = getAlertas().slice(0,4);
-  document.getElementById('dash-alertas').innerHTML = alerts.map(a=>`
-    <div class="alert-item" style="cursor:pointer" onclick="navigate('${a.page||'alertas'}')">
-      <div class="adot ${a.color}"></div>
-      <div class="a-body"><div class="a-title">${a.title}</div><div class="a-sub">${a.sub}</div></div>
-    </div>`).join('')||'<div style="font-size:12px;color:var(--text3);padding:6px 0">✅ Sin alertas activas</div>';
-}
-
-// ── GANANCIAS ──
-function renderGanancias() {
-  const ventas  = DB.ventas();
-  const tiendas = DB.tiendas();
-  const m       = mes();
-  const ventasMes = ventas.filter(v=>v.fecha_venta?.startsWith(m));
-
-  // Stats globales mes
   const totalGan    = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0);
   const totalVenta  = ventasMes.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
   const totalCostos = ventasMes.reduce((s,v)=>s+calcVenta(v).totalCostos,0);
-  const totalPerds  = DB.problemas()
-    .filter(p=>p.estado==='perdida'&&p.fecha?.startsWith(m))
-    .reduce((s,p)=>s+(parseFloat(p.valor_perdida)||0),0);
+  const marGen      = totalVenta>0?(totalGan/totalVenta)*100:0;
 
-  document.getElementById('gan-stats').innerHTML = [
-    { l:'Ganancia neta mes',     v:fmt(totalGan),   cls: totalGan>=0?'green':'red' },
-    { l:'Total ventas (ingresos)',v:fmt(totalVenta),  cls:'teal' },
-    { l:'Total costos',           v:fmt(totalCostos), cls:'yellow' },
-    { l:'Pérdidas por problemas', v:fmt(totalPerds),  cls:'red' },
-  ].map(s=>`<div class="stat-card ${s.cls}">
-    <div class="stat-label">${s.l}</div>
-    <div class="stat-value ${s.cls}">${s.v}</div>
-  </div>`).join('');
+  const elGan = document.getElementById('vg-total-gan');
+  const elIng = document.getElementById('vg-total-ing');
+  const elCos = document.getElementById('vg-total-cos');
+  const elMar = document.getElementById('vg-total-mar');
+  const elCnt = document.getElementById('vg-total-cnt');
+  if(elGan) elGan.textContent = fmt(totalGan);
+  if(elIng) elIng.textContent = fmt(totalVenta);
+  if(elCos) elCos.textContent = fmt(totalCostos);
+  if(elMar) elMar.textContent = fmtP(marGen);
+  if(elCnt) elCnt.textContent = ventasMes.length;
 
-  // Por tienda
-  document.getElementById('gan-por-tienda').innerHTML = `
-    <table style="width:100%;border-collapse:collapse;">
-      <thead><tr>
-        <th style="padding:7px 8px;background:#f7fafa;font-size:10px;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);">Tienda</th>
-        <th style="padding:7px 8px;background:#f7fafa;font-size:10px;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);">Ventas</th>
-        <th style="padding:7px 8px;background:#f7fafa;font-size:10px;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);">Ingresos</th>
-        <th style="padding:7px 8px;background:#f7fafa;font-size:10px;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);">Costos</th>
-        <th style="padding:7px 8px;background:#f7fafa;font-size:10px;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);">Ganancia</th>
-        <th style="padding:7px 8px;background:#f7fafa;font-size:10px;text-transform:uppercase;font-weight:700;border-bottom:1px solid var(--border);">Margen</th>
-      </tr></thead>
-      <tbody>
-        ${tiendas.map(t=>{
-          const tv = ventasMes.filter(v=>v.tienda_id===t.id);
-          const g  = tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
-          const ing= tv.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
-          const cos= tv.reduce((s,v)=>s+calcVenta(v).totalCostos,0);
-          const mar= ing>0?(g/ing)*100:0;
-          return `<tr style="border-bottom:1px solid #f0f4f4;">
-            <td style="padding:8px;font-size:12px;font-weight:600;">
-              <span style="display:flex;align-items:center;gap:6px;">
-                <span class="tienda-dot" style="background:${t.color}"></span>${t.nombre}
-              </span>
-            </td>
-            <td style="padding:8px;font-size:12px;">${tv.length}</td>
-            <td style="padding:8px;" class="td-mono">${fmt(ing)}</td>
-            <td style="padding:8px;" class="td-mono c-dim">${fmt(cos)}</td>
-            <td style="padding:8px;" class="td-mono fw7" style="color:${g>=0?'var(--green)':'var(--red)'}">
-              <span style="color:${g>=0?'var(--green)':'var(--red)'};">${fmt(g)}</span>
-            </td>
-            <td style="padding:8px;" class="td-mono" style="color:${mar<10?'var(--red)':mar<20?'var(--yellow)':'var(--green)'}">
-              <span style="color:${mar<10?'#842029':mar<20?'#856404':'#198754'};">${fmtP(mar)}</span>
-            </td>
-          </tr>`;
-        }).join('')}
-      </tbody>
-    </table>`;
-
-  // Resumen últimos 4 meses
-  const meses = Array.from({length:4},(_,i)=>{
-    const d = new Date(); d.setMonth(d.getMonth()-i);
-    return d.toISOString().slice(0,7);
-  }).reverse();
-
-  document.getElementById('gan-mensual').innerHTML = meses.map(m=>{
-    const mv  = ventas.filter(v=>v.fecha_venta?.startsWith(m));
-    const g   = mv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
-    const ing = mv.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
-    const mar = ing>0?(g/ing)*100:0;
-    const bar = Math.max(0,Math.min(100,mar));
-    return `<div style="margin-bottom:12px;">
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;">
-        <span style="font-weight:600;">${m}</span>
-        <span>${mv.length} ventas · ${fmt(ing)}</span>
-        <span style="font-weight:700;color:${g>=0?'var(--green)':'var(--red)'};">${fmt(g)}</span>
+  // Chips por tienda
+  const chipEl = document.getElementById('vg-por-tienda');
+  if(chipEl) chipEl.innerHTML = tiendas.map(t=>{
+    const tv = ventasMes.filter(v=>v.tienda_id===t.id);
+    const g  = tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
+    const ing= tv.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
+    const mar= ing>0?(g/ing)*100:0;
+    const isActive = t.estado !== 'inactiva';
+    return `<div style="
+      background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
+      padding:12px 16px;flex:1;min-width:160px;box-shadow:var(--shadow);
+      border-left:4px solid ${t.color};opacity:${isActive?1:.6};
+    ">
+      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
+        <span class="tienda-dot" style="background:${t.color};width:10px;height:10px;"></span>
+        <span style="font-size:12px;font-weight:700;flex:1;">${t.nombre}</span>
+        ${!isActive?'<span style="font-size:9px;background:#fde8ea;color:#b0202e;padding:1px 6px;border-radius:10px;font-weight:700;">INACTIVA</span>':''}
       </div>
-      <div style="background:var(--border);border-radius:2px;height:6px;">
-        <div style="height:100%;border-radius:2px;width:${bar}%;background:${g>=0?'var(--teal)':'#c0392b'};"></div>
-      </div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px;">Margen: ${fmtP(mar)}</div>
+      <div style="font-size:18px;font-weight:700;color:${g>=0?'var(--green)':'var(--red)'};">${fmt(g)}</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${tv.length} ventas · ${fmtP(mar)} margen</div>
     </div>`;
   }).join('');
+
+  // Renderizar tabla de ventas
+  renderVentas();
 }
 
 // ── ALERTAS ──
@@ -1575,9 +1458,12 @@ function openModalTienda(id) {
     if(t) {
       sv('t-nombre',t.nombre); sv('t-resp',t.responsable||'');
       sv('t-color',t.color); sv('t-obs',t.observaciones||'');
+      sv('t-estado',t.estado||'activa');
+      sv('t-mp-cuenta',t.mp_cuenta||'');
     }
   } else {
-    sv('t-nombre',''); sv('t-resp',''); sv('t-color','#2a7a7b'); sv('t-obs','');
+    sv('t-nombre',''); sv('t-resp',''); sv('t-color','#00897b'); sv('t-obs','');
+    sv('t-estado','activa'); sv('t-mp-cuenta','');
   }
   openModal('modal-tienda');
 }
@@ -1585,14 +1471,40 @@ function saveTienda() {
   const nombre = gv('t-nombre').trim();
   if(!nombre){ alert('El nombre es requerido.'); return; }
   DB.upsertTienda({ id:_editTiendaId||uid(), nombre, responsable:gv('t-resp'),
-    color:gv('t-color'), observaciones:gv('t-obs'), estado:'activa', fecha:hoy() });
+    color:gv('t-color'), observaciones:gv('t-obs'), estado:gv('t-estado')||'activa',
+    mp_cuenta:gv('t-mp-cuenta'), fecha:hoy() });
   closeModal('modal-tienda');
   populateSelects();
+  renderTiendas();
+}
+
+function toggleEstadoTienda(id) {
+  const tiendas = DB.tiendas();
+  const t = tiendas.find(x=>x.id===id);
+  if(t) {
+    t.estado = (t.estado === 'inactiva') ? 'activa' : 'inactiva';
+    DB.saveTiendas(tiendas);
+    renderTiendas();
+  }
+}
+
+function editarMPSaldo(tiendaId) {
+  const saldos = DB.saldos();
+  const mpKey  = 'mercadopago_' + tiendaId;
+  const actual = parseFloat(saldos[mpKey]) || 0;
+  const t      = DB.tiendas().find(x=>x.id===tiendaId);
+  const nuevo  = prompt(`💳 Saldo Mercado Pago — ${t?.nombre||tiendaId}\nSaldo actual: ${fmt(actual)}\n\nIngresa el nuevo saldo (COP$):`, actual||'');
+  if(nuevo===null) return;
+  const val = parseFloat(nuevo);
+  if(isNaN(val)) { alert('Valor inválido'); return; }
+  saldos[mpKey] = val;
+  DB.saveSaldos(saldos);
   renderTiendas();
 }
 function renderTiendas() {
   const tiendas = DB.tiendas();
   const ventas  = DB.ventas();
+  const saldos  = DB.saldos();
   if(!tiendas.length) {
     document.getElementById('tiendas-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="empty-icon">🏪</div><div class="empty-title">Sin tiendas</div>
@@ -1601,26 +1513,45 @@ function renderTiendas() {
   document.getElementById('tiendas-grid').innerHTML = tiendas.map(t=>{
     const tv = ventas.filter(v=>v.tienda_id===t.id);
     const gan= tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
-    return `<div class="card">
+    const isActive = t.estado !== 'inactiva';
+    // MP saldo para esta tienda (guardado como mercadopago_<tienda_id>)
+    const mpKey = 'mercadopago_' + t.id;
+    const mpSaldo = parseFloat(saldos[mpKey]) || 0;
+    return `<div class="card" style="opacity:${isActive?1:.7};border-left:4px solid ${t.color};">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <div style="width:38px;height:38px;border-radius:8px;background:${t.color}22;border:2px solid ${t.color};
+        <div style="width:40px;height:40px;border-radius:10px;background:${t.color}22;border:2px solid ${t.color};
              display:flex;align-items:center;justify-content:center;font-size:18px;">🏪</div>
-        <div>
-          <div class="fw7" style="font-size:13px;">${t.nombre}</div>
+        <div style="flex:1;">
+          <div class="fw7" style="font-size:13.5px;letter-spacing:-.1px;">${t.nombre}</div>
           <div class="c-dim" style="font-size:11px;">${t.responsable||'Sin responsable'}</div>
         </div>
+        <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;
+          background:${isActive?'var(--green-bg)':'var(--red-bg)'};
+          color:${isActive?'var(--green)':'var(--red)'};">${isActive?'ACTIVA':'INACTIVA'}</span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
-        <div style="background:var(--bg);border-radius:var(--radius);padding:8px;text-align:center;">
-          <div class="stat-label">Ventas</div><div class="fw7" style="font-size:16px;">${tv.length}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+        <div style="background:var(--bg);border-radius:var(--radius);padding:9px;text-align:center;">
+          <div class="stat-label">Ventas</div><div class="fw7" style="font-size:17px;">${tv.length}</div>
         </div>
-        <div style="background:var(--bg);border-radius:var(--radius);padding:8px;text-align:center;">
+        <div style="background:var(--bg);border-radius:var(--radius);padding:9px;text-align:center;">
           <div class="stat-label">Ganancia</div>
           <div class="fw7 mono" style="font-size:13px;color:${gan>=0?'var(--green)':'var(--red)'};">${fmt(gan)}</div>
         </div>
       </div>
-      <div style="display:flex;gap:6px;">
+      <!-- Mercado Pago saldo -->
+      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius);padding:8px 10px;margin-bottom:10px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <span style="font-size:10px;color:var(--teal-dark);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">💳 Mercado Pago</span>
+          <span class="mono fw7" style="font-size:13px;color:var(--teal-dark);">${fmt(mpSaldo)}</span>
+        </div>
+        <div style="font-size:9px;color:var(--teal);margin-top:2px;opacity:.7;">Saldo acumulado ML · click para editar</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
         <button class="btn btn-ghost btn-sm" onclick="openModalTienda('${t.id}')">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEstadoTienda('${t.id}')" style="color:${isActive?'var(--red)':'var(--green)'};">
+          ${isActive?'⏸ Desactivar':'▶️ Activar'}
+        </button>
+        <button class="btn btn-ghost btn-sm" onclick="editarMPSaldo('${t.id}')">💰 Saldo MP</button>
       </div>
     </div>`;
   }).join('');
@@ -1746,6 +1677,21 @@ function recalcVenta() {
   // Desglose TRM
   actualizarDesglloseTRM();
 
+  // ── Indicador en tiempo real: costo total del producto al momento de comprar ──
+  const elCostoRT = document.getElementById('v-costo-realtime');
+  if(elCostoRT) {
+    const costoTotalRT = (costoCOP * udes) + envioIntCOP + envExtra;
+    elCostoRT.innerHTML = costoTotalRT > 0
+      ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;">
+          <span style="background:#fff3e0;color:#8a4000;border:1px solid #ffe0b2;
+            border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;">
+            💸 Gasto total en producto: <b>${fmt(costoTotalRT)}</b>
+          </span>
+          ${costoUsd>0?`<span style="font-size:10px;color:var(--text3);">USD $${costoUsd.toFixed(2)} × ${fmt(trm)}</span>`:''}
+        </div>`
+      : '';
+  }
+
   // Cuadro resultado
   st('c-precio',      fmt(copVenta));
   st('c-udes',        `× ${udes}`);
@@ -1807,11 +1753,10 @@ function saveVenta() {
     trm,
     precio_venta:  copVenta,
     costo_usd:     costoUsd,
-    envio_int_usd: envioVal,          // valor ingresado (USD si servientrega, COP si otro)
+    envio_int_usd: envioVal,
     envio_estimado_cop: envioEstimadoCOP,
-    envio_real_cop:     envioReal,    // 0 = pendiente validación
+    envio_real_cop:     envioReal,
     envio_validado:     envioReal > 0,
-    // Financiación
     fuente_pago:   fuentePago,
     monto_pago:    montoPago,
     ref_pago:      gv('v-ref-pago').trim(),
@@ -1820,12 +1765,36 @@ function saveVenta() {
   });
 
   // Registrar egreso automático si se indicó fuente de pago
-  if(fuentePago && montoPago > 0) {
+  if(fuentePago && montoPago > 0 && !_editVentaId) {
+    // Descontar del saldo de la fuente de pago (gasto en producto)
+    const saldos = DB.saldos();
+    saldos[fuentePago] = (parseFloat(saldos[fuentePago])||0) - montoPago;
+    DB.saveSaldos(saldos);
+
     DB.upsertMovimiento({
       id: uid(), fecha: gv('v-fecha'), tipo:'egreso',
       fuente: fuentePago, valor: montoPago,
       concepto: `Compra: ${producto.slice(0,40)}`,
       notas: `Venta ${gv('v-id')||'—'} · costo $${costoUsd} USD`,
+      fecha_registro: new Date().toISOString(),
+    });
+  }
+
+  // ── Auto-sumar pago de ML al Mercado Pago de la tienda correspondiente ──
+  // Si ML pagó (precio_cop > 0), sumarlo al saldo MP de esa tienda
+  if(copVenta > 0 && !_editVentaId) {
+    const saldos = DB.saldos();
+    const mpKey  = 'mercadopago_' + tienda;
+    saldos[mpKey] = (parseFloat(saldos[mpKey])||0) + copVenta;
+    // También al mercadopago global
+    saldos['mercadopago'] = (parseFloat(saldos['mercadopago'])||0) + copVenta;
+    DB.saveSaldos(saldos);
+
+    DB.upsertMovimiento({
+      id: uid(), fecha: gv('v-fecha'), tipo:'ingreso',
+      fuente: 'mercadopago', valor: copVenta,
+      concepto: `Pago ML: ${producto.slice(0,35)}`,
+      notas: `Venta ${gv('v-id')||'—'} · Tienda: ${tienda}`,
       fecha_registro: new Date().toISOString(),
     });
   }
@@ -1836,8 +1805,26 @@ function saveVenta() {
 }
 
 function renderVentas() {
+  // Refresh the banner totals too
   const tiendas = DB.tiendas();
   let ventas    = DB.ventas();
+
+  const m  = mes();
+  const vm = ventas.filter(v=>v.fecha_venta?.startsWith(m));
+  const totalGan    = vm.reduce((s,v)=>s+calcVenta(v).ganancia,0);
+  const totalVenta  = vm.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
+  const totalCostos = vm.reduce((s,v)=>s+calcVenta(v).totalCostos,0);
+  const marGen      = totalVenta>0?(totalGan/totalVenta)*100:0;
+  const elGan = document.getElementById('vg-total-gan');
+  const elIng = document.getElementById('vg-total-ing');
+  const elCos = document.getElementById('vg-total-cos');
+  const elMar = document.getElementById('vg-total-mar');
+  const elCnt = document.getElementById('vg-total-cnt');
+  if(elGan) elGan.textContent = fmt(totalGan);
+  if(elIng) elIng.textContent = fmt(totalVenta);
+  if(elCos) elCos.textContent = fmt(totalCostos);
+  if(elMar) elMar.textContent = fmtP(marGen);
+  if(elCnt) elCnt.textContent = vm.length;
 
   const s  = gv('vf-search').toLowerCase();
   const ft = gv('vf-tienda');
@@ -2281,7 +2268,14 @@ function loadDemo() {
       estado:'abierto',valor_perdida:0,fecha_registro:new Date().toISOString() },
   ];
   // Saldos de demostración
-  const saldos = { mercadopago:450000, bancolombia:1200000, nequi:85000, daviplata:0, efectivo:150000, tarjeta_credito:0 };
+  const saldos = {
+    mercadopago:450000, bancolombia:1200000, nequi:85000,
+    daviplata:0, efectivo:150000, tarjeta_credito:0,
+    // Saldos MP por tienda
+    mercadopago_t1: 178000,
+    mercadopago_t2: 122000,
+    mercadopago_t3: 145000,
+  };
   // Movimientos de demostración
   const movs = [
     { id:'m1',fecha:d(5),tipo:'egreso',fuente:'mercadopago',valor:Math.round(8.0*trm)+12000,concepto:'Compra: Oxiclean Polvo Quitamanchas',notas:'Venta 2000015788963928',fecha_registro:new Date().toISOString() },
@@ -2316,7 +2310,7 @@ async function init() {
   });
 
   // Botón nueva venta topbar
-  document.getElementById('btn-nueva-venta').addEventListener('click',()=>openModalVenta());
+  document.getElementById('btn-nueva-venta')?.addEventListener('click',()=>openModalVenta());
 
   // Cerrar modales al click en overlay — excepto modal-venta (registro de ventas)
   document.querySelectorAll('.overlay').forEach(o=>{
@@ -2326,8 +2320,8 @@ async function init() {
 
   // Filtros ventas live
   ['vf-search','vf-tienda','vf-estado','vf-mes'].forEach(id=>{
-    document.getElementById(id)?.addEventListener('input', renderVentas);
-    document.getElementById(id)?.addEventListener('change',renderVentas);
+    document.getElementById(id)?.addEventListener('input', renderVentasGanancias);
+    document.getElementById(id)?.addEventListener('change',renderVentasGanancias);
   });
 
   // Filtros problemas live
@@ -2342,7 +2336,7 @@ async function init() {
   });
 
   // Render inicial
-  navigate('dashboard');
+  navigate('ventas');
   updateAlertaBadge();
 }
 
