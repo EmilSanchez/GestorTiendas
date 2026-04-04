@@ -987,11 +987,88 @@ thead{position:sticky;top:0;z-index:1;}
   </div>
 </div>
 
+<!-- ═══════════ FIREBASE SDK (compat — no requiere bundler) ═══════════ -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
 <script>
 // ═══════════════════════════════════════════════════════
 //  MERCAMANAGER v3 — JavaScript
-//  Diseño Centris · Lógica simplificada · TRM automático
+//  Diseño Centris · Firebase Firestore · TRM automático
 // ═══════════════════════════════════════════════════════
+
+// ┌──────────────────────────────────────────────────────────┐
+// │  🔑  REEMPLAZA ESTOS VALORES CON LOS DE TU PROYECTO      │
+// │  Firebase Console → Configuración → Tus apps → Web (</>)  │
+// └──────────────────────────────────────────────────────────┘
+const firebaseConfig = {
+  apiKey:            "TU_API_KEY",
+  authDomain:        "TU_PROJECT_ID.firebaseapp.com",
+  projectId:         "TU_PROJECT_ID",
+  storageBucket:     "TU_PROJECT_ID.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId:             "TU_APP_ID"
+};
+
+firebase.initializeApp(firebaseConfig);
+const _db = firebase.firestore();
+
+// ── Helpers Firestore ──
+async function _getAll(col) {
+  const snap = await _db.collection(col).get();
+  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+}
+async function _set(col, id, data) {
+  // Firestore no acepta undefined — limpiar antes de guardar
+  const clean = JSON.parse(JSON.stringify(data));
+  await _db.collection(col).doc(id).set(clean);
+}
+async function _del(col, id) {
+  await _db.collection(col).doc(id).delete();
+}
+async function _getObj(docPath, docId) {
+  const snap = await _db.collection(docPath).doc(docId).get();
+  return snap.exists ? snap.data() : {};
+}
+
+// ── Objeto DB — API idéntica a la anterior (async/await) ──
+const DB = {
+  // Tiendas
+  tiendas:      () => _getAll('tiendas'),
+  saveTiendas:  async (arr) => { const b=_db.batch(); arr.forEach(t=>b.set(_db.collection('tiendas').doc(t.id), JSON.parse(JSON.stringify(t)))); await b.commit(); },
+  upsertTienda: (t) => _set('tiendas', t.id, t),
+
+  // Ventas
+  ventas:      () => _getAll('ventas'),
+  saveVentas:  async (arr) => { const b=_db.batch(); arr.forEach(v=>b.set(_db.collection('ventas').doc(v.id), JSON.parse(JSON.stringify(v)))); await b.commit(); },
+  upsertVenta: (v) => _set('ventas', v.id, v),
+  deleteVenta: (id) => _del('ventas', id),
+
+  // Problemas
+  problemas:      () => _getAll('problemas'),
+  saveProblemas:  async (arr) => { const b=_db.batch(); arr.forEach(p=>b.set(_db.collection('problemas').doc(p.id), JSON.parse(JSON.stringify(p)))); await b.commit(); },
+  upsertProblema: (p) => _set('problemas', p.id, p),
+  deleteProblema: (id) => _del('problemas', id),
+
+  // Movimientos
+  movimientos:      () => _getAll('movimientos'),
+  saveMovimientos:  async (arr) => { const b=_db.batch(); arr.forEach(m=>b.set(_db.collection('movimientos').doc(m.id), JSON.parse(JSON.stringify(m)))); await b.commit(); },
+  upsertMovimiento: (m) => _set('movimientos', m.id, m),
+  deleteMovimiento: (id) => _del('movimientos', id),
+
+  // Membresías
+  membresias:      () => _getAll('membresias'),
+  saveMembresias:  async (arr) => { const b=_db.batch(); arr.forEach(m=>b.set(_db.collection('membresias').doc(m.id), JSON.parse(JSON.stringify(m)))); await b.commit(); },
+  upsertMembresia: (m) => _set('membresias', m.id, m),
+
+  // Saldos (documento único en colección "config")
+  saldos:     () => _getObj('config', 'saldos'),
+  saveSaldos: (obj) => _set('config', 'saldos', obj),
+
+  // Billeteras
+  billeteras:      () => _getAll('billeteras'),
+  saveBilleteras:  async (arr) => { const b=_db.batch(); arr.forEach(bw=>b.set(_db.collection('billeteras').doc(bw.id), JSON.parse(JSON.stringify(bw)))); await b.commit(); },
+};
 
 // ── UTILIDADES ──
 const uid  = () => 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
@@ -1002,34 +1079,9 @@ const fmtU = v  => isNaN(v) ? 'USD $0.00' : 'USD $' + Number(v).toFixed(2);
 const hoy  = () => new Date().toISOString().slice(0,10);
 const mes  = () => new Date().toISOString().slice(0,7);
 
-// ── BASE DE DATOS (localStorage) ──
-const DB = {
-  g: k  => { try{ return JSON.parse(localStorage.getItem('mm3_'+k))||[]; }catch(e){return [];} },
-  gObj: k => { try{ return JSON.parse(localStorage.getItem('mm3_'+k))||{}; }catch(e){return {};} },
-  s: (k,v) => localStorage.setItem('mm3_'+k, JSON.stringify(v)),
-  tiendas:    () => DB.g('tiendas'),
-  ventas:     () => DB.g('ventas'),
-  problemas:  () => DB.g('problemas'),
-  movimientos:() => DB.g('movimientos'),
-  membresias: () => DB.g('membresias'),
-  saldos:     () => DB.gObj('saldos'),
-  saveTiendas:    d => DB.s('tiendas',d),
-  saveVentas:     d => DB.s('ventas',d),
-  saveProblemas:  d => DB.s('problemas',d),
-  saveMovimientos:d => DB.s('movimientos',d),
-  saveMembresias: d => DB.s('membresias',d),
-  saveSaldos:     d => DB.s('saldos',d),
-  upsertTienda:   t => { const a=DB.tiendas(); const i=a.findIndex(x=>x.id===t.id); i>=0?a[i]=t:a.push(t); DB.saveTiendas(a); },
-  upsertVenta:    v => { const a=DB.ventas();  const i=a.findIndex(x=>x.id===v.id); i>=0?a[i]=v:a.push(v); DB.saveVentas(a);  },
-  upsertProblema: p => { const a=DB.problemas(); const i=a.findIndex(x=>x.id===p.id); i>=0?a[i]=p:a.push(p); DB.saveProblemas(a); },
-  upsertMovimiento: m => { const a=DB.movimientos(); const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); DB.saveMovimientos(a); },
-  upsertMembresia: m => { const a=DB.membresias(); const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); DB.saveMembresias(a); },
-  deleteVenta:    id => DB.saveVentas(DB.ventas().filter(v=>v.id!==id)),
-  deleteProblema: id => DB.saveProblemas(DB.problemas().filter(p=>p.id!==id)),
-  deleteMovimiento: id => DB.saveMovimientos(DB.movimientos().filter(m=>m.id!==id)),
-  billeteras:     () => DB.g('billeteras'),
-  saveBilleteras: d => DB.s('billeteras',d),
-};
+// ── BASE DE DATOS — Firebase Firestore (definido en el módulo de arriba) ──
+// DB se inyecta como window.DB desde el módulo Firebase.
+// Todas las llamadas a DB son ahora async/await.
 
 // ── TRM AUTOMÁTICO ──
 let TRM_ACTUAL  = 3800; // fallback
@@ -1151,18 +1203,18 @@ const FUENTES_ICON = {
   efectivo:'💵', tarjeta_credito:'💳', otro:'🔄'
 };
 
-function getSaldoFuente(fuente) {
-  const saldos = DB.saldos();
+async function getSaldoFuente(fuente) {
+  const saldos = await DB.saldos();
   return parseFloat(saldos[fuente]) || 0;
 }
 
-function recalcFuente() {
+async function recalcFuente() {
   const fuente = gv('v-fuente-pago');
   const monto  = parseFloat(gv('v-monto-pago')) || 0;
   const el     = document.getElementById('v-fuente-saldo-info');
   if(!el) return;
   if(!fuente) { el.innerHTML=''; return; }
-  const saldo  = getSaldoFuente(fuente);
+  const saldo  = await getSaldoFuente(fuente);
   const icon   = FUENTES_ICON[fuente]||'💳';
   const label  = FUENTES_LABEL[fuente]||fuente;
   const resto  = saldo - monto;
@@ -1191,11 +1243,11 @@ function recalcValidacionEnvio() {
 }
 
 // ── MÓDULO FINANZAS ──
-function renderFinanzas() {
-  const movs    = DB.movimientos();
-  const mems    = DB.membresias();
-  const saldos  = DB.saldos();
-  const bwExtra = DB.billeteras(); // billeteras personalizadas
+async function renderFinanzas() {
+  const movs    = await DB.movimientos();
+  const mems    = await DB.membresias();
+  const saldos  = await DB.saldos();
+  const bwExtra = await DB.billeteras(); // billeteras personalizadas
 
   // Poblar selector de mes
   const mesEl = document.getElementById('fin-filtro-mes');
@@ -1222,7 +1274,7 @@ function renderFinanzas() {
   }).join('');
 
   // ── Envíos del mes ──
-  const ventasMes = DB.ventas().filter(v=>v.fecha_venta?.startsWith(mesAct));
+  const ventasMes = (await DB.ventas()).filter(v=>v.fecha_venta?.startsWith(mesAct));
   const enviosValidados = ventasMes.filter(v=>v.envio_validado).reduce((s,v)=>s+(v.envio_real_cop||0),0);
   const enviosPendientes = ventasMes.filter(v=>!v.envio_validado && v.envio_int_usd>0)
     .reduce((s,v)=>s+(v.envio_estimado_cop||v.envio_int_usd||0),0);
@@ -1308,43 +1360,43 @@ function openModalNuevaBilletera() {
   sv('bw-nombre',''); sv('bw-icono','💳'); sv('bw-saldo','');
   openModal('modal-billetera');
 }
-function saveNuevaBilletera() {
+async function saveNuevaBilletera() {
   const nombre = gv('bw-nombre').trim();
   if(!nombre){ alert('El nombre es requerido.'); return; }
   const icono  = gv('bw-icono').trim() || '💳';
   const saldo  = parseFloat(gv('bw-saldo')) || 0;
   const id     = 'bw_' + uid();
-  const bws    = DB.billeteras();
+  const bws    = await DB.billeteras();
   bws.push({ id, nombre, icono, fecha:hoy() });
-  DB.saveBilleteras(bws);
+  await DB.saveBilleteras(bws);
   // Guardar saldo inicial
-  const saldos = DB.saldos();
+  const saldos = await DB.saldos();
   saldos[id] = saldo;
-  DB.saveSaldos(saldos);
+  await DB.saveSaldos(saldos);
   // Agregar a FUENTES_LABEL e ICON para movimientos
   FUENTES_LABEL[id] = nombre;
   FUENTES_ICON[id]  = icono;
   closeModal('modal-billetera');
-  renderFinanzas();
+  await renderFinanzas();
   // Actualizar selects de fuente de pago en modal venta y movimiento
-  actualizarSelectsFuente();
+  await actualizarSelectsFuente();
 }
-function deleteBilletera(id) {
-  const bws = DB.billeteras();
+async function deleteBilletera(id) {
+  const bws = await DB.billeteras();
   const bw  = bws.find(x=>x.id===id);
   if(!bw) return;
   if(!confirm(`¿Eliminar la billetera "${bw.nombre}"? El saldo se perderá.`)) return;
-  DB.saveBilleteras(bws.filter(x=>x.id!==id));
-  const saldos = DB.saldos();
+  await DB.saveBilleteras(bws.filter(x=>x.id!==id));
+  const saldos = await DB.saldos();
   delete saldos[id];
-  DB.saveSaldos(saldos);
+  await DB.saveSaldos(saldos);
   delete FUENTES_LABEL[id];
   delete FUENTES_ICON[id];
-  renderFinanzas();
-  actualizarSelectsFuente();
+  await renderFinanzas();
+  await actualizarSelectsFuente();
 }
-function actualizarSelectsFuente() {
-  const bws = DB.billeteras();
+async function actualizarSelectsFuente() {
+  const bws = await DB.billeteras();
   const baseOpts = [
     ['mercadopago','💳 Mercado Pago'],['bancolombia','🏦 Bancolombia'],
     ['nequi','📱 Nequi'],['daviplata','📱 Daviplata'],
@@ -1358,8 +1410,8 @@ function actualizarSelectsFuente() {
   });
 }
 
-function openModalMovimiento(id) {
-  const mov = id ? DB.movimientos().find(x=>x.id===id) : null;
+async function openModalMovimiento(id) {
+  const mov = id ? (await DB.movimientos()).find(x=>x.id===id) : null;
   document.getElementById('mov-title').textContent = mov ? 'Editar Movimiento' : 'Nuevo Movimiento';
   sv('mov-fecha', mov?.fecha||hoy());
   sv('mov-tipo',  mov?.tipo||'egreso');
@@ -1371,22 +1423,22 @@ function openModalMovimiento(id) {
   openModal('modal-movimiento');
 }
 
-function saveMovimiento() {
+async function saveMovimiento() {
   const valor   = parseFloat(gv('mov-valor'))||0;
   const concepto= gv('mov-concepto').trim();
   if(!valor)    { alert('Ingresa el valor del movimiento.'); return; }
   if(!concepto) { alert('Ingresa un concepto.'); return; }
   const id = document.getElementById('modal-movimiento')._editId || uid();
-  DB.upsertMovimiento({ id, fecha:gv('mov-fecha'), tipo:gv('mov-tipo'),
+  await DB.upsertMovimiento({ id, fecha:gv('mov-fecha'), tipo:gv('mov-tipo'),
     fuente:gv('mov-fuente'), valor, concepto, notas:gv('mov-notas'), fecha_registro:new Date().toISOString() });
   closeModal('modal-movimiento');
-  renderFinanzas();
+  await renderFinanzas();
 }
 
-function deleteMovimiento(id) {
+async function deleteMovimiento(id) {
   if(!confirm('¿Eliminar este movimiento?')) return;
-  DB.deleteMovimiento(id);
-  renderFinanzas();
+  await DB.deleteMovimiento(id);
+  await renderFinanzas();
 }
 
 function openModalMembresia() {
@@ -1395,39 +1447,39 @@ function openModalMembresia() {
   openModal('modal-membresia');
 }
 
-function saveMembresia() {
+async function saveMembresia() {
   const valor = parseFloat(gv('mem-valor'))||0;
   if(!valor) { alert('Ingresa el valor de la membresía.'); return; }
-  DB.upsertMembresia({ id:uid(), mes:gv('mem-mes'), valor, fuente:gv('mem-fuente'),
+  await DB.upsertMembresia({ id:uid(), mes:gv('mem-mes'), valor, fuente:gv('mem-fuente'),
     fecha:gv('mem-fecha'), obs:gv('mem-obs'), fecha_registro:new Date().toISOString() });
   // También registrar como movimiento egreso automáticamente
-  DB.upsertMovimiento({ id:uid(), fecha:gv('mem-fecha'), tipo:'egreso',
+  await DB.upsertMovimiento({ id:uid(), fecha:gv('mem-fecha'), tipo:'egreso',
     fuente:gv('mem-fuente'), valor, concepto:`Membresía Centris ${gv('mem-mes')}`,
     notas:gv('mem-obs'), fecha_registro:new Date().toISOString() });
   closeModal('modal-membresia');
-  renderFinanzas();
+  await renderFinanzas();
 }
 
-function deleteMembresia(id) {
+async function deleteMembresia(id) {
   if(!confirm('¿Eliminar este pago de membresía?')) return;
-  const mems = DB.membresias().filter(m=>m.id!==id);
-  DB.saveMembresias(mems);
-  renderFinanzas();
+  const mems = (await DB.membresias()).filter(m=>m.id!==id);
+  await DB.saveMembresias(mems);
+  await renderFinanzas();
 }
 
-function openModalSaldo(fuente) {
-  const actual = getSaldoFuente(fuente);
+async function openModalSaldo(fuente) {
+  const actual = await getSaldoFuente(fuente);
   const nuevo  = prompt(`${FUENTES_ICON[fuente]} ${FUENTES_LABEL[fuente]}\nSaldo actual: ${fmt(actual)}\n\nIngresa el nuevo saldo (COP$):`, actual||'');
   if(nuevo===null) return;
   const val = parseFloat(nuevo);
   if(isNaN(val)) { alert('Valor inválido'); return; }
-  const saldos = DB.saldos();
+  const saldos = await DB.saldos();
   saldos[fuente] = val;
-  DB.saveSaldos(saldos);
-  renderFinanzas();
+  await DB.saveSaldos(saldos);
+  await renderFinanzas();
 }
 
-function navigate(page) {
+async function navigate(page) {
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page)?.classList.add('active');
@@ -1435,24 +1487,24 @@ function navigate(page) {
   const p = PAGES[page]||{};
   document.getElementById('tb-title').textContent = p.title||page;
   document.getElementById('tb-icon').textContent  = p.icon||'';
-  render(page);
+  await render(page);
 }
 
-function render(page) {
+async function render(page) {
   switch(page) {
-    case 'ventas':     renderVentasGanancias(); break;
-    case 'alertas':    renderAlertas();    break;
-    case 'tiendas':    renderTiendas();    break;
-    case 'problemas':  renderProblemas();  break;
-    case 'finanzas':   renderFinanzas();   break;
+    case 'ventas':     await renderVentasGanancias(); break;
+    case 'alertas':    await renderAlertas();    break;
+    case 'tiendas':    await renderTiendas();    break;
+    case 'problemas':  await renderProblemas();  break;
+    case 'finanzas':   await renderFinanzas();   break;
   }
 }
 
 // ── VENTAS & GANANCIAS (FUSIONADO) ──
-function renderVentasGanancias() {
+async function renderVentasGanancias() {
   // Actualizar banner de ganancias totales
-  const ventas   = DB.ventas();
-  const tiendas  = DB.tiendas();
+  const ventas   = await DB.ventas();
+  const tiendas  = await DB.tiendas();
   const m        = mes();
   const ventasMes = ventas.filter(v=>v.fecha_venta?.startsWith(m));
 
@@ -1500,9 +1552,9 @@ function renderVentasGanancias() {
 }
 
 // ── ALERTAS ──
-function getAlertas() {
-  const ventas   = DB.ventas();
-  const problemas= DB.problemas();
+async function getAlertas() {
+  const ventas   = await DB.ventas();
+  const problemas= await DB.problemas();
   const alerts   = [];
 
   const probAbiertos = problemas.filter(p=>p.estado==='abierto');
@@ -1544,8 +1596,8 @@ function getAlertas() {
   return alerts;
 }
 
-function renderAlertas() {
-  const alerts = getAlertas();
+async function renderAlertas() {
+  const alerts = await getAlertas();
   document.getElementById('alertas-count').textContent = alerts.length;
   document.getElementById('alertas-container').innerHTML = alerts.length
     ? alerts.map(a=>`
@@ -1562,10 +1614,10 @@ function renderAlertas() {
 
 // ── TIENDAS ──
 let _editTiendaId = null;
-function openModalTienda(id) {
+async function openModalTienda(id) {
   _editTiendaId = id||null;
   if(id) {
-    const t = DB.tiendas().find(x=>x.id===id);
+    const t = (await DB.tiendas()).find(x=>x.id===id);
     if(t) {
       sv('t-nombre',t.nombre); sv('t-resp',t.responsable||'');
       sv('t-color',t.color); sv('t-obs',t.observaciones||'');
@@ -1578,57 +1630,57 @@ function openModalTienda(id) {
   }
   openModal('modal-tienda');
 }
-function saveTienda() {
+async function saveTienda() {
   const nombre = gv('t-nombre').trim();
   if(!nombre){ alert('El nombre es requerido.'); return; }
-  DB.upsertTienda({ id:_editTiendaId||uid(), nombre, responsable:gv('t-resp'),
+  await DB.upsertTienda({ id:_editTiendaId||uid(), nombre, responsable:gv('t-resp'),
     color:gv('t-color'), observaciones:gv('t-obs'), estado:gv('t-estado')||'activa',
     mp_cuenta:gv('t-mp-cuenta'), fecha:hoy() });
   closeModal('modal-tienda');
-  populateSelects();
-  renderTiendas();
+  await populateSelects();
+  await renderTiendas();
 }
 
-function toggleEstadoTienda(id) {
-  const tiendas = DB.tiendas();
+async function toggleEstadoTienda(id) {
+  const tiendas = await DB.tiendas();
   const t = tiendas.find(x=>x.id===id);
   if(t) {
     t.estado = (t.estado === 'inactiva') ? 'activa' : 'inactiva';
-    DB.saveTiendas(tiendas);
-    renderTiendas();
+    await DB.saveTiendas(tiendas);
+    await renderTiendas();
   }
 }
 
-function deleteTienda(id) {
-  const t = DB.tiendas().find(x=>x.id===id);
+async function deleteTienda(id) {
+  const t = (await DB.tiendas()).find(x=>x.id===id);
   if(!t) return;
-  const ventasAsociadas = DB.ventas().filter(v=>v.tienda_id===id).length;
+  const ventasAsociadas = (await DB.ventas()).filter(v=>v.tienda_id===id).length;
   const msg = ventasAsociadas > 0
     ? `⚠️ La tienda "${t.nombre}" tiene ${ventasAsociadas} venta(s) asociada(s).\n¿Seguro que deseas eliminarla? Las ventas no se borrarán.`
     : `¿Eliminar la tienda "${t.nombre}"?`;
   if(!confirm(msg)) return;
-  DB.saveTiendas(DB.tiendas().filter(x=>x.id!==id));
-  populateSelects();
-  renderTiendas();
+  await DB.saveTiendas((await DB.tiendas()).filter(x=>x.id!==id));
+  await populateSelects();
+  await renderTiendas();
 }
 
-function editarMPSaldo(tiendaId) {
-  const saldos = DB.saldos();
+async function editarMPSaldo(tiendaId) {
+  const saldos = await DB.saldos();
   const mpKey  = 'mercadopago_' + tiendaId;
   const actual = parseFloat(saldos[mpKey]) || 0;
-  const t      = DB.tiendas().find(x=>x.id===tiendaId);
+  const t      = (await DB.tiendas()).find(x=>x.id===tiendaId);
   const nuevo  = prompt(`💳 Saldo Mercado Pago — ${t?.nombre||tiendaId}\nSaldo actual: ${fmt(actual)}\n\nIngresa el nuevo saldo (COP$):`, actual||'');
   if(nuevo===null) return;
   const val = parseFloat(nuevo);
   if(isNaN(val)) { alert('Valor inválido'); return; }
   saldos[mpKey] = val;
-  DB.saveSaldos(saldos);
-  renderTiendas();
+  await DB.saveSaldos(saldos);
+  await renderTiendas();
 }
-function renderTiendas() {
-  const tiendas = DB.tiendas();
-  const ventas  = DB.ventas();
-  const saldos  = DB.saldos();
+async function renderTiendas() {
+  const tiendas = await DB.tiendas();
+  const ventas  = await DB.ventas();
+  const saldos  = await DB.saldos();
   if(!tiendas.length) {
     document.getElementById('tiendas-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="empty-icon">🏪</div><div class="empty-title">Sin tiendas</div>
@@ -1685,14 +1737,14 @@ function renderTiendas() {
 // ── VENTAS ──
 let _editVentaId = null;
 
-function openModalVenta(id) {
+async function openModalVenta(id) {
   _editVentaId = id||null;
   document.getElementById('mv-title').textContent = id ? 'Editar Venta' : 'Nueva Venta';
-  const tiendas = DB.tiendas();
+  const tiendas = await DB.tiendas();
   document.getElementById('v-tienda').innerHTML = tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
 
   if(id) {
-    const v = DB.ventas().find(x=>x.id===id);
+    const v = (await DB.ventas()).find(x=>x.id===id);
     if(v) {
       sv('v-id', v.id_ml||''); sv('v-tienda', v.tienda_id||'');
       sv('v-fecha', v.fecha_venta||hoy()); sv('v-fecha-entrega', v.fecha_entrega||'');
@@ -1839,7 +1891,7 @@ function recalcVenta() {
   if(cardEl) cardEl.className  = 'result-card ' + (gan >= 0 ? 'rc-gan' : 'rc-neg');
 }
 
-function saveVenta() {
+async function saveVenta() {
   const producto = gv('v-producto').trim();
   const tienda   = gv('v-tienda');
   const copVenta = parseFloat(gv('v-cop-venta')) || 0;
@@ -1861,7 +1913,7 @@ function saveVenta() {
   const costoUsd   = parseFloat(gv('v-costo-usd'))||0;
   const costoCOP   = costoUsd * trm;
 
-  DB.upsertVenta({
+  await DB.upsertVenta({
     id:            _editVentaId || uid(),
     id_ml:         gv('v-id').trim(),
     tienda_id:     tienda,
@@ -1892,11 +1944,11 @@ function saveVenta() {
   // Registrar egreso automático si se indicó fuente de pago
   if(fuentePago && montoPago > 0 && !_editVentaId) {
     // Descontar del saldo de la fuente de pago (gasto en producto)
-    const saldos = DB.saldos();
+    const saldos = await DB.saldos();
     saldos[fuentePago] = (parseFloat(saldos[fuentePago])||0) - montoPago;
-    DB.saveSaldos(saldos);
+    await DB.saveSaldos(saldos);
 
-    DB.upsertMovimiento({
+    await DB.upsertMovimiento({
       id: uid(), fecha: gv('v-fecha'), tipo:'egreso',
       fuente: fuentePago, valor: montoPago,
       concepto: `Compra: ${producto.slice(0,40)}`,
@@ -1908,14 +1960,14 @@ function saveVenta() {
   // ── Auto-sumar pago de ML al Mercado Pago de la tienda correspondiente ──
   // Si ML pagó (precio_cop > 0), sumarlo al saldo MP de esa tienda
   if(copVenta > 0 && !_editVentaId) {
-    const saldos = DB.saldos();
+    const saldos = await DB.saldos();
     const mpKey  = 'mercadopago_' + tienda;
     saldos[mpKey] = (parseFloat(saldos[mpKey])||0) + copVenta;
     // También al mercadopago global
     saldos['mercadopago'] = (parseFloat(saldos['mercadopago'])||0) + copVenta;
-    DB.saveSaldos(saldos);
+    await DB.saveSaldos(saldos);
 
-    DB.upsertMovimiento({
+    await DB.upsertMovimiento({
       id: uid(), fecha: gv('v-fecha'), tipo:'ingreso',
       fuente: 'mercadopago', valor: copVenta,
       concepto: `Pago ML: ${producto.slice(0,35)}`,
@@ -1925,14 +1977,14 @@ function saveVenta() {
   }
 
   closeModal('modal-venta');
-  renderVentas();
-  updateAlertaBadge();
+  await renderVentas();
+  await updateAlertaBadge();
 }
 
-function renderVentas() {
+async function renderVentas() {
   // Refresh the banner totals too
-  const tiendas = DB.tiendas();
-  let ventas    = DB.ventas();
+  const tiendas = await DB.tiendas();
+  let ventas    = await DB.ventas();
 
   const m  = mes();
   const vm = ventas.filter(v=>v.fecha_venta?.startsWith(m));
@@ -2026,20 +2078,20 @@ function renderVentas() {
   }).join('')||'<tr><td colspan="16" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 }
 
-function cambiarEstado(id, estado) {
-  const ventas = DB.ventas();
+async function cambiarEstado(id, estado) {
+  const ventas = await DB.ventas();
   const v = ventas.find(x=>x.id===id);
-  if(v) { v.estado = estado; DB.saveVentas(ventas); updateAlertaBadge(); }
+  if(v) { v.estado = estado; await DB.saveVentas(ventas); await updateAlertaBadge(); }
 }
 
-function deleteVenta(id) {
+async function deleteVenta(id) {
   if(!confirm('¿Eliminar esta venta?')) return;
-  DB.deleteVenta(id);
-  renderVentas(); updateAlertaBadge();
+  await DB.deleteVenta(id);
+  await renderVentas(); await updateAlertaBadge();
 }
 
-function openValidarEnvio(id) {
-  const v = DB.ventas().find(x=>x.id===id);
+async function openValidarEnvio(id) {
+  const v = (await DB.ventas()).find(x=>x.id===id);
   if(!v) return;
   const trm = v.trm || TRM_ACTUAL;
   const estimado = v.envio_estimado_cop || (v.envio_tipo==='servientrega' ? (v.envio_int_usd||0)*trm : v.envio_int_usd||0);
@@ -2051,14 +2103,14 @@ function openValidarEnvio(id) {
     estimado || ''
   ));
   if(isNaN(real) || real === null) return;
-  const ventas = DB.ventas();
+  const ventas = await DB.ventas();
   const vv = ventas.find(x=>x.id===id);
   if(vv) {
     vv.envio_real_cop  = real;
     vv.envio_validado  = true;
     vv.envio_estimado_cop = estimado;
-    DB.saveVentas(ventas);
-    renderVentas();
+    await DB.saveVentas(ventas);
+    await renderVentas();
     const diff = real - estimado;
     if(Math.abs(diff) >= 500) {
       alert(`Envío validado ✅\nDiferencia vs estimado: ${diff>=0?'+':''}${fmt(diff)}\nEsta diferencia ya se aplicó al cálculo de ganancia.`);
@@ -2072,12 +2124,12 @@ function clearVentaFilters() {
   renderVentas();
 }
 
-function verDetalleVenta(id) {
-  const v = DB.ventas().find(x=>x.id===id);
+async function verDetalleVenta(id) {
+  const v = (await DB.ventas()).find(x=>x.id===id);
   if(!v) return;
-  const t = DB.tiendas().find(x=>x.id===v.tienda_id);
+  const t = (await DB.tiendas()).find(x=>x.id===v.tienda_id);
   const c = calcVenta(v);
-  const problemas = DB.problemas().filter(p=>p.venta_id===id);
+  const problemas = (await DB.problemas()).filter(p=>p.venta_id===id);
 
   document.getElementById('md-title').textContent = `Detalle — ${v.id_ml||v.id}`;
   document.getElementById('md-btn-editar').onclick = ()=>{ closeModal('modal-detalle'); openModalVenta(id); };
@@ -2142,7 +2194,7 @@ function dr(label, val) {
 let _editProbId = null;
 let _ventaSelProblema = null;
 
-function openModalProblema(ventaId, probId) {
+async function openModalProblema(ventaId, probId) {
   _editProbId = probId||null;
   _ventaSelProblema = null;
   document.getElementById('mp-title').textContent = probId ? 'Editar Problema' : 'Registrar Problema';
@@ -2152,14 +2204,14 @@ function openModalProblema(ventaId, probId) {
   sv('p-descripcion',''); sv('p-solucion',''); sv('p-estado','abierto'); sv('p-perdida','');
 
   if(ventaId) {
-    const v = DB.ventas().find(x=>x.id===ventaId);
+    const v = (await DB.ventas()).find(x=>x.id===ventaId);
     if(v) {
       document.getElementById('p-buscar').value = v.id_ml||v.id;
       seleccionarVentaProblema(v);
     }
   }
   if(probId) {
-    const p = DB.problemas().find(x=>x.id===probId);
+    const p = (await DB.problemas()).find(x=>x.id===probId);
     if(p) {
       sv('p-fecha',p.fecha); sv('p-tipo',p.tipo);
       sv('p-descripcion',p.descripcion); sv('p-solucion',p.solucion||'');
@@ -2169,10 +2221,10 @@ function openModalProblema(ventaId, probId) {
   openModal('modal-problema');
 }
 
-function buscarVentaProblema() {
+async function buscarVentaProblema() {
   const query = gv('p-buscar').toLowerCase().trim();
   if(!query) return;
-  const ventas = DB.ventas();
+  const ventas = await DB.ventas();
   const resultados = ventas.filter(v=>
     (v.id_ml||'').toLowerCase().includes(query) ||
     (v.id||'').toLowerCase().includes(query) ||
@@ -2184,7 +2236,7 @@ function buscarVentaProblema() {
   if(!resultados.length) {
     el.innerHTML = '<div style="font-size:11px;color:var(--text3);padding:4px 0;">No se encontraron ventas.</div>'; return;
   }
-  const tiendas = DB.tiendas();
+  const tiendas = await DB.tiendas();
   el.innerHTML = resultados.map(v=>{
     const t = tiendas.find(x=>x.id===v.tienda_id);
     return `<div onclick="seleccionarVentaProblema(${JSON.stringify(v).replace(/"/g,'&quot;')})"
@@ -2200,9 +2252,9 @@ function buscarVentaProblema() {
   }).join('');
 }
 
-function seleccionarVentaProblema(v) {
+async function seleccionarVentaProblema(v) {
   _ventaSelProblema = typeof v === 'string' ? JSON.parse(v) : v;
-  const t = DB.tiendas().find(x=>x.id===_ventaSelProblema.tienda_id);
+  const t = (await DB.tiendas()).find(x=>x.id===_ventaSelProblema.tienda_id);
   document.getElementById('p-buscar-resultado').innerHTML = `
     <div style="padding:8px 10px;background:var(--teal-bg);border:1px solid #b8d8d8;
          border-radius:var(--radius);font-size:12px;margin-top:4px;">
@@ -2217,15 +2269,15 @@ const TIPO_LABELS = {
   diferencia_precio:'Diferencia de precio', cancelacion:'Cancelación', otro:'Otro'
 };
 
-function saveProblema() {
+async function saveProblema() {
   const desc = gv('p-descripcion').trim();
   if(!desc) { alert('La descripción es requerida.'); return; }
   if(!_ventaSelProblema && !_editProbId) { alert('Busca y selecciona una venta relacionada.'); return; }
 
   const tipo = gv('p-tipo');
-  DB.upsertProblema({
+  await DB.upsertProblema({
     id:           _editProbId || uid(),
-    venta_id:     _ventaSelProblema?.id || (DB.problemas().find(x=>x.id===_editProbId)?.venta_id),
+    venta_id:     _ventaSelProblema?.id || ((await DB.problemas()).find(x=>x.id===_editProbId)?.venta_id),
     id_ml_venta:  _ventaSelProblema?.id_ml || '',
     producto:     _ventaSelProblema?.producto || '',
     tienda_id:    _ventaSelProblema?.tienda_id || '',
@@ -2239,14 +2291,14 @@ function saveProblema() {
     fecha_registro: new Date().toISOString(),
   });
   closeModal('modal-problema');
-  renderProblemas();
-  updateAlertaBadge();
+  await renderProblemas();
+  await updateAlertaBadge();
 }
 
-function renderProblemas() {
-  const tiendas   = DB.tiendas();
-  const ventas    = DB.ventas();
-  let   problemas = DB.problemas();
+async function renderProblemas() {
+  const tiendas   = await DB.tiendas();
+  const ventas    = await DB.ventas();
+  let   problemas = await DB.problemas();
 
   const s  = gv('pf-search').toLowerCase();
   const fe = gv('pf-estado');
@@ -2304,8 +2356,8 @@ function renderProblemas() {
   }).join('');
 }
 
-function resolverProblema(id, estado) {
-  const probs = DB.problemas();
+async function resolverProblema(id, estado) {
+  const probs = await DB.problemas();
   const p = probs.find(x=>x.id===id);
   if(p) {
     p.estado = estado;
@@ -2313,15 +2365,15 @@ function resolverProblema(id, estado) {
       const val = parseFloat(prompt('¿Cuánto fue la pérdida en COP?','0'));
       if(!isNaN(val)) p.valor_perdida = val;
     }
-    DB.saveProblemas(probs);
-    renderProblemas(); updateAlertaBadge();
+    await DB.saveProblemas(probs);
+    await renderProblemas(); await updateAlertaBadge();
   }
 }
 
-function deleteProb(id) {
+async function deleteProb(id) {
   if(!confirm('¿Eliminar este problema?')) return;
-  DB.deleteProblema(id);
-  renderProblemas(); updateAlertaBadge();
+  await DB.deleteProblema(id);
+  await renderProblemas(); await updateAlertaBadge();
 }
 
 // ── HELPERS DOM ──
@@ -2331,12 +2383,12 @@ const st = (id,v) => { const el=document.getElementById(id); if(el) el.textConte
 function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('close'); document.getElementById(id)?.classList.remove('open'); }
 
-function updateAlertaBadge() {
-  document.getElementById('alertas-count').textContent = getAlertas().length;
+async function updateAlertaBadge() {
+  document.getElementById('alertas-count').textContent = (await getAlertas()).length;
 }
 
-function populateSelects() {
-  const tiendas = DB.tiendas();
+async function populateSelects() {
+  const tiendas = await DB.tiendas();
   const opts = tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
   const blank = '<option value="">Todas</option>';
   ['vf-tienda','pf-tienda'].forEach(id=>{
@@ -2344,85 +2396,13 @@ function populateSelects() {
   });
 }
 
-// ── DATOS DEMO ──
-function loadDemo() {
-  const tiendas = [
-    { id:'t1', nombre:'SATARDSHOP',     responsable:'Diego',  color:'#2a7a7b', estado:'activa' },
-    { id:'t2', nombre:'MiTienda_Santi', responsable:'Santi',  color:'#5c6bc0', estado:'activa' },
-    { id:'t3', nombre:'ModaFast_CO',    responsable:'Daniel', color:'#e57c23', estado:'activa' },
-  ];
-  const d = (n) => { const x=new Date(); x.setDate(x.getDate()-n); return x.toISOString().slice(0,10); };
-  const trm = TRM_ACTUAL || 3800;
-  const ventas = [
-    { id:'v1',id_ml:'2000015788963928',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:d(-2),
-      cliente:'Pedro García',telefono:'3001234567',producto:'Oxiclean Polvo Quitamanchas 5 Lbs',
-      udes:1,precio_cop:89000,precio_usd:89000/trm,trm,costo_usd:8.0,
-      envio_int_usd:12000,envio_estimado_cop:12000,envio_real_cop:12000,envio_validado:true,
-      envio_extra:0,envio_tipo:'aguachica',estado:'entregado',precio_venta:89000,
-      fuente_pago:'mercadopago',monto_pago:Math.round(8.0*trm)+12000,
-      fecha_registro:new Date().toISOString() },
-    { id:'v2',id_ml:'2000015794128036',tienda_id:'t1',fecha_venta:d(2),fecha_entrega:'',
-      cliente:'María López',telefono:'3109876543',producto:'Vasagle Mesa Auxiliar Alta 3 Niveles',
-      udes:1,precio_cop:340000,precio_usd:340000/trm,trm,costo_usd:38.0,
-      envio_int_usd:14.15,envio_estimado_cop:Math.round(14.15*trm),envio_real_cop:0,envio_validado:false,
-      envio_extra:0,envio_tipo:'servientrega',estado:'en_camino',precio_venta:340000,
-      fuente_pago:'bancolombia',monto_pago:Math.round(38.0*trm),
-      fecha_registro:new Date().toISOString() },
-    { id:'v3',id_ml:'2000015801707076',tienda_id:'t2',fecha_venta:d(3),fecha_entrega:d(-1),
-      cliente:'Carlos Rueda',telefono:'3154445566',producto:'Herbalista Té De Hierbas Viral 2 Oz',
-      udes:2,precio_cop:50000,precio_usd:50000/trm,trm,costo_usd:4.5,
-      envio_int_usd:9000,envio_estimado_cop:9000,envio_real_cop:9500,envio_validado:true,
-      envio_extra:0,envio_tipo:'aguachica',estado:'entregado',precio_venta:50000,
-      fuente_pago:'nequi',monto_pago:Math.round(4.5*trm)+9000,
-      fecha_registro:new Date().toISOString() },
-    { id:'v4',id_ml:'2000015812811546',tienda_id:'t2',fecha_venta:d(1),fecha_entrega:'',
-      cliente:'Ana Herrera',telefono:'3002223344',producto:'Cascade Power Dry Abrillantador 16 Fl',
-      udes:1,precio_cop:72000,precio_usd:72000/trm,trm,costo_usd:7.0,
-      envio_int_usd:8500,envio_estimado_cop:8500,envio_real_cop:0,envio_validado:false,
-      envio_extra:0,envio_tipo:'aguachica',estado:'pendiente',precio_venta:72000,
-      fuente_pago:'mercadopago',monto_pago:Math.round(7.0*trm)+8500,
-      fecha_registro:new Date().toISOString() },
-    { id:'v5',id_ml:'2000015822334455',tienda_id:'t3',fecha_venta:d(5),fecha_entrega:d(1),
-      cliente:'Jorge Torres',telefono:'3178889900',producto:'Camiseta Polo Premium Hombre',
-      udes:2,precio_cop:145000,precio_usd:145000/trm,trm,costo_usd:15.0,
-      envio_int_usd:12.5,envio_estimado_cop:Math.round(12.5*trm),envio_real_cop:0,envio_validado:false,
-      envio_extra:0,envio_tipo:'servientrega',estado:'problema',precio_venta:145000,
-      fuente_pago:'efectivo',monto_pago:Math.round(15.0*trm),
-      fecha_registro:new Date().toISOString() },
-  ];
-  const problemas = [
-    { id:'p1',venta_id:'v5',id_ml_venta:'2000015822334455',producto:'Camiseta Polo Premium Hombre',
-      tienda_id:'t3',fecha:d(3),tipo:'producto_danado',tipo_label:'Producto dañado',
-      descripcion:'El cliente reportó que llegó una camiseta con el cuello roto y manchada.',
-      solucion:'Se abrió caso en ML. Esperando resolución de mediación.',
-      estado:'abierto',valor_perdida:0,fecha_registro:new Date().toISOString() },
-  ];
-  // Saldos de demostración
-  const saldos = {
-    mercadopago:450000, bancolombia:1200000, nequi:85000,
-    daviplata:0, efectivo:150000, tarjeta_credito:0,
-    // Saldos MP por tienda
-    mercadopago_t1: 178000,
-    mercadopago_t2: 122000,
-    mercadopago_t3: 145000,
-  };
-  // Movimientos de demostración
-  const movs = [
-    { id:'m1',fecha:d(5),tipo:'egreso',fuente:'mercadopago',valor:Math.round(8.0*trm)+12000,concepto:'Compra: Oxiclean Polvo Quitamanchas',notas:'Venta 2000015788963928',fecha_registro:new Date().toISOString() },
-    { id:'m2',fecha:d(4),tipo:'ingreso',fuente:'mercadopago',valor:89000,concepto:'Pago ML — Oxiclean 5 Lbs',notas:'',fecha_registro:new Date().toISOString() },
-    { id:'m3',fecha:d(3),tipo:'egreso',fuente:'bancolombia',valor:Math.round(38.0*trm),concepto:'Compra: Vasagle Mesa Auxiliar',notas:'',fecha_registro:new Date().toISOString() },
-  ];
-  const mems = [
-    { id:'mem1',mes:mes(),valor:89000,fuente:'mercadopago',fecha:d(1),obs:'Plan Pro · 3 tiendas',fecha_registro:new Date().toISOString() },
-  ];
-  DB.saveTiendas(tiendas); DB.saveVentas(ventas); DB.saveProblemas(problemas);
-  DB.saveMovimientos(movs); DB.saveMembresias(mems); DB.saveSaldos(saldos);
-}
+// ── DATOS DEMO eliminados — se usan datos reales de Firebase ──
 
 // ── INIT ──
 async function init() {
   // Cargar billeteras personalizadas en maps globales
-  DB.billeteras().forEach(b=>{
+  const bws = await DB.billeteras();
+  bws.forEach(b=>{
     FUENTES_LABEL[b.id] = b.nombre;
     FUENTES_ICON[b.id]  = b.icono||'💳';
   });
@@ -2430,15 +2410,12 @@ async function init() {
   // Cargar TRM primero
   await cargarTRM();
 
-  // Cargar demo si no hay datos
-  if(!DB.tiendas().length) loadDemo();
-
   // Fecha en topbar
   document.getElementById('trm-display').title =
     'TRM de referencia — ingresa el valor manualmente al registrar ventas';
 
   // Poblar selects
-  populateSelects();
+  await populateSelects();
 
   // Navegación sidebar
   document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
@@ -2462,14 +2439,14 @@ async function init() {
 
   // Filtros ventas live
   ['vf-search','vf-tienda','vf-estado','vf-mes'].forEach(id=>{
-    document.getElementById(id)?.addEventListener('input', renderVentasGanancias);
-    document.getElementById(id)?.addEventListener('change',renderVentasGanancias);
+    document.getElementById(id)?.addEventListener('input', ()=>renderVentasGanancias());
+    document.getElementById(id)?.addEventListener('change',()=>renderVentasGanancias());
   });
 
   // Filtros problemas live
   ['pf-search','pf-estado','pf-tienda'].forEach(id=>{
-    document.getElementById(id)?.addEventListener('input', renderProblemas);
-    document.getElementById(id)?.addEventListener('change',renderProblemas);
+    document.getElementById(id)?.addEventListener('input', ()=>renderProblemas());
+    document.getElementById(id)?.addEventListener('change',()=>renderProblemas());
   });
 
   // Buscar al presionar Enter en campo búsqueda de problema
@@ -2478,8 +2455,8 @@ async function init() {
   });
 
   // Render inicial
-  navigate('ventas');
-  updateAlertaBadge();
+  await navigate('ventas');
+  await updateAlertaBadge();
 }
 
 document.addEventListener('DOMContentLoaded', init);
