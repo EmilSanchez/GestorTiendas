@@ -464,7 +464,7 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="spacer"></div>
         <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
       </div>
-      <div class="g3" id="tiendas-grid"></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;" id="tiendas-grid"></div>
     </section>
 
     <!-- ══════════════ PROBLEMAS ══════════════ -->
@@ -758,14 +758,28 @@ thead{position:sticky;top:0;z-index:1;}
 <div class="overlay" id="modal-tienda">
   <div class="modal">
     <div class="mh">
-      <div class="mh-title">Nueva Tienda</div>
+      <div class="mh-title" id="mt-title">Nueva Tienda</div>
       <button class="mclose" onclick="closeModal('modal-tienda')">✕</button>
     </div>
     <div class="mc">
+      <!-- Foto de perfil -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:18px;">
+        <div id="t-foto-preview" onclick="document.getElementById('t-foto-input').click()"
+          style="width:80px;height:80px;border-radius:50%;border:3px dashed var(--border);
+                 background:var(--bg);display:flex;align-items:center;justify-content:center;
+                 cursor:pointer;overflow:hidden;transition:border-color .2s;"
+          onmouseover="this.style.borderColor='var(--teal)'"
+          onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:28px;opacity:.4;">📷</span>
+        </div>
+        <input type="file" id="t-foto-input" accept="image/*" style="display:none"
+          onchange="previewFotoTienda(this)">
+        <span style="font-size:10px;color:var(--text3);">Clic para subir foto de perfil</span>
+        <input type="hidden" id="t-foto-data">
+      </div>
       <div class="grid2">
         <div class="fg span2"><label class="fl2">Nombre de la tienda *</label><input type="text" id="t-nombre" placeholder="Ej: SATARDSHOP"></div>
         <div class="fg"><label class="fl2">Responsable</label><input type="text" id="t-resp" placeholder="Nombre del encargado"></div>
-        <div class="fg"><label class="fl2">Color identificativo</label><input type="color" id="t-color" value="#00897b" style="height:36px;padding:3px;"></div>
         <div class="fg">
           <label class="fl2">Estado de la tienda</label>
           <select id="t-estado">
@@ -773,7 +787,8 @@ thead{position:sticky;top:0;z-index:1;}
             <option value="inactiva">🔴 Inactiva</option>
           </select>
         </div>
-        <div class="fg"><label class="fl2">Plataforma Mercado Pago</label><input type="text" id="t-mp-cuenta" placeholder="Ej: @satardshop" title="Cuenta ML asociada"></div>
+        <div class="fg"><label class="fl2">Plataforma Mercado Pago</label><input type="text" id="t-mp-cuenta" placeholder="Ej: @satardshop"></div>
+        <div class="fg"><label class="fl2">Color identificativo</label><input type="color" id="t-color" value="#00897b" style="height:36px;padding:3px;"></div>
         <div class="fg span2"><label class="fl2">Observaciones</label><textarea id="t-obs" rows="2" style="width:100%;resize:none;"></textarea></div>
       </div>
     </div>
@@ -1713,26 +1728,52 @@ async function renderAlertas() {
 let _editTiendaId = null;
 async function openModalTienda(id) {
   _editTiendaId = id||null;
+  const prevEl = document.getElementById('t-foto-preview');
+  document.getElementById('t-foto-data').value = '';
+  document.getElementById('t-foto-input').value = '';
+  document.getElementById('mt-title').textContent = id ? 'Editar Tienda' : 'Nueva Tienda';
+
   if(id) {
     const t = (await DB.tiendas()).find(x=>x.id===id);
     if(t) {
       sv('t-nombre',t.nombre); sv('t-resp',t.responsable||'');
-      sv('t-color',t.color); sv('t-obs',t.observaciones||'');
+      sv('t-color',t.color||'#00897b'); sv('t-obs',t.observaciones||'');
       sv('t-estado',t.estado||'activa');
       sv('t-mp-cuenta',t.mp_cuenta||'');
+      if(t.foto) {
+        document.getElementById('t-foto-data').value = t.foto;
+        prevEl.innerHTML = `<img src="${t.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
+      } else {
+        prevEl.innerHTML = '<span style="font-size:28px;opacity:.4;">📷</span>';
+      }
     }
   } else {
     sv('t-nombre',''); sv('t-resp',''); sv('t-color','#00897b'); sv('t-obs','');
     sv('t-estado','activa'); sv('t-mp-cuenta','');
+    prevEl.innerHTML = '<span style="font-size:28px;opacity:.4;">📷</span>';
   }
   openModal('modal-tienda');
 }
+function previewFotoTienda(input) {
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const data = e.target.result;
+    document.getElementById('t-foto-data').value = data;
+    const prev = document.getElementById('t-foto-preview');
+    prev.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
+  };
+  reader.readAsDataURL(file);
+}
+
 async function saveTienda() {
   const nombre = gv('t-nombre').trim();
   if(!nombre){ alert('El nombre es requerido.'); return; }
+  const foto = document.getElementById('t-foto-data').value || null;
   await DB.upsertTienda({ id:_editTiendaId||uid(), nombre, responsable:gv('t-resp'),
     color:gv('t-color'), observaciones:gv('t-obs'), estado:gv('t-estado')||'activa',
-    mp_cuenta:gv('t-mp-cuenta'), fecha:hoy() });
+    mp_cuenta:gv('t-mp-cuenta'), foto, fecha:hoy() });
   closeModal('modal-tienda');
   await populateSelects();
   await renderTiendas();
@@ -1778,54 +1819,110 @@ async function renderTiendas() {
   const tiendas = await DB.tiendas();
   const ventas  = await DB.ventas();
   const saldos  = await DB.saldos();
+  const problemas = await DB.problemas();
   if(!tiendas.length) {
     document.getElementById('tiendas-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="empty-icon">🏪</div><div class="empty-title">Sin tiendas</div>
       <div class="c-dim" style="font-size:12px;">Crea tu primera tienda ML</div></div>`; return;
   }
   document.getElementById('tiendas-grid').innerHTML = tiendas.map(t=>{
-    const tv = ventas.filter(v=>v.tienda_id===t.id);
-    const gan= tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
+    const tv       = ventas.filter(v=>v.tienda_id===t.id);
+    const gan      = tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
     const isActive = t.estado !== 'inactiva';
-    // MP saldo para esta tienda (guardado como mercadopago_<tienda_id>)
-    const mpKey = 'mercadopago_' + t.id;
-    const mpSaldo = parseFloat(saldos[mpKey]) || 0;
-    return `<div class="card" style="opacity:${isActive?1:.7};border-left:4px solid ${t.color};">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-        <div style="width:40px;height:40px;border-radius:10px;background:${t.color}22;border:2px solid ${t.color};
-             display:flex;align-items:center;justify-content:center;font-size:18px;">🏪</div>
-        <div style="flex:1;">
-          <div class="fw7" style="font-size:13.5px;letter-spacing:-.1px;">${t.nombre}</div>
-          <div class="c-dim" style="font-size:11px;">${t.responsable||'Sin responsable'}</div>
+    const mpKey    = 'mercadopago_' + t.id;
+    const mpSaldo  = parseFloat(saldos[mpKey]) || 0;
+
+    // Métricas de reputación
+    const canceladas  = tv.filter(v=>v.estado==='cancelado').length;
+    const reclamos    = problemas.filter(p=>p.tienda_id===t.id && p.tipo==='reclamo').length;
+    const demoras     = tv.filter(v=>{
+      if(v.estado!=='en_camino') return false;
+      return (new Date()-new Date(v.fecha_venta||''))/86400000 > 5;
+    }).length;
+
+    // Barra de reputación (3 indicadores: reclamos, cancelaciones, demoras)
+    const _bar = (val) => {
+      const color = val===0 ? '#22c55e' : val<=2 ? '#f59e0b' : '#ef4444';
+      return `<div style="width:28px;height:6px;border-radius:3px;background:${color};"></div>`;
+    };
+
+    // Foto de perfil
+    const fotoEl = t.foto
+      ? `<img src="${t.foto}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid ${t.color};">`
+      : `<div style="width:64px;height:64px;border-radius:50%;background:${t.color}22;border:2px solid ${t.color};
+           display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏪</div>`;
+
+    return `
+    <div style="background:#fff;border:1px solid var(--border);border-radius:14px;
+                padding:20px;box-shadow:var(--shadow);opacity:${isActive?1:.65};
+                transition:box-shadow .15s;position:relative;"
+         onmouseover="this.style.boxShadow='var(--shadow-md)'"
+         onmouseout="this.style.boxShadow='var(--shadow)'">
+
+      <!-- Cabecera: foto + nombre + estado -->
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:16px;">
+        ${fotoEl}
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:15px;font-weight:800;letter-spacing:-.3px;color:var(--text);
+                      white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.nombre}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:2px;">${isActive?'Activa':'Inactiva'}</div>
         </div>
-        <span style="font-size:10px;padding:2px 8px;border-radius:20px;font-weight:700;
+        <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:20px;flex-shrink:0;
           background:${isActive?'var(--green-bg)':'var(--red-bg)'};
-          color:${isActive?'var(--green)':'var(--red)'};">${isActive?'ACTIVA':'INACTIVA'}</span>
+          color:${isActive?'var(--green)':'var(--red)'};">
+          ${isActive?'● ACTIVA':'● INACTIVA'}
+        </span>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-        <div style="background:var(--bg);border-radius:var(--radius);padding:9px;text-align:center;">
-          <div class="stat-label">Ventas</div><div class="fw7" style="font-size:17px;">${tv.length}</div>
+
+      <!-- Reputación + Ventas en fila -->
+      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:10px;overflow:hidden;margin-bottom:14px;">
+        <!-- Reputación -->
+        <div style="flex:1;padding:12px 14px;border-right:1px solid var(--border);">
+          <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;">Reputación</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:11px;color:var(--text2);">Reclamos</span>
+              ${_bar(reclamos)}
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:11px;color:var(--text2);">Cancelaciones</span>
+              ${_bar(canceladas)}
+            </div>
+            <div style="display:flex;align-items:center;justify-content:space-between;">
+              <span style="font-size:11px;color:var(--text2);">Demoras</span>
+              ${_bar(demoras)}
+            </div>
+          </div>
         </div>
-        <div style="background:var(--bg);border-radius:var(--radius);padding:9px;text-align:center;">
-          <div class="stat-label">Ganancia</div>
-          <div class="fw7 mono" style="font-size:13px;color:${gan>=0?'var(--green)':'var(--red)'};">${fmt(gan)}</div>
+        <!-- Ventas -->
+        <div style="flex:1;padding:12px 14px;display:flex;flex-direction:column;justify-content:space-between;">
+          <div style="font-size:10px;font-weight:700;color:var(--text2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Ventas</div>
+          <div style="font-size:28px;font-weight:800;color:var(--text);line-height:1;">${tv.length}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px;">
+            Ganancia: <span style="font-weight:700;color:${gan>=0?'var(--green)':'var(--red)'};">${fmt(gan)}</span>
+          </div>
+          <button class="btn btn-sm" style="margin-top:10px;background:var(--teal);color:#fff;border:none;
+            border-radius:8px;font-size:11px;font-weight:700;width:100%;padding:7px 0;"
+            onclick="navigate('ventas')">Ver ventas</button>
         </div>
       </div>
-      <!-- Mercado Pago saldo -->
-      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius);padding:8px 10px;margin-bottom:10px;">
-        <div style="display:flex;align-items:center;justify-content:space-between;">
-          <span style="font-size:10px;color:var(--teal-dark);font-weight:600;text-transform:uppercase;letter-spacing:.5px;">💳 Mercado Pago</span>
-          <span class="mono fw7" style="font-size:13px;color:var(--teal-dark);">${fmt(mpSaldo)}</span>
-        </div>
-        <div style="font-size:9px;color:var(--teal);margin-top:2px;opacity:.7;">Saldo acumulado ML · click para editar</div>
+
+      <!-- Saldo MP -->
+      <div onclick="editarMPSaldo('${t.id}')" style="display:flex;align-items:center;justify-content:space-between;
+           padding:8px 12px;border-radius:8px;background:var(--teal-bg);cursor:pointer;margin-bottom:12px;"
+           onmouseover="this.style.background='#c8e8e6'" onmouseout="this.style.background='var(--teal-bg)'">
+        <span style="font-size:10px;font-weight:600;color:var(--teal-dark);">💳 Saldo Mercado Pago</span>
+        <span style="font-size:13px;font-weight:800;color:var(--teal-dark);font-family:var(--font-mono);">${fmt(mpSaldo)}</span>
       </div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <button class="btn btn-ghost btn-sm" onclick="openModalTienda('${t.id}')">✏️ Editar</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleEstadoTienda('${t.id}')" style="color:${isActive?'var(--red)':'var(--green)'};">
-          ${isActive?'⏸ Desactivar':'▶️ Activar'}
+
+      <!-- Acciones -->
+      <div style="display:flex;gap:6px;">
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openModalTienda('${t.id}')">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEstadoTienda('${t.id}')"
+          style="color:${isActive?'var(--red)':'var(--green)'};">
+          ${isActive?'⏸':'▶️'}
         </button>
-        <button class="btn btn-ghost btn-sm" onclick="editarMPSaldo('${t.id}')">💰 Saldo MP</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteTienda('${t.id}')">🗑 Eliminar</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteTienda('${t.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
