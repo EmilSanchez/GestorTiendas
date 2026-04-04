@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MercaManager — Control de Ventas ML</title>
+<title>MeLi Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -335,7 +335,7 @@ thead{position:sticky;top:0;z-index:1;}
   <div class="sb-logo">
     <div class="sb-logo-icon">📦</div>
     <div>
-      <div class="sb-logo-name">MercaManager</div>
+      <div class="sb-logo-name">MeLi Manager</div>
       <div class="sb-logo-sub">Control ML</div>
     </div>
   </div>
@@ -354,7 +354,7 @@ thead{position:sticky;top:0;z-index:1;}
   </div>
 
   <div class="sb-bottom">
-    <div class="sb-ver">v6.0 · localStorage</div>
+    <div class="sb-ver" id="db-status">v6.0 · Conectando...</div>
   </div>
 </nav>
 
@@ -2446,27 +2446,42 @@ async function populateSelects() {
 
 // ── DATOS DEMO eliminados — se usan datos reales de Firebase ──
 
+// ── SPINNER OVERLAY ──
+function showSpinner(msg='Cargando...') {
+  let el = document.getElementById('_fb_spinner');
+  if(!el) {
+    el = document.createElement('div');
+    el.id = '_fb_spinner';
+    el.style.cssText = 'position:fixed;inset:0;background:rgba(255,255,255,.85);'
+      + 'z-index:9999;display:flex;flex-direction:column;align-items:center;'
+      + 'justify-content:center;gap:14px;';
+    document.body.appendChild(el);
+  }
+  el.innerHTML = `<div style="font-size:38px;animation:pulse 1.5s infinite;">🔥</div>
+    <div style="font-size:14px;font-weight:700;color:#00897b;">${msg}</div>
+    <div style="font-size:11px;color:#8aabaa;">MercaManager</div>`;
+}
+function hideSpinner() {
+  const el = document.getElementById('_fb_spinner');
+  if(el) el.remove();
+}
+
 // ── INIT ──
 async function init() {
-  // ── Mostrar spinner mientras carga desde Firebase ──
-  const mainEl = document.getElementById('page-content');
-  if(mainEl) mainEl.innerHTML = `
-    <div style="display:flex;flex-direction:column;align-items:center;
-                justify-content:center;height:60vh;gap:14px;">
-      <div style="font-size:36px;animation:pulse 1.5s infinite;">🔥</div>
-      <div style="font-size:14px;font-weight:700;color:var(--teal);">Cargando datos...</div>
-      <div style="font-size:11px;color:var(--text3);">Conectando con Firebase</div>
-    </div>`;
+  // ── Mostrar spinner encima (sin tocar el DOM de las secciones) ──
+  showSpinner('Conectando con Firebase...');
 
   // ── Carga inicial: UNA sola llamada a Firestore ──
+  const statusEl = document.getElementById('db-status');
   try {
     await _cargarTodo();
+    if(statusEl) statusEl.textContent = 'v6.0 · Firebase ✓';
   } catch(e) {
-    console.warn('Firebase no disponible, trabajando sin conexión:', e.message);
+    console.warn('Firebase no disponible:', e.message);
+    if(statusEl) statusEl.textContent = 'v6.0 · Sin conexión ⚠️';
   }
 
-  // Restaurar contenido
-  if(mainEl) mainEl.innerHTML = '';
+  hideSpinner();
 
   // Cargar billeteras personalizadas en maps globales
   const bws = await DB.billeteras();
