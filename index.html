@@ -1013,61 +1013,109 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const _db = firebase.firestore();
 
-// ── Helpers Firestore ──
-async function _getAll(col) {
-  const snap = await _db.collection(col).get();
-  return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-}
-async function _set(col, id, data) {
-  // Firestore no acepta undefined — limpiar antes de guardar
-  const clean = JSON.parse(JSON.stringify(data));
-  await _db.collection(col).doc(id).set(clean);
-}
-async function _del(col, id) {
-  await _db.collection(col).doc(id).delete();
-}
-async function _getObj(docPath, docId) {
-  const snap = await _db.collection(docPath).doc(docId).get();
-  return snap.exists ? snap.data() : {};
+// ═══════════════════════════════════════════════════════
+// CAPA DE CACHÉ EN MEMORIA
+// Se carga UNA sola vez al inicio. Todas las lecturas
+// son instantáneas (memoria). Solo las escrituras van
+// a Firestore en segundo plano (fire-and-forget para
+// no bloquear la UI).
+// ═══════════════════════════════════════════════════════
+const _cache = {
+  tiendas:     null,
+  ventas:      null,
+  problemas:   null,
+  movimientos: null,
+  membresias:  null,
+  saldos:      null,
+  billeteras:  null,
+};
+
+// Carga todas las colecciones en paralelo al iniciar
+async function _cargarTodo() {
+  const clean = d => JSON.parse(JSON.stringify(d));
+  const col = async (nombre) => {
+    const snap = await _db.collection(nombre).get();
+    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  };
+  const [t, v, p, m, mem, b, sDoc] = await Promise.all([
+    col('tiendas'), col('ventas'), col('problemas'),
+    col('movimientos'), col('membresias'), col('billeteras'),
+    _db.collection('config').doc('saldos').get(),
+  ]);
+  _cache.tiendas     = t;
+  _cache.ventas      = v;
+  _cache.problemas   = p;
+  _cache.movimientos = m;
+  _cache.membresias  = mem;
+  _cache.billeteras  = b;
+  _cache.saldos      = sDoc.exists ? sDoc.data() : {};
 }
 
-// ── Objeto DB — API idéntica a la anterior (async/await) ──
+// Persiste en Firestore en segundo plano (no bloquea UI)
+function _syncCol(nombre, arr) {
+  const b = _db.batch();
+  arr.forEach(item => b.set(
+    _db.collection(nombre).doc(item.id),
+    JSON.parse(JSON.stringify(item))
+  ));
+  b.commit().catch(e => console.warn('Firebase sync error:', e));
+}
+function _syncDoc(col, id, obj) {
+  _db.collection(col).doc(id).set(JSON.parse(JSON.stringify(obj)))
+    .catch(e => console.warn('Firebase sync error:', e));
+}
+function _delDoc(col, id) {
+  _db.collection(col).doc(id).delete()
+    .catch(e => console.warn('Firebase sync error:', e));
+}
+
+// ── Objeto DB — lecturas síncronas desde caché, escrituras async ──
 const DB = {
   // Tiendas
-  tiendas:      () => _getAll('tiendas'),
-  saveTiendas:  async (arr) => { const b=_db.batch(); arr.forEach(t=>b.set(_db.collection('tiendas').doc(t.id), JSON.parse(JSON.stringify(t)))); await b.commit(); },
-  upsertTienda: (t) => _set('tiendas', t.id, t),
+  tiendas:      () => Promise.resolve(_cache.tiendas     || []),
+  ventas:       () => Promise.resolve(_cache.ventas      || []),
+  problemas:    () => Promise.resolve(_cache.problemas   || []),
+  movimientos:  () => Promise.resolve(_cache.movimientos || []),
+  membresias:   () => Promise.resolve(_cache.membresias  || []),
+  billeteras:   () => Promise.resolve(_cache.billeteras  || []),
+  saldos:       () => Promise.resolve(_cache.saldos      || {}),
 
-  // Ventas
-  ventas:      () => _getAll('ventas'),
-  saveVentas:  async (arr) => { const b=_db.batch(); arr.forEach(v=>b.set(_db.collection('ventas').doc(v.id), JSON.parse(JSON.stringify(v)))); await b.commit(); },
-  upsertVenta: (v) => _set('ventas', v.id, v),
-  deleteVenta: (id) => _del('ventas', id),
+  saveTiendas:  (arr) => { _cache.tiendas     = arr; _syncCol('tiendas', arr); return Promise.resolve(); },
+  saveVentas:   (arr) => { _cache.ventas      = arr; _syncCol('ventas', arr);  return Promise.resolve(); },
+  saveProblemas:(arr) => { _cache.problemas   = arr; _syncCol('problemas', arr); return Promise.resolve(); },
+  saveMovimientos:(arr)=>{ _cache.movimientos = arr; _syncCol('movimientos', arr); return Promise.resolve(); },
+  saveMembresias:(arr)=>{ _cache.membresias   = arr; _syncCol('membresias', arr); return Promise.resolve(); },
+  saveBilleteras:(arr)=>{ _cache.billeteras   = arr; _syncCol('billeteras', arr); return Promise.resolve(); },
+  saveSaldos:   (obj) => { _cache.saldos      = obj; _syncDoc('config','saldos', obj); return Promise.resolve(); },
 
-  // Problemas
-  problemas:      () => _getAll('problemas'),
-  saveProblemas:  async (arr) => { const b=_db.batch(); arr.forEach(p=>b.set(_db.collection('problemas').doc(p.id), JSON.parse(JSON.stringify(p)))); await b.commit(); },
-  upsertProblema: (p) => _set('problemas', p.id, p),
-  deleteProblema: (id) => _del('problemas', id),
-
-  // Movimientos
-  movimientos:      () => _getAll('movimientos'),
-  saveMovimientos:  async (arr) => { const b=_db.batch(); arr.forEach(m=>b.set(_db.collection('movimientos').doc(m.id), JSON.parse(JSON.stringify(m)))); await b.commit(); },
-  upsertMovimiento: (m) => _set('movimientos', m.id, m),
-  deleteMovimiento: (id) => _del('movimientos', id),
-
-  // Membresías
-  membresias:      () => _getAll('membresias'),
-  saveMembresias:  async (arr) => { const b=_db.batch(); arr.forEach(m=>b.set(_db.collection('membresias').doc(m.id), JSON.parse(JSON.stringify(m)))); await b.commit(); },
-  upsertMembresia: (m) => _set('membresias', m.id, m),
-
-  // Saldos (documento único en colección "config")
-  saldos:     () => _getObj('config', 'saldos'),
-  saveSaldos: (obj) => _set('config', 'saldos', obj),
-
-  // Billeteras
-  billeteras:      () => _getAll('billeteras'),
-  saveBilleteras:  async (arr) => { const b=_db.batch(); arr.forEach(bw=>b.set(_db.collection('billeteras').doc(bw.id), JSON.parse(JSON.stringify(bw)))); await b.commit(); },
+  upsertTienda: (t) => {
+    const a = _cache.tiendas || []; const i = a.findIndex(x=>x.id===t.id);
+    i>=0 ? a[i]=t : a.push(t); _cache.tiendas = a;
+    _syncDoc('tiendas', t.id, t); return Promise.resolve();
+  },
+  upsertVenta: (v) => {
+    const a = _cache.ventas || []; const i = a.findIndex(x=>x.id===v.id);
+    i>=0 ? a[i]=v : a.push(v); _cache.ventas = a;
+    _syncDoc('ventas', v.id, v); return Promise.resolve();
+  },
+  upsertProblema: (p) => {
+    const a = _cache.problemas || []; const i = a.findIndex(x=>x.id===p.id);
+    i>=0 ? a[i]=p : a.push(p); _cache.problemas = a;
+    _syncDoc('problemas', p.id, p); return Promise.resolve();
+  },
+  upsertMovimiento: (m) => {
+    const a = _cache.movimientos || []; const i = a.findIndex(x=>x.id===m.id);
+    i>=0 ? a[i]=m : a.push(m); _cache.movimientos = a;
+    _syncDoc('movimientos', m.id, m); return Promise.resolve();
+  },
+  upsertMembresia: (m) => {
+    const a = _cache.membresias || []; const i = a.findIndex(x=>x.id===m.id);
+    i>=0 ? a[i]=m : a.push(m); _cache.membresias = a;
+    _syncDoc('membresias', m.id, m); return Promise.resolve();
+  },
+  deleteVenta:    (id) => { _cache.ventas      = (_cache.ventas||[]).filter(x=>x.id!==id);      _delDoc('ventas', id);      return Promise.resolve(); },
+  deleteProblema: (id) => { _cache.problemas   = (_cache.problemas||[]).filter(x=>x.id!==id);   _delDoc('problemas', id);   return Promise.resolve(); },
+  deleteMovimiento:(id)=> { _cache.movimientos = (_cache.movimientos||[]).filter(x=>x.id!==id); _delDoc('movimientos', id); return Promise.resolve(); },
 };
 
 // ── UTILIDADES ──
@@ -2400,6 +2448,26 @@ async function populateSelects() {
 
 // ── INIT ──
 async function init() {
+  // ── Mostrar spinner mientras carga desde Firebase ──
+  const mainEl = document.getElementById('page-content');
+  if(mainEl) mainEl.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;
+                justify-content:center;height:60vh;gap:14px;">
+      <div style="font-size:36px;animation:pulse 1.5s infinite;">🔥</div>
+      <div style="font-size:14px;font-weight:700;color:var(--teal);">Cargando datos...</div>
+      <div style="font-size:11px;color:var(--text3);">Conectando con Firebase</div>
+    </div>`;
+
+  // ── Carga inicial: UNA sola llamada a Firestore ──
+  try {
+    await _cargarTodo();
+  } catch(e) {
+    console.warn('Firebase no disponible, trabajando sin conexión:', e.message);
+  }
+
+  // Restaurar contenido
+  if(mainEl) mainEl.innerHTML = '';
+
   // Cargar billeteras personalizadas en maps globales
   const bws = await DB.billeteras();
   bws.forEach(b=>{
