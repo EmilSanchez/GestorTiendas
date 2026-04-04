@@ -342,7 +342,7 @@ thead{position:sticky;top:0;z-index:1;}
 
   <div class="sb-section">
     <div class="sb-section-label">Principal</div>
-    <div class="nav-item active" data-page="ventas"><span class="ni">🛒</span>Ventas & Ganancias</div>
+    <div class="nav-item active" data-page="ventas"><span class="ni">🛒</span>Gestor Ventas</div>
     <div class="nav-item" data-page="alertas" id="nav-alertas"><span class="ni">🔔</span>Alertas<span class="nb" id="alertas-count">0</span></div>
   </div>
 
@@ -385,28 +385,24 @@ thead{position:sticky;top:0;z-index:1;}
 
       <!-- Banner total ganancia todas las tiendas -->
       <div id="vg-banner" style="
-        background:linear-gradient(135deg,var(--teal-dark) 0%,var(--teal) 60%,var(--teal-light) 100%);
+        background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%);
         border-radius:var(--radius-lg);padding:18px 24px;margin-bottom:18px;
         display:flex;align-items:center;gap:20px;flex-wrap:wrap;
         box-shadow:0 4px 20px rgba(0,137,123,.25);color:#fff;
       ">
         <div style="flex:1;min-width:180px;">
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:.7;margin-bottom:4px;">Ganancia neta total — todas las tiendas</div>
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:.7;margin-bottom:4px;">Ganancia Todas las tiendas</div>
           <div id="vg-total-gan" style="font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;">$0</div>
           <div id="vg-total-sub" style="font-size:11px;opacity:.65;margin-top:4px;">mes actual</div>
         </div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;">
           <div style="text-align:center;">
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Ingresos brutos</div>
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Ingresos</div>
             <div id="vg-total-ing" style="font-size:16px;font-weight:700;">$0</div>
           </div>
           <div style="text-align:center;">
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total costos</div>
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Gastos</div>
             <div id="vg-total-cos" style="font-size:16px;font-weight:700;opacity:.8;">$0</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Margen global</div>
-            <div id="vg-total-mar" style="font-size:16px;font-weight:700;">0%</div>
           </div>
           <div style="text-align:center;">
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Ventas del mes</div>
@@ -441,7 +437,7 @@ thead{position:sticky;top:0;z-index:1;}
           <thead><tr>
             <th>#</th><th>ID Venta ML</th><th>Tienda</th><th>Fecha Venta</th>
             <th>Fecha Entrega</th><th>Cliente / Tel</th><th>Producto</th>
-            <th>Udes</th><th>USD$</th><th>TRM</th><th>Valor COP</th>
+            <th>Udes</th><th>USD</th><th>TRM</th><th>Valor COP</th>
             <th>Costo Total</th><th>Ganancia</th><th>Envío</th>
             <th>Estado</th><th>Acc.</th>
           </tr></thead>
@@ -1996,7 +1992,6 @@ function renderVentas() {
       <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
       <td class="td-mono fw7" style="color:${isLoss?'#842029':'#198754'};">
         ${fmt(c.ganancia)}
-        <div style="font-size:9px;color:var(--text3);">${fmtP(c.margen)}</div>
       </td>
       <td style="font-size:11px;text-align:center;">
         <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'pendiente':'entregado'}">${envioLabel}</span>
