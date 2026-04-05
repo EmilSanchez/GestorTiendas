@@ -3,10 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Meli Manager — Control de Ventas ML</title>
+<title>Meli Manager</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="icon" href="melimanager2.png" type="image/x-icon">
 <style>
 /* ==============================================
    MELI MANAGER v6 — Tipografía y paleta renovada
@@ -333,7 +334,9 @@ thead{position:sticky;top:0;z-index:1;}
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
 <nav id="sidebar">
   <div class="sb-logo">
-    <div class="sb-logo-icon">📦</div>
+    <div class="sb-logo-icon" style="background:none;box-shadow:none;">
+      <img src="melimanager2.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+    </div>
     <div>
       <div class="sb-logo-name">Meli Manager</div>
       <div class="sb-logo-sub">Control ML</div>
@@ -464,7 +467,7 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="spacer"></div>
         <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px;" id="tiendas-grid"></div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px;" id="tiendas-grid"></div>
     </section>
 
     <!-- ══════════════ PROBLEMAS ══════════════ -->
@@ -510,12 +513,16 @@ thead{position:sticky;top:0;z-index:1;}
       <div class="card mb16" style="margin-bottom:14px;" id="fin-envios-card">
         <div class="card-header">
           <div>
-            <div class="card-title">🚚 Envíos del mes</div>
+            <div class="card-title">🚚 Envíos por mes</div>
             <div class="card-sub" id="fin-envios-sub">Desglosado por transportadora</div>
           </div>
-          <div style="text-align:right;">
-            <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Total envíos</div>
-            <div id="fin-envios-total" style="font-size:22px;font-weight:700;color:var(--teal);">$0</div>
+          <div style="display:flex;align-items:center;gap:14px;">
+            <select id="fin-envios-mes" style="font-size:11px;padding:4px 8px;border-radius:6px;"
+              onchange="renderEnviosMes()"></select>
+            <div style="text-align:right;">
+              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Total envíos</div>
+              <div id="fin-envios-total" style="font-size:22px;font-weight:700;color:var(--teal);">$0</div>
+            </div>
           </div>
         </div>
         <!-- Bloques por transportadora -->
@@ -1258,7 +1265,7 @@ function calcVenta(v) {
 
 // ── NAVEGACIÓN ──
 const PAGES = {
-  ventas:     { title:'Ventas & Ganancias', icon:'🛒' },
+  ventas:     { title:'Gestor de Ventas', icon:'🛒' },
   alertas:    { title:'Alertas', icon:'🔔' },
   tiendas:    { title:'Tiendas', icon:'🏪' },
   problemas:  { title:'Problemas', icon:'⚠️' },
@@ -1266,14 +1273,9 @@ const PAGES = {
 };
 
 // ── HELPERS DE FUENTE DE PAGO ──
-const FUENTES_LABEL = {
-  mercadopago:'Mercado Pago', bancolombia:'Bancolombia', nequi:'Nequi',
-  daviplata:'Daviplata', efectivo:'Efectivo', tarjeta_credito:'Tarjeta crédito', otro:'Otro'
-};
-const FUENTES_ICON = {
-  mercadopago:'💳', bancolombia:'🏦', nequi:'📱', daviplata:'📱',
-  efectivo:'💵', tarjeta_credito:'💳', otro:'🔄'
-};
+// Billeteras: solo se cargan desde la BD. Sin valores hardcodeados.
+const FUENTES_LABEL = {};
+const FUENTES_ICON  = {};
 
 async function getSaldoFuente(fuente) {
   const saldos = await DB.saldos();
@@ -1314,6 +1316,68 @@ function recalcValidacionEnvio() {
     : `Diferencia: <b style="color:${diff>0?'var(--red)':'var(--teal)'};">${diff>0?'+':''}${fmt(diff)}</b> — el costo real se usará para el cálculo de ganancia.`;
 }
 
+// ── ENVÍOS POR MES (función independiente) ──
+async function renderEnviosMes() {
+  const mesSelEl = document.getElementById('fin-envios-mes');
+  const mesAct   = mesSelEl?.value || mes();
+  const ventas   = await DB.ventas();
+  const tiendas  = await DB.tiendas();
+  const _tNombre = (id) => tiendas.find(x=>x.id===id)?.nombre || id;
+
+  const ventasMes = ventas.filter(v=>v.fecha_venta?.startsWith(mesAct));
+  const vAg = ventasMes.filter(v=>v.envio_tipo==='aguachica'    && v.envio_int_usd>0);
+  const vSv = ventasMes.filter(v=>v.envio_tipo==='servientrega' && v.envio_int_usd>0);
+
+  const _envVal = v => v.envio_validado ? (v.envio_real_cop||0) : (v.envio_estimado_cop||v.envio_int_usd||0);
+
+  const totalAg     = vAg.reduce((s,v)=>s+_envVal(v), 0);
+  const totalSv     = vSv.reduce((s,v)=>s+_envVal(v), 0);
+  const enviosTotal = totalAg + totalSv;
+  const enviosCount = vAg.length + vSv.length;
+
+  const mesNombres = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio',
+    '07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+  const [y,mo] = mesAct.split('-');
+  const mesLabel = `${mesNombres[mo]||mo} ${y}`;
+
+  const el = (id) => document.getElementById(id);
+  if(el('fin-envios-total'))  el('fin-envios-total').textContent = fmt(enviosTotal);
+  if(el('fin-env-ag-total'))  el('fin-env-ag-total').textContent = fmt(totalAg);
+  if(el('fin-env-sv-total'))  el('fin-env-sv-total').textContent = fmt(totalSv);
+  if(el('fin-envios-sub'))    el('fin-envios-sub').textContent   = `${enviosCount} envío(s) · ${mesLabel}`;
+
+  const _filaEnvio = v => {
+    const val = _envVal(v);
+    const est = v.envio_estimado_cop || v.envio_int_usd || 0;
+    const badge = v.envio_validado
+      ? `<span style="color:var(--green);font-weight:700;">✅ ${fmt(val)}</span>`
+      : `<span style="color:var(--yellow);font-weight:700;">⏳ ~${fmt(est)}</span>`;
+    return `<div style="display:flex;justify-content:space-between;align-items:center;
+              padding:5px 0;border-bottom:1px dashed #e0eaea;">
+      <div style="min-width:0;flex:1;padding-right:8px;">
+        <div style="font-weight:600;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${v.producto?.slice(0,34)||'—'}</div>
+        <div style="color:var(--text3);font-size:10px;">${_tNombre(v.tienda_id)} · ${v.fecha_venta||''}</div>
+      </div>
+      <div style="flex-shrink:0;">${badge}</div>
+    </div>`;
+  };
+
+  if(el('fin-env-ag-detalle')) el('fin-env-ag-detalle').innerHTML = vAg.length
+    ? vAg.map(_filaEnvio).join('')
+    : '<div style="color:var(--text3);padding:6px 0;font-size:11px;">Sin envíos Aguachica este mes</div>';
+
+  if(el('fin-env-sv-detalle')) el('fin-env-sv-detalle').innerHTML = vSv.length
+    ? vSv.map(_filaEnvio).join('')
+    : '<div style="color:var(--text3);padding:6px 0;font-size:11px;">Sin envíos Servientrega este mes</div>';
+
+  const validados  = ventasMes.filter(v=>v.envio_validado && v.envio_int_usd>0).length;
+  const pendientes = ventasMes.filter(v=>!v.envio_validado && v.envio_int_usd>0).length;
+  if(el('fin-envios-detalle')) el('fin-envios-detalle').innerHTML = enviosCount
+    ? `<span style="color:var(--green);">✅ ${validados} validado(s)</span>
+       <span style="margin-left:14px;color:var(--yellow);">⏳ ${pendientes} pendiente(s)</span>`
+    : `<span style="color:var(--text3);">Sin envíos en ${mesLabel}</span>`;
+}
+
 // ── MÓDULO FINANZAS ──
 async function renderFinanzas() {
   const movs    = await DB.movimientos();
@@ -1329,77 +1393,36 @@ async function renderFinanzas() {
   }
   const mesAct = mesEl?.value || mes();
 
-  // ── Saldos — fuentes base + billeteras personalizadas ──
-  const fuentesBase = ['mercadopago','bancolombia','nequi','daviplata','efectivo','tarjeta_credito'];
-  const fuentesTodas = [
-    ...fuentesBase.map(f=>({ key:f, label:FUENTES_LABEL[f], icon:FUENTES_ICON[f] })),
-    ...bwExtra.map(b=>({ key:b.id, label:b.nombre, icon:b.icono||'💳', custom:true, id:b.id })),
-  ];
-  document.getElementById('fin-saldos').innerHTML = fuentesTodas.map(f=>{
-    const s = parseFloat(saldos[f.key])||0;
-    return `<div class="stat-card ${s<0?'red':s===0?'yellow':'green'}" style="cursor:pointer;" onclick="openModalSaldo('${f.key}')">
-      <div class="stat-icon">${f.icon}</div>
-      <div class="stat-label">${f.label}</div>
-      <div class="stat-value ${s<0?'red':s===0?'yellow':'green'}">${fmt(s)}</div>
-      <div class="stat-delta">${f.custom?`<button class="btn btn-danger btn-sm" style="font-size:9px;padding:1px 5px;margin-top:2px;" onclick="event.stopPropagation();deleteBilletera('${f.id}')">🗑 Eliminar</button>`:'Click para editar saldo'}</div>
-    </div>`;
-  }).join('');
+  // ── Saldos — solo billeteras guardadas en la BD ──
+  document.getElementById('fin-saldos').innerHTML = bwExtra.length
+    ? bwExtra.map(b=>{
+        const s = parseFloat(saldos[b.id])||0;
+        return `<div class="stat-card ${s<0?'red':s===0?'yellow':'green'}" style="cursor:pointer;" onclick="openModalSaldo('${b.id}')">
+          <div class="stat-icon">${b.icono||'💳'}</div>
+          <div class="stat-label">${b.nombre}</div>
+          <div class="stat-value ${s<0?'red':s===0?'yellow':'green'}">${fmt(s)}</div>
+          <div class="stat-delta"><button class="btn btn-danger btn-sm" style="font-size:9px;padding:1px 5px;margin-top:2px;"
+            onclick="event.stopPropagation();deleteBilletera('${b.id}')">🗑 Eliminar</button></div>
+        </div>`;
+      }).join('')
+    : '<div class="c-dim" style="font-size:12px;padding:16px 0;">No hay billeteras registradas. Crea una con "+ Billetera".</div>';
 
-  // ── Envíos del mes — desglosado por transportadora ──
-  const ventasMes = (await DB.ventas()).filter(v=>v.fecha_venta?.startsWith(mesAct));
-  const tiendas__ = await DB.tiendas();
-  const _tNombre  = (id) => tiendas__.find(x=>x.id===id)?.nombre || id;
+  // ── Poblar selector de mes en envíos (independiente del filtro de movimientos) ──
+  const envMesEl = document.getElementById('fin-envios-mes');
+  if(envMesEl && !envMesEl.innerHTML) {
+    const meses12 = Array.from({length:12},(_,i)=>{
+      const d=new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7);
+    });
+    const mesNombres = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio',
+      '07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+    envMesEl.innerHTML = meses12.map(m=>{
+      const [y,mo] = m.split('-');
+      return `<option value="${m}" ${m===mes()?'selected':''}>${mesNombres[mo]} ${y}</option>`;
+    }).join('');
+  }
 
-  // Separar por tipo
-  const vAg = ventasMes.filter(v=>v.envio_tipo==='aguachica'    && v.envio_int_usd>0);
-  const vSv = ventasMes.filter(v=>v.envio_tipo==='servientrega' && v.envio_int_usd>0);
-
-  // Calcular valor efectivo de cada venta (real si validado, estimado si no)
-  const _envVal = v => v.envio_validado ? (v.envio_real_cop||0) : (v.envio_estimado_cop||v.envio_int_usd||0);
-
-  const totalAg = vAg.reduce((s,v)=>s+_envVal(v), 0);
-  const totalSv = vSv.reduce((s,v)=>s+_envVal(v), 0);
-  const enviosTotal = totalAg + totalSv;
-  const enviosCount = vAg.length + vSv.length;
-
-  document.getElementById('fin-envios-total').textContent = fmt(enviosTotal);
-  document.getElementById('fin-env-ag-total').textContent = fmt(totalAg);
-  document.getElementById('fin-env-sv-total').textContent = fmt(totalSv);
-  document.getElementById('fin-envios-sub').textContent   = `${enviosCount} envío(s) en ${mesAct}`;
-
-  // Fila de detalle por venta
-  const _filaEnvio = v => {
-    const val   = _envVal(v);
-    const est   = v.envio_estimado_cop || v.envio_int_usd || 0;
-    const badge = v.envio_validado
-      ? `<span style="color:var(--green);font-weight:700;">✅ ${fmt(val)}</span>`
-      : `<span style="color:var(--yellow);font-weight:700;">⏳ ~${fmt(est)}</span>`;
-    return `<div style="display:flex;justify-content:space-between;align-items:center;
-              padding:4px 0;border-bottom:1px dashed #e0eaea;">
-      <div>
-        <div style="font-weight:600;font-size:11px;">${v.producto?.slice(0,32)||'—'}</div>
-        <div style="color:var(--text3);font-size:10px;">${_tNombre(v.tienda_id)} · ${v.fecha_venta||''}</div>
-      </div>
-      ${badge}
-    </div>`;
-  };
-
-  const agHTML = vAg.length
-    ? vAg.map(_filaEnvio).join('')
-    : '<div style="color:var(--text3);padding:4px 0;">Sin envíos Aguachica</div>';
-  const svHTML = vSv.length
-    ? vSv.map(_filaEnvio).join('')
-    : '<div style="color:var(--text3);padding:4px 0;">Sin envíos Servientrega</div>';
-
-  document.getElementById('fin-env-ag-detalle').innerHTML = agHTML;
-  document.getElementById('fin-env-sv-detalle').innerHTML = svHTML;
-
-  const validados  = ventasMes.filter(v=>v.envio_validado && v.envio_int_usd>0).length;
-  const pendientes = ventasMes.filter(v=>!v.envio_validado && v.envio_int_usd>0).length;
-  document.getElementById('fin-envios-detalle').innerHTML = enviosCount
-    ? `<span style="color:var(--green);">✅ ${validados} validado(s)</span>
-       <span style="margin-left:14px;color:var(--yellow);">⏳ ${pendientes} pendiente(s) de confirmar</span>`
-    : '<span style="color:var(--text3);">Sin envíos registrados este mes</span>';
+  // Render envíos con el mes seleccionado
+  await renderEnviosMes();
 
   // ── Membresía Centris ──
   const memMes = mems.filter(m=>m.mes===mesAct);
@@ -1485,7 +1508,7 @@ async function saveNuevaBilletera() {
   const saldos = await DB.saldos();
   saldos[id] = saldo;
   await DB.saveSaldos(saldos);
-  // Agregar a FUENTES_LABEL e ICON para movimientos
+  // Actualizar maps en memoria
   FUENTES_LABEL[id] = nombre;
   FUENTES_ICON[id]  = icono;
   closeModal('modal-billetera');
@@ -1509,16 +1532,11 @@ async function deleteBilletera(id) {
 }
 async function actualizarSelectsFuente() {
   const bws = await DB.billeteras();
-  const baseOpts = [
-    ['mercadopago','💳 Mercado Pago'],['bancolombia','🏦 Bancolombia'],
-    ['nequi','📱 Nequi'],['daviplata','📱 Daviplata'],
-    ['efectivo','💵 Efectivo'],['tarjeta_credito','💳 Tarjeta de crédito'],['otro','🔄 Otro'],
-  ];
-  const extraOpts = bws.map(b=>[b.id, `${b.icono||'💳'} ${b.nombre}`]);
-  const allOpts   = [...baseOpts, ...extraOpts].map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+  // Solo billeteras guardadas en la BD
+  const allOpts = bws.map(b=>`<option value="${b.id}">${b.icono||'💳'} ${b.nombre}</option>`).join('');
   ['v-fuente-pago','mov-fuente'].forEach(id=>{
     const el=document.getElementById(id);
-    if(el){ const cur=el.value; el.innerHTML=`<option value="">— Seleccionar —</option>`+allOpts; el.value=cur; }
+    if(el){ const cur=el.value; el.innerHTML=`<option value="">— Seleccionar —</option>`+allOpts; el.value=cur||''; }
   });
 }
 
@@ -1901,8 +1919,8 @@ async function renderTiendas() {
           <div style="font-size:10px;color:var(--text3);margin-top:4px;">
             Ganancia: <span style="font-weight:700;color:${gan>=0?'var(--green)':'var(--red)'};">${fmt(gan)}</span>
           </div>
-          <button class="btn btn-sm" style="margin-top:10px;background:var(--teal);color:#fff;border:none;
-            border-radius:8px;font-size:11px;font-weight:700;width:100%;padding:7px 0;"
+            <button class="btn btn-sm" style="margin-top:10px;background:var(--teal);color:#fff;border:none;
+            border-radius:8px;font-size:11px;font-weight:700;width:100%;padding:7px 0;margin-left:0;text-align:center;"
             onclick="navigate('ventas')">Ver ventas</button>
         </div>
       </div>
@@ -2629,8 +2647,11 @@ async function init() {
 
   hideSpinner();
 
-  // Cargar billeteras personalizadas en maps globales
+  // Cargar billeteras desde BD en los maps globales
   const bws = await DB.billeteras();
+  // Limpiar y repoblar desde la BD solamente
+  Object.keys(FUENTES_LABEL).forEach(k=>delete FUENTES_LABEL[k]);
+  Object.keys(FUENTES_ICON).forEach(k=>delete FUENTES_ICON[k]);
   bws.forEach(b=>{
     FUENTES_LABEL[b.id] = b.nombre;
     FUENTES_ICON[b.id]  = b.icono||'💳';
