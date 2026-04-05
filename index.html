@@ -331,6 +331,36 @@ thead{position:sticky;top:0;z-index:1;}
 </head>
 <body>
 
+<!-- ═══════════════════ PANTALLA DE ACCESO ═══════════════════ -->
+<div id="login-screen" style="
+  position:fixed;inset:0;z-index:99999;
+  background:linear-gradient(135deg,#0f1f1e 0%,#1a3332 60%,#0d2020 100%);
+  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;">
+  <div style="background:#fff;border-radius:18px;padding:40px 44px;width:340px;
+              box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
+    <div style="font-size:42px;margin-bottom:8px;">🔐</div>
+    <div style="font-size:18px;font-weight:800;color:#0d2020;margin-bottom:4px;">Meli Manager</div>
+    <div style="font-size:11px;color:#8aabaa;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;">Acceso seguro</div>
+    <input type="password" id="login-input" placeholder="Código de acceso"
+      style="width:100%;padding:12px 16px;border:2px solid #d8e4e3;border-radius:10px;
+             font-size:15px;outline:none;text-align:center;letter-spacing:4px;font-family:monospace;
+             transition:border-color .2s;"
+      onfocus="this.style.borderColor='#00897b'"
+      onblur="this.style.borderColor='#d8e4e3'"
+      onkeydown="if(event.key==='Enter')verificarAcceso()">
+    <div id="login-error" style="color:#b0202e;font-size:12px;margin-top:8px;min-height:18px;"></div>
+    <button onclick="verificarAcceso()" style="
+      width:100%;margin-top:12px;padding:13px;border:none;border-radius:10px;
+      background:linear-gradient(135deg,#00897b,#00695c);color:#fff;
+      font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;
+      box-shadow:0 4px 14px rgba(0,137,123,.35);transition:opacity .15s;"
+      onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
+      Entrar
+    </button>
+    <div style="font-size:10px;color:#b8d0cf;margin-top:20px;">El código es administrado por el propietario</div>
+  </div>
+</div>
+
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
 <nav id="sidebar">
   <div class="sb-logo">
@@ -351,6 +381,7 @@ thead{position:sticky;top:0;z-index:1;}
 
   <div class="sb-section">
     <div class="sb-section-label">Operación</div>
+    <div class="nav-item" data-page="envios"><span class="ni">🚚</span>Envíos</div>
     <div class="nav-item" data-page="tiendas"><span class="ni">🏪</span>Tiendas</div>
     <div class="nav-item" data-page="problemas"><span class="ni">⚠️</span>Problemas</div>
     <div class="nav-item" data-page="finanzas"><span class="ni">💳</span>Finanzas</div>
@@ -438,9 +469,8 @@ thead{position:sticky;top:0;z-index:1;}
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>#</th><th>ID Venta ML</th><th>Tienda</th><th>Fecha Venta</th>
-            <th>Fecha Entrega</th><th>Cliente / Tel</th><th>Producto</th>
-            <th>Udes</th><th>USD</th><th>TRM</th><th>Valor COP</th>
+            <th>#</th><th>Tienda</th><th>ID Venta ML</th><th>Fecha Venta</th>
+            <th>Teléfono</th><th>Udes</th><th>USD</th><th>TRM</th><th>Valor COP</th>
             <th>Costo Total</th><th>Ganancia</th><th>Envío</th>
             <th>Estado</th><th>Acc.</th>
           </tr></thead>
@@ -448,6 +478,61 @@ thead{position:sticky;top:0;z-index:1;}
         </table>
       </div>
       <div style="margin-top:8px;font-size:11px;color:var(--text3);" id="ventas-count"></div>
+    </section>
+
+    <!-- ══════════════ ENVÍOS ══════════════ -->
+    <section class="page-section" id="page-envios">
+      <div class="frow mb16">
+        <div class="c-dim" style="font-size:12px;">Registro y seguimiento de envíos por transportadora</div>
+        <div class="spacer"></div>
+        <button class="btn btn-primary btn-sm" onclick="openModalEnvio()">+ Registrar Envío</button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filters-bar">
+        <input type="text" placeholder="🔍 Buscar por ID venta, guía, teléfono..." id="ef-search" style="min-width:220px;">
+        <span class="fl">Transportadora</span>
+        <select id="ef-empresa">
+          <option value="">Todas</option>
+          <option value="aguachica">Aguachica</option>
+          <option value="servientrega">Servientrega</option>
+          <option value="otro">Otro</option>
+        </select>
+        <span class="fl">Tienda</span>
+        <select id="ef-tienda"><option value="">Todas</option></select>
+        <span class="fl">Estado</span>
+        <select id="ef-estado">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="en_camino">En camino</option>
+          <option value="entregado">Entregado</option>
+          <option value="devuelto">Devuelto</option>
+          <option value="problema">Problema</option>
+        </select>
+        <span class="fl">Mes</span>
+        <input type="month" id="ef-mes">
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" onclick="clearEnvioFilters()">✕ Limpiar</button>
+      </div>
+
+      <!-- Resumen rápido -->
+      <div class="stat-grid" id="envios-stats" style="margin-bottom:14px;"></div>
+
+      <!-- Tabla -->
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th>#</th><th>Tienda</th><th>ID Venta ML</th>
+            <th>Transportadora</th><th>N° Guía</th>
+            <th>Fecha Envío</th><th>Teléfono</th>
+            <th>Valor Env. Est.</th><th>Valor Env. Real</th>
+            <th>Gasto Extra</th><th>Nota</th>
+            <th>Estado</th><th>Acc.</th>
+          </tr></thead>
+          <tbody id="envios-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3);" id="envios-count"></div>
     </section>
 
     <!-- ══════════════ ALERTAS ══════════════ -->
@@ -592,52 +677,40 @@ thead{position:sticky;top:0;z-index:1;}
       <div class="fsec">📋 Identificación</div>
       <div class="grid3">
         <div class="fg">
-          <label class="fl2">ID Venta ML *</label>
-          <input type="text" id="v-id" placeholder="Ej: 2000015788963928">
-        </div>
-        <div class="fg">
           <label class="fl2">Tienda *</label>
           <select id="v-tienda"></select>
+        </div>
+        <div class="fg">
+          <label class="fl2">ID Venta ML *</label>
+          <input type="text" id="v-id" placeholder="Ej: 2000015788963928">
         </div>
         <div class="fg">
           <label class="fl2">Fecha de venta *</label>
           <input type="date" id="v-fecha">
         </div>
         <div class="fg">
-          <label class="fl2">Fecha de entrega</label>
-          <input type="date" id="v-fecha-entrega">
-        </div>
-        <div class="fg">
-          <label class="fl2">Nombre del cliente</label>
-          <input type="text" id="v-cliente" placeholder="Nombre completo">
-        </div>
-        <div class="fg">
           <label class="fl2">Teléfono del cliente</label>
           <input type="tel" id="v-tel" placeholder="3001234567">
-        </div>
-      </div>
-
-      <div class="fsec">📦 Producto</div>
-      <div class="grid3">
-        <div class="fg span2" style="grid-column:1/-1;">
-          <label class="fl2">Nombre del producto *</label>
-          <input type="text" id="v-producto" placeholder="Descripción del producto">
         </div>
         <div class="fg">
           <label class="fl2">Unidades *</label>
           <input type="number" id="v-udes" value="1" min="1" oninput="recalcVenta()">
         </div>
         <div class="fg">
-          <label class="fl2">Tipo de envío *</label>
+          <label class="fl2">Empresa de envío *</label>
           <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
-            <option value="ml">Logística ML (incluida)</option>
-            <option value="servientrega">Servientrega</option>
             <option value="aguachica" selected>Aguachica / Local</option>
+            <option value="servientrega">Servientrega</option>
+            <option value="otro">Otro</option>
           </select>
         </div>
         <div class="fg">
-          <label class="fl2">Valor envío extra COP <small class="c-dim">(guía aparte)</small></label>
+          <label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label>
           <input type="number" id="v-envio-extra" placeholder="0" oninput="recalcVenta()">
+        </div>
+        <div class="fg span2" style="grid-column:1/-1;">
+          <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
+          <input type="text" id="v-nota" placeholder="Ej: cliente solicitó empaque especial">
         </div>
       </div>
 
@@ -667,8 +740,8 @@ thead{position:sticky;top:0;z-index:1;}
           <input type="number" id="v-costo-cop" readonly>
         </div>
         <div class="fg">
-          <label class="fl2" id="lbl-envio-int">Envío internacional (COP$)
-            <small class="c-dim" id="lbl-envio-int-sub"> — flete local</small>
+          <label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)
+            <small class="c-dim" id="lbl-envio-int-sub"> — flete desde USA</small>
           </label>
           <input type="number" id="v-envio-int-usd" placeholder="0" step="1" oninput="recalcVenta()">
           <div id="envio-int-desglose" style="font-size:10px;color:var(--text3);margin-top:2px;display:none;"></div>
@@ -683,13 +756,6 @@ thead{position:sticky;top:0;z-index:1;}
           <label class="fl2">Método de pago *</label>
           <select id="v-fuente-pago" onchange="recalcFuente()">
             <option value="">— Seleccionar —</option>
-            <option value="mercadopago">💳 Mercado Pago</option>
-            <option value="bancolombia">🏦 Bancolombia</option>
-            <option value="nequi">📱 Nequi</option>
-            <option value="daviplata">📱 Daviplata</option>
-            <option value="efectivo">💵 Efectivo</option>
-            <option value="tarjeta_credito">💳 Tarjeta de crédito</option>
-            <option value="otro">🔄 Otro</option>
           </select>
         </div>
         <div class="fg">
@@ -762,6 +828,82 @@ thead{position:sticky;top:0;z-index:1;}
 </div>
 
 <!-- ═══════════════════ MODAL: TIENDA ═══════════════════ -->
+<!-- ═══════════════════ MODAL: ENVÍO ═══════════════════ -->
+<div class="overlay" id="modal-envio">
+  <div class="modal modal-lg">
+    <div class="mh">
+      <div class="mh-title" id="me-title">Registrar Envío</div>
+      <button class="mclose" onclick="closeModal('modal-envio')">✕</button>
+    </div>
+    <div class="mc">
+      <div class="fsec">📋 Identificación</div>
+      <div class="grid3">
+        <div class="fg">
+          <label class="fl2">Tienda *</label>
+          <select id="e-tienda"></select>
+        </div>
+        <div class="fg">
+          <label class="fl2">ID Venta ML *</label>
+          <input type="text" id="e-id-venta" placeholder="Ej: 2000015788963928">
+        </div>
+        <div class="fg">
+          <label class="fl2">Fecha de envío *</label>
+          <input type="date" id="e-fecha">
+        </div>
+        <div class="fg">
+          <label class="fl2">Transportadora *</label>
+          <select id="e-empresa">
+            <option value="aguachica">Aguachica / Local</option>
+            <option value="servientrega">Servientrega</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">N° de Guía</label>
+          <input type="text" id="e-guia" placeholder="Ej: 1234567890">
+        </div>
+        <div class="fg">
+          <label class="fl2">Teléfono destinatario</label>
+          <input type="tel" id="e-telefono" placeholder="3001234567">
+        </div>
+      </div>
+      <div class="fsec">💰 Costos de envío</div>
+      <div class="grid3">
+        <div class="fg">
+          <label class="fl2">Valor estimado (COP$)</label>
+          <input type="number" id="e-valor-est" placeholder="0" step="1">
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor real confirmado (COP$)</label>
+          <input type="number" id="e-valor-real" placeholder="Pendiente…" step="1">
+        </div>
+        <div class="fg">
+          <label class="fl2">Gasto extra (guía adicional)</label>
+          <input type="number" id="e-gasto-extra" placeholder="0" step="1">
+        </div>
+      </div>
+      <div class="fsec">📝 Nota</div>
+      <div class="fg">
+        <input type="text" id="e-nota" placeholder="Observaciones del envío (opcional)">
+      </div>
+      <div class="fsec">📦 Estado</div>
+      <div class="fg" style="max-width:200px;">
+        <select id="e-estado">
+          <option value="pendiente">Pendiente</option>
+          <option value="en_camino">En camino</option>
+          <option value="entregado">Entregado</option>
+          <option value="devuelto">Devuelto</option>
+          <option value="problema">Problema</option>
+        </select>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-envio')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEnvio()">💾 Guardar Envío</button>
+    </div>
+  </div>
+</div>
+
 <div class="overlay" id="modal-tienda">
   <div class="modal">
     <div class="mh">
@@ -1059,6 +1201,7 @@ const _cache = {
   membresias:  null,
   saldos:      null,
   billeteras:  null,
+  envios:      null,
 };
 
 // Carga todas las colecciones en paralelo al iniciar
@@ -1068,9 +1211,9 @@ async function _cargarTodo() {
     const snap = await _db.collection(nombre).get();
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   };
-  const [t, v, p, m, mem, b, sDoc] = await Promise.all([
+  const [t, v, p, m, mem, b, env, sDoc] = await Promise.all([
     col('tiendas'), col('ventas'), col('problemas'),
-    col('movimientos'), col('membresias'), col('billeteras'),
+    col('movimientos'), col('membresias'), col('billeteras'), col('envios'),
     _db.collection('config').doc('saldos').get(),
   ]);
   _cache.tiendas     = t;
@@ -1079,6 +1222,7 @@ async function _cargarTodo() {
   _cache.movimientos = m;
   _cache.membresias  = mem;
   _cache.billeteras  = b;
+  _cache.envios      = env;
   _cache.saldos      = sDoc.exists ? sDoc.data() : {};
 }
 
@@ -1147,6 +1291,16 @@ const DB = {
   deleteVenta:    (id) => { _cache.ventas      = (_cache.ventas||[]).filter(x=>x.id!==id);      _delDoc('ventas', id);      return Promise.resolve(); },
   deleteProblema: (id) => { _cache.problemas   = (_cache.problemas||[]).filter(x=>x.id!==id);   _delDoc('problemas', id);   return Promise.resolve(); },
   deleteMovimiento:(id)=> { _cache.movimientos = (_cache.movimientos||[]).filter(x=>x.id!==id); _delDoc('movimientos', id); return Promise.resolve(); },
+
+  // Envíos
+  envios:       () => Promise.resolve(_cache.envios || []),
+  saveEnvios:   (arr) => { _cache.envios = arr; _syncCol('envios', arr); return Promise.resolve(); },
+  upsertEnvio:  (e) => {
+    const a = _cache.envios || []; const i = a.findIndex(x=>x.id===e.id);
+    i>=0 ? a[i]=e : a.push(e); _cache.envios = a;
+    _syncDoc('envios', e.id, e); return Promise.resolve();
+  },
+  deleteEnvio:  (id) => { _cache.envios = (_cache.envios||[]).filter(x=>x.id!==id); _delDoc('envios', id); return Promise.resolve(); },
 };
 
 // ── UTILIDADES ──
@@ -1154,7 +1308,7 @@ const uid  = () => 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2
 const fmt  = v  => isNaN(v)||v===null||v===undefined ? '$0' :
                    '$' + Number(v).toLocaleString('es-CO',{minimumFractionDigits:0,maximumFractionDigits:0});
 const fmtP = v  => isNaN(v) ? '0%' : v.toFixed(1) + '%';
-const fmtU = v  => isNaN(v) ? 'USD $0.00' : 'USD $' + Number(v).toFixed(2);
+const fmtU = v  => isNaN(v) ? '$0.00' : '$' + Number(v).toFixed(2);
 const hoy  = () => new Date().toISOString().slice(0,10);
 const mes  = () => new Date().toISOString().slice(0,7);
 
@@ -1267,6 +1421,7 @@ function calcVenta(v) {
 const PAGES = {
   ventas:     { title:'Gestor de Ventas', icon:'🛒' },
   alertas:    { title:'Alertas', icon:'🔔' },
+  envios:     { title:'Envíos', icon:'🚚' },
   tiendas:    { title:'Tiendas', icon:'🏪' },
   problemas:  { title:'Problemas', icon:'⚠️' },
   finanzas:   { title:'Finanzas', icon:'💳' },
@@ -1624,6 +1779,7 @@ async function render(page) {
   switch(page) {
     case 'ventas':     await renderVentasGanancias(); break;
     case 'alertas':    await renderAlertas();    break;
+    case 'envios':     await renderEnvios();     break;
     case 'tiendas':    await renderTiendas();    break;
     case 'problemas':  await renderProblemas();  break;
     case 'finanzas':   await renderFinanzas();   break;
@@ -1654,26 +1810,32 @@ async function renderVentasGanancias() {
   if(elMar) elMar.textContent = fmtP(marGen);
   if(elCnt) elCnt.textContent = ventasMes.length;
 
-  // Chips por tienda
+  // Chips por tienda — ganancia del mes + total de ventas acumuladas
   const chipEl = document.getElementById('vg-por-tienda');
   if(chipEl) chipEl.innerHTML = tiendas.map(t=>{
-    const tv = ventasMes.filter(v=>v.tienda_id===t.id);
-    const g  = tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
-    const ing= tv.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
-    const mar= ing>0?(g/ing)*100:0;
+    const tvMes  = ventasMes.filter(v=>v.tienda_id===t.id);          // solo mes actual
+    const tvTodo = ventas.filter(v=>v.tienda_id===t.id);             // todas las ventas
+    const g   = tvMes.reduce((s,v)=>s+calcVenta(v).ganancia,0);
+    const ing = tvMes.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
+    const mar = ing>0?(g/ing)*100:0;
     const isActive = t.estado !== 'inactiva';
+    const fotoEl = t.foto
+      ? `<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${t.color};">`
+      : `<span class="tienda-dot" style="background:${t.color};width:10px;height:10px;"></span>`;
     return `<div style="
       background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
       padding:12px 16px;flex:1;min-width:160px;box-shadow:var(--shadow);
       border-left:4px solid ${t.color};opacity:${isActive?1:.6};
     ">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
-        <span class="tienda-dot" style="background:${t.color};width:10px;height:10px;"></span>
+        ${fotoEl}
         <span style="font-size:12px;font-weight:700;flex:1;">${t.nombre}</span>
         ${!isActive?'<span style="font-size:9px;background:#fde8ea;color:#b0202e;padding:1px 6px;border-radius:10px;font-weight:700;">INACTIVA</span>':''}
       </div>
       <div style="font-size:18px;font-weight:700;color:${g>=0?'var(--green)':'var(--red)'};">${fmt(g)}</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px;">${tv.length} ventas · ${fmtP(mar)} margen</div>
+      <div style="font-size:10px;color:var(--text3);margin-top:2px;">
+        <b>${tvTodo.length}</b> ventas total · <b>${tvMes.length}</b> este mes · ${fmtP(mar)} margen
+      </div>
     </div>`;
   }).join('');
 
@@ -1959,9 +2121,10 @@ async function openModalVenta(id) {
     const v = (await DB.ventas()).find(x=>x.id===id);
     if(v) {
       sv('v-id', v.id_ml||''); sv('v-tienda', v.tienda_id||'');
-      sv('v-fecha', v.fecha_venta||hoy()); sv('v-fecha-entrega', v.fecha_entrega||'');
-      sv('v-cliente', v.cliente||''); sv('v-tel', v.telefono||'');
-      sv('v-producto', v.producto||''); sv('v-udes', v.udes||1);
+      sv('v-fecha', v.fecha_venta||hoy());
+      sv('v-tel', v.telefono||'');
+      sv('v-udes', v.udes||1);
+      sv('v-nota', v.nota||'');
       sv('v-envio-tipo', v.envio_tipo||'aguachica'); sv('v-envio-extra', v.envio_extra||0);
       const trm = v.trm || TRM_ACTUAL;
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
@@ -1977,9 +2140,9 @@ async function openModalVenta(id) {
       recalcValidacionEnvio();
     }
   } else {
-    ['v-id','v-cliente','v-tel','v-producto','v-costo-usd','v-envio-int-usd','v-cop-venta',
-     'v-fuente-pago','v-monto-pago','v-ref-pago','v-envio-real'].forEach(i=>sv(i,''));
-    sv('v-fecha', hoy()); sv('v-fecha-entrega',''); sv('v-udes',1);
+    ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta',
+     'v-fuente-pago','v-monto-pago','v-ref-pago','v-envio-real','v-nota'].forEach(i=>sv(i,''));
+    sv('v-fecha', hoy()); sv('v-udes',1);
     sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
     sv('v-trm', '');  // TRM vacío — el usuario lo ingresa manualmente
     sv('v-envio-estimado','');
@@ -2104,12 +2267,11 @@ function recalcVenta() {
 }
 
 async function saveVenta() {
-  const producto = gv('v-producto').trim();
   const tienda   = gv('v-tienda');
   const copVenta = parseFloat(gv('v-cop-venta')) || 0;
-  if(!producto)  { alert('El nombre del producto es requerido.'); return; }
   if(!tienda)    { alert('Selecciona una tienda.'); return; }
   if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
+  const producto = ''; // campo eliminado del formulario
 
   const trm       = parseFloat(gv('v-trm')) || TRM_ACTUAL;
   const envioTipo = gv('v-envio-tipo');
@@ -2149,6 +2311,7 @@ async function saveVenta() {
     fuente_pago:   fuentePago,
     monto_pago:    montoPago,
     ref_pago:      gv('v-ref-pago').trim(),
+    nota:          gv('v-nota').trim(),
     estado:        'pendiente',
     fecha_registro: new Date().toISOString(),
   });
@@ -2163,7 +2326,7 @@ async function saveVenta() {
     await DB.upsertMovimiento({
       id: uid(), fecha: gv('v-fecha'), tipo:'egreso',
       fuente: fuentePago, valor: montoPago,
-      concepto: `Compra: ${producto.slice(0,40)}`,
+      concepto: `Compra · Tienda ${tienda} · ${gv('v-id')||'sin ID'}`.slice(0,60),
       notas: `Venta ${gv('v-id')||'—'} · costo $${costoUsd} USD`,
       fecha_registro: new Date().toISOString(),
     });
@@ -2182,7 +2345,7 @@ async function saveVenta() {
     await DB.upsertMovimiento({
       id: uid(), fecha: gv('v-fecha'), tipo:'ingreso',
       fuente: 'mercadopago', valor: copVenta,
-      concepto: `Pago ML: ${producto.slice(0,35)}`,
+      concepto: `Pago ML · ${gv('v-id')||'sin ID'}`,
       notas: `Venta ${gv('v-id')||'—'} · Tienda: ${tienda}`,
       fecha_registro: new Date().toISOString(),
     });
@@ -2232,23 +2395,19 @@ async function renderVentas() {
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const c = calcVenta(v);
     const isLoss = c.ganancia < 0;
-    const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica' }[v.envio_tipo]||'ML';
+    const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
     return `<tr class="${isLoss?'loss-row':''}">
       <td class="td-mono c-dim" style="text-align:center;">${i+1}</td>
-      <td><span class="venta-id">${v.id_ml||v.id}</span></td>
       <td>
         <span style="display:flex;align-items:center;gap:5px;">
-          <span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>
+          ${t?.foto?`<img src="${t.foto}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:
+            `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`}
           <span style="font-size:11px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
+      <td><span class="venta-id">${v.id_ml||v.id}</span></td>
       <td class="td-dim">${v.fecha_venta||'—'}</td>
-      <td class="td-dim">${v.fecha_entrega||'—'}</td>
-      <td>
-        <div style="font-size:12px;font-weight:500;">${v.cliente||'—'}</div>
-        ${v.telefono?`<div class="mono" style="font-size:10px;color:var(--text3);">${v.telefono}</div>`:''}
-      </td>
-      <td style="font-size:12px;font-weight:500;max-width:160px;">${v.producto}</td>
+      <td class="td-mono c-dim">${v.telefono||'—'}</td>
       <td class="td-mono text-center">${v.udes||1}</td>
       <td class="td-mono">${v.precio_usd?fmtU(v.precio_usd):'—'}</td>
       <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
@@ -2287,7 +2446,7 @@ async function renderVentas() {
         </div>
       </td>
     </tr>`;
-  }).join('')||'<tr><td colspan="16" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
+  }).join('')||'<tr><td colspan="14" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 }
 
 async function cambiarEstado(id, estado) {
@@ -2603,12 +2762,230 @@ async function populateSelects() {
   const tiendas = await DB.tiendas();
   const opts = tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
   const blank = '<option value="">Todas</option>';
-  ['vf-tienda','pf-tienda'].forEach(id=>{
+  ['vf-tienda','pf-tienda','ef-tienda'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.innerHTML=blank+opts;
   });
 }
 
 // ── DATOS DEMO eliminados — se usan datos reales de Firebase ──
+
+// ══════════════════════════════════════════════════════════
+// MÓDULO ENVÍOS
+// ══════════════════════════════════════════════════════════
+let _editEnvioId = null;
+
+async function openModalEnvio(id) {
+  _editEnvioId = id || null;
+  document.getElementById('me-title').textContent = id ? 'Editar Envío' : 'Registrar Envío';
+  const tiendas = await DB.tiendas();
+  document.getElementById('e-tienda').innerHTML =
+    tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
+
+  if(id) {
+    const e = (await DB.envios()).find(x=>x.id===id);
+    if(e) {
+      sv('e-tienda',     e.tienda_id||'');
+      sv('e-id-venta',   e.id_venta||'');
+      sv('e-fecha',      e.fecha||hoy());
+      sv('e-empresa',    e.empresa||'aguachica');
+      sv('e-guia',       e.guia||'');
+      sv('e-telefono',   e.telefono||'');
+      sv('e-valor-est',  e.valor_estimado||'');
+      sv('e-valor-real', e.valor_real||'');
+      sv('e-gasto-extra',e.gasto_extra||'');
+      sv('e-nota',       e.nota||'');
+      sv('e-estado',     e.estado||'pendiente');
+    }
+  } else {
+    ['e-id-venta','e-guia','e-telefono','e-valor-est','e-valor-real','e-gasto-extra','e-nota'].forEach(i=>sv(i,''));
+    sv('e-fecha', hoy());
+    sv('e-empresa','aguachica');
+    sv('e-estado','pendiente');
+    // Pre-llenar tienda si solo hay una
+    if(tiendas.length===1) sv('e-tienda', tiendas[0].id);
+  }
+  openModal('modal-envio');
+}
+
+async function saveEnvio() {
+  const tienda   = gv('e-tienda');
+  const idVenta  = gv('e-id-venta').trim();
+  if(!tienda)   { alert('Selecciona una tienda.'); return; }
+  if(!idVenta)  { alert('El ID de venta es requerido.'); return; }
+
+  await DB.upsertEnvio({
+    id:              _editEnvioId || uid(),
+    tienda_id:       tienda,
+    id_venta:        idVenta,
+    fecha:           gv('e-fecha'),
+    empresa:         gv('e-empresa'),
+    guia:            gv('e-guia').trim(),
+    telefono:        gv('e-telefono').trim(),
+    valor_estimado:  parseFloat(gv('e-valor-est'))||0,
+    valor_real:      parseFloat(gv('e-valor-real'))||0,
+    gasto_extra:     parseFloat(gv('e-gasto-extra'))||0,
+    nota:            gv('e-nota').trim(),
+    estado:          gv('e-estado')||'pendiente',
+    fecha_registro:  new Date().toISOString(),
+  });
+  closeModal('modal-envio');
+  await renderEnvios();
+}
+
+async function deleteEnvio(id) {
+  if(!confirm('¿Eliminar este envío?')) return;
+  await DB.deleteEnvio(id);
+  await renderEnvios();
+}
+
+async function cambiarEstadoEnvio(id, estado) {
+  const envios = await DB.envios();
+  const e = envios.find(x=>x.id===id);
+  if(e) { e.estado = estado; await DB.saveEnvios(envios); }
+}
+
+function clearEnvioFilters() {
+  ['ef-search','ef-mes'].forEach(i=>sv(i,''));
+  ['ef-empresa','ef-tienda','ef-estado'].forEach(i=>sv(i,''));
+  renderEnvios();
+}
+
+async function renderEnvios() {
+  const tiendas = await DB.tiendas();
+  let envios    = await DB.envios();
+
+  const s  = gv('ef-search').toLowerCase();
+  const fe = gv('ef-empresa');
+  const ft = gv('ef-tienda');
+  const fs = gv('ef-estado');
+  const fm = gv('ef-mes');
+
+  if(s)  envios = envios.filter(e=>(e.id_venta+e.guia+e.telefono+e.nota).toLowerCase().includes(s));
+  if(fe) envios = envios.filter(e=>e.empresa===fe);
+  if(ft) envios = envios.filter(e=>e.tienda_id===ft);
+  if(fs) envios = envios.filter(e=>e.estado===fs);
+  if(fm) envios = envios.filter(e=>e.fecha?.startsWith(fm));
+
+  envios.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+
+  // Stats rápidos
+  const totalEst  = envios.reduce((s,e)=>s+(e.valor_estimado||0),0);
+  const totalReal = envios.filter(e=>e.valor_real>0).reduce((s,e)=>s+(e.valor_real||0),0);
+  const totalExtra= envios.reduce((s,e)=>s+(e.gasto_extra||0),0);
+  const cntAg     = envios.filter(e=>e.empresa==='aguachica').length;
+  const cntSv     = envios.filter(e=>e.empresa==='servientrega').length;
+  document.getElementById('envios-stats').innerHTML = [
+    { label:'Total envíos', val:envios.length, color:'teal' },
+    { label:'Aguachica',    val:cntAg,          color:'teal' },
+    { label:'Servientrega', val:cntSv,          color:'yellow' },
+    { label:'Valor estimado', val:fmt(totalEst),   color:'green' },
+    { label:'Valor real',     val:fmt(totalReal),  color:'green' },
+    { label:'Gastos extra',   val:fmt(totalExtra), color:'red' },
+  ].map(s=>`<div class="stat-card ${s.color}">
+    <div class="stat-label">${s.label}</div>
+    <div class="stat-value ${s.color}">${s.val}</div>
+  </div>`).join('');
+
+  document.getElementById('envios-count').textContent = `${envios.length} envío(s) mostrado(s)`;
+
+  const _empresa = { aguachica:'🏍 Aguachica', servientrega:'📦 Servientrega', otro:'📬 Otro' };
+  const _estadoBadge = { pendiente:'badge-pendiente', en_camino:'badge-en_camino',
+    entregado:'badge-entregado', devuelto:'badge-devuelto', problema:'badge-problema' };
+
+  document.getElementById('envios-tbody').innerHTML = envios.map((e,i)=>{
+    const t = tiendas.find(x=>x.id===e.tienda_id);
+    const fotoEl = t?.foto
+      ? `<img src="${t.foto}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
+      : `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`;
+    const valReal = e.valor_real>0
+      ? `<span style="color:var(--green);font-weight:700;">${fmt(e.valor_real)}</span>`
+      : `<span style="color:var(--text3);">—</span>`;
+    return `<tr>
+      <td class="td-mono c-dim" style="text-align:center;">${i+1}</td>
+      <td>
+        <span style="display:flex;align-items:center;gap:5px;">
+          ${fotoEl}
+          <span style="font-size:11px;font-weight:600;">${t?.nombre||'?'}</span>
+        </span>
+      </td>
+      <td><span class="venta-id">${e.id_venta||'—'}</span></td>
+      <td style="font-size:11px;font-weight:600;">${_empresa[e.empresa]||e.empresa||'—'}</td>
+      <td class="td-mono" style="font-size:11px;">${e.guia||'—'}</td>
+      <td class="td-dim">${e.fecha||'—'}</td>
+      <td class="td-mono c-dim">${e.telefono||'—'}</td>
+      <td class="td-mono">${e.valor_estimado>0?fmt(e.valor_estimado):'—'}</td>
+      <td>${valReal}</td>
+      <td class="td-mono c-dim">${e.gasto_extra>0?fmt(e.gasto_extra):'—'}</td>
+      <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${e.nota||''}">${e.nota||'—'}</td>
+      <td>
+        <select style="font-size:11px;padding:3px 5px;border-radius:var(--radius);"
+          onchange="cambiarEstadoEnvio('${e.id}',this.value)">
+          ${['pendiente','en_camino','entregado','devuelto','problema']
+            .map(s=>`<option value="${s}" ${e.estado===s?'selected':''}>${s}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <div class="actions-cell">
+          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalEnvio('${e.id}')">✏️</button>
+          <button class="btn btn-danger btn-icon btn-sm" title="Eliminar" onclick="deleteEnvio('${e.id}')">🗑</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="13" class="text-center c-dim" style="padding:40px;">Sin envíos registrados</td></tr>';
+}
+
+// ══════════════════════════════════════════════════════════
+// AUTENTICACIÓN — código encriptado en Firebase
+// ══════════════════════════════════════════════════════════
+const _SESSION_KEY = 'mm_auth_ok';
+const _SESSION_TTL = 8 * 60 * 60 * 1000; // 8 horas
+
+async function _hashCode(str) {
+  // SHA-256 nativo del navegador — el hash nunca se puede revertir
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+
+async function verificarAcceso() {
+  const input = document.getElementById('login-input').value;
+  const errEl = document.getElementById('login-error');
+  errEl.textContent = '';
+  if(!input) { errEl.textContent = 'Ingresa el código de acceso.'; return; }
+
+  try {
+    // Obtener hash guardado en Firestore (colección config, doc auth)
+    const snap = await _db.collection('config').doc('auth').get();
+    if(!snap.exists) {
+      errEl.textContent = '⚠️ No hay código configurado en la BD.';
+      return;
+    }
+    const hashGuardado = snap.data().hash;
+    const hashIngresado = await _hashCode(input);
+
+    if(hashIngresado === hashGuardado) {
+      // Guardar sesión local con TTL
+      sessionStorage.setItem(_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+      document.getElementById('login-screen').style.display = 'none';
+      await init();
+    } else {
+      errEl.textContent = 'Código incorrecto. Intenta de nuevo.';
+      document.getElementById('login-input').value = '';
+      document.getElementById('login-input').focus();
+    }
+  } catch(e) {
+    errEl.textContent = 'Error al conectar con Firebase. Verifica tu conexión.';
+    console.error(e);
+  }
+}
+
+function _checkSession() {
+  try {
+    const raw = sessionStorage.getItem(_SESSION_KEY);
+    if(!raw) return false;
+    const { ts } = JSON.parse(raw);
+    return (Date.now() - ts) < _SESSION_TTL;
+  } catch { return false; }
+}
 
 // ── SPINNER OVERLAY ──
 function showSpinner(msg='Cargando...') {
@@ -2693,6 +3070,12 @@ async function init() {
     document.getElementById(id)?.addEventListener('change',()=>renderVentasGanancias());
   });
 
+  // Filtros envíos live
+  ['ef-search','ef-empresa','ef-tienda','ef-estado','ef-mes'].forEach(id=>{
+    document.getElementById(id)?.addEventListener('input',  ()=>renderEnvios());
+    document.getElementById(id)?.addEventListener('change', ()=>renderEnvios());
+  });
+
   // Filtros problemas live
   ['pf-search','pf-estado','pf-tienda'].forEach(id=>{
     document.getElementById(id)?.addEventListener('input', ()=>renderProblemas());
@@ -2709,7 +3092,22 @@ async function init() {
   await updateAlertaBadge();
 }
 
-document.addEventListener('DOMContentLoaded', init);
+// Filtros envíos live
+['ef-search','ef-empresa','ef-tienda','ef-estado','ef-mes'].forEach(id=>{
+  document.getElementById(id)?.addEventListener('input',  ()=>renderEnvios());
+  document.getElementById(id)?.addEventListener('change', ()=>renderEnvios());
+});
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // Si hay sesión válida, saltar el login directo a init
+  if(_checkSession()) {
+    document.getElementById('login-screen').style.display = 'none';
+    await init();
+  } else {
+    // Mostrar login y enfocar el input
+    document.getElementById('login-input').focus();
+  }
+});
 </script>
 </body>
 </html>
