@@ -4,9 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meli Manager</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <link rel="icon" href="melimanager2.png" type="image/x-icon">
 <style>
 /* ==============================================
@@ -39,12 +37,12 @@
   --shadow:      0 2px 8px rgba(0,137,123,0.07), 0 1px 2px rgba(0,0,0,0.06);
   --shadow-md:   0 4px 16px rgba(0,137,123,0.10), 0 2px 4px rgba(0,0,0,0.06);
   --sidebar-w:   218px;
-  --font:        'DM Sans', system-ui, sans-serif;
-  --font-mono:   'DM Mono', 'Courier New', monospace;
+  --font:        'Calibri', 'Calibri Regular', system-ui, sans-serif;
+  --font-mono:   'Calibri', 'Courier New', monospace;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html{font-size:14px}
+html{font-size:17px}
 body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -58,58 +56,43 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
   border-right:1px solid rgba(255,255,255,0.05);
 }
 .sb-logo{
-  padding:20px 16px 16px;border-bottom:1px solid rgba(255,255,255,0.06);
-  display:flex;align-items:center;gap:11px;
+  padding:1.2rem 1rem 1rem;border-bottom:1px solid rgba(255,255,255,0.06);
+  display:flex;align-items:center;gap:0.7rem;
 }
 .sb-logo-icon{
-  width:38px;height:38px;border-radius:10px;
+  width:2.4rem;height:2.4rem;border-radius:10px;
   background:linear-gradient(135deg,var(--teal),var(--teal-dark));
   display:flex;align-items:center;justify-content:center;
-  font-size:19px;flex-shrink:0;box-shadow:0 2px 8px rgba(0,137,123,.35);
+  font-size:1.2rem;flex-shrink:0;box-shadow:0 2px 8px rgba(0,137,123,.35);
 }
-.sb-logo-name{font-size:14px;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.2px;}
-.sb-logo-sub{font-size:9px;color:rgba(255,255,255,0.30);text-transform:uppercase;letter-spacing:1px;margin-top:1px;}
+.sb-logo-name{font-size:0.95rem;font-weight:700;color:#fff;line-height:1.2;letter-spacing:-.2px;}
+.sb-logo-sub{font-size:0.65rem;color:rgba(255,255,255,0.30);text-transform:uppercase;letter-spacing:1px;margin-top:1px;}
 
-.sb-section{padding:16px 10px 2px;}
-.sb-section-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:rgba(255,255,255,0.22);padding:0 9px 6px;}
+.sb-section{padding:1rem 0.6rem 0.1rem;}
+.sb-section-label{font-size:0.65rem;font-weight:600;text-transform:uppercase;letter-spacing:1.4px;color:rgba(255,255,255,0.22);padding:0 0.55rem 0.4rem;}
 .nav-item{
-  display:flex;align-items:center;gap:9px;padding:8px 11px;
+  display:flex;align-items:center;gap:0.55rem;padding:0.55rem 0.7rem;
   border-radius:8px;cursor:pointer;margin-bottom:2px;
-  color:rgba(255,255,255,0.55);font-size:12.5px;font-weight:500;transition:background .15s,color .15s;
+  color:rgba(255,255,255,0.55);font-size:0.85rem;font-weight:500;transition:background .15s,color .15s;
 }
 .nav-item:hover{background:rgba(255,255,255,0.07);color:rgba(255,255,255,0.9);}
 .nav-item.active{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(0,137,123,.3);}
-.nav-item .ni{font-size:14px;width:18px;text-align:center;}
-.nb{margin-left:auto;background:#e53935;color:#fff;font-size:9px;font-weight:700;
+.nav-item .ni{font-size:1rem;width:1.1rem;text-align:center;}
+.nb{margin-left:auto;background:#e53935;color:#fff;font-size:0.6rem;font-weight:700;
     padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
-.sb-bottom{margin-top:auto;padding:12px 16px;border-top:1px solid rgba(255,255,255,0.06);}
-.sb-ver{font-size:9px;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-mono);}
+.sb-bottom{margin-top:auto;padding:0.75rem 1rem;border-top:1px solid rgba(255,255,255,0.06);}
+.sb-ver{font-size:0.6rem;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-mono);}
 
 /* ── MAIN ── */
 #main{margin-left:var(--sidebar-w);flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
 
-.topbar{
-  background:var(--white);border-bottom:1px solid var(--border);
-  padding:0 26px;height:56px;display:flex;align-items:center;gap:12px;
-  position:sticky;top:0;z-index:50;box-shadow:0 1px 4px rgba(0,137,123,.06);
-}
-.topbar-icon{font-size:19px;margin-right:2px;}
-.topbar-title{font-size:16px;font-weight:700;color:var(--text);flex:1;letter-spacing:-.2px;}
-.topbar-sub{font-size:11px;color:var(--text3);margin-top:1px;}
-.topbar-right{display:flex;align-items:center;gap:8px;}
-.trm-badge{
-  display:flex;align-items:center;gap:6px;font-size:11.5px;
-  background:var(--teal-bg);color:var(--teal-dark);font-weight:600;
-  padding:5px 12px;border-radius:20px;border:1px solid rgba(0,137,123,.2);
-}
-.trm-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s infinite;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 
-#page-content{padding:22px 26px;flex:1;}
+#page-content{padding:1.3rem 1.6rem;flex:1;}
 
 /* ── BOTONES ── */
-.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 15px;border-radius:8px;
-     font-size:12.5px;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .15s;letter-spacing:-.1px;}
+.btn{display:inline-flex;align-items:center;gap:0.3rem;padding:0.45rem 0.95rem;border-radius:8px;
+     font-size:0.85rem;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .15s;letter-spacing:-.1px;}
 .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;border-color:var(--teal-dark);box-shadow:0 2px 6px rgba(0,137,123,.3);}
 .btn-primary:hover{background:linear-gradient(135deg,var(--teal-light),var(--teal));box-shadow:0 3px 10px rgba(0,137,123,.4);}
 .btn-success{background:#198754;color:#fff;border-color:#157347;}
@@ -118,20 +101,20 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .btn-danger:hover{background:#b02a37;}
 .btn-ghost{background:var(--white);color:var(--text2);border:1px solid var(--border);}
 .btn-ghost:hover{background:var(--bg);border-color:#b8d0cf;}
-.btn-sm{padding:5px 10px;font-size:11.5px;}
-.btn-icon{padding:4px;width:28px;height:28px;justify-content:center;border-radius:6px;}
+.btn-sm{padding:0.3rem 0.65rem;font-size:0.78rem;}
+.btn-icon{padding:4px;width:1.8rem;height:1.8rem;justify-content:center;border-radius:6px;}
 
 /* ── CARDS ── */
-.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:18px;box-shadow:var(--shadow);}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;padding-bottom:12px;border-bottom:1px solid var(--border);}
-.card-title{font-size:13.5px;font-weight:700;color:var(--text);letter-spacing:-.1px;}
-.card-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.1rem;box-shadow:var(--shadow);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:0.9rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border);}
+.card-title{font-size:0.9rem;font-weight:700;color:var(--text);letter-spacing:-.1px;}
+.card-sub{font-size:0.72rem;color:var(--text3);margin-top:2px;}
 
 /* ── STAT CARDS ── */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:14px;margin-bottom:22px;}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:0.9rem;margin-bottom:1.4rem;}
 .stat-card{
   background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:16px 18px;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .15s;
+  padding:1rem 1.1rem;position:relative;overflow:hidden;box-shadow:var(--shadow);transition:box-shadow .15s;
 }
 .stat-card:hover{box-shadow:var(--shadow-md);}
 .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:var(--radius-lg) var(--radius-lg) 0 0;}
@@ -140,35 +123,35 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .stat-card.red::before{background:linear-gradient(90deg,#dc3545,#e8606e);}
 .stat-card.yellow::before{background:linear-gradient(90deg,#d4a017,#f0c040);}
 .stat-card.orange::before{background:linear-gradient(90deg,#c0620a,#e07a30);}
-.stat-label{font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
-.stat-value{font-size:20px;font-weight:700;margin:5px 0 3px;letter-spacing:-.5px;}
+.stat-label{font-size:0.68rem;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;font-weight:600;}
+.stat-value{font-size:1.3rem;font-weight:700;margin:5px 0 3px;letter-spacing:-.5px;}
 .stat-value.teal{color:var(--teal);}
 .stat-value.green{color:#198754;}
 .stat-value.red{color:#842029;}
 .stat-value.yellow{color:#856404;}
-.stat-delta{font-size:10.5px;color:var(--text3);}
-.stat-icon{position:absolute;top:14px;right:14px;font-size:20px;opacity:.09;}
+.stat-delta{font-size:0.7rem;color:var(--text3);}
+.stat-icon{position:absolute;top:14px;right:14px;font-size:1.3rem;opacity:.09;}
 
 /* ── TABLAS ── */
 .table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);}
 table{width:100%;border-collapse:collapse;}
 thead th{
-  background:#f3f8f8;color:var(--text2);font-size:10.5px;font-weight:700;
-  text-transform:uppercase;letter-spacing:.6px;padding:10px 12px;
+  background:#f3f8f8;color:var(--text2);font-size:0.72rem;font-weight:700;
+  text-transform:uppercase;letter-spacing:.6px;padding:0.65rem 0.75rem;
   text-align:left;white-space:nowrap;border-bottom:1px solid var(--border);
 }
 tbody tr{border-bottom:1px solid #edf3f3;transition:background .1s;}
 tbody tr:last-child{border-bottom:none;}
 tbody tr:hover td{background:#f4fafa;}
-tbody td{padding:9px 12px;font-size:12.5px;color:var(--text);background:var(--white);vertical-align:middle;}
-.td-mono{font-family:var(--font-mono);font-size:11.5px;}
+tbody td{padding:0.6rem 0.75rem;font-size:0.85rem;color:var(--text);background:var(--white);vertical-align:middle;}
+.td-mono{font-family:var(--font-mono);font-size:0.8rem;}
 .td-dim{color:var(--text3);}
 
 /* ── BADGES ── */
-.badge{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:20px;
-       font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
-.badge::before{content:'●';font-size:7px;}
-.badge-entregado{background:var(--green-bg);color:var(--green);}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:0.2rem 0.5rem;border-radius:20px;
+       font-size:0.68rem;font-weight:600;text-transform:uppercase;letter-spacing:.3px;white-space:nowrap;}
+.badge::before{content:'●';font-size:0.45rem;}
+.badge-entregado{background:var(--green-bg);color:var(--blue);}
 .badge-pendiente{background:var(--yellow-bg);color:var(--yellow);}
 .badge-en_camino{background:#cfe2ff;color:#084298;}
 .badge-cancelado{background:var(--red-bg);color:var(--red);}
@@ -181,14 +164,14 @@ tbody td{padding:9px 12px;font-size:12.5px;color:var(--text);background:var(--wh
 
 /* ── FILTROS ── */
 .filters-bar{
-  display:flex;flex-wrap:wrap;gap:8px;align-items:center;
+  display:flex;flex-wrap:wrap;gap:0.5rem;align-items:center;
   background:var(--white);border:1px solid var(--border);
-  padding:10px 14px;border-radius:var(--radius-lg);margin-bottom:14px;box-shadow:var(--shadow);
+  padding:0.65rem 0.9rem;border-radius:var(--radius-lg);margin-bottom:0.9rem;box-shadow:var(--shadow);
 }
-.fl{font-size:11px;color:var(--text2);font-weight:500;white-space:nowrap;}
+.fl{font-size:0.78rem;color:var(--text2);font-weight:500;white-space:nowrap;}
 input,select,textarea{
   background:var(--white);border:1px solid var(--border);color:var(--text);
-  border-radius:var(--radius);padding:7px 10px;font-size:12.5px;font-family:var(--font);outline:none;
+  border-radius:var(--radius);padding:0.4rem 0.65rem;font-size:0.85rem;font-family:var(--font);outline:none;
   transition:border-color .15s,box-shadow .15s;
 }
 input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,137,123,.12);}
@@ -196,76 +179,80 @@ input::placeholder{color:var(--text3);}
 input[readonly]{background:#f3f7f7;color:var(--text2);}
 
 /* ── MODAL ── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);backdrop-filter:blur(3px);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;}
 .overlay.open{display:flex;}
 .modal{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
-       width:100%;max-width:620px;max-height:92vh;overflow-y:auto;
+       width:100%;max-width:640px;max-height:92vh;overflow-y:auto;
        box-shadow:0 8px 30px rgba(0,0,0,.15);animation:mIn .15s ease;}
-.modal-lg{max-width:740px;}
-.modal-xl{max-width:860px;}
+.modal-lg{max-width:780px;}
+.modal-xl{max-width:920px;}
 @keyframes mIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
-.mh{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;
+.mh{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.25rem;
     border-bottom:1px solid var(--border);background:#f7fafa;}
-.mh-title{font-size:14px;font-weight:700;}
-.mc{padding:20px;}
-.mf{padding:12px 20px;border-top:1px solid var(--border);background:#f7fafa;
-    display:flex;gap:8px;justify-content:flex-end;}
-.mclose{width:26px;height:26px;border-radius:var(--radius);background:var(--white);
-        border:1px solid var(--border);color:var(--text2);font-size:13px;cursor:pointer;
+.mh-title{font-size:0.95rem;font-weight:700;}
+.mc{padding:1.25rem;}
+.mf{padding:0.75rem 1.25rem;border-top:1px solid var(--border);background:#f7fafa;
+    display:flex;gap:0.5rem;justify-content:flex-end;}
+.mclose{width:1.7rem;height:1.7rem;border-radius:var(--radius);background:var(--white);
+        border:1px solid var(--border);color:var(--text2);font-size:0.85rem;cursor:pointer;
         display:flex;align-items:center;justify-content:center;}
 .mclose:hover{background:var(--red-bg);color:var(--red);border-color:#f5c2c7;}
 
 /* ── FORMULARIO ── */
-.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:14px;}
-.fl2{font-size:11.5px;font-weight:500;color:var(--text);}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:0.9rem;}
+.fl2{font-size:0.8rem;font-weight:500;color:var(--text);}
 .fsec{
-  font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
-  color:var(--white);background:var(--teal);padding:5px 10px;
-  border-radius:var(--radius);margin:10px 0 14px;
+  font-size:0.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;
+  color:var(--white);background:var(--teal);padding:0.3rem 0.65rem;
+  border-radius:var(--radius);margin:0.65rem 0 0.9rem;
 }
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0.75rem;}
 .span2{grid-column:1/-1;}
 
 /* ── CAJA DE RESULTADO ── */
 .calc-box{
   background:#f2f9f9;border:1px solid #b8d8d8;border-radius:var(--radius-lg);
-  padding:14px;margin-top:4px;
+  padding:0.9rem;margin-top:4px;
 }
-.calc-box-title{font-size:10px;font-weight:700;text-transform:uppercase;color:var(--teal);
-                letter-spacing:.6px;margin-bottom:10px;}
+.calc-box-title{font-size:0.68rem;font-weight:700;text-transform:uppercase;color:var(--teal);
+                letter-spacing:.6px;margin-bottom:0.65rem;}
 .cr{display:flex;justify-content:space-between;align-items:center;
-    padding:4px 0;border-bottom:1px dashed #d4e8e8;font-size:12px;}
+    padding:0.25rem 0;border-bottom:1px dashed #d4e8e8;font-size:0.82rem;}
 .cr:last-child{border-bottom:none;}
-.cr.total{border-top:2px solid #b8d8d8;border-bottom:none;margin-top:6px;padding-top:8px;font-weight:700;}
+.cr.total{border-top:2px solid #b8d8d8;border-bottom:none;margin-top:0.4rem;padding-top:0.5rem;font-weight:700;}
 .cr-label{color:var(--text2);}
-.cr-val{font-family:var(--font-mono);font-size:12px;}
+.cr-val{font-family:var(--font-mono);font-size:0.82rem;}
 .cr-val.pos{color:var(--green);}
 .cr-val.neg{color:var(--red);}
 .cr-val.neu{color:var(--text);}
-.result-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px;}
-.result-card{border-radius:var(--radius);padding:10px;text-align:center;}
+.result-cards{display:grid;grid-template-columns:1fr 1fr;gap:0.5rem;margin-top:0.65rem;}
+.result-card{border-radius:var(--radius);padding:0.65rem;text-align:center;}
 .result-card.rc-total{background:#e8f4f4;border:1px solid #b8d8d8;}
 .result-card.rc-gan{background:#d4edda;border:1px solid #b8d8d8;}
 .result-card.rc-neg{background:var(--red-bg);border:1px solid #f5c2c7;}
-.rc-label{font-size:9px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;color:var(--text3);margin-bottom:3px;}
-.rc-value{font-size:18px;font-weight:700;}
+.rc-label{font-size:0.6rem;text-transform:uppercase;letter-spacing:.6px;font-weight:600;color:var(--text3);margin-bottom:3px;}
+.rc-value{font-size:1.15rem;font-weight:700;}
 
 /* ── GRID LAYOUTS ── */
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;}
-.g-lw{display:grid;grid-template-columns:2fr 1fr;gap:16px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;}
+.g-lw{display:grid;grid-template-columns:2fr 1fr;gap:1rem;}
 
 /* ── TABS ── */
-.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;}
-.tab{padding:8px 16px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--text2);
+.tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1rem;}
+.tab{padding:0.5rem 1rem;font-size:0.85rem;font-weight:500;cursor:pointer;color:var(--text2);
      border-bottom:2px solid transparent;margin-bottom:-2px;background:none;border-top:none;border-left:none;border-right:none;}
 .tab:hover{color:var(--text);}
 .tab.active{color:var(--teal);border-bottom-color:var(--teal);font-weight:700;}
 
 /* ── UTILIDADES ── */
 .page-section{display:none;}
-.page-section.active{display:block;}
+.page-section.active{display:block;animation:pageIn .28s cubic-bezier(.4,0,.2,1);}
+@keyframes pageIn{
+  from{opacity:0;transform:translateY(12px);}
+  to{opacity:1;transform:translateY(0);}
+}
 .hidden{display:none!important;}
 .text-center{text-align:center;}
 .mono{font-family:var(--font-mono);}
@@ -275,50 +262,49 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 .c-red{color:var(--red);}
 .c-teal{color:var(--teal);}
 .c-dim{color:var(--text3);}
-.mb12{margin-bottom:12px;}
-.mb16{margin-bottom:16px;}
-.mb20{margin-bottom:20px;}
-.frow{display:flex;align-items:center;gap:8px;}
+.mb12{margin-bottom:0.75rem;}
+.mb16{margin-bottom:1rem;}
+.mb20{margin-bottom:1.25rem;}
+.frow{display:flex;align-items:center;gap:0.5rem;}
 .spacer{flex:1;}
 
-.venta-id{font-family:var(--font-mono);font-size:10px;
+.venta-id{font-family:var(--font-mono);font-size:0.7rem;
           color:var(--teal);background:var(--teal-bg);
           padding:2px 7px;border-radius:20px;border:1px solid rgba(0,137,123,.2);}
 .tienda-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .actions-cell{display:flex;gap:4px;}
 .loss-row td{background:#fff8f8!important;color:#842029!important;}
-.empty-state{text-align:center;padding:50px 20px;color:var(--text3);}
-.empty-icon{font-size:36px;opacity:.25;margin-bottom:10px;}
-.empty-title{font-size:13px;font-weight:600;margin-bottom:4px;}
+.empty-state{text-align:center;padding:3rem 1.25rem;color:var(--text3);}
+.empty-icon{font-size:2.2rem;opacity:.25;margin-bottom:0.65rem;}
+.empty-title{font-size:0.9rem;font-weight:600;margin-bottom:4px;}
 
 /* ── ALERTA ITEM ── */
-.alert-item{display:flex;align-items:flex-start;gap:10px;padding:10px 13px;
+.alert-item{display:flex;align-items:flex-start;gap:0.65rem;padding:0.65rem 0.8rem;
             border-radius:var(--radius);border:1px solid var(--border);
-            margin-bottom:6px;background:var(--white);}
+            margin-bottom:0.4rem;background:var(--white);}
 .alert-item:hover{background:#f7fafa;}
 .adot{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:4px;}
 .adot.red{background:#c0392b;}.adot.yellow{background:#d4a017;}.adot.teal{background:var(--teal);}
 .a-body{flex:1;}
-.a-title{font-size:12.5px;font-weight:600;}
-.a-sub{font-size:11px;color:var(--text3);margin-top:2px;}
+.a-title{font-size:0.85rem;font-weight:600;}
+.a-sub{font-size:0.75rem;color:var(--text3);margin-top:2px;}
 
 /* ── PROBLEMA CARD ── */
 .prob-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
-           padding:14px;margin-bottom:8px;box-shadow:var(--shadow);}
-.prob-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
-.prob-venta{font-size:10px;color:var(--teal);font-weight:600;}
-.prob-body{font-size:12.5px;color:var(--text2);}
-.prob-footer{margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);
-             display:flex;gap:8px;align-items:center;}
+           padding:0.9rem;margin-bottom:0.5rem;box-shadow:var(--shadow);}
+.prob-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:0.5rem;}
+.prob-venta{font-size:0.7rem;color:var(--teal);font-weight:600;}
+.prob-body{font-size:0.85rem;color:var(--text2);}
+.prob-footer{margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--border);
+             display:flex;gap:0.5rem;align-items:center;}
 
 /* Tabla sticky header */
-thead{position:sticky;top:0;z-index:1;}
 
 /* ── VALIDACIÓN ENVÍO ── */
 #envio-validacion-box{transition:border-color .2s;}
 #envio-validacion-box:focus-within{border-color:var(--teal);}
-.fin-fuente-chip{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:3px;
-  font-size:11px;font-weight:600;background:var(--teal-bg);color:var(--teal-dark);border:1px solid #b8d8d8;}
+.fin-fuente-chip{display:inline-flex;align-items:center;gap:4px;padding:0.2rem 0.5rem;border-radius:3px;
+  font-size:0.75rem;font-weight:600;background:var(--teal-bg);color:var(--teal-dark);border:1px solid #b8d8d8;}
 
 @media(max-width:860px){
   :root{--sidebar-w:0px;}
@@ -379,6 +365,109 @@ thead{position:sticky;top:0;z-index:1;}
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL VALIDAR ENVÍO ═══════════════════ -->
+<div id="modal-validar-envio" style="
+  display:none;position:fixed;inset:0;z-index:99997;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:420px;
+              box-shadow:0 24px 60px rgba(0,0,0,.3);animation:mIn .18s ease;overflow:hidden;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1a2332,#1e3a5f);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#fff;">✅ Validar Envío</div>
+        <div id="ve-subtitulo" style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;"></div>
+      </div>
+      <button onclick="_cancelValidarEnvio()" style="background:rgba(255,255,255,.1);border:none;color:#fff;
+        width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+
+    <!-- Info estimado -->
+    <div style="padding:18px 22px 0;">
+      <div style="background:#f0f4f4;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#8aabaa;font-weight:600;margin-bottom:3px;">Valor estimado</div>
+          <div id="ve-estimado" style="font-size:20px;font-weight:800;color:#0d2020;">$ 0</div>
+        </div>
+        <div style="font-size:28px;opacity:.3;">📦</div>
+      </div>
+
+      <!-- Input valor real -->
+      <div style="margin-bottom:6px;">
+        <label style="font-size:11px;font-weight:700;color:#476060;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">
+          Valor REAL confirmado en Centris (COP$)
+        </label>
+        <input type="number" id="ve-input" placeholder="Ej: 19000"
+          style="width:100%;padding:12px 14px;border:2px solid #d8e4e3;border-radius:10px;
+                 font-size:18px;font-weight:700;outline:none;color:#0d2020;
+                 text-align:center;transition:border-color .2s;"
+          onfocus="this.style.borderColor='#00897b'"
+          onblur="this.style.borderColor='#d8e4e3'"
+          oninput="_calcDiffEnvio()"
+          onkeydown="if(event.key==='Enter')_confirmarValidarEnvio()">
+      </div>
+
+      <!-- Diferencia en tiempo real -->
+      <div id="ve-diff-box" style="display:none;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;">
+        <span id="ve-diff-text" style="font-size:12px;font-weight:700;"></span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:16px 22px;display:flex;gap:10px;margin-top:8px;">
+      <button onclick="_cancelValidarEnvio()" style="
+        flex:1;padding:11px;border:1px solid #d8e4e3;border-radius:10px;
+        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:pointer;">
+        Cancelar
+      </button>
+      <button onclick="_confirmarValidarEnvio()" style="
+        flex:2;padding:11px;border:none;border-radius:10px;
+        background:linear-gradient(135deg,#00897b,#00695c);color:#fff;
+        font-size:13px;font-weight:700;cursor:pointer;
+        box-shadow:0 4px 12px rgba(0,137,123,.35);">
+        ✅ Confirmar valor real
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL CONFIRMAR ELIMINACIÓN ═══════════════════ -->
+<div id="modal-delete-confirm" style="
+  display:none;position:fixed;inset:0;z-index:99998;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:36px 40px;width:320px;
+              box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;animation:mIn .18s ease;">
+    <div style="font-size:38px;margin-bottom:10px;">🗑️</div>
+    <div style="font-size:16px;font-weight:800;color:#0d2020;margin-bottom:4px;">Eliminar venta</div>
+    <div style="font-size:12px;color:#8aabaa;margin-bottom:22px;">Ingresa tu código de acceso para confirmar</div>
+    <input type="password" id="delete-code-input" placeholder="Código de acceso"
+      style="width:100%;padding:11px 14px;border:2px solid #d8e4e3;border-radius:10px;
+             font-size:14px;outline:none;text-align:center;letter-spacing:1px;
+             color:#0d2020;transition:border-color .2s;"
+      onfocus="this.style.borderColor='#dc3545'"
+      onblur="this.style.borderColor='#d8e4e3'"
+      onkeydown="if(event.key==='Enter')_confirmDeleteVenta()">
+    <div id="delete-code-error" style="color:#b0202e;font-size:11px;margin-top:7px;min-height:16px;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="_cancelDeleteVenta()" style="
+        flex:1;padding:11px;border:1px solid #d8e4e3;border-radius:10px;
+        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:pointer;">
+        Cancelar
+      </button>
+      <button id="delete-confirm-btn" onclick="_confirmDeleteVenta()" style="
+        flex:1;padding:11px;border:none;border-radius:10px;
+        background:linear-gradient(135deg,#dc3545,#b02a37);color:#fff;
+        font-size:13px;font-weight:700;cursor:pointer;
+        box-shadow:0 4px 12px rgba(220,53,69,.35);">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
 <nav id="sidebar">
   <div class="sb-logo">
@@ -393,16 +482,15 @@ thead{position:sticky;top:0;z-index:1;}
 
   <div class="sb-section">
     <div class="sb-section-label">Principal</div>
-    <div class="nav-item active" data-page="ventas"><span class="ni">🛒</span>Gestor Ventas</div>
-    <div class="nav-item" data-page="alertas" id="nav-alertas"><span class="ni">🔔</span>Alertas<span class="nb" id="alertas-count">0</span></div>
+    <div class="nav-item active" data-page="ventas"><span class="ni"><img src="ventas.png" alt="Ventas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Gestor Ventas</span></div>
   </div>
 
   <div class="sb-section">
     <div class="sb-section-label">Operación</div>
-    <div class="nav-item" data-page="envios"><span class="ni">🚚</span>Envíos</div>
-    <div class="nav-item" data-page="tiendas"><span class="ni">🏪</span>Tiendas</div>
-    <div class="nav-item" data-page="problemas"><span class="ni">⚠️</span>Problemas</div>
-    <div class="nav-item" data-page="finanzas"><span class="ni">💳</span>Finanzas</div>
+    <div class="nav-item" data-page="envios"><span class="ni"><img src="envios.png" alt="Envíos" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Envíos</span></div>
+    <div class="nav-item" data-page="tiendas"><span class="ni"><img src="tiendas.png" alt="Tiendas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Tiendas</span></div>
+    <div class="nav-item" data-page="problemas"><span class="ni"><img src="problemas.png" alt="Problemas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Problemas</span></div>
+    <div class="nav-item" data-page="finanzas"><span class="ni"><img src="finanzas.png" alt="Finanzas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Finanzas</span></div>
   </div>
 
   <div class="sb-bottom">
@@ -412,21 +500,6 @@ thead{position:sticky;top:0;z-index:1;}
 
 <!-- ═══════════════════ MAIN ═══════════════════ -->
 <div id="main">
-
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <span class="topbar-icon" id="tb-icon">📊</span>
-    <div>
-      <div class="topbar-title" id="tb-title">Resumen</div>
-    </div>
-    <div class="topbar-right">
-      <div class="trm-badge" id="trm-display">
-        <span class="trm-dot"></span>
-        <span id="trm-text">Cargando TRM...</span>
-      </div>
-      <button class="btn btn-primary btn-sm" id="btn-nueva-venta">+ Nueva Venta</button>
-    </div>
-  </div>
 
   <!-- PAGE CONTENT -->
   <div id="page-content">
@@ -444,21 +517,21 @@ thead{position:sticky;top:0;z-index:1;}
       ">
         <div style="flex:1;min-width:180px;">
           <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:.7;margin-bottom:4px;">Ganancia Todas las tiendas</div>
-          <div id="vg-total-gan" style="font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;">$0</div>
+          <div id="vg-total-gan" style="font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;">$ 0</div>
           <div id="vg-total-sub" style="font-size:11px;opacity:.65;margin-top:4px;">mes actual</div>
         </div>
         <div style="display:flex;gap:16px;flex-wrap:wrap;">
           <div style="text-align:center;">
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Ingresos</div>
-            <div id="vg-total-ing" style="font-size:16px;font-weight:700;">$0</div>
+            <div id="vg-total-ing" style="font-size:19px;font-weight:700;">$ 0</div>
           </div>
           <div style="text-align:center;">
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Gastos</div>
-            <div id="vg-total-cos" style="font-size:16px;font-weight:700;opacity:.8;">$0</div>
+            <div id="vg-total-cos" style="font-size:19px;font-weight:700;opacity:.8;">$ 0</div>
           </div>
           <div style="text-align:center;">
             <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Ventas del mes</div>
-            <div id="vg-total-cnt" style="font-size:16px;font-weight:700;">0</div>
+            <div id="vg-total-cnt" style="font-size:19px;font-weight:700;">0</div>
           </div>
         </div>
       </div>
@@ -478,21 +551,28 @@ thead{position:sticky;top:0;z-index:1;}
           <option>en_camino</option><option>cancelado</option>
           <option>problema</option><option>devuelto</option>
         </select>
-        <span class="fl">Mes</span>
-        <input type="month" id="vf-mes">
         <span class="fl">Día</span>
         <input type="date" id="vf-dia" style="font-size:11.5px;padding:5px 8px;">
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" onclick="clearVentaFilters()">✕ Limpiar</button>
         <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
       </div>
-      <div class="table-wrap">
+      <div class="table-wrap" style="max-height:calc(100vh - 370px);overflow-y:auto;">
         <table>
           <thead><tr>
-            <th>#</th><th>Tienda</th><th>ID Venta ML</th><th>Fecha Venta</th>
-            <th>Teléfono</th><th>Udes</th><th>USD</th><th>TRM</th><th>Valor COP</th>
-            <th>Costo Total</th><th>Ganancia</th><th>Envío</th>
-            <th>Estado</th><th>Acc.</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">#</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Tienda</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">ID Venta ML</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Teléfono</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Udes</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">USD</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">TRM</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Valor COP</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Costo Total</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Ganancia</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Envío</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Estado</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Acc.</th>
           </tr></thead>
           <tbody id="ventas-tbody"></tbody>
         </table>
@@ -502,67 +582,101 @@ thead{position:sticky;top:0;z-index:1;}
 
     <!-- ══════════════ ENVÍOS ══════════════ -->
     <section class="page-section" id="page-envios">
-      <div class="frow mb16">
-        <div class="c-dim" style="font-size:12px;">Registro y seguimiento de envíos por transportadora</div>
-        <div class="spacer"></div>
-        <button class="btn btn-primary btn-sm" onclick="openModalEnvio()">+ Registrar Envío</button>
+      <div class="c-dim" style="font-size:12px;margin-bottom:14px;">Ventas registradas agrupadas por transportadora · gestiona el estado de pago de cada envío</div>
+
+      <!-- Tarjetas resumen por transportadora -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;" id="envios-resumen-grid">
+        <!-- Aguachica -->
+        <div style="background:#eff6ff;border:2px solid #bfdbfe;border-radius:var(--radius-lg);padding:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-size:13px;font-weight:800;color:#1d4ed8;">Aguachica</span>
+            <span id="env-ag-total-count" style="font-size:12px;background:#dbeafe;color:#1d4ed8;padding:2px 9px;border-radius:20px;font-weight:700;">0 envíos</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+                 onclick="filtrarEnvios('aguachica','pendiente')"
+                 onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">⏳ Pendientes pago</div>
+              <div id="env-ag-pend-count" style="font-size:22px;font-weight:800;color:#f59e0b;">0</div>
+              <div id="env-ag-pend-total" style="font-size:13px;font-weight:700;color:#92400e;margin-top:2px;">$ 0</div>
+            </div>
+            <div style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+                 onclick="filtrarEnvios('aguachica','pagado')"
+                 onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">✅ Pagados</div>
+              <div id="env-ag-pag-count" style="font-size:22px;font-weight:800;color:#16a34a;">0</div>
+              <div id="env-ag-pag-total" style="font-size:13px;font-weight:700;color:#14532d;margin-top:2px;">$ 0</div>
+            </div>
+          </div>
+        </div>
+        <!-- Servientrega -->
+        <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:var(--radius-lg);padding:16px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <span style="font-size:13px;font-weight:800;color:#15803d;">📦 Servientrega</span>
+            <span id="env-sv-total-count" style="font-size:12px;background:#dcfce7;color:#15803d;padding:2px 9px;border-radius:20px;font-weight:700;">0 envíos</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div style="background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+                 onclick="filtrarEnvios('servientrega','pendiente')"
+                 onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">⏳ Pendientes pago</div>
+              <div id="env-sv-pend-count" style="font-size:22px;font-weight:800;color:#f59e0b;">0</div>
+              <div id="env-sv-pend-total" style="font-size:13px;font-weight:700;color:#92400e;margin-top:2px;">$ 0</div>
+            </div>
+            <div style="background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+                 onclick="filtrarEnvios('servientrega','pagado')"
+                 onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
+              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">✅ Pagados</div>
+              <div id="env-sv-pag-count" style="font-size:22px;font-weight:800;color:#16a34a;">0</div>
+              <div id="env-sv-pag-total" style="font-size:13px;font-weight:700;color:#14532d;margin-top:2px;">$ 0</div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Filtros -->
       <div class="filters-bar">
-        <input type="text" placeholder="🔍 Buscar por ID venta, guía, teléfono..." id="ef-search" style="min-width:220px;">
+        <input type="text" placeholder="🔍 Buscar ID venta, teléfono..." id="ef-search" style="min-width:200px;">
         <span class="fl">Transportadora</span>
         <select id="ef-empresa">
           <option value="">Todas</option>
           <option value="aguachica">Aguachica</option>
           <option value="servientrega">Servientrega</option>
-          <option value="otro">Otro</option>
+        </select>
+        <span class="fl">Pago envío</span>
+        <select id="ef-pago">
+          <option value="">Todos</option>
+          <option value="pendiente">⏳ Pendiente</option>
+          <option value="pagado">✅ Pagado</option>
         </select>
         <span class="fl">Tienda</span>
         <select id="ef-tienda"><option value="">Todas</option></select>
-        <span class="fl">Estado</span>
-        <select id="ef-estado">
-          <option value="">Todos</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="en_camino">En camino</option>
-          <option value="entregado">Entregado</option>
-          <option value="devuelto">Devuelto</option>
-          <option value="problema">Problema</option>
-        </select>
         <span class="fl">Mes</span>
         <input type="month" id="ef-mes">
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" onclick="clearEnvioFilters()">✕ Limpiar</button>
+        <button class="btn btn-success btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">💰 Pagar seleccionados (<span id="selected-count">0</span>)</button>
       </div>
-
-      <!-- Resumen rápido -->
-      <div class="stat-grid" id="envios-stats" style="margin-bottom:14px;"></div>
 
       <!-- Tabla -->
       <div class="table-wrap">
         <table>
           <thead><tr>
-            <th>#</th><th>Tienda</th><th>ID Venta ML</th>
-            <th>Transportadora</th><th>N° Guía</th>
-            <th>Fecha Envío</th><th>Teléfono</th>
-            <th>Valor Env. Est.</th><th>Valor Env. Real</th>
-            <th>Gasto Extra</th><th>Nota</th>
-            <th>Estado</th><th>Acc.</th>
+            <th style="width:36px;text-align:center;"><input type="checkbox" id="chk-all-envios" title="Seleccionar todos" onchange="toggleAllEnvios(this.checked)" style="cursor:pointer;"></th>
+            <th>#</th>
+            <th>Tienda</th>
+            <th>ID Venta ML</th>
+            <th>Fecha Venta</th>
+            <th>Transportadora</th>
+            <th>Valor Envío (COP)</th>
+            <th>Estado Venta</th>
+            <th>Pago Envío</th>
+            <th>Acc.</th>
           </tr></thead>
           <tbody id="envios-tbody"></tbody>
         </table>
       </div>
-      <div style="margin-top:8px;font-size:11px;color:var(--text3);" id="envios-count"></div>
-    </section>
-
-    <!-- ══════════════ ALERTAS ══════════════ -->
-    <section class="page-section" id="page-alertas">
-      <div class="frow mb12">
-        <div class="c-dim" style="font-size:12px;">Pendientes y riesgos operativos detectados automáticamente</div>
-        <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" onclick="renderAlertas()">🔄 Actualizar</button>
-      </div>
-      <div id="alertas-container"></div>
+      <div style="margin-top:8px;font-size:13px;color:var(--text3);" id="envios-count"></div>
     </section>
 
     <!-- ══════════════ TIENDAS ══════════════ -->
@@ -614,44 +728,6 @@ thead{position:sticky;top:0;z-index:1;}
       <!-- Saldos actuales -->
       <div class="stat-grid" id="fin-saldos" style="margin-bottom:16px;"></div>
 
-      <!-- Resumen envíos del mes -->
-      <div class="card mb16" style="margin-bottom:14px;" id="fin-envios-card">
-        <div class="card-header">
-          <div>
-            <div class="card-title">🚚 Envíos por mes</div>
-            <div class="card-sub" id="fin-envios-sub">Desglosado por transportadora</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:14px;">
-            <select id="fin-envios-mes" style="font-size:11px;padding:4px 8px;border-radius:6px;"
-              onchange="renderEnviosMes()"></select>
-            <div style="text-align:right;">
-              <div style="font-size:10px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;">Total envíos</div>
-              <div id="fin-envios-total" style="font-size:22px;font-weight:700;color:var(--teal);">$0</div>
-            </div>
-          </div>
-        </div>
-        <!-- Bloques por transportadora -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
-          <!-- Aguachica -->
-          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-lg);padding:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.5px;">🏍 Aguachica</span>
-              <span id="fin-env-ag-total" style="font-size:16px;font-weight:700;color:#1d4ed8;">$0</span>
-            </div>
-            <div id="fin-env-ag-detalle" style="font-size:11px;color:var(--text2);max-height:160px;overflow-y:auto;"></div>
-          </div>
-          <!-- Servientrega -->
-          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-lg);padding:12px;">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:11px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.5px;">📦 Servientrega</span>
-              <span id="fin-env-sv-total" style="font-size:16px;font-weight:700;color:#15803d;">$0</span>
-            </div>
-            <div id="fin-env-sv-detalle" style="font-size:11px;color:var(--text2);max-height:160px;overflow-y:auto;"></div>
-          </div>
-        </div>
-        <div id="fin-envios-detalle" style="font-size:11px;color:var(--text3);padding-top:4px;border-top:1px dashed var(--border);"></div>
-      </div>
-
       <!-- Membresía Centris -->
       <div class="card mb16" style="margin-bottom:14px;">
         <div class="card-header">
@@ -687,15 +763,23 @@ thead{position:sticky;top:0;z-index:1;}
 
 <!-- ═══════════════════ MODAL: NUEVA VENTA ═══════════════════ -->
 <div class="overlay" id="modal-venta">
-  <div class="modal modal-lg">
-    <div class="mh">
-      <div class="mh-title" id="mv-title">Nueva Venta</div>
-      <button class="mclose" onclick="closeModal('modal-venta')">✕</button>
-    </div>
-    <div class="mc">
-      <div class="grid3">
+  <div class="modal modal-lg" style="border-radius:18px;overflow:hidden;border:none;max-height:95vh;">
 
-        <!-- Fila 1 -->
+    <!-- Header oscuro -->
+    <div style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div>
+        <div class="mh-title" id="mv-title" style="color:#fff;font-size:16px;font-weight:800;letter-spacing:-.2px;">Nueva Venta</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;">Completa los campos para registrar</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-venta')" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:10px;font-size:16px;">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div class="mc" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
+
+      <!-- Sección 1: Información general -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Información general</div>
+      <div class="grid3" style="margin-bottom:16px;">
         <div class="fg">
           <label class="fl2">Tienda *</label>
           <select id="v-tienda"></select>
@@ -708,8 +792,6 @@ thead{position:sticky;top:0;z-index:1;}
           <label class="fl2">Fecha de venta *</label>
           <input type="date" id="v-fecha">
         </div>
-
-        <!-- Fila 2 -->
         <div class="fg">
           <label class="fl2">Teléfono del cliente</label>
           <input type="tel" id="v-tel" placeholder="3001234567">
@@ -719,15 +801,14 @@ thead{position:sticky;top:0;z-index:1;}
           <input type="number" id="v-udes" value="1" min="1" oninput="recalcVenta()">
         </div>
         <div class="fg">
-          <label class="fl2">Empresa de envío *</label>
-          <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
-            <option value="aguachica" selected>Aguachica</option>
-            <option value="servientrega">Servientrega</option>
-            <option value="otro">Otro</option>
-          </select>
+          <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
+          <input type="text" id="v-nota" placeholder="Ej: empaque especial">
         </div>
+      </div>
 
-        <!-- Fila 3 -->
+      <!-- Sección 2: Costos y precios -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Costos y precios</div>
+      <div class="grid3" style="margin-bottom:16px;">
         <div class="fg">
           <label class="fl2">Precio de venta (COP$) *</label>
           <input type="number" id="v-cop-venta" placeholder="0" step="1" oninput="recalcVenta()">
@@ -740,8 +821,19 @@ thead{position:sticky;top:0;z-index:1;}
           <label class="fl2">Costo producto Amazon (USD$) *</label>
           <input type="number" id="v-costo-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
         </div>
+      </div>
 
-        <!-- Fila 4 -->
+      <!-- Sección 3: Envío -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Envío</div>
+      <div class="grid3" style="margin-bottom:20px;">
+        <div class="fg">
+          <label class="fl2">Empresa de envío *</label>
+          <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
+            <option value="aguachica" selected>Aguachica</option>
+            <option value="servientrega">Servientrega</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
         <div class="fg">
           <label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label>
           <input type="number" id="v-envio-int-usd" placeholder="0" step="1" oninput="recalcVenta()">
@@ -753,126 +845,96 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="fg">
           <label class="fl2">Validación de envío</label>
           <select id="v-envio-validado">
-            <option value="0">⏳ Sin validar</option>
-            <option value="1">✅ Validado</option>
+            <option value="0">Sin validar</option>
+            <option value="1">Validado</option>
           </select>
         </div>
-
-        <!-- Nota al final, ancho completo -->
-        <div class="fg" style="grid-column:1/-1;">
-          <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
-          <input type="text" id="v-nota" placeholder="Ej: cliente solicitó empaque especial">
-        </div>
-
       </div>
 
-      <!-- Resultado compacto -->
-      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-lg);
-                  overflow:hidden;margin-top:14px;background:var(--white);">
-        <div style="flex:1;padding:11px 14px;border-right:1px solid var(--border);text-align:center;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Ingresos</div>
-          <div id="c-rv-total" style="font-size:16px;font-weight:700;color:var(--teal);">$0</div>
+      <!-- Resultado en tiempo real -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:14px;overflow:hidden;border:1.5px solid var(--border);background:var(--white);box-shadow:0 2px 12px rgba(0,137,123,.08);">
+        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#f0fdf9,#fff);">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ingresos</div>
+          <div id="c-rv-total" style="font-size:20px;font-weight:800;color:var(--teal);">$ 0</div>
         </div>
-        <div style="flex:1;padding:11px 14px;border-right:1px solid var(--border);text-align:center;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Costos</div>
-          <div id="c-total-costos" style="font-size:16px;font-weight:700;color:var(--red);">$0</div>
+        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#fff5f5,#fff);">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Costos</div>
+          <div id="c-total-costos" style="font-size:20px;font-weight:800;color:var(--red);">$ 0</div>
         </div>
-        <div style="flex:1;padding:11px 14px;text-align:center;">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Ganancia</div>
-          <div id="c-rv-gan" style="font-size:16px;font-weight:700;color:var(--green);">$0</div>
-          <div id="c-rv-margen" style="font-size:9px;color:var(--text3);margin-top:1px;">0%</div>
+        <div style="padding:14px 16px;text-align:center;background:linear-gradient(135deg,#f0fdf4,#fff);">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ganancia</div>
+          <div id="c-rv-gan" style="font-size:20px;font-weight:800;color:var(--green);">$ 0</div>
         </div>
       </div>
 
-      <!-- campos ocultos para compatibilidad -->
+      <!-- campos ocultos -->
       <input type="hidden" id="v-envio-estimado">
       <input type="hidden" id="v-envio-real">
       <input type="hidden" id="v-fuente-pago">
       <input type="hidden" id="v-monto-pago">
       <input type="hidden" id="v-ref-pago">
       <input type="hidden" id="v-costo-cop">
+      <input type="hidden" id="c-rv-margen">
 
-    </div><!-- /mc -->
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 24px;border-top:1px solid var(--border);background:#f7fafa;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-venta')" style="padding:10px 20px;font-size:13px;">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVenta()" style="padding:10px 24px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,137,123,.3);">Guardar Venta</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════ MODAL: PAGO MÚLTIPLE ENVÍOS ═══════════════════ -->
+<div class="overlay" id="modal-pago-multiple">
+  <div class="modal modal-lg">
+    <div class="mh">
+      <div class="mh-title">💰 Pago múltiple de envíos</div>
+      <button class="mclose" onclick="closeModal('modal-pago-multiple')">✕</button>
+    </div>
+    <div class="mc">
+      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:600;color:var(--teal-dark);">Total a pagar por los envíos seleccionados</span>
+        <span id="mpm-total" style="font-size:20px;font-weight:700;color:var(--teal-dark);">$ 0</span>
+      </div>
+      <div style="max-height:300px;overflow-y:auto;margin-bottom:14px;" id="mpm-lista"></div>
+      <div class="fg">
+        <label class="fl2">Nota del pago <small class="c-dim">(opcional, aplica a todos)</small></label>
+        <input type="text" id="mpm-nota" placeholder="Ej: pago en efectivo lote marzo...">
+      </div>
+    </div>
     <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-venta')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveVenta()">💾 Guardar Venta</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-pago-multiple')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarPagoMultiple()">✅ Confirmar pago de todos</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════ MODAL: TIENDA ═══════════════════ -->
-<!-- ═══════════════════ MODAL: ENVÍO ═══════════════════ -->
-<div class="overlay" id="modal-envio">
-  <div class="modal modal-lg">
+
+<div class="overlay" id="modal-pago-envio">
+  <div class="modal">
     <div class="mh">
-      <div class="mh-title" id="me-title">Registrar Envío</div>
-      <button class="mclose" onclick="closeModal('modal-envio')">✕</button>
+      <div class="mh-title">Registrar pago de envío</div>
+      <button class="mclose" onclick="closeModal('modal-pago-envio')">✕</button>
     </div>
     <div class="mc">
-      <div class="fsec">📋 Identificación</div>
-      <div class="grid3">
-        <div class="fg">
-          <label class="fl2">Tienda *</label>
-          <select id="e-tienda"></select>
-        </div>
-        <div class="fg">
-          <label class="fl2">ID Venta ML *</label>
-          <input type="text" id="e-id-venta" placeholder="Ej: 2000015788963928">
-        </div>
-        <div class="fg">
-          <label class="fl2">Fecha de envío *</label>
-          <input type="date" id="e-fecha">
-        </div>
-        <div class="fg">
-          <label class="fl2">Transportadora *</label>
-          <select id="e-empresa">
-            <option value="aguachica">Aguachica</option>
-            <option value="servientrega">Servientrega</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2">N° de Guía</label>
-          <input type="text" id="e-guia" placeholder="Ej: 1234567890">
-        </div>
-        <div class="fg">
-          <label class="fl2">Teléfono destinatario</label>
-          <input type="tel" id="e-telefono" placeholder="3001234567">
-        </div>
-      </div>
-      <div class="fsec">💰 Costos de envío</div>
-      <div class="grid3">
-        <div class="fg">
-          <label class="fl2">Valor estimado (COP$)</label>
-          <input type="number" id="e-valor-est" placeholder="0" step="1">
-        </div>
-        <div class="fg">
-          <label class="fl2">Valor real confirmado (COP$)</label>
-          <input type="number" id="e-valor-real" placeholder="Pendiente…" step="1">
-        </div>
-        <div class="fg">
-          <label class="fl2">Gasto extra (guía adicional)</label>
-          <input type="number" id="e-gasto-extra" placeholder="0" step="1">
-        </div>
-      </div>
-      <div class="fsec">📝 Nota</div>
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
       <div class="fg">
-        <input type="text" id="e-nota" placeholder="Observaciones del envío (opcional)">
+        <label class="fl2">Valor real del envío pagado (COP$) *</label>
+        <input type="number" id="mpe-valor" placeholder="Ej: 19000" step="1">
+        <span style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span>
       </div>
-      <div class="fsec">📦 Estado</div>
-      <div class="fg" style="max-width:200px;">
-        <select id="e-estado">
-          <option value="pendiente">Pendiente</option>
-          <option value="en_camino">En camino</option>
-          <option value="entregado">Entregado</option>
-          <option value="devuelto">Devuelto</option>
-          <option value="problema">Problema</option>
-        </select>
+      <div class="fg">
+        <label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label>
+        <input type="text" id="mpe-nota" placeholder="Ej: pagado en efectivo, guía 12345...">
       </div>
     </div>
     <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-envio')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEnvio()">💾 Guardar Envío</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-pago-envio')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPagoEnvio()">✅ Marcar como pagado</button>
     </div>
   </div>
 </div>
@@ -1278,10 +1340,10 @@ const DB = {
 
 // ── UTILIDADES ──
 const uid  = () => 'id_' + Date.now() + '_' + Math.random().toString(36).slice(2,7);
-const fmt  = v  => isNaN(v)||v===null||v===undefined ? '$0' :
-                   '$' + Number(v).toLocaleString('es-CO',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmt  = v  => isNaN(v)||v===null||v===undefined ? '$ 0' :
+                   '$ ' + Number(v).toLocaleString('es-CO',{minimumFractionDigits:0,maximumFractionDigits:0});
 const fmtP = v  => isNaN(v) ? '0%' : v.toFixed(1) + '%';
-const fmtU = v  => isNaN(v) ? '$0.00' : '$' + Number(v).toFixed(2);
+const fmtU = v  => isNaN(v) ? '$ 0.00' : '$ ' + Number(v).toFixed(2);
 const hoy  = () => new Date().toISOString().slice(0,10);
 const mes  = () => new Date().toISOString().slice(0,7);
 
@@ -1392,12 +1454,11 @@ function calcVenta(v) {
 
 // ── NAVEGACIÓN ──
 const PAGES = {
-  ventas:     { title:'Gestor de Ventas', icon:'🛒' },
-  alertas:    { title:'Alertas', icon:'🔔' },
-  envios:     { title:'Envíos', icon:'🚚' },
-  tiendas:    { title:'Tiendas', icon:'🏪' },
-  problemas:  { title:'Problemas', icon:'⚠️' },
-  finanzas:   { title:'Finanzas', icon:'💳' },
+  ventas:     { title:'Gestor de Ventas', icon:'' },
+  envios:     { title:'Envíos', icon:'' },
+  tiendas:    { title:'Tiendas', icon:'' },
+  problemas:  { title:'Problemas', icon:'' },
+  finanzas:   { title:'Finanzas', icon:'' },
 };
 
 // ── HELPERS DE FUENTE DE PAGO ──
@@ -1534,23 +1595,6 @@ async function renderFinanzas() {
         </div>`;
       }).join('')
     : '<div class="c-dim" style="font-size:12px;padding:16px 0;">No hay billeteras registradas. Crea una con "+ Billetera".</div>';
-
-  // ── Poblar selector de mes en envíos (independiente del filtro de movimientos) ──
-  const envMesEl = document.getElementById('fin-envios-mes');
-  if(envMesEl && !envMesEl.innerHTML) {
-    const meses12 = Array.from({length:12},(_,i)=>{
-      const d=new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7);
-    });
-    const mesNombres = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio',
-      '07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
-    envMesEl.innerHTML = meses12.map(m=>{
-      const [y,mo] = m.split('-');
-      return `<option value="${m}" ${m===mes()?'selected':''}>${mesNombres[mo]} ${y}</option>`;
-    }).join('');
-  }
-
-  // Render envíos con el mes seleccionado
-  await renderEnviosMes();
 
   // ── Membresía Centris ──
   const memMes = mems.filter(m=>m.mes===mesAct);
@@ -1743,15 +1787,14 @@ async function navigate(page) {
   document.getElementById('page-'+page)?.classList.add('active');
   document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
   const p = PAGES[page]||{};
-  document.getElementById('tb-title').textContent = p.title||page;
-  document.getElementById('tb-icon').textContent  = p.icon||'';
+  if(document.getElementById('tb-title')) document.getElementById('tb-title').textContent = p.title||page;
+  if(document.getElementById('tb-icon'))  document.getElementById('tb-icon').textContent  = p.icon||'';
   await render(page);
 }
 
 async function render(page) {
   switch(page) {
     case 'ventas':     await renderVentasGanancias(); break;
-    case 'alertas':    await renderAlertas();    break;
     case 'envios':     await renderEnvios();     break;
     case 'tiendas':    await renderTiendas();    break;
     case 'problemas':  await renderProblemas();  break;
@@ -1793,7 +1836,7 @@ async function renderVentasGanancias() {
     const mar = ing>0?(g/ing)*100:0;
     const isActive = t.estado !== 'inactiva';
     const fotoEl = t.foto
-      ? `<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${t.color};">`
+      ? `<img src="${t.foto}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${t.color};">`
       : `<span class="tienda-dot" style="background:${t.color};width:10px;height:10px;"></span>`;
     return `<div style="
       background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
@@ -1802,12 +1845,12 @@ async function renderVentasGanancias() {
     ">
       <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
         ${fotoEl}
-        <span style="font-size:12px;font-weight:700;flex:1;">${t.nombre}</span>
+        <span style="font-size:15px;font-weight:700;flex:1;">${t.nombre}</span>
         ${!isActive?'<span style="font-size:9px;background:#fde8ea;color:#b0202e;padding:1px 6px;border-radius:10px;font-weight:700;">INACTIVA</span>':''}
       </div>
-      <div style="font-size:18px;font-weight:700;color:${g>=0?'var(--green)':'var(--red)'};">${fmt(g)}</div>
-      <div style="font-size:10px;color:var(--text3);margin-top:2px;">
-        <b>${tvTodo.length}</b> ventas total · <b>${tvMes.length}</b> este mes · ${fmtP(mar)} margen
+      <div style="font-size:20px;font-weight:700;color:${g>=0?'var(--green)':'var(--red)'};">${fmt(g)}</div>
+      <div style="font-size:12px;color:var(--text3);margin-top:2px;">
+        <b>${tvTodo.length}</b> ventas total
       </div>
     </div>`;
   }).join('');
@@ -2257,7 +2300,7 @@ async function saveVenta() {
   }
 
   closeModal('modal-venta');
-  await renderVentas();
+  await renderVentasGanancias();
   await updateAlertaBadge();
 }
 
@@ -2294,51 +2337,57 @@ async function renderVentas() {
   if(fe) ventas = ventas.filter(v=>v.estado===fe);
   if(fd) ventas = ventas.filter(v=>v.fecha_venta===fd);          // día exacto
   else if(fm) ventas = ventas.filter(v=>v.fecha_venta?.startsWith(fm)); // mes si no hay día
-  ventas.sort((a,b)=>(b.fecha_venta||'').localeCompare(a.fecha_venta||''));
+  // Ordenar de más antigua a más reciente para asignar número cronológico
+  ventas.sort((a,b)=>(a.fecha_venta||'').localeCompare(b.fecha_venta||''));
+  // Asignar número cronológico (1 = primera venta del período)
+  const ventasConNum = ventas.map((v,i)=>({ ...v, _num: i+1 }));
+  // Invertir para mostrar la más reciente arriba
+  const ventasMostrar = [...ventasConNum].reverse();
 
   document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
 
-  document.getElementById('ventas-tbody').innerHTML = ventas.map((v,i)=>{
+  document.getElementById('ventas-tbody').innerHTML = ventasMostrar.map((v)=>{
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const c = calcVenta(v);
     const isLoss = c.ganancia < 0;
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
     return `<tr class="${isLoss?'loss-row':''}">
-      <td class="td-mono c-dim" style="text-align:center;">${i+1}</td>
+      <td class="td-mono c-dim" style="text-align:center;">${v._num}</td>
       <td>
         <span style="display:flex;align-items:center;gap:5px;">
-          ${t?.foto?`<img src="${t.foto}" style="width:22px;height:22px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:
+          ${t?.foto?`<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:
             `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`}
-          <span style="font-size:11px;font-weight:600;">${t?.nombre||'?'}</span>
+          <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td><span class="venta-id">${v.id_ml||v.id}</span></td>
-      <td class="td-dim">${v.fecha_venta||'—'}</td>
+      <td style="text-align:center;"><span class="venta-id">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
       <td class="td-mono c-dim">${v.telefono||'—'}</td>
       <td class="td-mono text-center">${v.udes||1}</td>
       <td class="td-mono">${v.costo_usd?fmtU(v.costo_usd):'—'}</td>
       <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
-      <td class="td-mono fw6">${fmt(c.precioCOP)}</td>
+      <td class="td-mono">${fmt(c.precioCOP)}</td>
       <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
-      <td class="td-mono fw7" style="color:${isLoss?'#842029':'#198754'};">
+      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
         ${fmt(c.ganancia)}
       </td>
-      <td style="font-size:11px;text-align:center;">
-        <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'pendiente':'entregado'}">${envioLabel}</span>
-        ${v.envio_extra>0?`<div class="mono" style="font-size:9px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
+      <td style="font-size:11px;text-align:center;vertical-align:middle;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':'en_camino'}">${envioLabel}</span>
+        ${v.envio_extra>0?`<div class="mono" style="font-size:11px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
         ${(v.envio_tipo==='aguachica'||v.envio_tipo==='servientrega') && v.envio_int_usd > 0
           ? v.envio_validado
-            ? `<div style="margin-top:2px;font-family:var(--font-mono);font-size:10px;font-weight:700;color:var(--green);">✅ ${fmt(v.envio_real_cop||v.envio_estimado_cop)}</div>`
+            ? `<div style="margin-top:2px;font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--green);"> ${fmt(v.envio_real_cop||v.envio_estimado_cop)}</div>`
             : `<div style="margin-top:2px;">
-                <button class="btn btn-sm" style="font-size:9px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">
-                  ⚠️ ${fmt(v.envio_estimado_cop||v.envio_int_usd)}
+                <button class="btn btn-sm" style="font-size:11px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">
+                   ${fmt(v.envio_estimado_cop||v.envio_int_usd)}
                 </button>
                </div>`
           : ''
         }
+        </div>
       </td>
       <td>
-        <select style="font-size:11px;padding:3px 5px;border-radius:var(--radius);"
+        <select style="font-size:13px;padding:3px 5px;border-radius:var(--radius);"
           onchange="cambiarEstado('${v.id}',this.value)">
           ${['pendiente','en_camino','entregado','cancelado','problema','devuelto']
             .map(e=>`<option value="${e}" ${v.estado===e?'selected':''}>${e}</option>`).join('')}
@@ -2353,7 +2402,7 @@ async function renderVentas() {
         </div>
       </td>
     </tr>`;
-  }).join('')||'<tr><td colspan="14" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
+  }).join('')||'<tr><td colspan="13" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 }
 
 async function cambiarEstado(id, estado) {
@@ -2362,38 +2411,132 @@ async function cambiarEstado(id, estado) {
   if(v) { v.estado = estado; await DB.saveVentas(ventas); await updateAlertaBadge(); }
 }
 
-async function deleteVenta(id) {
-  if(!confirm('¿Eliminar esta venta?')) return;
-  await DB.deleteVenta(id);
-  await renderVentas(); await updateAlertaBadge();
+// ── ELIMINAR VENTA CON CÓDIGO DE ACCESO ──
+let _pendingDeleteId = null;
+
+function deleteVenta(id) {
+  _pendingDeleteId = id;
+  const modal = document.getElementById('modal-delete-confirm');
+  const input = document.getElementById('delete-code-input');
+  const errEl = document.getElementById('delete-code-error');
+  errEl.textContent = '';
+  input.value = '';
+  modal.style.display = 'flex';
+  setTimeout(() => input.focus(), 80);
 }
+
+function _cancelDeleteVenta() {
+  _pendingDeleteId = null;
+  document.getElementById('modal-delete-confirm').style.display = 'none';
+  document.getElementById('delete-code-input').value = '';
+  document.getElementById('delete-code-error').textContent = '';
+}
+
+async function _confirmDeleteVenta() {
+  const input  = document.getElementById('delete-code-input');
+  const errEl  = document.getElementById('delete-code-error');
+  const btn    = document.getElementById('delete-confirm-btn');
+  const codigo = input.value.trim();
+
+  if(!codigo) { errEl.textContent = 'Ingresa el código de acceso.'; return; }
+
+  btn.textContent = 'Verificando...';
+  btn.disabled = true;
+  errEl.textContent = '';
+
+  try {
+    const snap = await _db.collection('config').doc('auth').get();
+    if(!snap.exists) { errEl.textContent = '⚠️ No hay código configurado.'; btn.textContent = 'Eliminar'; btn.disabled = false; return; }
+    const hashGuardado  = snap.data().hash;
+    const hashIngresado = await _hashCode(codigo);
+
+    if(hashIngresado === hashGuardado) {
+      await DB.deleteVenta(_pendingDeleteId);
+      _cancelDeleteVenta();
+      await renderVentas();
+      await updateAlertaBadge();
+    } else {
+      errEl.textContent = 'Código incorrecto. Intenta de nuevo.';
+      input.value = '';
+      input.focus();
+    }
+  } catch(e) {
+    errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+    console.error(e);
+  }
+
+  btn.textContent = 'Eliminar';
+  btn.disabled = false;
+}
+
+let _validarEnvioId = null;
+let _validarEnvioEstimado = 0;
 
 async function openValidarEnvio(id) {
   const v = (await DB.ventas()).find(x=>x.id===id);
   if(!v) return;
   const trm = v.trm || TRM_ACTUAL;
   const estimado = v.envio_estimado_cop || (v.envio_tipo==='servientrega' ? (v.envio_int_usd||0)*trm : v.envio_int_usd||0);
-  const real = parseFloat(prompt(
-    `✅ Validar envío — ${v.producto?.slice(0,30)}\n`
-    + `Tipo: ${v.envio_tipo==='aguachica'?'Aguachica':'Servientrega'}\n`
-    + `Valor estimado: ${fmt(estimado)}\n\n`
-    + `Ingresa el valor REAL del envío confirmado en Centris (COP$):`,
-    estimado || ''
-  ));
-  if(isNaN(real) || real === null) return;
+
+  _validarEnvioId       = id;
+  _validarEnvioEstimado = estimado;
+
+  document.getElementById('ve-subtitulo').textContent =
+    `${v.envio_tipo==='aguachica'?'Aguachica':'Servientrega'} · ${v.id_ml||v.id}`;
+  document.getElementById('ve-estimado').textContent  = fmt(estimado);
+  document.getElementById('ve-input').value           = estimado || '';
+  document.getElementById('ve-diff-box').style.display = 'none';
+
+  const modal = document.getElementById('modal-validar-envio');
+  modal.style.display = 'flex';
+  setTimeout(()=>document.getElementById('ve-input').focus(), 80);
+  _calcDiffEnvio();
+}
+
+function _calcDiffEnvio() {
+  const val  = parseFloat(document.getElementById('ve-input').value);
+  const box  = document.getElementById('ve-diff-box');
+  const txt  = document.getElementById('ve-diff-text');
+  if(isNaN(val)) { box.style.display='none'; return; }
+  const diff = val - _validarEnvioEstimado;
+  box.style.display = 'block';
+  if(Math.abs(diff) < 1) {
+    box.style.background = '#e0f2f1';
+    txt.style.color = '#00695c';
+    txt.textContent = '✔ Igual al estimado';
+  } else if(diff > 0) {
+    box.style.background = '#fde8ea';
+    txt.style.color = '#b0202e';
+    txt.textContent = `▲ +${fmt(diff)} más caro que el estimado`;
+  } else {
+    box.style.background = '#d1f0e0';
+    txt.style.color = '#1b7e4a';
+    txt.textContent = `▼ ${fmt(diff)} más barato que el estimado`;
+  }
+}
+
+function _cancelValidarEnvio() {
+  document.getElementById('modal-validar-envio').style.display = 'none';
+  _validarEnvioId = null;
+}
+
+async function _confirmarValidarEnvio() {
+  const real = parseFloat(document.getElementById('ve-input').value);
+  if(isNaN(real) || real < 0) {
+    document.getElementById('ve-input').style.borderColor = '#dc3545';
+    setTimeout(()=>document.getElementById('ve-input').style.borderColor='#d8e4e3', 1200);
+    return;
+  }
   const ventas = await DB.ventas();
-  const vv = ventas.find(x=>x.id===id);
+  const vv = ventas.find(x=>x.id===_validarEnvioId);
   if(vv) {
-    vv.envio_real_cop  = real;
-    vv.envio_validado  = true;
-    vv.envio_estimado_cop = estimado;
+    vv.envio_real_cop      = real;
+    vv.envio_validado      = true;
+    vv.envio_estimado_cop  = _validarEnvioEstimado;
     await DB.saveVentas(ventas);
     await renderVentas();
-    const diff = real - estimado;
-    if(Math.abs(diff) >= 500) {
-      alert(`Envío validado ✅\nDiferencia vs estimado: ${diff>=0?'+':''}${fmt(diff)}\nEsta diferencia ya se aplicó al cálculo de ganancia.`);
-    }
   }
+  _cancelValidarEnvio();
 }
 
 function clearVentaFilters() {
@@ -2677,168 +2820,279 @@ async function populateSelects() {
 // ── DATOS DEMO eliminados — se usan datos reales de Firebase ──
 
 // ══════════════════════════════════════════════════════════
-// MÓDULO ENVÍOS
+// MÓDULO ENVÍOS — basado en ventas registradas
 // ══════════════════════════════════════════════════════════
-let _editEnvioId = null;
 
-async function openModalEnvio(id) {
-  _editEnvioId = id || null;
-  document.getElementById('me-title').textContent = id ? 'Editar Envío' : 'Registrar Envío';
-  const tiendas = await DB.tiendas();
-  document.getElementById('e-tienda').innerHTML =
-    tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
-
-  if(id) {
-    const e = (await DB.envios()).find(x=>x.id===id);
-    if(e) {
-      sv('e-tienda',     e.tienda_id||'');
-      sv('e-id-venta',   e.id_venta||'');
-      sv('e-fecha',      e.fecha||hoy());
-      sv('e-empresa',    e.empresa||'aguachica');
-      sv('e-guia',       e.guia||'');
-      sv('e-telefono',   e.telefono||'');
-      sv('e-valor-est',  e.valor_estimado||'');
-      sv('e-valor-real', e.valor_real||'');
-      sv('e-gasto-extra',e.gasto_extra||'');
-      sv('e-nota',       e.nota||'');
-      sv('e-estado',     e.estado||'pendiente');
-    }
-  } else {
-    ['e-id-venta','e-guia','e-telefono','e-valor-est','e-valor-real','e-gasto-extra','e-nota'].forEach(i=>sv(i,''));
-    sv('e-fecha', hoy());
-    sv('e-empresa','aguachica');
-    sv('e-estado','pendiente');
-    // Pre-llenar tienda si solo hay una
-    if(tiendas.length===1) sv('e-tienda', tiendas[0].id);
-  }
-  openModal('modal-envio');
-}
-
-async function saveEnvio() {
-  const tienda   = gv('e-tienda');
-  const idVenta  = gv('e-id-venta').trim();
-  if(!tienda)   { alert('Selecciona una tienda.'); return; }
-  if(!idVenta)  { alert('El ID de venta es requerido.'); return; }
-
-  await DB.upsertEnvio({
-    id:              _editEnvioId || uid(),
-    tienda_id:       tienda,
-    id_venta:        idVenta,
-    fecha:           gv('e-fecha'),
-    empresa:         gv('e-empresa'),
-    guia:            gv('e-guia').trim(),
-    telefono:        gv('e-telefono').trim(),
-    valor_estimado:  parseFloat(gv('e-valor-est'))||0,
-    valor_real:      parseFloat(gv('e-valor-real'))||0,
-    gasto_extra:     parseFloat(gv('e-gasto-extra'))||0,
-    nota:            gv('e-nota').trim(),
-    estado:          gv('e-estado')||'pendiente',
-    fecha_registro:  new Date().toISOString(),
-  });
-  closeModal('modal-envio');
-  await renderEnvios();
-}
-
-async function deleteEnvio(id) {
-  if(!confirm('¿Eliminar este envío?')) return;
-  await DB.deleteEnvio(id);
-  await renderEnvios();
-}
-
-async function cambiarEstadoEnvio(id, estado) {
-  const envios = await DB.envios();
-  const e = envios.find(x=>x.id===id);
-  if(e) { e.estado = estado; await DB.saveEnvios(envios); }
+// filtrarEnvios: atajo desde las tarjetas resumen (clic en pendiente/pagado)
+function filtrarEnvios(empresa, pago) {
+  sv('ef-empresa', empresa);
+  sv('ef-pago', pago);
+  sv('ef-search',''); sv('ef-tienda',''); sv('ef-mes','');
+  renderEnvios();
 }
 
 function clearEnvioFilters() {
   ['ef-search','ef-mes'].forEach(i=>sv(i,''));
-  ['ef-empresa','ef-tienda','ef-estado'].forEach(i=>sv(i,''));
+  ['ef-empresa','ef-tienda','ef-pago'].forEach(i=>sv(i,''));
   renderEnvios();
+}
+
+// ── Obtener el valor del envío de una venta (en COP) ──
+function _envioValorCOP(v) {
+  if(v.envio_validado && v.envio_real_cop > 0) return v.envio_real_cop;
+  const trm = parseFloat(v.trm) || TRM_ACTUAL;
+  if(v.envio_tipo === 'servientrega') return (parseFloat(v.envio_int_usd)||0) * trm;
+  return parseFloat(v.envio_int_usd) || 0;
+}
+
+// Modal para registrar pago de envío
+let _pagoEnvioVentaId = null;
+async function openPagoEnvio(ventaId) {
+  _pagoEnvioVentaId = ventaId;
+  const v = (await DB.ventas()).find(x=>x.id===ventaId);
+  if(!v) return;
+  const tiendas = await DB.tiendas();
+  const t = tiendas.find(x=>x.id===v.tienda_id);
+  const estimado = _envioValorCOP(v);
+  const empresa = v.envio_tipo === 'servientrega' ? 'Servientrega' : 'Aguachica';
+  document.getElementById('mpe-info').innerHTML = `
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div><span style="font-size:10px;color:var(--text3);">Venta</span><br><b>${v.id_ml||v.id}</b></div>
+      <div><span style="font-size:10px;color:var(--text3);">Tienda</span><br><b>${t?.nombre||'?'}</b></div>
+      <div><span style="font-size:10px;color:var(--text3);">Transportadora</span><br><b>${empresa}</b></div>
+      <div><span style="font-size:10px;color:var(--text3);">Valor estimado</span><br><b style="color:var(--teal);">${fmt(estimado)}</b></div>
+    </div>`;
+  sv('mpe-valor', estimado || '');
+  sv('mpe-nota', v.nota_envio_pago || '');
+  openModal('modal-pago-envio');
+}
+
+async function guardarPagoEnvio() {
+  if(!_pagoEnvioVentaId) return;
+  const ventas = await DB.ventas();
+  const v = ventas.find(x=>x.id===_pagoEnvioVentaId);
+  if(!v) return;
+  const valorReal = parseFloat(gv('mpe-valor')) || _envioValorCOP(v);
+  v.envio_pagado      = true;
+  v.envio_real_cop    = valorReal;
+  v.envio_validado    = true;
+  v.nota_envio_pago   = gv('mpe-nota').trim();
+  await DB.saveVentas(ventas);
+  closeModal('modal-pago-envio');
+  await renderEnvios();
+}
+
+async function desmarcarPagoEnvio(ventaId) {
+  if(!confirm('¿Desmarcar este envío como pagado?')) return;
+  const ventas = await DB.ventas();
+  const v = ventas.find(x=>x.id===ventaId);
+  if(v) {
+    v.envio_pagado   = false;
+    v.envio_validado = false;
+    await DB.saveVentas(ventas);
+    await renderEnvios();
+  }
 }
 
 async function renderEnvios() {
   const tiendas = await DB.tiendas();
-  let envios    = await DB.envios();
+  let ventas    = await DB.ventas();
 
-  const s  = gv('ef-search').toLowerCase();
-  const fe = gv('ef-empresa');
-  const ft = gv('ef-tienda');
-  const fs = gv('ef-estado');
-  const fm = gv('ef-mes');
+  // Resetear selección al re-renderizar
+  const btnMulti = document.getElementById('btn-pago-multiple');
+  if(btnMulti) btnMulti.style.display = 'none';
+  const countEl = document.getElementById('selected-count');
+  if(countEl) countEl.textContent = '0';
+  const chkAll = document.getElementById('chk-all-envios');
+  if(chkAll) chkAll.checked = false;
 
-  if(s)  envios = envios.filter(e=>(e.id_venta+e.guia+e.telefono+e.nota).toLowerCase().includes(s));
-  if(fe) envios = envios.filter(e=>e.empresa===fe);
-  if(ft) envios = envios.filter(e=>e.tienda_id===ft);
-  if(fs) envios = envios.filter(e=>e.estado===fs);
-  if(fm) envios = envios.filter(e=>e.fecha?.startsWith(fm));
+  // Solo ventas con transportadora Aguachica o Servientrega y que tengan valor de envío
+  ventas = ventas.filter(v =>
+    (v.envio_tipo === 'aguachica' || v.envio_tipo === 'servientrega')
+  );
 
-  envios.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
+  // ── Calcular resúmenes por transportadora ──
+  const ag  = ventas.filter(v=>v.envio_tipo==='aguachica');
+  const sv_ = ventas.filter(v=>v.envio_tipo==='servientrega');
 
-  // Stats rápidos
-  const totalEst  = envios.reduce((s,e)=>s+(e.valor_estimado||0),0);
-  const totalReal = envios.filter(e=>e.valor_real>0).reduce((s,e)=>s+(e.valor_real||0),0);
-  const totalExtra= envios.reduce((s,e)=>s+(e.gasto_extra||0),0);
-  const cntAg     = envios.filter(e=>e.empresa==='aguachica').length;
-  const cntSv     = envios.filter(e=>e.empresa==='servientrega').length;
-  document.getElementById('envios-stats').innerHTML = [
-    { label:'Total envíos', val:envios.length, color:'teal' },
-    { label:'Aguachica',    val:cntAg,          color:'teal' },
-    { label:'Servientrega', val:cntSv,          color:'yellow' },
-    { label:'Valor estimado', val:fmt(totalEst),   color:'green' },
-    { label:'Valor real',     val:fmt(totalReal),  color:'green' },
-    { label:'Gastos extra',   val:fmt(totalExtra), color:'red' },
-  ].map(s=>`<div class="stat-card ${s.color}">
-    <div class="stat-label">${s.label}</div>
-    <div class="stat-value ${s.color}">${s.val}</div>
-  </div>`).join('');
+  const agPend  = ag.filter(v=>!v.envio_pagado);
+  const agPag   = ag.filter(v=>v.envio_pagado);
+  const svPend  = sv_.filter(v=>!v.envio_pagado);
+  const svPag   = sv_.filter(v=>v.envio_pagado);
 
-  document.getElementById('envios-count').textContent = `${envios.length} envío(s) mostrado(s)`;
+  const _sum = arr => arr.reduce((s,v)=>s+_envioValorCOP(v),0);
 
-  const _empresa = { aguachica:'🏍 Aguachica', servientrega:'📦 Servientrega', otro:'📬 Otro' };
-  const _estadoBadge = { pendiente:'badge-pendiente', en_camino:'badge-en_camino',
-    entregado:'badge-entregado', devuelto:'badge-devuelto', problema:'badge-problema' };
+  document.getElementById('env-ag-total-count').textContent = `${ag.length} envío${ag.length!==1?'s':''}`;
+  document.getElementById('env-ag-pend-count').textContent  = agPend.length;
+  document.getElementById('env-ag-pend-total').textContent  = fmt(_sum(agPend));
+  document.getElementById('env-ag-pag-count').textContent   = agPag.length;
+  document.getElementById('env-ag-pag-total').textContent   = fmt(_sum(agPag));
 
-  document.getElementById('envios-tbody').innerHTML = envios.map((e,i)=>{
-    const t = tiendas.find(x=>x.id===e.tienda_id);
+  document.getElementById('env-sv-total-count').textContent = `${sv_.length} envío${sv_.length!==1?'s':''}`;
+  document.getElementById('env-sv-pend-count').textContent  = svPend.length;
+  document.getElementById('env-sv-pend-total').textContent  = fmt(_sum(svPend));
+  document.getElementById('env-sv-pag-count').textContent   = svPag.length;
+  document.getElementById('env-sv-pag-total').textContent   = fmt(_sum(svPag));
+
+  // ── Aplicar filtros ──
+  const s   = gv('ef-search').toLowerCase();
+  const fe  = gv('ef-empresa');
+  const fp  = gv('ef-pago');
+  const ft  = gv('ef-tienda');
+  const fm  = gv('ef-mes');
+
+  if(s)   ventas = ventas.filter(v=>(v.id_ml+v.telefono+(v.nota||'')).toLowerCase().includes(s));
+  if(fe)  ventas = ventas.filter(v=>v.envio_tipo===fe);
+  if(fp === 'pendiente') ventas = ventas.filter(v=>!v.envio_pagado);
+  if(fp === 'pagado')    ventas = ventas.filter(v=>v.envio_pagado);
+  if(ft)  ventas = ventas.filter(v=>v.tienda_id===ft);
+  if(fm)  ventas = ventas.filter(v=>v.fecha_venta?.startsWith(fm));
+
+  ventas.sort((a,b)=>(b.fecha_venta||'').localeCompare(a.fecha_venta||''));
+
+  document.getElementById('envios-count').textContent = `${ventas.length} envío(s) mostrado(s)`;
+
+  document.getElementById('envios-tbody').innerHTML = ventas.map((v,i)=>{
+    const t = tiendas.find(x=>x.id===v.tienda_id);
     const fotoEl = t?.foto
       ? `<img src="${t.foto}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
       : `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`;
-    const valReal = e.valor_real>0
-      ? `<span style="color:var(--green);font-weight:700;">${fmt(e.valor_real)}</span>`
-      : `<span style="color:var(--text3);">—</span>`;
+    const esAg  = v.envio_tipo==='aguachica';
+    const label = esAg ? 'Aguachica' : 'Servientrega';
+    const bgCol = esAg ? '#eff6ff' : '#f0fdf4';
+    const txtCol= esAg ? '#1d4ed8' : '#15803d';
+    const borCol= esAg ? '#bfdbfe' : '#bbf7d0';
+    const valorEnvio = _envioValorCOP(v);
+    const pagado = v.envio_pagado;
+
     return `<tr>
+      <td style="text-align:center;">
+        ${!pagado ? `<input type="checkbox" class="chk-envio" data-id="${v.id}" data-valor="${valorEnvio}" onchange="actualizarSeleccionEnvios()" style="cursor:pointer;">` : ''}
+      </td>
       <td class="td-mono c-dim" style="text-align:center;">${i+1}</td>
       <td>
         <span style="display:flex;align-items:center;gap:5px;">
           ${fotoEl}
-          <span style="font-size:11px;font-weight:600;">${t?.nombre||'?'}</span>
+          <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td><span class="venta-id">${e.id_venta||'—'}</span></td>
-      <td style="font-size:11px;font-weight:600;">${_empresa[e.empresa]||e.empresa||'—'}</td>
-      <td class="td-mono" style="font-size:11px;">${e.guia||'—'}</td>
-      <td class="td-dim">${e.fecha||'—'}</td>
-      <td class="td-mono c-dim">${e.telefono||'—'}</td>
-      <td class="td-mono">${e.valor_estimado>0?fmt(e.valor_estimado):'—'}</td>
-      <td>${valReal}</td>
-      <td class="td-mono c-dim">${e.gasto_extra>0?fmt(e.gasto_extra):'—'}</td>
-      <td style="font-size:11px;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${e.nota||''}">${e.nota||'—'}</td>
+      <td><span class="venta-id">${v.id_ml||v.id}</span></td>
+      <td class="td-dim">${v.fecha_venta||'—'}</td>
       <td>
-        <select style="font-size:11px;padding:3px 5px;border-radius:var(--radius);"
-          onchange="cambiarEstadoEnvio('${e.id}',this.value)">
-          ${['pendiente','en_camino','entregado','devuelto','problema']
-            .map(s=>`<option value="${s}" ${e.estado===s?'selected':''}>${s}</option>`).join('')}
-        </select>
+        <span style="display:inline-flex;align-items:center;gap:4px;background:${bgCol};color:${txtCol};
+          border:1px solid ${borCol};border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;">
+          ${label}
+        </span>
+      </td>
+      <td class="td-mono">
+        ${valorEnvio > 0 ? fmt(valorEnvio) : '<span class="c-dim">—</span>'}
+        ${v.envio_extra>0 ? `<div style="font-size:11px;color:var(--text3);">+extra ${fmt(v.envio_extra)}</div>` : ''}
+      </td>
+      <td>
+        <span class="badge badge-${v.estado||'pendiente'}">${v.estado||'pendiente'}</span>
+      </td>
+      <td>
+        ${pagado
+          ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#16a34a;
+               border:1px solid #bbf7d0;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;">
+               ✅ Pagado
+             </span>
+             ${v.nota_envio_pago ? `<div style="font-size:12px;color:var(--text3);margin-top:2px;">${v.nota_envio_pago}</div>` : ''}`
+          : `<span style="display:inline-flex;align-items:center;gap:4px;background:#fef9c3;color:#854d0e;
+               border:1px solid #fde68a;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;">
+               ⏳ Pendiente
+             </span>`
+        }
       </td>
       <td>
         <div class="actions-cell">
-          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalEnvio('${e.id}')">✏️</button>
-          <button class="btn btn-danger btn-icon btn-sm" title="Eliminar" onclick="deleteEnvio('${e.id}')">🗑</button>
+          ${pagado
+            ? `<button class="btn btn-ghost btn-sm" style="font-size:12px;" onclick="desmarcarPagoEnvio('${v.id}')">↩ Desmarcar</button>`
+            : `<button class="btn btn-primary btn-sm" style="font-size:12px;" onclick="openPagoEnvio('${v.id}')">💰 Pagar</button>`
+          }
         </div>
       </td>
     </tr>`;
-  }).join('') || '<tr><td colspan="13" class="text-center c-dim" style="padding:40px;">Sin envíos registrados</td></tr>';
+  }).join('') || '<tr><td colspan="10" class="text-center c-dim" style="padding:40px;">Sin envíos registrados. Las ventas con Aguachica o Servientrega aparecerán aquí.</td></tr>';
+}
+
+// ══════════════════════════════════════════════════════════
+// PAGO MÚLTIPLE DE ENVÍOS
+// ══════════════════════════════════════════════════════════
+
+function actualizarSeleccionEnvios() {
+  const checks = document.querySelectorAll('.chk-envio:checked');
+  const count  = checks.length;
+  const btnMulti = document.getElementById('btn-pago-multiple');
+  const countEl  = document.getElementById('selected-count');
+  if(btnMulti) btnMulti.style.display = count > 0 ? 'inline-flex' : 'none';
+  if(countEl)  countEl.textContent = count;
+}
+
+function toggleAllEnvios(checked) {
+  document.querySelectorAll('.chk-envio').forEach(c => c.checked = checked);
+  actualizarSeleccionEnvios();
+}
+
+async function openPagoMultiple() {
+  const checks = document.querySelectorAll('.chk-envio:checked');
+  if(!checks.length) return;
+
+  const ids = Array.from(checks).map(c => c.dataset.id);
+  const ventas = await DB.ventas();
+  const tiendas = await DB.tiendas();
+  const seleccionadas = ventas.filter(v => ids.includes(v.id));
+
+  let total = 0;
+  const filas = seleccionadas.map(v => {
+    const t = tiendas.find(x=>x.id===v.tienda_id);
+    const val = _envioValorCOP(v);
+    total += val;
+    const empresa = v.envio_tipo === 'servientrega' ? '📦 Servientrega' : '🏍 Aguachica';
+    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;">
+      <div>
+        <span class="venta-id">${v.id_ml||v.id}</span>
+        <span class="c-dim" style="margin:0 6px;">·</span>
+        <span style="font-size:11px;">${t?.nombre||'?'}</span>
+        <span class="c-dim" style="margin:0 6px;">·</span>
+        <span style="font-size:11px;">${empresa}</span>
+      </div>
+      <span style="font-weight:600;color:var(--teal-dark);">${fmt(val)}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('mpm-lista').innerHTML = filas || '<div class="c-dim" style="padding:16px;text-align:center;font-size:12px;">Sin envíos seleccionados.</div>';
+  document.getElementById('mpm-total').textContent = fmt(total);
+  document.getElementById('mpm-nota').value = '';
+  document.getElementById('modal-pago-multiple')._ids = ids;
+  openModal('modal-pago-multiple');
+}
+
+async function confirmarPagoMultiple() {
+  const ids  = document.getElementById('modal-pago-multiple')._ids || [];
+  const nota = document.getElementById('mpm-nota').value.trim();
+  if(!ids.length) return;
+
+  const ventas = await DB.ventas();
+  ids.forEach(id => {
+    const v = ventas.find(x=>x.id===id);
+    if(v) {
+      v.envio_pagado    = true;
+      v.envio_validado  = true;
+      v.envio_real_cop  = v.envio_real_cop || _envioValorCOP(v);
+      if(nota) v.nota_envio_pago = nota;
+    }
+  });
+  await DB.saveVentas(ventas);
+
+  // Desmarcar checkboxes y ocultar botón
+  document.querySelectorAll('.chk-envio').forEach(c => c.checked = false);
+  const chkAll = document.getElementById('chk-all-envios');
+  if(chkAll) chkAll.checked = false;
+  actualizarSeleccionEnvios();
+
+  closeModal('modal-pago-multiple');
+  await renderEnvios();
 }
 
 // ══════════════════════════════════════════════════════════
@@ -2963,8 +3217,7 @@ async function init() {
   await cargarTRM();
 
   // Fecha en topbar
-  document.getElementById('trm-display').title =
-    'TRM de referencia — ingresa el valor manualmente al registrar ventas';
+
 
   // Poblar selects
   await populateSelects();
@@ -2996,7 +3249,7 @@ async function init() {
   });
 
   // Filtros envíos live
-  ['ef-search','ef-empresa','ef-tienda','ef-estado','ef-mes'].forEach(id=>{
+  ['ef-search','ef-empresa','ef-tienda','ef-pago','ef-mes'].forEach(id=>{
     document.getElementById(id)?.addEventListener('input',  ()=>renderEnvios());
     document.getElementById(id)?.addEventListener('change', ()=>renderEnvios());
   });
@@ -3018,7 +3271,7 @@ async function init() {
 }
 
 // Filtros envíos live
-['ef-search','ef-empresa','ef-tienda','ef-estado','ef-mes'].forEach(id=>{
+['ef-search','ef-empresa','ef-tienda','ef-pago','ef-mes'].forEach(id=>{
   document.getElementById(id)?.addEventListener('input',  ()=>renderEnvios());
   document.getElementById(id)?.addEventListener('change', ()=>renderEnvios());
 });
