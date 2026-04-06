@@ -488,9 +488,13 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   <div class="sb-section">
     <div class="sb-section-label">Operación</div>
     <div class="nav-item" data-page="envios"><span class="ni"><img src="envios.png" alt="Envíos" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Envíos</span></div>
-    <div class="nav-item" data-page="tiendas"><span class="ni"><img src="tiendas.png" alt="Tiendas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Tiendas</span></div>
     <div class="nav-item" data-page="problemas"><span class="ni"><img src="problemas.png" alt="Problemas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Problemas</span></div>
     <div class="nav-item" data-page="finanzas"><span class="ni"><img src="finanzas.png" alt="Finanzas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Finanzas</span></div>
+  </div>
+
+  <div class="sb-section" style="margin-top:auto;">
+    <div class="sb-section-label">Sistema</div>
+    <div class="nav-item" data-page="configuracion"><span class="ni">⚙️</span><span style="color:#fff;">Configuración</span></div>
   </div>
 
   <div class="sb-bottom">
@@ -564,13 +568,12 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Tienda</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">ID Venta ML</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Teléfono</th>
-            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Udes</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Valor COP</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">USD</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">TRM</th>
-            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Valor COP</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Envío</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Costo Total</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Ganancia</th>
-            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Envío</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Estado</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Acc.</th>
           </tr></thead>
@@ -679,14 +682,48 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
       <div style="margin-top:8px;font-size:13px;color:var(--text3);" id="envios-count"></div>
     </section>
 
-    <!-- ══════════════ TIENDAS ══════════════ -->
-    <section class="page-section" id="page-tiendas">
+    <!-- ══════════════ CONFIGURACIÓN ══════════════ -->
+    <section class="page-section" id="page-configuracion">
       <div class="frow mb16">
-        <div class="c-dim" style="font-size:12px;">Tiendas registradas en Mercado Libre</div>
-        <div class="spacer"></div>
-        <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
+        <div class="c-dim" style="font-size:12px;">Ajustes del sistema, sesión y gestión de tiendas</div>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:20px;" id="tiendas-grid"></div>
+
+      <!-- Sesión activa -->
+      <div class="card mb16" style="margin-bottom:14px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🔐 Sesión Activa</div>
+            <div class="card-sub">Estado de tu sesión actual</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;">Tiempo de sesión</div>
+            <div id="cfg-session-time" style="font-size:22px;font-weight:700;color:var(--teal);">—</div>
+            <div id="cfg-session-expiry" style="font-size:11px;color:var(--text3);margin-top:2px;">Calculando...</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="_lockApp()" style="display:flex;align-items:center;gap:5px;">
+              🔒 Bloquear App
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="openModalCambiarCodigo()" style="display:flex;align-items:center;gap:5px;">
+              🔑 Cambiar Código
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tiendas registradas -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">🏪 Tiendas Registradas</div>
+            <div class="card-sub">Tiendas de Mercado Libre vinculadas al sistema</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;" id="cfg-tiendas-grid"></div>
+      </div>
     </section>
 
     <!-- ══════════════ PROBLEMAS ══════════════ -->
@@ -1000,6 +1037,10 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
         </div>
         <div id="p-buscar-resultado" style="margin-top:6px;"></div>
       </div>
+      <div class="fg">
+        <label class="fl2">Número de venta <small class="c-dim">(opcional — si no está en Gestor de Ventas, escríbelo manualmente)</small></label>
+        <input type="text" id="p-num-venta-manual" placeholder="Ej: 2000015788963928 o referencia propia">
+      </div>
 
       <div class="fsec">📋 Datos del problema</div>
       <div class="grid2">
@@ -1191,6 +1232,38 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-billetera')">Cancelar</button>
       <button class="btn btn-primary" onclick="saveNuevaBilletera()">💾 Agregar Billetera</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: CAMBIAR CÓDIGO ═══════════════════ -->
+<div class="overlay" id="modal-cambiar-codigo">
+  <div class="modal" style="max-width:420px;">
+    <div class="mh">
+      <div class="mh-title">🔑 Cambiar Código de Acceso</div>
+      <button class="mclose" onclick="closeModal('modal-cambiar-codigo')">✕</button>
+    </div>
+    <div class="mc">
+      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--teal-dark);">
+        ℹ️ El nuevo código se guardará de forma segura (cifrado SHA-256) en Firebase.
+      </div>
+      <div class="fg">
+        <label class="fl2">Código actual *</label>
+        <input type="password" id="cc-actual" placeholder="Ingresa el código actual">
+      </div>
+      <div class="fg">
+        <label class="fl2">Nuevo código *</label>
+        <input type="password" id="cc-nuevo" placeholder="Mínimo 4 caracteres">
+      </div>
+      <div class="fg">
+        <label class="fl2">Confirmar nuevo código *</label>
+        <input type="password" id="cc-confirmar" placeholder="Repite el nuevo código">
+      </div>
+      <div id="cc-error" style="font-size:12px;color:var(--red);margin-top:4px;min-height:18px;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cambiar-codigo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNuevoCodigo()">💾 Guardar Código</button>
     </div>
   </div>
 </div>
@@ -1454,11 +1527,11 @@ function calcVenta(v) {
 
 // ── NAVEGACIÓN ──
 const PAGES = {
-  ventas:     { title:'Gestor de Ventas', icon:'' },
-  envios:     { title:'Envíos', icon:'' },
-  tiendas:    { title:'Tiendas', icon:'' },
-  problemas:  { title:'Problemas', icon:'' },
-  finanzas:   { title:'Finanzas', icon:'' },
+  ventas:         { title:'Gestor de Ventas', icon:'' },
+  envios:         { title:'Envíos', icon:'' },
+  problemas:      { title:'Problemas', icon:'' },
+  finanzas:       { title:'Finanzas', icon:'' },
+  configuracion:  { title:'Configuración', icon:'' },
 };
 
 // ── HELPERS DE FUENTE DE PAGO ──
@@ -1782,6 +1855,11 @@ async function openModalSaldo(fuente) {
 }
 
 async function navigate(page) {
+  // Limpiar timer de sesión si se navega fuera de configuración
+  if(page !== 'configuracion' && typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
+    clearInterval(_sessionTimerInterval);
+    _sessionTimerInterval = null;
+  }
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
   document.getElementById('page-'+page)?.classList.add('active');
@@ -1794,11 +1872,11 @@ async function navigate(page) {
 
 async function render(page) {
   switch(page) {
-    case 'ventas':     await renderVentasGanancias(); break;
-    case 'envios':     await renderEnvios();     break;
-    case 'tiendas':    await renderTiendas();    break;
-    case 'problemas':  await renderProblemas();  break;
-    case 'finanzas':   await renderFinanzas();   break;
+    case 'ventas':        await renderVentasGanancias(); break;
+    case 'envios':        await renderEnvios();          break;
+    case 'problemas':     await renderProblemas();       break;
+    case 'finanzas':      await renderFinanzas();        break;
+    case 'configuracion': await renderConfiguracion();   break;
   }
 }
 
@@ -2016,12 +2094,14 @@ async function renderTiendas() {
   const ventas  = await DB.ventas();
   const saldos  = await DB.saldos();
   const problemas = await DB.problemas();
+  const gridEl = document.getElementById('cfg-tiendas-grid') || document.getElementById('tiendas-grid');
+  if(!gridEl) return;
   if(!tiendas.length) {
-    document.getElementById('tiendas-grid').innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+    gridEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
       <div class="empty-icon">🏪</div><div class="empty-title">Sin tiendas</div>
       <div class="c-dim" style="font-size:12px;">Crea tu primera tienda ML</div></div>`; return;
   }
-  document.getElementById('tiendas-grid').innerHTML = tiendas.map(t=>{
+  gridEl.innerHTML = tiendas.map(t=>{
     const tv       = ventas.filter(v=>v.tienda_id===t.id);
     const gan      = tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
     const isActive = t.estado !== 'inactiva';
@@ -2122,6 +2202,131 @@ async function renderTiendas() {
       </div>
     </div>`;
   }).join('');
+}
+
+// ── CONFIGURACIÓN ──
+let _sessionTimerInterval = null;
+
+async function renderConfiguracion() {
+  // Renderizar tiendas en el nuevo grid de configuración
+  const tiendas   = await DB.tiendas();
+  const ventas    = await DB.ventas();
+  const saldos    = await DB.saldos();
+  const problemas = await DB.problemas();
+  const gridEl    = document.getElementById('cfg-tiendas-grid');
+
+  if(!tiendas.length) {
+    gridEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <div class="empty-icon">🏪</div><div class="empty-title">Sin tiendas registradas</div>
+      <div class="c-dim" style="font-size:12px;">Crea tu primera tienda ML</div></div>`;
+  } else {
+    gridEl.innerHTML = tiendas.map(t=>{
+      const tv      = ventas.filter(v=>v.tienda_id===t.id);
+      const gan     = tv.reduce((s,v)=>s+calcVenta(v).ganancia,0);
+      const isActive= t.estado !== 'inactiva';
+      const mpKey   = 'mercadopago_' + t.id;
+      const mpSaldo = parseFloat(saldos[mpKey]) || 0;
+      const reclamos    = problemas.filter(p=>p.tienda_id===t.id && p.tipo==='reclamo').length;
+      const canceladas  = tv.filter(v=>v.estado==='cancelado').length;
+      const fotoEl = t.foto
+        ? `<img src="${t.foto}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid ${t.color};">`
+        : `<div style="width:52px;height:52px;border-radius:50%;background:${t.color}22;border:2px solid ${t.color};
+             display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏪</div>`;
+      return `
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow);opacity:${isActive?1:.65};">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+          ${fotoEl}
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.nombre}</div>
+            <div style="font-size:11px;color:var(--text3);">${t.responsable||'Sin responsable'}</div>
+          </div>
+          <span style="font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0;
+            background:${isActive?'var(--green-bg)':'var(--red-bg)'};color:${isActive?'var(--green)':'var(--red)'};">
+            ${isActive?'● ACTIVA':'● INACTIVA'}
+          </span>
+        </div>
+        <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);margin-bottom:10px;flex-wrap:wrap;">
+          <span>📦 ${tv.length} ventas</span>
+          <span>💰 ${fmt(gan)}</span>
+          <span>💳 MP: ${fmt(mpSaldo)}</span>
+          ${reclamos>0?`<span style="color:var(--red);">⚠️ ${reclamos} reclamo(s)</span>`:''}
+          ${canceladas>0?`<span style="color:var(--yellow);">✖ ${canceladas} cancelación(es)</span>`:''}
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openModalTienda('${t.id}')">✏️ Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="toggleEstadoTienda('${t.id}')" style="color:${isActive?'var(--red)':'var(--green)'};">
+            ${isActive?'⏸':'▶️'}
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="deleteTienda('${t.id}')">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Actualizar info de sesión y arrancar timer
+  _updateSessionInfo();
+  if(_sessionTimerInterval) clearInterval(_sessionTimerInterval);
+  _sessionTimerInterval = setInterval(_updateSessionInfo, 1000);
+}
+
+function _updateSessionInfo() {
+  const tsStart = _getSessionStart();
+  const timeEl  = document.getElementById('cfg-session-time');
+  const expEl   = document.getElementById('cfg-session-expiry');
+  if(!timeEl) return;
+  if(!tsStart) { timeEl.textContent = '—'; if(expEl) expEl.textContent = 'Sin sesión activa'; return; }
+
+  const elapsed = Date.now() - tsStart;
+  const remaining = _SESSION_TTL - elapsed;
+  const toHMS = ms => {
+    const s = Math.floor(ms/1000);
+    const h = Math.floor(s/3600);
+    const m = Math.floor((s%3600)/60);
+    const sec = s%60;
+    return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+  };
+  timeEl.textContent = toHMS(elapsed);
+  if(expEl) {
+    if(remaining > 0) {
+      expEl.textContent = `Sesión válida por ${toHMS(remaining)} más`;
+    } else {
+      expEl.textContent = 'Sesión expirada — por favor vuelve a ingresar';
+      expEl.style.color = 'var(--red)';
+    }
+  }
+}
+
+function openModalCambiarCodigo() {
+  sv('cc-actual',''); sv('cc-nuevo',''); sv('cc-confirmar','');
+  document.getElementById('cc-error').textContent = '';
+  openModal('modal-cambiar-codigo');
+}
+
+async function guardarNuevoCodigo() {
+  const actual    = document.getElementById('cc-actual').value;
+  const nuevo     = document.getElementById('cc-nuevo').value;
+  const confirmar = document.getElementById('cc-confirmar').value;
+  const errEl     = document.getElementById('cc-error');
+  errEl.textContent = '';
+
+  if(!actual || !nuevo || !confirmar) { errEl.textContent = 'Completa todos los campos.'; return; }
+  if(nuevo.length < 4) { errEl.textContent = 'El nuevo código debe tener al menos 4 caracteres.'; return; }
+  if(nuevo !== confirmar) { errEl.textContent = 'El nuevo código y la confirmación no coinciden.'; return; }
+
+  try {
+    const snap = await _db.collection('config').doc('auth').get();
+    if(!snap.exists) { errEl.textContent = '⚠️ No hay código configurado en la BD.'; return; }
+    const hashGuardado = snap.data().hash;
+    const hashActual   = await _hashCode(actual);
+    if(hashActual !== hashGuardado) { errEl.textContent = 'El código actual es incorrecto.'; return; }
+    const hashNuevo = await _hashCode(nuevo);
+    await _db.collection('config').doc('auth').set({ hash: hashNuevo });
+    closeModal('modal-cambiar-codigo');
+    alert('✅ Código actualizado correctamente.');
+  } catch(e) {
+    errEl.textContent = 'Error al conectar con Firebase.';
+    console.error(e);
+  }
 }
 
 // ── VENTAS ──
@@ -2346,31 +2551,36 @@ async function renderVentas() {
 
   document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
 
+  const ESTADO_ROW_STYLE = {
+    pendiente:  'background:#fff3e0!important;',
+    en_camino:  'background:#e8f5e9!important;',
+    entregado:  'background:#e3f2fd!important;',
+    cancelado:  'background:#fde8ea!important;',
+    problema:   'background:#fffde7!important;',
+    devuelto:   'background:#fce4ec!important;',
+  };
+
   document.getElementById('ventas-tbody').innerHTML = ventasMostrar.map((v)=>{
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const c = calcVenta(v);
     const isLoss = c.ganancia < 0;
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
-    return `<tr class="${isLoss?'loss-row':''}">
-      <td class="td-mono c-dim" style="text-align:center;">${v._num}</td>
-      <td>
+    const rowStyle = ESTADO_ROW_STYLE[v.estado] || '';
+    return `<tr class="${isLoss?'loss-row':''}" style="${rowStyle}">
+      <td class="td-mono c-dim" style="text-align:center;${rowStyle}">${v._num}</td>
+      <td style="${rowStyle}">
         <span style="display:flex;align-items:center;gap:5px;">
           ${t?.foto?`<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:
             `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`}
           <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td style="text-align:center;"><span class="venta-id">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
-      <td class="td-mono c-dim">${v.telefono||'—'}</td>
-      <td class="td-mono text-center">${v.udes||1}</td>
-      <td class="td-mono">${v.costo_usd?fmtU(v.costo_usd):'—'}</td>
-      <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
-      <td class="td-mono">${fmt(c.precioCOP)}</td>
-      <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
-      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
-        ${fmt(c.ganancia)}
-      </td>
-      <td style="font-size:11px;text-align:center;vertical-align:middle;">
+      <td style="text-align:center;${rowStyle}"><span class="venta-id">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
+      <td class="td-mono c-dim" style="${rowStyle}">${v.telefono||'—'}</td>
+      <td class="td-mono" style="${rowStyle}">${fmt(c.precioCOP)}</td>
+      <td class="td-mono" style="${rowStyle}">${v.costo_usd?fmtU(v.costo_usd):'—'}</td>
+      <td class="td-mono c-dim" style="${rowStyle}">${v.trm?fmt(v.trm):'—'}</td>
+      <td style="font-size:11px;text-align:center;vertical-align:middle;${rowStyle}">
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
         <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':'en_camino'}">${envioLabel}</span>
         ${v.envio_extra>0?`<div class="mono" style="font-size:11px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
@@ -2386,14 +2596,18 @@ async function renderVentas() {
         }
         </div>
       </td>
-      <td>
+      <td class="td-mono c-dim" style="${rowStyle}">${fmt(c.totalCostos)}</td>
+      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};${rowStyle}">
+        ${fmt(c.ganancia)}
+      </td>
+      <td style="${rowStyle}">
         <select style="font-size:13px;padding:3px 5px;border-radius:var(--radius);"
           onchange="cambiarEstado('${v.id}',this.value)">
           ${['pendiente','en_camino','entregado','cancelado','problema','devuelto']
             .map(e=>`<option value="${e}" ${v.estado===e?'selected':''}>${e}</option>`).join('')}
         </select>
       </td>
-      <td>
+      <td style="${rowStyle}">
         <div class="actions-cell">
           <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')">👁</button>
           <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')">✏️</button>
@@ -2402,7 +2616,7 @@ async function renderVentas() {
         </div>
       </td>
     </tr>`;
-  }).join('')||'<tr><td colspan="13" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
+  }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 }
 
 async function cambiarEstado(id, estado) {
@@ -2621,6 +2835,7 @@ async function openModalProblema(ventaId, probId) {
   document.getElementById('mp-title').textContent = probId ? 'Editar Problema' : 'Registrar Problema';
   document.getElementById('p-buscar').value = '';
   document.getElementById('p-buscar-resultado').innerHTML = '';
+  document.getElementById('p-num-venta-manual').value = '';
   sv('p-fecha', hoy()); sv('p-tipo','producto_danado');
   sv('p-descripcion',''); sv('p-solucion',''); sv('p-estado','abierto'); sv('p-perdida','');
 
@@ -2637,6 +2852,7 @@ async function openModalProblema(ventaId, probId) {
       sv('p-fecha',p.fecha); sv('p-tipo',p.tipo);
       sv('p-descripcion',p.descripcion); sv('p-solucion',p.solucion||'');
       sv('p-estado',p.estado); sv('p-perdida',p.valor_perdida||'');
+      sv('p-num-venta-manual', p.id_ml_venta||'');
     }
   }
   openModal('modal-problema');
@@ -2693,15 +2909,19 @@ const TIPO_LABELS = {
 async function saveProblema() {
   const desc = gv('p-descripcion').trim();
   if(!desc) { alert('La descripción es requerida.'); return; }
-  if(!_ventaSelProblema && !_editProbId) { alert('Busca y selecciona una venta relacionada.'); return; }
 
   const tipo = gv('p-tipo');
+  // Número de venta manual (puede ser vacío o cualquier valor aunque no exista en BD)
+  const numVentaManual = gv('p-num-venta-manual').trim();
+
+  // Si hay venta seleccionada desde buscador, usar sus datos; si no, usar el campo manual
+  const existingProb = _editProbId ? (await DB.problemas()).find(x=>x.id===_editProbId) : null;
   await DB.upsertProblema({
     id:           _editProbId || uid(),
-    venta_id:     _ventaSelProblema?.id || ((await DB.problemas()).find(x=>x.id===_editProbId)?.venta_id),
-    id_ml_venta:  _ventaSelProblema?.id_ml || '',
-    producto:     _ventaSelProblema?.producto || '',
-    tienda_id:    _ventaSelProblema?.tienda_id || '',
+    venta_id:     _ventaSelProblema?.id || existingProb?.venta_id || '',
+    id_ml_venta:  _ventaSelProblema?.id_ml || numVentaManual || existingProb?.id_ml_venta || '',
+    producto:     _ventaSelProblema?.producto || existingProb?.producto || '',
+    tienda_id:    _ventaSelProblema?.tienda_id || existingProb?.tienda_id || '',
     fecha:        gv('p-fecha'),
     tipo,
     tipo_label:   TIPO_LABELS[tipo]||tipo,
@@ -3143,7 +3363,7 @@ async function verificarAcceso() {
 
     if(hashIngresado === hashGuardado) {
       msgEl.textContent = 'Acceso concedido · Cargando app...';
-      sessionStorage.setItem(_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+      localStorage.setItem(_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
       // Breve pausa para que se vea el mensaje de éxito
       await new Promise(r => setTimeout(r, 600));
       document.getElementById('login-screen').style.display = 'none';
@@ -3159,11 +3379,65 @@ async function verificarAcceso() {
 
 function _checkSession() {
   try {
-    const raw = sessionStorage.getItem(_SESSION_KEY);
+    const raw = localStorage.getItem(_SESSION_KEY);
     if(!raw) return false;
     const { ts } = JSON.parse(raw);
     return (Date.now() - ts) < _SESSION_TTL;
   } catch { return false; }
+}
+
+function _getSessionStart() {
+  try {
+    const raw = localStorage.getItem(_SESSION_KEY);
+    if(!raw) return null;
+    return JSON.parse(raw).ts || null;
+  } catch { return null; }
+}
+
+function _lockApp() {
+  localStorage.removeItem(_SESSION_KEY);
+
+  // Animación de bloqueo 1.5s
+  const overlay = document.createElement('div');
+  overlay.id = '_lock_anim';
+  overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;'
+    + 'align-items:center;justify-content:center;gap:18px;'
+    + 'background:linear-gradient(135deg,#0f1f1e 0%,#1a3332 60%,#0d2020 100%);'
+    + 'animation:lockFadeIn .3s ease;';
+  overlay.innerHTML = `
+    <div style="font-size:64px;animation:lockBounce 1.5s ease forwards;">🔒</div>
+    <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:.5px;">Sesión bloqueada</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1px;">Meli Manager</div>
+  `;
+
+  // Agregar keyframes si no existen
+  if(!document.getElementById('_lock_styles')) {
+    const s = document.createElement('style');
+    s.id = '_lock_styles';
+    s.textContent = `
+      @keyframes lockFadeIn { from{opacity:0;} to{opacity:1;} }
+      @keyframes lockBounce {
+        0%   { transform:scale(0.3) rotate(-20deg); opacity:0; }
+        40%  { transform:scale(1.25) rotate(8deg);  opacity:1; }
+        65%  { transform:scale(0.92) rotate(-4deg); }
+        80%  { transform:scale(1.07) rotate(2deg);  }
+        100% { transform:scale(1)    rotate(0deg);  }
+      }
+    `;
+    document.head.appendChild(s);
+  }
+
+  document.body.appendChild(overlay);
+
+  setTimeout(() => {
+    overlay.remove();
+    const loginScreen = document.getElementById('login-screen');
+    loginScreen.style.display = 'flex';
+    loginScreen.style.animation = 'lockFadeIn .3s ease';
+    document.getElementById('login-input').value = '';
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('login-input').focus();
+  }, 1500);
 }
 
 // ── SPINNER OVERLAY ──
