@@ -2551,13 +2551,14 @@ async function renderVentas() {
 
   document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
 
-  const ESTADO_ROW_STYLE = {
-    pendiente:  'background:#fff3e0!important;',
-    en_camino:  'background:#e8f5e9!important;',
-    entregado:  'background:#e3f2fd!important;',
-    cancelado:  'background:#fde8ea!important;',
-    problema:   'background:#fffde7!important;',
-    devuelto:   'background:#fce4ec!important;',
+  // Estilos de color por estado — solo para el select pill
+  const ESTADO_PILL = {
+    pendiente: { bg:'#fff3e0', color:'#a0522d', border:'#ffcc80' },
+    en_camino: { bg:'#e8f5e9', color:'#2e7d32', border:'#a5d6a7' },
+    entregado: { bg:'#e3f2fd', color:'#1565c0', border:'#90caf9' },
+    cancelado: { bg:'#fde8ea', color:'#b0202e', border:'#f5c2c7' },
+    problema:  { bg:'#fffde7', color:'#7d5c00', border:'#ffe082' },
+    devuelto:  { bg:'#fce4ec', color:'#880e4f', border:'#f48fb1' },
   };
 
   document.getElementById('ventas-tbody').innerHTML = ventasMostrar.map((v)=>{
@@ -2565,22 +2566,25 @@ async function renderVentas() {
     const c = calcVenta(v);
     const isLoss = c.ganancia < 0;
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
-    const rowStyle = ESTADO_ROW_STYLE[v.estado] || '';
-    return `<tr class="${isLoss?'loss-row':''}" style="${rowStyle}">
-      <td class="td-mono c-dim" style="text-align:center;${rowStyle}">${v._num}</td>
-      <td style="${rowStyle}">
+    const pill = ESTADO_PILL[v.estado] || { bg:'#f3f8f8', color:'var(--text2)', border:'var(--border)' };
+    const selectStyle = `font-size:12px;padding:4px 8px;border-radius:20px;font-weight:700;cursor:pointer;`
+      + `background:${pill.bg};color:${pill.color};border:1.5px solid ${pill.border};outline:none;`
+      + `appearance:none;-webkit-appearance:none;text-align:center;min-width:96px;`;
+    return `<tr class="${isLoss?'loss-row':''}">
+      <td class="td-mono c-dim" style="text-align:center;">${v._num}</td>
+      <td>
         <span style="display:flex;align-items:center;gap:5px;">
           ${t?.foto?`<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:
             `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`}
           <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td style="text-align:center;${rowStyle}"><span class="venta-id">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
-      <td class="td-mono c-dim" style="${rowStyle}">${v.telefono||'—'}</td>
-      <td class="td-mono" style="${rowStyle}">${fmt(c.precioCOP)}</td>
-      <td class="td-mono" style="${rowStyle}">${v.costo_usd?fmtU(v.costo_usd):'—'}</td>
-      <td class="td-mono c-dim" style="${rowStyle}">${v.trm?fmt(v.trm):'—'}</td>
-      <td style="font-size:11px;text-align:center;vertical-align:middle;${rowStyle}">
+      <td style="text-align:center;"><span class="venta-id">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
+      <td class="td-mono c-dim">${v.telefono||'—'}</td>
+      <td class="td-mono">${fmt(c.precioCOP)}</td>
+      <td class="td-mono">${v.costo_usd?fmtU(v.costo_usd):'—'}</td>
+      <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
+      <td style="font-size:11px;text-align:center;vertical-align:middle;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
         <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':'en_camino'}">${envioLabel}</span>
         ${v.envio_extra>0?`<div class="mono" style="font-size:11px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
@@ -2596,18 +2600,18 @@ async function renderVentas() {
         }
         </div>
       </td>
-      <td class="td-mono c-dim" style="${rowStyle}">${fmt(c.totalCostos)}</td>
-      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};${rowStyle}">
+      <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
+      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
         ${fmt(c.ganancia)}
       </td>
-      <td style="${rowStyle}">
-        <select style="font-size:13px;padding:3px 5px;border-radius:var(--radius);"
-          onchange="cambiarEstado('${v.id}',this.value)">
+      <td>
+        <select style="${selectStyle}"
+          onchange="_onEstadoChange(this,'${v.id}')">
           ${['pendiente','en_camino','entregado','cancelado','problema','devuelto']
             .map(e=>`<option value="${e}" ${v.estado===e?'selected':''}>${e}</option>`).join('')}
         </select>
       </td>
-      <td style="${rowStyle}">
+      <td>
         <div class="actions-cell">
           <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')">👁</button>
           <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')">✏️</button>
@@ -2617,6 +2621,24 @@ async function renderVentas() {
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
+}
+
+const _ESTADO_PILL_MAP = {
+  pendiente: { bg:'#fff3e0', color:'#a0522d', border:'#ffcc80' },
+  en_camino: { bg:'#e8f5e9', color:'#2e7d32', border:'#a5d6a7' },
+  entregado: { bg:'#e3f2fd', color:'#1565c0', border:'#90caf9' },
+  cancelado: { bg:'#fde8ea', color:'#b0202e', border:'#f5c2c7' },
+  problema:  { bg:'#fffde7', color:'#7d5c00', border:'#ffe082' },
+  devuelto:  { bg:'#fce4ec', color:'#880e4f', border:'#f48fb1' },
+};
+
+function _onEstadoChange(selectEl, id) {
+  const estado = selectEl.value;
+  const pill = _ESTADO_PILL_MAP[estado] || { bg:'#f3f8f8', color:'var(--text2)', border:'var(--border)' };
+  selectEl.style.background = pill.bg;
+  selectEl.style.color      = pill.color;
+  selectEl.style.borderColor= pill.border;
+  cambiarEstado(id, estado);
 }
 
 async function cambiarEstado(id, estado) {
