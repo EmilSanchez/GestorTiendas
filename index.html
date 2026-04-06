@@ -341,10 +341,10 @@ thead{position:sticky;top:0;z-index:1;}
     <div style="font-size:42px;margin-bottom:8px;">🔐</div>
     <div style="font-size:18px;font-weight:800;color:#0d2020;margin-bottom:4px;">Meli Manager</div>
     <div style="font-size:11px;color:#8aabaa;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;">Acceso seguro</div>
-    <input type="password" id="login-input" placeholder="Código de acceso"
+    <input type="password" id="login-input" placeholder="Ingresa tu código"
       style="width:100%;padding:12px 16px;border:2px solid #d8e4e3;border-radius:10px;
-             font-size:15px;outline:none;text-align:center;font-family:monospace;
-             transition:border-color .2s;"
+             font-size:15px;outline:none;text-align:center;letter-spacing:1px;
+             color:#0d2020;transition:border-color .2s;"
       onfocus="this.style.borderColor='#00897b'"
       onblur="this.style.borderColor='#d8e4e3'"
       onkeydown="if(event.key==='Enter')verificarAcceso()">
@@ -480,6 +480,8 @@ thead{position:sticky;top:0;z-index:1;}
         </select>
         <span class="fl">Mes</span>
         <input type="month" id="vf-mes">
+        <span class="fl">Día</span>
+        <input type="date" id="vf-dia" style="font-size:11.5px;padding:5px 8px;">
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" onclick="clearVentaFilters()">✕ Limpiar</button>
         <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
@@ -631,18 +633,18 @@ thead{position:sticky;top:0;z-index:1;}
         <!-- Bloques por transportadora -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
           <!-- Aguachica -->
-          <div style="background:#f0f9f8;border:1px solid #b8d8d8;border-radius:var(--radius-lg);padding:12px;">
+          <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--radius-lg);padding:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:11px;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.5px;">🏍 Aguachica</span>
-              <span id="fin-env-ag-total" style="font-size:16px;font-weight:700;color:var(--teal);">$0</span>
+              <span style="font-size:11px;font-weight:700;color:#1d4ed8;text-transform:uppercase;letter-spacing:.5px;">🏍 Aguachica</span>
+              <span id="fin-env-ag-total" style="font-size:16px;font-weight:700;color:#1d4ed8;">$0</span>
             </div>
             <div id="fin-env-ag-detalle" style="font-size:11px;color:var(--text2);max-height:160px;overflow-y:auto;"></div>
           </div>
           <!-- Servientrega -->
-          <div style="background:#f5f0ff;border:1px solid #d8c8f0;border-radius:var(--radius-lg);padding:12px;">
+          <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:var(--radius-lg);padding:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-              <span style="font-size:11px;font-weight:700;color:#6a3ec2;text-transform:uppercase;letter-spacing:.5px;">📦 Servientrega</span>
-              <span id="fin-env-sv-total" style="font-size:16px;font-weight:700;color:#6a3ec2;">$0</span>
+              <span style="font-size:11px;font-weight:700;color:#15803d;text-transform:uppercase;letter-spacing:.5px;">📦 Servientrega</span>
+              <span id="fin-env-sv-total" style="font-size:16px;font-weight:700;color:#15803d;">$0</span>
             </div>
             <div id="fin-env-sv-detalle" style="font-size:11px;color:var(--text2);max-height:160px;overflow-y:auto;"></div>
           </div>
@@ -685,15 +687,15 @@ thead{position:sticky;top:0;z-index:1;}
 
 <!-- ═══════════════════ MODAL: NUEVA VENTA ═══════════════════ -->
 <div class="overlay" id="modal-venta">
-  <div class="modal modal-xl">
+  <div class="modal modal-lg">
     <div class="mh">
       <div class="mh-title" id="mv-title">Nueva Venta</div>
       <button class="mclose" onclick="closeModal('modal-venta')">✕</button>
     </div>
     <div class="mc">
-
-      <div class="fsec">📋 Identificación</div>
       <div class="grid3">
+
+        <!-- Fila 1 -->
         <div class="fg">
           <label class="fl2">Tienda *</label>
           <select id="v-tienda"></select>
@@ -706,6 +708,8 @@ thead{position:sticky;top:0;z-index:1;}
           <label class="fl2">Fecha de venta *</label>
           <input type="date" id="v-fecha">
         </div>
+
+        <!-- Fila 2 -->
         <div class="fg">
           <label class="fl2">Teléfono del cliente</label>
           <input type="tel" id="v-tel" placeholder="3001234567">
@@ -717,125 +721,76 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="fg">
           <label class="fl2">Empresa de envío *</label>
           <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
-            <option value="aguachica" selected>Aguachica / Local</option>
+            <option value="aguachica" selected>Aguachica</option>
             <option value="servientrega">Servientrega</option>
             <option value="otro">Otro</option>
           </select>
+        </div>
+
+        <!-- Fila 3 -->
+        <div class="fg">
+          <label class="fl2">Precio de venta (COP$) *</label>
+          <input type="number" id="v-cop-venta" placeholder="0" step="1" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">TRM del día <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span></label>
+          <input type="number" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">Costo producto Amazon (USD$) *</label>
+          <input type="number" id="v-costo-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
+        </div>
+
+        <!-- Fila 4 -->
+        <div class="fg">
+          <label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label>
+          <input type="number" id="v-envio-int-usd" placeholder="0" step="1" oninput="recalcVenta()">
         </div>
         <div class="fg">
           <label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label>
           <input type="number" id="v-envio-extra" placeholder="0" oninput="recalcVenta()">
         </div>
-        <div class="fg span2" style="grid-column:1/-1;">
+        <div class="fg">
+          <label class="fl2">Validación de envío</label>
+          <select id="v-envio-validado">
+            <option value="0">⏳ Sin validar</option>
+            <option value="1">✅ Validado</option>
+          </select>
+        </div>
+
+        <!-- Nota al final, ancho completo -->
+        <div class="fg" style="grid-column:1/-1;">
           <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
           <input type="text" id="v-nota" placeholder="Ej: cliente solicitó empaque especial">
         </div>
+
       </div>
 
-      <div class="fsec">💵 Precio y Conversión</div>
-      <div class="grid3">
-        <div class="fg span2">
-          <label class="fl2">Precio de venta (COP$) *
-            <small class="c-dim"> — lo que te depositó ML</small>
-          </label>
-          <input type="number" id="v-cop-venta" placeholder="0" step="1" oninput="recalcVenta()">
+      <!-- Resultado compacto -->
+      <div style="display:flex;gap:0;border:1px solid var(--border);border-radius:var(--radius-lg);
+                  overflow:hidden;margin-top:14px;background:var(--white);">
+        <div style="flex:1;padding:11px 14px;border-right:1px solid var(--border);text-align:center;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Ingresos</div>
+          <div id="c-rv-total" style="font-size:16px;font-weight:700;color:var(--teal);">$0</div>
         </div>
-        <div class="fg">
-          <label class="fl2">TRM del día (COP x USD)
-            <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span>
-          </label>
-          <input type="number" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()">
-          <div id="trm-desglose" style="font-size:10px;color:var(--text3);margin-top:3px;">Ingresa el TRM manualmente según la tasa del día</div>
+        <div style="flex:1;padding:11px 14px;border-right:1px solid var(--border);text-align:center;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Costos</div>
+          <div id="c-total-costos" style="font-size:16px;font-weight:700;color:var(--red);">$0</div>
         </div>
-        <div class="fg">
-          <label class="fl2">Costo del producto (USD$) *
-            <small class="c-dim"> — comprado en Amazon</small>
-          </label>
-          <input type="number" id="v-costo-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">Costo producto en COP (calculado)</label>
-          <input type="number" id="v-costo-cop" readonly>
-        </div>
-        <div class="fg">
-          <label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)
-            <small class="c-dim" id="lbl-envio-int-sub"> — flete desde USA</small>
-          </label>
-          <input type="number" id="v-envio-int-usd" placeholder="0" step="1" oninput="recalcVenta()">
-          <div id="envio-int-desglose" style="font-size:10px;color:var(--text3);margin-top:2px;display:none;"></div>
+        <div style="flex:1;padding:11px 14px;text-align:center;">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Ganancia</div>
+          <div id="c-rv-gan" style="font-size:16px;font-weight:700;color:var(--green);">$0</div>
+          <div id="c-rv-margen" style="font-size:9px;color:var(--text3);margin-top:1px;">0%</div>
         </div>
       </div>
 
-      <div class="fsec">💳 Fuente de financiación <small style="font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;"> — ¿con qué se pagó la compra?</small></div>
-      <!-- Indicador en tiempo real del costo total -->
-      <div id="v-costo-realtime" style="margin-bottom:10px;"></div>
-      <div class="grid3">
-        <div class="fg">
-          <label class="fl2">Método de pago *</label>
-          <select id="v-fuente-pago" onchange="recalcFuente()">
-            <option value="">— Seleccionar —</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2">Valor pagado en Amazon (COP$) <small class="c-dim">— costo real pagado</small></label>
-          <input type="number" id="v-monto-pago" placeholder="0" step="1" oninput="recalcFuente()">
-          <div style="font-size:10px;color:var(--text3);margin-top:2px;" id="v-fuente-saldo-info"></div>
-        </div>
-        <div class="fg">
-          <label class="fl2">Referencia <small class="c-dim">— N° de venta #ID</small></label>
-          <input type="text" id="v-ref-pago" placeholder="Ej: #2000015788963928">
-        </div>
-      </div>
-
-      <div class="fsec">✅ Validación de envío <small style="font-weight:400;font-size:9px;text-transform:none;letter-spacing:0;"> — confirmar valor real al llegar</small></div>
-      <div style="background:#fffbf0;border:1px solid #ffe08a;border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;" id="envio-validacion-box">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;">
-          <div class="fg" style="margin:0;">
-            <label class="fl2">Valor estimado envío (COP$)</label>
-            <input type="number" id="v-envio-estimado" placeholder="0" step="1" readonly style="background:#f5f8f8;">
-          </div>
-          <div class="fg" style="margin:0;">
-            <label class="fl2">Valor real confirmado (COP$) <small class="c-dim">— al llegar</small></label>
-            <input type="number" id="v-envio-real" placeholder="Pendiente…" step="1" oninput="recalcValidacionEnvio()">
-          </div>
-          <div>
-            <label class="fl2">Estado validación</label>
-            <div id="envio-validacion-estado" style="margin-top:4px;">
-              <span style="font-size:11px;color:var(--yellow);font-weight:600;">⏳ Pendiente de confirmar</span>
-            </div>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:8px;" id="envio-validacion-diff"></div>
-      </div>
-      <div class="calc-box">
-        <div class="calc-box-title">⚡ Resultado automático</div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 20px;">
-          <div>
-            <div class="cr"><span class="cr-label">Precio de venta (COP)</span><span class="cr-val neu" id="c-precio">$0</span></div>
-            <div class="cr"><span class="cr-label">× Unidades</span><span class="cr-val neu" id="c-udes">× 1</span></div>
-            <div class="cr total"><span class="cr-label">= TOTAL VENTA</span><span class="cr-val neu" id="c-total-venta">$0</span></div>
-          </div>
-          <div>
-            <div class="cr"><span class="cr-label">− Costo producto (USD × TRM)</span><span class="cr-val neg" id="c-costo">$0</span></div>
-            <div class="cr" style="font-size:10px;color:var(--text3);padding:1px 0;border-bottom:none;" id="c-costo-desglose"></div>
-            <div class="cr"><span class="cr-label" id="c-lbl-envio-int">− Envío internacional (COP)</span><span class="cr-val neg" id="c-envio-int">$0</span></div>
-            <div class="cr" style="font-size:10px;color:var(--text3);padding:1px 0;border-bottom:none;" id="c-envio-int-desglose"></div>
-            <div class="cr"><span class="cr-label">− Envío extra local</span><span class="cr-val neg" id="c-envio-extra">$0</span></div>
-            <div class="cr total"><span class="cr-label">= TOTAL COSTOS</span><span class="cr-val neg" id="c-total-costos">$0</span></div>
-          </div>
-        </div>
-        <div class="result-cards">
-          <div class="result-card rc-total">
-            <div class="rc-label">Total Venta</div>
-            <div class="rc-value c-teal" id="c-rv-total">$0</div>
-          </div>
-          <div class="result-card rc-gan" id="rc-gan-card">
-            <div class="rc-label">Ganancia Neta</div>
-            <div class="rc-value" id="c-rv-gan" style="color:var(--green)">$0</div>
-            <div style="font-size:10px;color:var(--text3);" id="c-rv-margen">0%</div>
-          </div>
-        </div>
-      </div>
+      <!-- campos ocultos para compatibilidad -->
+      <input type="hidden" id="v-envio-estimado">
+      <input type="hidden" id="v-envio-real">
+      <input type="hidden" id="v-fuente-pago">
+      <input type="hidden" id="v-monto-pago">
+      <input type="hidden" id="v-ref-pago">
+      <input type="hidden" id="v-costo-cop">
 
     </div><!-- /mc -->
     <div class="mf">
@@ -871,7 +826,7 @@ thead{position:sticky;top:0;z-index:1;}
         <div class="fg">
           <label class="fl2">Transportadora *</label>
           <select id="e-empresa">
-            <option value="aguachica">Aguachica / Local</option>
+            <option value="aguachica">Aguachica</option>
             <option value="servientrega">Servientrega</option>
             <option value="otro">Otro</option>
           </select>
@@ -2144,6 +2099,7 @@ async function openModalVenta(id) {
       sv('v-udes', v.udes||1);
       sv('v-nota', v.nota||'');
       sv('v-envio-tipo', v.envio_tipo||'aguachica'); sv('v-envio-extra', v.envio_extra||0);
+      sv('v-envio-validado', v.envio_validado ? '1' : '0');
       const trm = v.trm || TRM_ACTUAL;
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
       sv('v-cop-venta', copVenta || '');
@@ -2154,134 +2110,65 @@ async function openModalVenta(id) {
       sv('v-ref-pago', v.ref_pago||'');
       // Validación envío
       sv('v-envio-estimado', v.envio_estimado_cop||'');
-      sv('v-envio-real', v.envio_real_cop||'');
-      recalcValidacionEnvio();
+      sv('v-envio-validado', v.envio_validado ? '1' : '0');
     }
   } else {
-    ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta',
-     'v-fuente-pago','v-monto-pago','v-ref-pago','v-envio-real','v-nota'].forEach(i=>sv(i,''));
+    ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-udes',1);
     sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
-    sv('v-trm', '');  // TRM vacío — el usuario lo ingresa manualmente
-    sv('v-envio-estimado','');
-    recalcValidacionEnvio();
+    sv('v-envio-validado','0');
+    sv('v-trm', '');
   }
   recalcVenta();
   openModal('modal-venta');
 }
 
 function recalcVenta() {
-  const copVenta   = parseFloat(gv('v-cop-venta'))    || 0;
-  const trm        = parseFloat(gv('v-trm'))           || TRM_ACTUAL;
-  const costoUsd   = parseFloat(gv('v-costo-usd'))     || 0;
-  const envioVal   = parseFloat(gv('v-envio-int-usd')) || 0;
-  const envExtra   = parseFloat(gv('v-envio-extra'))   || 0;
-  const udes       = parseFloat(gv('v-udes'))           || 1;
-  const envTipo    = gv('v-envio-tipo');
+  const copVenta = parseFloat(gv('v-cop-venta'))    || 0;
+  const trm      = parseFloat(gv('v-trm'))           || TRM_ACTUAL;
+  const costoUsd = parseFloat(gv('v-costo-usd'))     || 0;
+  const envioVal = parseFloat(gv('v-envio-int-usd')) || 0;
+  const envExtra = parseFloat(gv('v-envio-extra'))   || 0;
+  const udes     = parseFloat(gv('v-udes'))           || 1;
+  const envTipo  = gv('v-envio-tipo');
 
-  // Costo producto: siempre en USD × TRM (comprado en Amazon)
+  // Costo producto: USD × TRM
   const costoCOP = costoUsd * trm;
 
-  // Envío internacional: en USD×TRM solo si es Servientrega, de lo contrario el valor ya es COP
-  let envioIntCOP = 0;
-  let envioEsUSD  = false;
-  if(envTipo === 'servientrega') {
-    envioIntCOP = envioVal * trm;  // el valor ingresado es en USD
-    envioEsUSD  = true;
-  } else {
-    envioIntCOP = envioVal;        // el valor ingresado ya es COP
-    envioEsUSD  = false;
+  // Envío: Servientrega ingresa en USD y se convierte; el resto ya viene en COP
+  const envioIntCOP = envTipo === 'servientrega' ? envioVal * trm : envioVal;
+
+  // Actualizar label del campo según tipo
+  const lblEnvio = document.getElementById('lbl-envio-int');
+  if(lblEnvio) {
+    lblEnvio.textContent = envTipo === 'servientrega'
+      ? 'Envío Servientrega (USD$)'
+      : 'Precio envío internacional (COP$)';
+    const envInputEl = document.getElementById('v-envio-int-usd');
+    if(envInputEl) {
+      envInputEl.step        = envTipo === 'servientrega' ? '0.01' : '1';
+      envInputEl.placeholder = envTipo === 'servientrega' ? '0.00' : '0';
+    }
   }
 
   const totalV = copVenta * udes;
   const totalC = (costoCOP * udes) + envioIntCOP + envExtra;
   const gan    = totalV - totalC;
-  const mar    = totalV > 0 ? (gan/totalV)*100 : 0;
+  const mar    = totalV > 0 ? (gan / totalV) * 100 : 0;
 
-  // Actualizar label del campo de envío en el formulario
-  const lblEnvio    = document.getElementById('lbl-envio-int');
-  const lblEnvioSub = document.getElementById('lbl-envio-int-sub');
-  const envInputEl  = document.getElementById('v-envio-int-usd');
-  const envDesglEl  = document.getElementById('envio-int-desglose');
-  if(lblEnvio) {
-    if(envioEsUSD) {
-      lblEnvio.childNodes[0].textContent = 'Envío Servientrega (USD$) ';
-      if(lblEnvioSub) lblEnvioSub.textContent = ' — se convierte con TRM';
-      if(envInputEl) { envInputEl.step='0.01'; envInputEl.placeholder='0.00'; }
-      if(envDesglEl && envioVal>0) {
-        envDesglEl.style.display='block';
-        envDesglEl.innerHTML=`USD $${envioVal.toFixed(2)} × ${fmt(trm)} = <b>${fmt(envioIntCOP)}</b>`;
-      } else if(envDesglEl) { envDesglEl.style.display='none'; }
-    } else {
-      lblEnvio.childNodes[0].textContent = 'Envío internacional (COP$) ';
-      if(lblEnvioSub) lblEnvioSub.textContent = ' — flete en pesos';
-      if(envInputEl) { envInputEl.step='1'; envInputEl.placeholder='0'; }
-      if(envDesglEl) envDesglEl.style.display='none';
-    }
-  }
+  // Resultado compacto
+  const ganEl = document.getElementById('c-rv-gan');
+  const totEl = document.getElementById('c-rv-total');
+  const cosEl = document.getElementById('c-total-costos');
+  const marEl = document.getElementById('c-rv-margen');
+  if(ganEl) { ganEl.textContent = fmt(gan); ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'; }
+  if(totEl)  totEl.textContent  = fmt(totalV);
+  if(cosEl)  cosEl.textContent  = fmt(totalC);
+  if(marEl)  marEl.textContent  = fmtP(mar);
 
-  // Actualizar label en calc-box
-  const cLblEnvio = document.getElementById('c-lbl-envio-int');
-  if(cLblEnvio) cLblEnvio.textContent = envioEsUSD ? '− Envío Servientrega (USD × TRM)' : '− Envío internacional (COP)';
-  const cEnvioDesgl = document.getElementById('c-envio-int-desglose');
-  if(cEnvioDesgl && envioEsUSD && envioVal>0) {
-    cEnvioDesgl.innerHTML=`<span style="padding-left:8px;">USD $${envioVal.toFixed(2)} × ${fmt(trm)} TRM</span>`;
-  } else if(cEnvioDesgl) { cEnvioDesgl.innerHTML=''; }
-
-  // Costo producto readonly
-  const elCostoCop = document.getElementById('v-costo-cop');
-  if(elCostoCop) elCostoCop.value = costoCOP > 0 ? Math.round(costoCOP) : '';
-
-  // Sincronizar campo envío estimado (readonly)
+  // Sincronizar campos hidden
   const elEstimado = document.getElementById('v-envio-estimado');
-  if(elEstimado) elEstimado.value = envioIntCOP > 0 ? Math.round(envioIntCOP) : '';
-
-  // Sugerir monto de pago = costo producto + envío (si no se ha llenado)
-  const elMonto = document.getElementById('v-monto-pago');
-  if(elMonto && !elMonto.value && (costoCOP+envioIntCOP) > 0) {
-    // Solo sugerir, no sobreescribir si ya tiene valor
-  }
-
-  recalcFuente();
-
-  // Desglose TRM
-  actualizarDesglloseTRM();
-
-  // ── Indicador en tiempo real: costo total del producto al momento de comprar ──
-  const elCostoRT = document.getElementById('v-costo-realtime');
-  if(elCostoRT) {
-    const costoTotalRT = (costoCOP * udes) + envioIntCOP + envExtra;
-    elCostoRT.innerHTML = costoTotalRT > 0
-      ? `<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:4px;">
-          <span style="background:#fff3e0;color:#8a4000;border:1px solid #ffe0b2;
-            border-radius:6px;padding:3px 10px;font-size:11px;font-weight:700;">
-            💸 Gasto total en producto: <b>${fmt(costoTotalRT)}</b>
-          </span>
-          ${costoUsd>0?`<span style="font-size:10px;color:var(--text3);">USD $${costoUsd.toFixed(2)} × ${fmt(trm)}</span>`:''}
-        </div>`
-      : '';
-  }
-
-  // Cuadro resultado
-  st('c-precio',      fmt(copVenta));
-  st('c-udes',        `× ${udes}`);
-  st('c-total-venta', fmt(totalV));
-  st('c-costo',       '−'+fmt(costoCOP*udes));
-  const desglEl = document.getElementById('c-costo-desglose');
-  if(desglEl && costoUsd > 0) {
-    desglEl.innerHTML = `<span style="padding-left:8px;color:var(--text3);">USD $${costoUsd.toFixed(2)} × ${fmt(trm)} TRM</span>`;
-  } else if(desglEl) { desglEl.innerHTML=''; }
-  st('c-envio-int',   '−'+fmt(envioIntCOP));
-  st('c-envio-extra', '−'+fmt(envExtra));
-  st('c-total-costos','−'+fmt(totalC));
-  st('c-rv-total',    fmt(totalV));
-  st('c-rv-gan',      fmt(gan));
-  st('c-rv-margen',   'Margen: '+fmtP(mar));
-
-  const ganEl  = document.getElementById('c-rv-gan');
-  const cardEl = document.getElementById('rc-gan-card');
-  if(ganEl)  ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)';
-  if(cardEl) cardEl.className  = 'result-card ' + (gan >= 0 ? 'rc-gan' : 'rc-neg');
+  if(elEstimado) elEstimado.value = Math.round(envioIntCOP) || '';
 }
 
 async function saveVenta() {
@@ -2325,7 +2212,7 @@ async function saveVenta() {
     envio_int_usd: envioVal,
     envio_estimado_cop: envioEstimadoCOP,
     envio_real_cop:     envioReal,
-    envio_validado:     envioReal > 0,
+    envio_validado:     gv('v-envio-validado') === '1',
     fuente_pago:   fuentePago,
     monto_pago:    montoPago,
     ref_pago:      gv('v-ref-pago').trim(),
@@ -2396,15 +2283,17 @@ async function renderVentas() {
   if(elMar) elMar.textContent = fmtP(marGen);
   if(elCnt) elCnt.textContent = vm.length;
 
-  const s  = gv('vf-search').toLowerCase();
-  const ft = gv('vf-tienda');
-  const fe = gv('vf-estado');
-  const fm = gv('vf-mes');
+  const s   = gv('vf-search').toLowerCase();
+  const ft  = gv('vf-tienda');
+  const fe  = gv('vf-estado');
+  const fm  = gv('vf-mes');
+  const fd  = gv('vf-dia');
 
-  if(s)  ventas = ventas.filter(v=>(v.id_ml+v.producto+v.cliente).toLowerCase().includes(s));
+  if(s)  ventas = ventas.filter(v=>(v.id_ml+v.telefono+v.nota).toLowerCase().includes(s));
   if(ft) ventas = ventas.filter(v=>v.tienda_id===ft);
   if(fe) ventas = ventas.filter(v=>v.estado===fe);
-  if(fm) ventas = ventas.filter(v=>v.fecha_venta?.startsWith(fm));
+  if(fd) ventas = ventas.filter(v=>v.fecha_venta===fd);          // día exacto
+  else if(fm) ventas = ventas.filter(v=>v.fecha_venta?.startsWith(fm)); // mes si no hay día
   ventas.sort((a,b)=>(b.fecha_venta||'').localeCompare(a.fecha_venta||''));
 
   document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
@@ -2427,7 +2316,7 @@ async function renderVentas() {
       <td class="td-dim">${v.fecha_venta||'—'}</td>
       <td class="td-mono c-dim">${v.telefono||'—'}</td>
       <td class="td-mono text-center">${v.udes||1}</td>
-      <td class="td-mono">${v.precio_usd?fmtU(v.precio_usd):'—'}</td>
+      <td class="td-mono">${v.costo_usd?fmtU(v.costo_usd):'—'}</td>
       <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
       <td class="td-mono fw6">${fmt(c.precioCOP)}</td>
       <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
@@ -2508,7 +2397,7 @@ async function openValidarEnvio(id) {
 }
 
 function clearVentaFilters() {
-  ['vf-search','vf-mes'].forEach(i=>sv(i,''));
+  ['vf-search','vf-mes','vf-dia'].forEach(i=>sv(i,''));
   ['vf-tienda','vf-estado'].forEach(i=>sv(i,''));
   renderVentas();
 }
@@ -3101,7 +2990,7 @@ async function init() {
   });
 
   // Filtros ventas live
-  ['vf-search','vf-tienda','vf-estado','vf-mes'].forEach(id=>{
+  ['vf-search','vf-tienda','vf-estado','vf-mes','vf-dia'].forEach(id=>{
     document.getElementById(id)?.addEventListener('input', ()=>renderVentasGanancias());
     document.getElementById(id)?.addEventListener('change',()=>renderVentasGanancias());
   });
