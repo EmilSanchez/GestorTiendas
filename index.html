@@ -343,20 +343,38 @@ thead{position:sticky;top:0;z-index:1;}
     <div style="font-size:11px;color:#8aabaa;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;">Acceso seguro</div>
     <input type="password" id="login-input" placeholder="Código de acceso"
       style="width:100%;padding:12px 16px;border:2px solid #d8e4e3;border-radius:10px;
-             font-size:15px;outline:none;text-align:center;letter-spacing:4px;font-family:monospace;
+             font-size:15px;outline:none;text-align:center;font-family:monospace;
              transition:border-color .2s;"
       onfocus="this.style.borderColor='#00897b'"
       onblur="this.style.borderColor='#d8e4e3'"
       onkeydown="if(event.key==='Enter')verificarAcceso()">
     <div id="login-error" style="color:#b0202e;font-size:12px;margin-top:8px;min-height:18px;"></div>
-    <button onclick="verificarAcceso()" style="
+    <button id="login-btn" onclick="verificarAcceso()" style="
       width:100%;margin-top:12px;padding:13px;border:none;border-radius:10px;
       background:linear-gradient(135deg,#00897b,#00695c);color:#fff;
       font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;
-      box-shadow:0 4px 14px rgba(0,137,123,.35);transition:opacity .15s;"
+      box-shadow:0 4px 14px rgba(0,137,123,.35);transition:all .2s;
+      display:flex;align-items:center;justify-content:center;gap:10px;"
       onmouseover="this.style.opacity='.9'" onmouseout="this.style.opacity='1'">
-      Entrar
+      <span id="login-btn-text">Entrar</span>
     </button>
+
+    <!-- Spinner de carga (oculto hasta verificar) -->
+    <div id="login-loading" style="display:none;flex-direction:column;align-items:center;gap:14px;margin-top:24px;">
+      <div style="position:relative;width:52px;height:52px;">
+        <svg viewBox="0 0 52 52" style="width:52px;height:52px;animation:login-spin 1s linear infinite;">
+          <circle cx="26" cy="26" r="22" fill="none" stroke="#e0f2f1" stroke-width="4"/>
+          <circle cx="26" cy="26" r="22" fill="none" stroke="#00897b" stroke-width="4"
+            stroke-dasharray="34 100" stroke-linecap="round"/>
+        </svg>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;">🔐</div>
+      </div>
+      <div style="font-size:13px;font-weight:600;color:#00695c;" id="login-loading-msg">Verificando acceso...</div>
+    </div>
+
+    <style>
+      @keyframes login-spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+    </style>
     <div style="font-size:10px;color:#b8d0cf;margin-top:20px;">El código es administrado por el propietario</div>
   </div>
 </div>
@@ -2947,33 +2965,51 @@ async function _hashCode(str) {
 }
 
 async function verificarAcceso() {
-  const input = document.getElementById('login-input').value;
-  const errEl = document.getElementById('login-error');
+  const input  = document.getElementById('login-input').value;
+  const errEl  = document.getElementById('login-error');
+  const btnEl  = document.getElementById('login-btn');
+  const loadEl = document.getElementById('login-loading');
+  const msgEl  = document.getElementById('login-loading-msg');
+
   errEl.textContent = '';
   if(!input) { errEl.textContent = 'Ingresa el código de acceso.'; return; }
 
+  // Mostrar spinner, ocultar botón e input
+  btnEl.style.display  = 'none';
+  loadEl.style.display = 'flex';
+  document.getElementById('login-input').disabled = true;
+  msgEl.textContent = 'Verificando acceso...';
+
+  const _reset = (err) => {
+    btnEl.style.display  = 'flex';
+    loadEl.style.display = 'none';
+    document.getElementById('login-input').disabled = false;
+    document.getElementById('login-input').value = '';
+    document.getElementById('login-input').focus();
+    if(err) errEl.textContent = err;
+  };
+
   try {
-    // Obtener hash guardado en Firestore (colección config, doc auth)
+    msgEl.textContent = 'Conectando con Firebase...';
     const snap = await _db.collection('config').doc('auth').get();
-    if(!snap.exists) {
-      errEl.textContent = '⚠️ No hay código configurado en la BD.';
-      return;
-    }
-    const hashGuardado = snap.data().hash;
+    if(!snap.exists) { _reset('⚠️ No hay código configurado en la BD.'); return; }
+
+    msgEl.textContent = 'Comprobando código...';
+    const hashGuardado  = snap.data().hash;
     const hashIngresado = await _hashCode(input);
 
     if(hashIngresado === hashGuardado) {
-      // Guardar sesión local con TTL
+      msgEl.textContent = 'Acceso concedido · Cargando app...';
       sessionStorage.setItem(_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
+      // Breve pausa para que se vea el mensaje de éxito
+      await new Promise(r => setTimeout(r, 600));
       document.getElementById('login-screen').style.display = 'none';
       await init();
     } else {
-      errEl.textContent = 'Código incorrecto. Intenta de nuevo.';
-      document.getElementById('login-input').value = '';
-      document.getElementById('login-input').focus();
+      _reset('Código incorrecto. Intenta de nuevo.');
     }
   } catch(e) {
-    errEl.textContent = 'Error al conectar con Firebase. Verifica tu conexión.';
+    _reset('Error al conectar con Firebase. Verifica tu conexión.');
     console.error(e);
   }
 }
