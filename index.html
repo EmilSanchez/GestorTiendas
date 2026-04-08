@@ -273,7 +273,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           padding:2px 7px;border-radius:20px;border:1px solid rgba(0,137,123,.2);}
 .tienda-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .actions-cell{display:flex;gap:4px;}
-.loss-row td{background:#fff8f8!important;color:#842029!important;}
 .empty-state{text-align:center;padding:3rem 1.25rem;color:var(--text3);}
 .empty-icon{font-size:2.2rem;opacity:.25;margin-bottom:0.65rem;}
 .empty-title{font-size:0.9rem;font-weight:600;margin-bottom:4px;}
@@ -395,7 +394,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
       <!-- Input valor real -->
       <div style="margin-bottom:6px;">
-        <label style="font-size:11px;font-weight:700;color:#476060;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">
+        <label id="ve-input-label" style="font-size:11px;font-weight:700;color:#476060;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">
           Valor REAL confirmado en Centris (COP$)
         </label>
         <input type="number" id="ve-input" placeholder="Ej: 19000"
@@ -692,7 +691,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
       <div class="card mb16" style="margin-bottom:14px;">
         <div class="card-header">
           <div>
-            <div class="card-title">🔐 Sesión Activa</div>
+            <div class="card-title">Sesión Activa</div>
             <div class="card-sub">Estado de tu sesión actual</div>
           </div>
         </div>
@@ -704,14 +703,30 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="btn btn-ghost btn-sm" onclick="_lockApp()" style="display:flex;align-items:center;gap:5px;">
-              🔒 Bloquear App
+              Bloquear App
             </button>
             <button class="btn btn-ghost btn-sm" onclick="openModalCambiarCodigo()" style="display:flex;align-items:center;gap:5px;">
-              🔑 Cambiar Código
+              Cambiar Código
             </button>
           </div>
         </div>
       </div>
+      <div class="card mb16" style="margin-bottom:14px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Dólar para compras</div>
+            <div class="card-sub">Valor fijo en COP usado para calcular compras y envíos Servientrega</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+          <div class="fg" style="min-width:220px;margin-bottom:0;">
+            <label class="fl2">Valor dólar (COP)</label>
+            <input type="number" id="cfg-dolar-compras" placeholder="3800">
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="guardarDolarCompras()">Guardar</button>
+        </div>
+      </div>
+      
 
       <!-- Tiendas registradas -->
       <div class="card">
@@ -830,22 +845,9 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           <input type="date" id="v-fecha">
         </div>
         <div class="fg">
-          <label class="fl2">Teléfono del cliente</label>
-          <input type="tel" id="v-tel" placeholder="3001234567">
-        </div>
-        <div class="fg">
           <label class="fl2">Unidades *</label>
           <input type="number" id="v-udes" value="1" min="1" oninput="recalcVenta()">
         </div>
-        <div class="fg">
-          <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
-          <input type="text" id="v-nota" placeholder="Ej: empaque especial">
-        </div>
-      </div>
-
-      <!-- Sección 2: Costos y precios -->
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Costos y precios</div>
-      <div class="grid3" style="margin-bottom:16px;">
         <div class="fg">
           <label class="fl2">Precio de venta (COP$) *</label>
           <input type="number" id="v-cop-venta" placeholder="0" step="1" oninput="recalcVenta()">
@@ -858,11 +860,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           <label class="fl2">Costo producto Amazon (USD$) *</label>
           <input type="number" id="v-costo-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
         </div>
-      </div>
-
-      <!-- Sección 3: Envío -->
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Envío</div>
-      <div class="grid3" style="margin-bottom:20px;">
         <div class="fg">
           <label class="fl2">Empresa de envío *</label>
           <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
@@ -885,6 +882,14 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
             <option value="0">Sin validar</option>
             <option value="1">Validado</option>
           </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Teléfono del cliente</label>
+          <input type="tel" id="v-tel" placeholder="3001234567">
+        </div>
+        <div class="fg">
+          <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
+          <input type="text" id="v-nota" placeholder="Ej: empaque especial">
         </div>
       </div>
 
@@ -1488,7 +1493,7 @@ function actualizarDesglloseTRM() {
  */
 function calcVenta(v) {
   const udes       = parseFloat(v.udes)         || 1;
-  const trm        = parseFloat(v.trm)          || TRM_ACTUAL;
+  const trm        = parseFloat(v.trm) || getDolarComprasConfigurado();
   const costoUsd   = parseFloat(v.costo_usd)    || 0;
   const envioVal   = parseFloat(v.envio_int_usd)|| 0;
   const envioExtra = parseFloat(v.envio_extra)  || 0;
@@ -1513,6 +1518,8 @@ function calcVenta(v) {
     envioIntCOP = envioVal * trm;
   } else {
     envioIntCOP = envioVal;
+    envioEsUSD  = false;
+
   }
 
   const totalVenta  = precioCOP * udes;
@@ -2348,10 +2355,10 @@ async function openModalVenta(id) {
       sv('v-nota', v.nota||'');
       sv('v-envio-tipo', v.envio_tipo||'aguachica'); sv('v-envio-extra', v.envio_extra||0);
       sv('v-envio-validado', v.envio_validado ? '1' : '0');
-      const trm = v.trm || TRM_ACTUAL;
+      const trm = v.trm || getDolarComprasConfigurado();
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
       sv('v-cop-venta', copVenta || '');
-      sv('v-trm', trm);
+      sv('v-trm', getDolarComprasConfigurado());
       sv('v-costo-usd', v.costo_usd||''); sv('v-envio-int-usd', v.envio_int_usd||'');
       // Financiación
       sv('v-fuente-pago', v.fuente_pago||''); sv('v-monto-pago', v.monto_pago||'');
@@ -2373,7 +2380,7 @@ async function openModalVenta(id) {
 
 function recalcVenta() {
   const copVenta = parseFloat(gv('v-cop-venta'))    || 0;
-  const trm      = parseFloat(gv('v-trm'))           || TRM_ACTUAL;
+  const trm      = parseFloat(gv('v-trm')) || getDolarComprasConfigurado();
   const costoUsd = parseFloat(gv('v-costo-usd'))     || 0;
   const envioVal = parseFloat(gv('v-envio-int-usd')) || 0;
   const envExtra = parseFloat(gv('v-envio-extra'))   || 0;
@@ -2383,19 +2390,19 @@ function recalcVenta() {
   // Costo producto: USD × TRM
   const costoCOP = costoUsd * trm;
 
-  // Envío: Servientrega ingresa en USD y se convierte; el resto ya viene en COP
-  const envioIntCOP = envTipo === 'servientrega' ? envioVal * trm : envioVal;
+  // Envío: ahora TODOS los tipos ingresan en COP en el registro
+  const envioIntCOP = envioVal; // ya es COP para todos
 
   // Actualizar label del campo según tipo
   const lblEnvio = document.getElementById('lbl-envio-int');
   if(lblEnvio) {
     lblEnvio.textContent = envTipo === 'servientrega'
-      ? 'Envío Servientrega (USD$)'
+      ? 'Envío Servientrega (COP$) — estimado'
       : 'Precio envío internacional (COP$)';
     const envInputEl = document.getElementById('v-envio-int-usd');
     if(envInputEl) {
-      envInputEl.step        = envTipo === 'servientrega' ? '0.01' : '1';
-      envInputEl.placeholder = envTipo === 'servientrega' ? '0.00' : '0';
+      envInputEl.step        = '1';
+      envInputEl.placeholder = '0';
     }
   }
 
@@ -2419,6 +2426,26 @@ function recalcVenta() {
   if(elEstimado) elEstimado.value = Math.round(envioIntCOP) || '';
 }
 
+function getDolarComprasConfigurado() {
+  const v = localStorage.getItem('dolar_compras_cop');
+  return parseFloat(v) || TRM_ACTUAL || 3800;
+}
+
+function guardarDolarCompras() {
+  const val = parseFloat(document.getElementById('cfg-dolar-compras').value) || 0;
+  if(val <= 0) {
+    alert('Ingresa un valor válido para el dólar.');
+    return;
+  }
+  localStorage.setItem('dolar_compras_cop', val);
+  alert('✅ Valor del dólar guardado correctamente.');
+}
+
+function cargarDolarComprasEnConfig() {
+  const el = document.getElementById('cfg-dolar-compras');
+  if(el) el.value = getDolarComprasConfigurado();
+}
+
 async function saveVenta() {
   const tienda   = gv('v-tienda');
   const copVenta = parseFloat(gv('v-cop-venta')) || 0;
@@ -2431,8 +2458,8 @@ async function saveVenta() {
   const envioVal  = parseFloat(gv('v-envio-int-usd'))||0;
   const envioReal = parseFloat(gv('v-envio-real'))||0;
 
-  // Calcular envio en COP según tipo
-  const envioEstimadoCOP = envioTipo==='servientrega' ? envioVal*trm : envioVal;
+  // Calcular envio en COP: ahora todos los tipos ingresan en COP en el registro
+  const envioEstimadoCOP = envioVal; // ya es COP para todos (Servientrega también)
   const envioFinalCOP    = envioReal > 0 ? envioReal : envioEstimadoCOP;
 
   const fuentePago = gv('v-fuente-pago');
@@ -2457,7 +2484,8 @@ async function saveVenta() {
     trm,
     precio_venta:  copVenta,
     costo_usd:     costoUsd,
-    envio_int_usd: envioVal,
+    envio_int_usd: envioVal,            // en COP para todos los tipos (registro inicial)
+    envio_int_es_cop: true,             // siempre COP al registrar
     envio_estimado_cop: envioEstimadoCOP,
     envio_real_cop:     envioReal,
     envio_validado:     gv('v-envio-validado') === '1',
@@ -2707,20 +2735,40 @@ async function _confirmDeleteVenta() {
 
 let _validarEnvioId = null;
 let _validarEnvioEstimado = 0;
+let _validarEnvioEsServientrega = false;
+let _validarEnvioTRM = 0;
 
 async function openValidarEnvio(id) {
   const v = (await DB.ventas()).find(x=>x.id===id);
   if(!v) return;
   const trm = v.trm || TRM_ACTUAL;
-  const estimado = v.envio_estimado_cop || (v.envio_tipo==='servientrega' ? (v.envio_int_usd||0)*trm : v.envio_int_usd||0);
+  // El estimado siempre está en COP
+  const estimado = v.envio_estimado_cop || v.envio_int_usd || 0;
+  const esServientrega = v.envio_tipo === 'servientrega';
 
-  _validarEnvioId       = id;
-  _validarEnvioEstimado = estimado;
+  _validarEnvioId            = id;
+  _validarEnvioEstimado      = estimado;
+  _validarEnvioEsServientrega = esServientrega;
+  _validarEnvioTRM           = trm;
 
   document.getElementById('ve-subtitulo').textContent =
-    `${v.envio_tipo==='aguachica'?'Aguachica':'Servientrega'} · ${v.id_ml||v.id}`;
-  document.getElementById('ve-estimado').textContent  = fmt(estimado);
-  document.getElementById('ve-input').value           = estimado || '';
+    `${esServientrega ? 'Servientrega' : 'Aguachica'} · ${v.id_ml||v.id}`;
+  document.getElementById('ve-estimado').textContent = fmt(estimado);
+
+  // Cambiar el label según transportadora
+  const labelEl = document.getElementById('ve-input-label');
+  if(labelEl) {
+    labelEl.textContent = esServientrega
+      ? 'Valor REAL confirmado en Centris (USD$)'
+      : 'Valor REAL confirmado en Centris (COP$)';
+  }
+  // Cambiar placeholder e input
+  const inputEl = document.getElementById('ve-input');
+  if(inputEl) {
+    inputEl.placeholder = esServientrega ? 'Ej: 4.50' : 'Ej: 19000';
+    inputEl.step        = esServientrega ? '0.01' : '1';
+    inputEl.value       = esServientrega ? (estimado / trm).toFixed(2) : (estimado || '');
+  }
   document.getElementById('ve-diff-box').style.display = 'none';
 
   const modal = document.getElementById('modal-validar-envio');
@@ -2730,10 +2778,12 @@ async function openValidarEnvio(id) {
 }
 
 function _calcDiffEnvio() {
-  const val  = parseFloat(document.getElementById('ve-input').value);
+  const raw  = parseFloat(document.getElementById('ve-input').value);
   const box  = document.getElementById('ve-diff-box');
   const txt  = document.getElementById('ve-diff-text');
-  if(isNaN(val)) { box.style.display='none'; return; }
+  if(isNaN(raw)) { box.style.display='none'; return; }
+  // Convertir a COP si es Servientrega (el input es USD)
+  const val = _validarEnvioEsServientrega ? raw * _validarEnvioTRM : raw;
   const diff = val - _validarEnvioEstimado;
   box.style.display = 'block';
   if(Math.abs(diff) < 1) {
@@ -2757,16 +2807,19 @@ function _cancelValidarEnvio() {
 }
 
 async function _confirmarValidarEnvio() {
-  const real = parseFloat(document.getElementById('ve-input').value);
-  if(isNaN(real) || real < 0) {
+  const raw = parseFloat(document.getElementById('ve-input').value);
+  if(isNaN(raw) || raw < 0) {
     document.getElementById('ve-input').style.borderColor = '#dc3545';
     setTimeout(()=>document.getElementById('ve-input').style.borderColor='#d8e4e3', 1200);
     return;
   }
+  // Si es Servientrega el input está en USD → convertir a COP
+  const realCOP = _validarEnvioEsServientrega ? Math.round(raw * _validarEnvioTRM) : raw;
   const ventas = await DB.ventas();
   const vv = ventas.find(x=>x.id===_validarEnvioId);
   if(vv) {
-    vv.envio_real_cop      = real;
+    vv.envio_real_cop      = realCOP;
+    vv.envio_real_usd      = _validarEnvioEsServientrega ? raw : null;
     vv.envio_validado      = true;
     vv.envio_estimado_cop  = _validarEnvioEstimado;
     await DB.saveVentas(ventas);
@@ -3513,7 +3566,7 @@ async function init() {
   await cargarTRM();
 
   // Fecha en topbar
-
+  cargarDolarComprasEnConfig();
 
   // Poblar selects
   await populateSelects();
