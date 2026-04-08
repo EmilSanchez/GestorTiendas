@@ -722,6 +722,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           <div class="fg" style="min-width:220px;margin-bottom:0;">
             <label class="fl2">Valor dólar (COP)</label>
             <input type="number" id="cfg-dolar-compras" placeholder="3800">
+            <div id="cfg-dolar-origen" style="font-size:11px;margin-top:4px;color:var(--text3);">Cargando...</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="guardarDolarCompras()">Guardar</button>
         </div>
@@ -1315,6 +1316,7 @@ const _cache = {
   saldos:      null,
   billeteras:  null,
   envios:      null,
+  ajustes:     null,
 };
 
 // Carga todas las colecciones en paralelo al iniciar
@@ -1324,10 +1326,11 @@ async function _cargarTodo() {
     const snap = await _db.collection(nombre).get();
     return snap.docs.map(d => ({ id: d.id, ...d.data() }));
   };
-  const [t, v, p, m, mem, b, env, sDoc] = await Promise.all([
+  const [t, v, p, m, mem, b, env, sDoc, ajDoc] = await Promise.all([
     col('tiendas'), col('ventas'), col('problemas'),
     col('movimientos'), col('membresias'), col('billeteras'), col('envios'),
     _db.collection('config').doc('saldos').get(),
+    _db.collection('config').doc('ajustes').get(),
   ]);
   _cache.tiendas     = t;
   _cache.ventas      = v;
@@ -1337,6 +1340,7 @@ async function _cargarTodo() {
   _cache.billeteras  = b;
   _cache.envios      = env;
   _cache.saldos      = sDoc.exists ? sDoc.data() : {};
+  _cache.ajustes     = ajDoc.exists ? ajDoc.data() : {};
 }
 
 // Persiste en Firestore en segundo plano (no bloquea UI)
@@ -1375,6 +1379,8 @@ const DB = {
   saveMembresias:(arr)=>{ _cache.membresias   = arr; _syncCol('membresias', arr); return Promise.resolve(); },
   saveBilleteras:(arr)=>{ _cache.billeteras   = arr; _syncCol('billeteras', arr); return Promise.resolve(); },
   saveSaldos:   (obj) => { _cache.saldos      = obj; _syncDoc('config','saldos', obj); return Promise.resolve(); },
+  saveAjustes:  (obj) => { _cache.ajustes     = obj; _syncDoc('config','ajustes', obj); return Promise.resolve(); },
+  ajustes:      () => Promise.resolve(_cache.ajustes || {}),
 
   upsertTienda: (t) => {
     const a = _cache.tiendas || []; const i = a.findIndex(x=>x.id===t.id);
@@ -1509,17 +1515,17 @@ function calcVenta(v) {
   // Costo producto: siempre USD × TRM (Amazon)
   const costoCOP = costoUsd * trm;
 
-  // Envío: si está validado usar el real, si no el estimado
-  // Para Servientrega el valor guardado es en USD, para otros ya es COP
+  // Envío: si está validado usar el real; si no, el estimado en COP (siempre COP desde el registro nuevo)
   let envioIntCOP;
   if(v.envio_validado && v.envio_real_cop > 0) {
     envioIntCOP = v.envio_real_cop;
-  } else if(v.envio_tipo === 'servientrega') {
+  } else if(v.envio_estimado_cop > 0) {
+    envioIntCOP = v.envio_estimado_cop;
+  } else if(v.envio_tipo === 'servientrega' && !v.envio_int_es_cop) {
+    // ventas antiguas donde Servientrega guardaba en USD
     envioIntCOP = envioVal * trm;
   } else {
     envioIntCOP = envioVal;
-    envioEsUSD  = false;
-
   }
 
   const totalVenta  = precioCOP * udes;
@@ -2274,6 +2280,9 @@ async function renderConfiguracion() {
   _updateSessionInfo();
   if(_sessionTimerInterval) clearInterval(_sessionTimerInterval);
   _sessionTimerInterval = setInterval(_updateSessionInfo, 1000);
+
+  // Cargar el dólar fijo desde BD y mostrarlo en el campo
+  await cargarDolarComprasEnConfig();
 }
 
 function _updateSessionInfo() {
@@ -2372,7 +2381,16 @@ async function openModalVenta(id) {
     sv('v-fecha', hoy()); sv('v-udes',1);
     sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
     sv('v-envio-validado','0');
-    sv('v-trm', '');
+    // Prellenar TRM con el dólar fijo configurado en BD
+    sv('v-trm', getDolarComprasConfigurado());
+    // Actualizar badge del TRM
+    const badge = document.getElementById('trm-auto-badge');
+    if(badge) {
+      const desdeBD = parseFloat((_cache.ajustes||{}).dolar_compras_cop) > 0;
+      badge.textContent = desdeBD ? 'FIJO BD' : 'MANUAL';
+      badge.style.background = desdeBD ? 'var(--green-bg)' : 'var(--yellow-bg)';
+      badge.style.color      = desdeBD ? 'var(--green)'    : 'var(--yellow)';
+    }
   }
   recalcVenta();
   openModal('modal-venta');
@@ -2427,23 +2445,58 @@ function recalcVenta() {
 }
 
 function getDolarComprasConfigurado() {
-  const v = localStorage.getItem('dolar_compras_cop');
-  return parseFloat(v) || TRM_ACTUAL || 3800;
+  // Primero intenta desde el cache de Firebase (ajustes), luego localStorage como fallback
+  const ajustes = _cache.ajustes || {};
+  const fromDB  = parseFloat(ajustes.dolar_compras_cop);
+  if(fromDB > 0) return fromDB;
+  const fromLocal = parseFloat(localStorage.getItem('dolar_compras_cop'));
+  return fromLocal > 0 ? fromLocal : TRM_ACTUAL || 3800;
 }
 
-function guardarDolarCompras() {
+async function guardarDolarCompras() {
   const val = parseFloat(document.getElementById('cfg-dolar-compras').value) || 0;
   if(val <= 0) {
     alert('Ingresa un valor válido para el dólar.');
     return;
   }
-  localStorage.setItem('dolar_compras_cop', val);
-  alert('✅ Valor del dólar guardado correctamente.');
+  const btn = document.querySelector('[onclick="guardarDolarCompras()"]');
+  if(btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+  try {
+    const ajustes = await DB.ajustes();
+    ajustes.dolar_compras_cop = val;
+    await DB.saveAjustes(ajustes);
+    // También guardar en localStorage como respaldo offline
+    localStorage.setItem('dolar_compras_cop', val);
+    // Actualizar badge en modal de venta
+    const badge = document.getElementById('trm-auto-badge');
+    if(badge) { badge.textContent = 'FIJO BD'; badge.style.background = 'var(--green-bg)'; badge.style.color = 'var(--green)'; }
+    alert('✅ Valor del dólar guardado en la base de datos.');
+  } catch(e) {
+    console.error(e);
+    alert('❌ Error al guardar. Verifica la conexión con Firebase.');
+  } finally {
+    if(btn) { btn.textContent = 'Guardar'; btn.disabled = false; }
+  }
 }
 
-function cargarDolarComprasEnConfig() {
+async function cargarDolarComprasEnConfig() {
+  // Cargar desde BD (cache) con fallback a localStorage
   const el = document.getElementById('cfg-dolar-compras');
-  if(el) el.value = getDolarComprasConfigurado();
+  if(!el) return;
+  const ajustes = await DB.ajustes();
+  const val = parseFloat(ajustes.dolar_compras_cop) || parseFloat(localStorage.getItem('dolar_compras_cop')) || '';
+  el.value = val || '';
+  // Mostrar origen del valor
+  const infoEl = document.getElementById('cfg-dolar-origen');
+  if(infoEl) {
+    if(ajustes.dolar_compras_cop > 0) {
+      infoEl.textContent = `✅ Valor guardado en Firebase: $ ${Number(ajustes.dolar_compras_cop).toLocaleString('es-CO')}`;
+      infoEl.style.color = 'var(--green)';
+    } else {
+      infoEl.textContent = `⚠️ Sin valor en BD — usando TRM del día: $ ${Number(TRM_ACTUAL).toLocaleString('es-CO')}`;
+      infoEl.style.color = 'var(--yellow)';
+    }
+  }
 }
 
 async function saveVenta() {
@@ -3562,11 +3615,13 @@ async function init() {
     FUENTES_ICON[b.id]  = b.icono||'💳';
   });
 
-  // Cargar TRM primero
+  // Cargar TRM primero y sincronizar dólar configurado en BD al localStorage
   await cargarTRM();
-
-  // Fecha en topbar
-  cargarDolarComprasEnConfig();
+  // Sincronizar el dólar de BD a localStorage para tenerlo disponible offline
+  const ajustesInit = await DB.ajustes();
+  if(ajustesInit.dolar_compras_cop > 0) {
+    localStorage.setItem('dolar_compras_cop', ajustesInit.dolar_compras_cop);
+  }
 
   // Poblar selects
   await populateSelects();
