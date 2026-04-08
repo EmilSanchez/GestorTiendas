@@ -319,11 +319,12 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 <!-- ═══════════════════ PANTALLA DE ACCESO ═══════════════════ -->
 <div id="login-screen" style="
   position:fixed;inset:0;z-index:99999;
-  background:linear-gradient(135deg,#0f1f1e 0%,#1a3332 60%,#0d2020 100%);
+  background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%);
   display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;">
   <div style="background:#fff;border-radius:18px;padding:40px 44px;width:340px;
               box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;">
-    <div style="font-size:42px;margin-bottom:8px;">🔐</div>
+    <div style="font-size:42px;margin-bottom:8px;"></div>
+    <img src="locked.png" alt="Locked" style="width:36px;height:36px;object-fit:contain;">
     <div style="font-size:18px;font-weight:800;color:#0d2020;margin-bottom:4px;">Meli Manager</div>
     <div style="font-size:11px;color:#8aabaa;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;">Acceso seguro</div>
     <input type="password" id="login-input" placeholder="Ingresa tu código"
@@ -336,7 +337,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     <div id="login-error" style="color:#b0202e;font-size:12px;margin-top:8px;min-height:18px;"></div>
     <button id="login-btn" onclick="verificarAcceso()" style="
       width:100%;margin-top:12px;padding:13px;border:none;border-radius:10px;
-      background:linear-gradient(135deg,#00897b,#00695c);color:#fff;
+      background:linear-gradient(135deg,#264643,#005169);color:#fff;
       font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;
       box-shadow:0 4px 14px rgba(0,137,123,.35);transition:all .2s;
       display:flex;align-items:center;justify-content:center;gap:10px;"
@@ -352,7 +353,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           <circle cx="26" cy="26" r="22" fill="none" stroke="#00897b" stroke-width="4"
             stroke-dasharray="34 100" stroke-linecap="round"/>
         </svg>
-        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;">🔐</div>
+        <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:18px;"></div>
       </div>
       <div style="font-size:13px;font-weight:600;color:#00695c;" id="login-loading-msg">Verificando acceso...</div>
     </div>
@@ -439,7 +440,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;padding:36px 40px;width:320px;
               box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;animation:mIn .18s ease;">
-    <div style="font-size:38px;margin-bottom:10px;">🗑️</div>
+    <img src="eliminar.png" alt="Eliminar" style="width:48px;height:48px;object-fit:contain;margin-bottom:10px;">
     <div style="font-size:16px;font-weight:800;color:#0d2020;margin-bottom:4px;">Eliminar venta</div>
     <div style="font-size:12px;color:#8aabaa;margin-bottom:22px;">Ingresa tu código de acceso para confirmar</div>
     <input type="password" id="delete-code-input" placeholder="Código de acceso"
@@ -493,7 +494,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
   <div class="sb-section" style="margin-top:auto;">
     <div class="sb-section-label">Sistema</div>
-    <div class="nav-item" data-page="configuracion"><span class="ni">⚙️</span><span style="color:#fff;">Configuración</span></div>
+    <div class="nav-item" data-page="configuracion"><span class="ni"><img src="configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
   </div>
 
   <div class="sb-bottom">
@@ -544,7 +545,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
       <!-- Filtros -->
       <div class="filters-bar">
-        <input type="text" placeholder="🔍 Buscar ID, producto, cliente..." id="vf-search" style="min-width:200px;">
+        <input type="text" placeholder="Buscar ID, producto, cliente..." id="vf-search" style="min-width:200px;">
         <span class="fl">Tienda</span>
         <select id="vf-tienda"><option value="">Todas</option></select>
         <span class="fl">Estado</span>
@@ -574,7 +575,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Costo Total</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Ganancia</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Estado</th>
-            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Acc.</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;"></th>
           </tr></thead>
           <tbody id="ventas-tbody"></tbody>
         </table>
@@ -638,7 +639,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
       <!-- Filtros -->
       <div class="filters-bar">
-        <input type="text" placeholder="🔍 Buscar ID venta, teléfono..." id="ef-search" style="min-width:200px;">
+        <input type="text" placeholder="Buscar ID venta, teléfono..." id="ef-search" style="min-width:200px;">
         <span class="fl">Transportadora</span>
         <select id="ef-empresa">
           <option value="">Todas</option>
@@ -751,11 +752,11 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
       </div>
 
       <div class="filters-bar">
-        <input type="text" placeholder="🔍 Buscar ID venta, descripción..." id="pf-search" style="min-width:200px;">
+        <input type="text" placeholder="Buscar ID venta, descripción..." id="pf-search" style="min-width:200px;">
         <span class="fl">Estado</span>
-        <select id="pf-estado">
+        <select id="pf-estado" onchange="renderProblemas()">
           <option value="">Todos</option>
-          <option value="abierto">Abierto</option>
+          <option value="abierto" selected>Abierto</option>
           <option value="resuelto">Resuelto</option>
           <option value="perdida">Con Pérdida</option>
         </select>
@@ -770,43 +771,79 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
     <!-- ══════════════ FINANZAS ══════════════ -->
     <section class="page-section" id="page-finanzas">
-      <div class="frow mb16">
-        <div class="c-dim" style="font-size:12px;">Control de saldos, pagos y gastos operativos del mes</div>
-        <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" onclick="renderFinanzas()">🔄 Actualizar</button>
-        <button class="btn btn-ghost btn-sm" onclick="openModalNuevaBilletera()">+ Billetera</button>
-        <button class="btn btn-primary btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
-      </div>
+      <!-- ╔══ PLACEHOLDER "EN DESARROLLO" — el código original está intacto abajo ══╗ -->
+      <div style="
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        min-height:60vh;gap:24px;text-align:center;padding:40px 20px;
+      ">
+        <!-- Icono animado -->
+        <div style="
+          width:90px;height:90px;border-radius:50%;
+          background:linear-gradient(135deg,var(--teal-bg),#b2dfdb);
+          display:flex;align-items:center;justify-content:center;font-size:42px;
+          box-shadow:0 4px 24px rgba(0,137,123,.18);
+          animation:_finPulse 2.4s ease-in-out infinite;
+        "><img src="cerrado.png" alt="Construcción" style="width:100%;height:100%;object-fit:contain;"></div>
 
-      <!-- Saldos actuales -->
-      <div class="stat-grid" id="fin-saldos" style="margin-bottom:16px;"></div>
-
-      <!-- Membresía Centris -->
-      <div class="card mb16" style="margin-bottom:14px;">
-        <div class="card-header">
-          <div>
-            <div class="card-title">📦 Membresía Centris</div>
-            <div class="card-sub">Pago mensual del software de gestión de tiendas</div>
+        <!-- Título -->
+        <div>
+          <div style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px;margin-bottom:8px;">
+            Finanzas en Desarrollo...
           </div>
-          <button class="btn btn-ghost btn-sm" onclick="openModalMembresia()">✏️ Registrar pago</button>
+          <div style="font-size:14px;color:var(--text3);max-width:380px;line-height:1.6;">
+            Estamos construyendo el módulo de control de saldos, pagos y gastos operativos.
+            Pronto estará disponible.
+          </div>
         </div>
-        <div id="fin-membresia"></div>
+
+        <!-- Barra de progreso decorativa -->
+        <div style="width:280px;max-width:90vw;">
+          <div style="
+            height:6px;border-radius:3px;background:var(--border);overflow:hidden;
+          ">
+            <div style="
+              height:100%;width:40%;border-radius:3px;
+              background:linear-gradient(90deg,var(--teal),var(--teal-light));
+              animation:_finBar 2s ease-in-out infinite alternate;
+            "></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px;">Módulo en preparación</div>
+        </div>
       </div>
 
-      <!-- Movimientos del mes -->
-      <div class="g2">
-        <div class="card">
+      <style>
+        @keyframes _finPulse {
+          0%,100%{transform:scale(1);box-shadow:0 4px 24px rgba(0,137,123,.18);}
+          50%{transform:scale(1.07);box-shadow:0 8px 36px rgba(0,137,123,.30);}
+        }
+        @keyframes _finBar {
+          from{width:25%;} to{width:65%;}
+        }
+      </style>
+
+      <!-- ╚══ CÓDIGO ORIGINAL PRESERVADO (oculto) ══╝ -->
+      <div style="display:none;" aria-hidden="true">
+        <div class="frow mb16">
+          <div class="c-dim" style="font-size:12px;">Control de saldos, pagos y gastos operativos del mes</div>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost btn-sm" onclick="renderFinanzas()">🔄 Actualizar</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModalNuevaBilletera()">+ Billetera</button>
+          <button class="btn btn-primary btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
+        </div>
+        <div class="stat-grid" id="fin-saldos" style="margin-bottom:16px;"></div>
+        <div class="card mb16" style="margin-bottom:14px;">
           <div class="card-header">
-            <div class="card-title">📋 Movimientos del mes</div>
-            <div>
-              <select id="fin-filtro-mes" style="font-size:11px;padding:3px 8px;" onchange="renderFinanzas()"></select>
-            </div>
+            <div><div class="card-title">📦 Membresía Centris</div><div class="card-sub">Pago mensual del software de gestión de tiendas</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="openModalMembresia()">✏️ Registrar pago</button>
           </div>
-          <div id="fin-movimientos"></div>
+          <div id="fin-membresia"></div>
         </div>
-        <div class="card">
-          <div class="card-header"><div class="card-title">📊 Resumen por fuente</div></div>
-          <div id="fin-por-fuente"></div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📋 Movimientos del mes</div><div><select id="fin-filtro-mes" style="font-size:11px;padding:3px 8px;" onchange="renderFinanzas()"></select></div></div>
+            <div id="fin-movimientos"></div>
+          </div>
+          <div class="card"><div class="card-header"><div class="card-title">📊 Resumen por fuente</div></div><div id="fin-por-fuente"></div></div>
         </div>
       </div>
     </section>
@@ -1091,7 +1128,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     </div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveProblema()">💾 Guardar Problema</button>
+      <button class="btn btn-primary" onclick="saveProblema()">Guardar Problema</button>
     </div>
   </div>
 </div>
@@ -1106,8 +1143,8 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     <div class="mc" id="md-body"></div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
-      <button class="btn btn-primary btn-sm" id="md-btn-problema">⚠️ Registrar Problema</button>
-      <button class="btn btn-ghost btn-sm" id="md-btn-editar">✏️ Editar</button>
+      <button class="btn btn-primary btn-sm" id="md-btn-problema"> Registrar Problema</button>
+      <button class="btn btn-ghost btn-sm" id="md-btn-editar"> Editar</button>
     </div>
   </div>
 </div>
@@ -1168,9 +1205,9 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 <!-- ═══════════════════ MODAL: MEMBRESÍA CENTRIS ═══════════════════ -->
 <div class="overlay" id="modal-membresia">
   <div class="modal">
-    <div class="mh">
-      <div class="mh-title">📦 Pago Membresía Centris</div>
-      <button class="mclose" onclick="closeModal('modal-membresia')">✕</button>
+    <div class="mh" style="background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%); color:#fff;">
+      <div class="mh-title" style="color:#fff;">Pago Membresía Centris</div>
+      <button class="mclose" onclick="closeModal('modal-membresia')" style="background:rgba(255,255,255,.1); border:none; color:#fff;">✕</button>
     </div>
     <div class="mc">
       <div style="background:var(--teal-bg);border:1px solid #b8d8d8;border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--teal-dark);">
@@ -1188,11 +1225,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
         <div class="fg">
           <label class="fl2">Pagado con</label>
           <select id="mem-fuente">
-            <option value="mercadopago">💳 Mercado Pago</option>
-            <option value="bancolombia">🏦 Bancolombia</option>
-            <option value="nequi">📱 Nequi</option>
-            <option value="efectivo">💵 Efectivo</option>
-            <option value="tarjeta_credito">💳 Tarjeta de crédito</option>
           </select>
         </div>
         <div class="fg">
@@ -1207,7 +1239,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     </div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-membresia')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveMembresia()">💾 Guardar</button>
+      <button class="btn btn-primary" onclick="saveMembresia()"> Guardar</button>
     </div>
   </div>
 </div>
@@ -1246,7 +1278,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 <div class="overlay" id="modal-cambiar-codigo">
   <div class="modal" style="max-width:420px;">
     <div class="mh">
-      <div class="mh-title">🔑 Cambiar Código de Acceso</div>
+      <div class="mh-title">Cambiar Código de Acceso</div>
       <button class="mclose" onclick="closeModal('modal-cambiar-codigo')">✕</button>
     </div>
     <div class="mc">
@@ -1269,7 +1301,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     </div>
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-cambiar-codigo')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarNuevoCodigo()">💾 Guardar Código</button>
+      <button class="btn btn-primary" onclick="guardarNuevoCodigo()">Guardar Código</button>
     </div>
   </div>
 </div>
@@ -2694,10 +2726,10 @@ async function renderVentas() {
       </td>
       <td>
         <div class="actions-cell">
-          <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')">👁</button>
-          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')">✏️</button>
-          <button class="btn btn-ghost btn-icon btn-sm" title="Registrar problema" onclick="openModalProblema('${v.id}')">⚠️</button>
-          <button class="btn btn-danger btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')">🗑</button>
+            <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Registrar problema" onclick="openModalProblema('${v.id}')"><img src="advertencia.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
     </tr>`;
@@ -3035,8 +3067,16 @@ const TIPO_LABELS = {
 };
 
 async function saveProblema() {
-  const desc = gv('p-descripcion').trim();
+  const desc   = gv('p-descripcion').trim();
+  const estado = gv('p-estado');
+  const solucion = gv('p-solucion').trim();
   if(!desc) { alert('La descripción es requerida.'); return; }
+  // Si se marca como resuelto/pérdida desde el formulario, exigir solución
+  if((estado==='resuelto'||estado==='perdida') && !solucion) {
+    alert('⚠️ Para marcar como resuelto o con pérdida, debes registrar la solución / explicación de lo que ocurrió.');
+    document.getElementById('p-solucion').focus();
+    return;
+  }
 
   const tipo = gv('p-tipo');
   // Número de venta manual (puede ser vacío o cualquier valor aunque no exista en BD)
@@ -3110,14 +3150,36 @@ async function renderProblemas() {
         </div>
       </div>
       <div class="prob-body">
-        <div style="margin-bottom:5px;"><strong>Problema:</strong> ${p.descripcion}</div>
-        ${p.solucion?`<div style="color:var(--text2);"><strong>Solución:</strong> ${p.solucion}</div>`:''}
+        <!-- Descripción del problema -->
+        <div style="margin-bottom:8px;">
+          <strong style="color:var(--text);">Problema:</strong>
+          <span style="color:var(--text2);margin-left:4px;">${p.descripcion}</span>
+        </div>
+        <!-- Solución registrada — resaltada si existe -->
+        ${p.solucion
+          ? `<div style="background:var(--teal-bg);border-left:3px solid var(--teal);border-radius:0 var(--radius) var(--radius) 0;padding:8px 12px;font-size:12px;">
+               <strong style="color:var(--teal-dark);">✅ Solución:</strong>
+               <span style="color:var(--text2);margin-left:4px;">${p.solucion}</span>
+               ${p.fecha_resolucion?`<div style="font-size:10px;color:var(--text3);margin-top:3px;">Resuelta el ${p.fecha_resolucion}</div>`:''}
+             </div>`
+          : p.estado!=='abierto'
+            ? `<div style="background:var(--yellow-bg);border-left:3px solid var(--yellow);border-radius:0 var(--radius) var(--radius) 0;padding:7px 12px;font-size:11px;color:var(--yellow);">
+                 Sin solución registrada
+               </div>`
+            : ''
+        }
       </div>
       <div class="prob-footer">
-        <button class="btn btn-ghost btn-sm" onclick="openModalProblema(null,'${p.id}')">✏️ Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalProblema(null,'${p.id}')">Editar</button>
         ${p.estado==='abierto'?`
-          <button class="btn btn-success btn-sm" onclick="resolverProblema('${p.id}','resuelto')">✅ Resolver</button>
-          <button class="btn btn-danger btn-sm" onclick="resolverProblema('${p.id}','perdida')">📉 Pérdida</button>`:''}
+          <button class="btn btn-success btn-sm" onclick="openResolverProblema('${p.id}','resuelto')"
+            title="Registra la solución y marca como resuelto">
+            Resolver
+          </button>
+          <button class="btn btn-danger btn-sm" onclick="openResolverProblema('${p.id}','perdida')"
+            title="Registra la pérdida económica y cierra el caso">
+            Pérdida
+          </button>`:''}
         <div class="spacer"></div>
         <button class="btn btn-danger btn-icon btn-sm" onclick="deleteProb('${p.id}')">🗑</button>
       </div>
@@ -3125,18 +3187,101 @@ async function renderProblemas() {
   }).join('');
 }
 
+// Abre el modal de resolución con solución obligatoria
 async function resolverProblema(id, estado) {
+  // → Delegamos al nuevo modal que exige registrar la solución
+  await openResolverProblema(id, estado);
+}
+
+async function openResolverProblema(id, estado) {
   const probs = await DB.problemas();
   const p = probs.find(x=>x.id===id);
-  if(p) {
-    p.estado = estado;
-    if(estado==='perdida' && !p.valor_perdida) {
-      const val = parseFloat(prompt('¿Cuánto fue la pérdida en COP?','0'));
-      if(!isNaN(val)) p.valor_perdida = val;
-    }
-    await DB.saveProblemas(probs);
-    await renderProblemas(); await updateAlertaBadge();
+  if(!p) return;
+
+  // Limpiar y poblar modal
+  document.getElementById('mrp-prob-id').value    = id;
+  document.getElementById('mrp-estado-nuevo').value = estado;
+  document.getElementById('mrp-solucion').value    = p.solucion || '';
+  document.getElementById('mrp-perdida').value     = p.valor_perdida || '';
+  document.getElementById('mrp-solucion-error').style.display = 'none';
+  document.getElementById('mrp-solucion').style.borderColor = 'var(--border)';
+
+  // Título y color por estado
+  const esPerdida = estado === 'perdida';
+  const titulo = esPerdida ? 'Registrar como Pérdida' : 'Resolver Problema';
+  document.getElementById('mrp-title').textContent = titulo;
+
+  // Mostrar/ocultar campo de pérdida
+  document.getElementById('mrp-perdida-group').style.display = esPerdida ? '' : 'none';
+
+  // Info del problema
+  const tiendas = await DB.tiendas();
+  const t = tiendas.find(x=>x.id===p.tienda_id);
+  document.getElementById('mrp-info').innerHTML =
+    `<strong>${p.tipo_label||p.tipo}</strong> — ${p.descripcion}` +
+    (t ? `<span style="color:var(--text3);margin-left:8px;">· ${t.nombre}</span>` : '') +
+    (p.id_ml_venta ? `<div style="margin-top:4px;font-family:monospace;font-size:11px;color:var(--teal);">Venta: ${p.id_ml_venta}</div>` : '');
+
+  // Preview del estado
+  const previewEl = document.getElementById('mrp-estado-preview');
+  if(esPerdida) {
+    previewEl.innerHTML = 'El problema quedará marcado como <strong style="color:var(--red);margin-left:4px;">Pérdida registrada</strong>';
+    previewEl.style.background = 'var(--red-bg)';
+    previewEl.style.color = 'var(--red)';
+    document.getElementById('mrp-confirmar-btn').style.background = 'var(--red)';
+    document.getElementById('mrp-confirmar-btn').textContent = 'Registrar Pérdida';
+  } else {
+    previewEl.innerHTML = 'El problema quedará marcado como <strong style="color:var(--green);margin-left:4px;">Resuelto</strong>';
+    previewEl.style.background = 'var(--green-bg)';
+    previewEl.style.color = 'var(--green)';
+    document.getElementById('mrp-confirmar-btn').style.background = 'var(--teal)';
+    document.getElementById('mrp-confirmar-btn').textContent = 'Confirmar Resolución';
   }
+
+  // Dar foco al textarea
+  openModal('modal-resolver-problema');
+  setTimeout(() => document.getElementById('mrp-solucion')?.focus(), 120);
+}
+
+async function confirmarResolver() {
+  const id       = document.getElementById('mrp-prob-id').value;
+  const estado   = document.getElementById('mrp-estado-nuevo').value;
+  const solucion = document.getElementById('mrp-solucion').value.trim();
+  const perdida  = parseFloat(document.getElementById('mrp-perdida').value) || 0;
+  const errEl    = document.getElementById('mrp-solucion-error');
+  const inputEl  = document.getElementById('mrp-solucion');
+
+  // Validar solución obligatoria
+  if(!solucion) {
+    errEl.style.display = '';
+    inputEl.style.borderColor = 'var(--red)';
+    inputEl.focus();
+    return;
+  }
+
+  // Validar pérdida si es estado "perdida"
+  if(estado === 'perdida' && perdida <= 0) {
+    const perdidaInput = document.getElementById('mrp-perdida');
+    perdidaInput.style.borderColor = 'var(--red)';
+    perdidaInput.focus();
+    setTimeout(() => perdidaInput.style.borderColor = '', 2000);
+    alert('Ingresa el valor de la pérdida en COP.');
+    return;
+  }
+
+  const probs = await DB.problemas();
+  const p = probs.find(x=>x.id===id);
+  if(!p) return;
+
+  p.estado   = estado;
+  p.solucion = solucion;
+  p.fecha_resolucion = new Date().toISOString().slice(0,10);
+  if(estado === 'perdida') p.valor_perdida = perdida;
+
+  await DB.saveProblemas(probs);
+  closeModal('modal-resolver-problema');
+  await renderProblemas();
+  await updateAlertaBadge();
 }
 
 async function deleteProb(id) {
@@ -3530,11 +3675,11 @@ function _lockApp() {
   overlay.id = '_lock_anim';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;'
     + 'align-items:center;justify-content:center;gap:18px;'
-    + 'background:linear-gradient(135deg,#0f1f1e 0%,#1a3332 60%,#0d2020 100%);'
+    + 'background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%);'
     + 'animation:lockFadeIn .3s ease;';
   overlay.innerHTML = `
-    <div style="font-size:64px;animation:lockBounce 1.5s ease forwards;">🔒</div>
-    <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:.5px;">Sesión bloqueada</div>
+    <div style="font-size:64px;animation:lockBounce 1.5s ease forwards;"></div>
+    <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:.5px;">Bloqueando...</div>
     <div style="font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1px;">Meli Manager</div>
   `;
 
@@ -3691,5 +3836,51 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 </script>
+
+<!-- ═══════════════════ MODAL: RESOLVER PROBLEMA ═══════════════════ -->
+<div class="overlay" id="modal-resolver-problema">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
+      <div class="mh-title" id="mrp-title" style="color:#fff;font-size:15px;">✅ Resolver Problema</div>
+      <button class="mclose" onclick="closeModal('modal-resolver-problema')" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div class="mc" style="padding:20px 22px;">
+      <!-- Info del problema -->
+      <div id="mrp-info" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--text2);"></div>
+
+      <!-- Solución obligatoria -->
+      <div class="fg" style="margin-bottom:14px;">
+        <label class="fl2" style="font-weight:700;color:var(--text);">
+          Descripción de la solución <span style="color:var(--red);">*</span>
+        </label>
+        <textarea id="mrp-solucion" rows="4" style="width:100%;resize:vertical;border:2px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;font-family:inherit;"
+          placeholder=""></textarea>
+        <div id="mrp-solucion-error" style="color:var(--red);font-size:11px;margin-top:4px;display:none;">⚠️ La solución es obligatoria para resolver el problema.</div>
+      </div>
+
+      <!-- Pérdida — solo para estado "perdida" -->
+      <div id="mrp-perdida-group" style="display:none;margin-bottom:14px;">
+        <div class="fg">
+          <label class="fl2" style="font-weight:700;color:var(--red);">
+            Valor de la pérdida (COP$) <span style="color:var(--red);">*</span>
+          </label>
+          <input type="number" id="mrp-perdida" placeholder="0" step="1000"
+            style="border:2px solid var(--red-bg);border-radius:var(--radius);padding:7px 10px;font-size:13px;width:100%;">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">Ingresa cuánto dinero se perdió en esta novedad</div>
+        </div>
+      </div>
+
+      <!-- Resumen visual del nuevo estado -->
+      <div id="mrp-estado-preview" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);font-size:12px;font-weight:600;"></div>
+    </div>
+    <div class="mf" style="gap:10px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-resolver-problema')">Cancelar</button>
+      <button class="btn btn-primary" id="mrp-confirmar-btn" onclick="confirmarResolver()">Confirmar</button>
+    </div>
+    <input type="hidden" id="mrp-prob-id">
+    <input type="hidden" id="mrp-estado-nuevo">
+  </div>
+</div>
+
 </body>
 </html>
