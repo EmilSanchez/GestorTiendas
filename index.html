@@ -312,9 +312,30 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   .g2,.g3,.g-lw{grid-template-columns:1fr;}
   .grid2,.grid3{grid-template-columns:1fr;}
 }
+
+/* ── TOAST ── */
+#_toast{
+  position:fixed;bottom:28px;right:28px;z-index:9999;
+  padding:12px 20px;border-radius:10px;font-size:14px;font-weight:600;
+  color:#fff;box-shadow:0 4px 20px rgba(0,0,0,.25);
+  transform:translateY(80px);opacity:0;
+  transition:transform .3s cubic-bezier(.4,0,.2,1),opacity .3s;
+  pointer-events:none;max-width:340px;
+}
+#_toast.show{transform:translateY(0);opacity:1;}
+#_toast.success{background:#16a34a;}
+#_toast.error{background:#c0202e;}
+#_toast.info{background:var(--teal);}
+
+/* ── BOTÓN ACTUALIZAR girando ── */
+@keyframes _spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+.btn-refreshing{animation:_spin .5s linear;}
 </style>
 </head>
 <body>
+
+<!-- TOAST -->
+<div id="_toast"></div>
 
 <!-- ═══════════════════ PANTALLA DE ACCESO ═══════════════════ -->
 <div id="login-screen" style="
@@ -551,14 +572,19 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
         <span class="fl">Estado</span>
         <select id="vf-estado">
           <option value="">Todos</option>
-          <option>entregado</option><option>pendiente</option>
-          <option>en_camino</option><option>cancelado</option>
-          <option>problema</option><option>devuelto</option>
+          <option value="entregado">ENTREGADA</option>
+          <option value="pendiente">PENDIENTE</option>
+          <option value="en_camino">EN CAMINO</option>
+          <option value="cancelado">CANCELADA</option>
+          <option value="problema">PROBLEMA</option>
+          <option value="devuelto">DEVUELTO</option>
+          <option value="error">ERROR</option>
         </select>
         <span class="fl">Día</span>
-        <input type="date" id="vf-dia" style="font-size:11.5px;padding:5px 8px;">
+        <input type="date" id="vf-dia" style="padding:0.4rem 0.65rem;font-size:0.85rem;">
         <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" onclick="clearVentaFilters()">✕ Limpiar</button>
+        <button class="btn btn-ghost btn-sm" id="btn-limpiar-ventas" style="display:none;" onclick="clearVentaFilters()">✕ Limpiar</button>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar datos">↻ Actualizar</button>
         <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
       </div>
       <div class="table-wrap" style="max-height:calc(100vh - 370px);overflow-y:auto;">
@@ -588,50 +614,50 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
       <div class="c-dim" style="font-size:12px;margin-bottom:14px;">Ventas registradas agrupadas por transportadora · gestiona el estado de pago de cada envío</div>
 
       <!-- Tarjetas resumen por transportadora -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px;" id="envios-resumen-grid">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="envios-resumen-grid">
         <!-- Aguachica -->
-        <div style="background:#eff6ff;border:2px solid #bfdbfe;border-radius:var(--radius-lg);padding:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <span style="font-size:13px;font-weight:800;color:#1d4ed8;">Aguachica</span>
-            <span id="env-ag-total-count" style="font-size:12px;background:#dbeafe;color:#1d4ed8;padding:2px 9px;border-radius:20px;font-weight:700;">0 envíos</span>
+        <div style="background:#111827;border:1px solid #1f2937;border-radius:var(--radius-lg);overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1f2937;">
+            <span style="font-size:12px;font-weight:700;color:#e5e7eb;letter-spacing:1.5px;text-transform:uppercase;">Aguachica</span>
+            <span id="env-ag-total-count" style="font-size:11px;background:#1f2937;color:#9ca3af;padding:2px 10px;border-radius:20px;font-weight:600;">0 envíos</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+          <div style="display:grid;grid-template-columns:1fr 1fr;">
+            <div style="padding:14px 16px;cursor:pointer;border-right:1px solid #1f2937;transition:background .15s;"
                  onclick="filtrarEnvios('aguachica','pendiente')"
-                 onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
-              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">⏳ Pendientes pago</div>
-              <div id="env-ag-pend-count" style="font-size:22px;font-weight:800;color:#f59e0b;">0</div>
-              <div id="env-ag-pend-total" style="font-size:13px;font-weight:700;color:#92400e;margin-top:2px;">$ 0</div>
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pendiente pago</div>
+              <div id="env-ag-pend-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;">0</div>
+              <div id="env-ag-pend-total" style="font-size:13px;font-weight:600;color:#d97706;margin-top:5px;">$ 0</div>
             </div>
-            <div style="background:#fff;border:1px solid #bfdbfe;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+            <div style="padding:14px 16px;cursor:pointer;transition:background .15s;"
                  onclick="filtrarEnvios('aguachica','pagado')"
-                 onmouseover="this.style.background='#eff6ff'" onmouseout="this.style.background='#fff'">
-              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">✅ Pagados</div>
-              <div id="env-ag-pag-count" style="font-size:22px;font-weight:800;color:#16a34a;">0</div>
-              <div id="env-ag-pag-total" style="font-size:13px;font-weight:700;color:#14532d;margin-top:2px;">$ 0</div>
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pagado</div>
+              <div id="env-ag-pag-count" style="font-size:28px;font-weight:800;color:#22c55e;line-height:1;">0</div>
+              <div id="env-ag-pag-total" style="font-size:13px;font-weight:600;color:#16a34a;margin-top:5px;">$ 0</div>
             </div>
           </div>
         </div>
         <!-- Servientrega -->
-        <div style="background:#f0fdf4;border:2px solid #bbf7d0;border-radius:var(--radius-lg);padding:16px;">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
-            <span style="font-size:13px;font-weight:800;color:#15803d;">📦 Servientrega</span>
-            <span id="env-sv-total-count" style="font-size:12px;background:#dcfce7;color:#15803d;padding:2px 9px;border-radius:20px;font-weight:700;">0 envíos</span>
+        <div style="background:#111827;border:1px solid #1f2937;border-radius:var(--radius-lg);overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1f2937;">
+            <span style="font-size:12px;font-weight:700;color:#e5e7eb;letter-spacing:1.5px;text-transform:uppercase;">Servientrega</span>
+            <span id="env-sv-total-count" style="font-size:11px;background:#1f2937;color:#9ca3af;padding:2px 10px;border-radius:20px;font-weight:600;">0 envíos</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div style="background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+          <div style="display:grid;grid-template-columns:1fr 1fr;">
+            <div style="padding:14px 16px;cursor:pointer;border-right:1px solid #1f2937;transition:background .15s;"
                  onclick="filtrarEnvios('servientrega','pendiente')"
-                 onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
-              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">⏳ Pendientes pago</div>
-              <div id="env-sv-pend-count" style="font-size:22px;font-weight:800;color:#f59e0b;">0</div>
-              <div id="env-sv-pend-total" style="font-size:13px;font-weight:700;color:#92400e;margin-top:2px;">$ 0</div>
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pendiente pago</div>
+              <div id="env-sv-pend-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;">0</div>
+              <div id="env-sv-pend-total" style="font-size:13px;font-weight:600;color:#d97706;margin-top:5px;">$ 0</div>
             </div>
-            <div style="background:#fff;border:1px solid #bbf7d0;border-radius:8px;padding:10px;text-align:center;cursor:pointer;"
+            <div style="padding:14px 16px;cursor:pointer;transition:background .15s;"
                  onclick="filtrarEnvios('servientrega','pagado')"
-                 onmouseover="this.style.background='#f0fdf4'" onmouseout="this.style.background='#fff'">
-              <div style="font-size:11px;text-transform:uppercase;letter-spacing:.7px;color:#64748b;font-weight:600;margin-bottom:4px;">✅ Pagados</div>
-              <div id="env-sv-pag-count" style="font-size:22px;font-weight:800;color:#16a34a;">0</div>
-              <div id="env-sv-pag-total" style="font-size:13px;font-weight:700;color:#14532d;margin-top:2px;">$ 0</div>
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pagado</div>
+              <div id="env-sv-pag-count" style="font-size:28px;font-weight:800;color:#22c55e;line-height:1;">0</div>
+              <div id="env-sv-pag-total" style="font-size:13px;font-weight:600;color:#16a34a;margin-top:5px;">$ 0</div>
             </div>
           </div>
         </div>
@@ -649,16 +675,17 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
         <span class="fl">Pago envío</span>
         <select id="ef-pago">
           <option value="">Todos</option>
-          <option value="pendiente">⏳ Pendiente</option>
-          <option value="pagado">✅ Pagado</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="pagado">Pagado</option>
         </select>
         <span class="fl">Tienda</span>
         <select id="ef-tienda"><option value="">Todas</option></select>
         <span class="fl">Mes</span>
         <input type="month" id="ef-mes">
         <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" onclick="clearEnvioFilters()">✕ Limpiar</button>
-        <button class="btn btn-success btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">💰 Pagar seleccionados (<span id="selected-count">0</span>)</button>
+        <button class="btn btn-ghost btn-sm" id="btn-limpiar-envios" style="display:none;" onclick="clearEnvioFilters()">✕ Limpiar</button>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-envios" onclick="refreshModulo('envios')" title="Actualizar datos">↻ Actualizar</button>
+        <button class="btn btn-success btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">Pagar seleccionados (<span id="selected-count">0</span>)</button>
       </div>
 
       <!-- Tabla -->
@@ -734,7 +761,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
       <div class="card">
         <div class="card-header">
           <div>
-            <div class="card-title">🏪 Tiendas Registradas</div>
+            <div class="card-title">Tiendas Registradas</div>
             <div class="card-sub">Tiendas de Mercado Libre vinculadas al sistema</div>
           </div>
           <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
@@ -748,6 +775,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
       <div class="frow mb16">
         <div class="c-dim" style="font-size:12px;">Registro de problemas, novedades y su resolución por venta</div>
         <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-problemas" onclick="refreshModulo('problemas')" title="Actualizar datos">↻ Actualizar</button>
         <button class="btn btn-primary btn-sm" onclick="openModalProblema()">+ Registrar Problema</button>
       </div>
 
@@ -763,7 +791,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
         <span class="fl">Tienda</span>
         <select id="pf-tienda"><option value="">Todas</option></select>
         <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" onclick="renderProblemas()">🔄 Actualizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="renderProblemas()"> x s ddrttgvActualizar</button>
       </div>
 
       <div id="problemas-container"></div>
@@ -2143,8 +2171,8 @@ async function renderTiendas() {
   if(!gridEl) return;
   if(!tiendas.length) {
     gridEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-      <div class="empty-icon">🏪</div><div class="empty-title">Sin tiendas</div>
-      <div class="c-dim" style="font-size:12px;">Crea tu primera tienda ML</div></div>`; return;
+<div class="empty-title" style="margin-bottom:6px;">Sin tiendas registradas</div>
+      <div class="c-dim" style="font-size:12px;">Crea tu primera tienda desde configuración</div></div>`; return;
   }
   gridEl.innerHTML = tiendas.map(t=>{
     const tv       = ventas.filter(v=>v.tienda_id===t.id);
@@ -2262,8 +2290,8 @@ async function renderConfiguracion() {
 
   if(!tiendas.length) {
     gridEl.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
-      <div class="empty-icon">🏪</div><div class="empty-title">Sin tiendas registradas</div>
-      <div class="c-dim" style="font-size:12px;">Crea tu primera tienda ML</div></div>`;
+      <div class="empty-title" style="margin-bottom:6px;">Sin tiendas registradas</div>
+      <div class="c-dim" style="font-size:12px;">Crea tu primera tienda desde el botón superior</div></div>`;
   } else {
     gridEl.innerHTML = tiendas.map(t=>{
       const tv      = ventas.filter(v=>v.tienda_id===t.id);
@@ -2271,38 +2299,74 @@ async function renderConfiguracion() {
       const isActive= t.estado !== 'inactiva';
       const mpKey   = 'mercadopago_' + t.id;
       const mpSaldo = parseFloat(saldos[mpKey]) || 0;
-      const reclamos    = problemas.filter(p=>p.tienda_id===t.id && p.tipo==='reclamo').length;
-      const canceladas  = tv.filter(v=>v.estado==='cancelado').length;
+      const reclamos   = problemas.filter(p=>p.tienda_id===t.id && p.tipo==='reclamo').length;
+      const canceladas = tv.filter(v=>v.estado==='cancelado').length;
       const fotoEl = t.foto
-        ? `<img src="${t.foto}" style="width:52px;height:52px;border-radius:50%;object-fit:cover;border:2px solid ${t.color};">`
-        : `<div style="width:52px;height:52px;border-radius:50%;background:${t.color}22;border:2px solid ${t.color};
-             display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏪</div>`;
+        ? `<img src="${t.foto}" style="width:48px;height:48px;border-radius:8px;object-fit:cover;flex-shrink:0;">`
+        : `<div style="width:48px;height:48px;border-radius:8px;background:${t.color};
+             display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+             </svg>
+           </div>`;
       return `
-      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;padding:16px;box-shadow:var(--shadow);opacity:${isActive?1:.65};">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
-          ${fotoEl}
-          <div style="flex:1;min-width:0;">
-            <div style="font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.nombre}</div>
-            <div style="font-size:11px;color:var(--text3);">${t.responsable||'Sin responsable'}</div>
+      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;
+                  box-shadow:var(--shadow);opacity:${isActive?1:.6};transition:box-shadow .15s;"
+           onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow)'">
+
+        <!-- Header con acento de color -->
+        <div style="height:4px;background:${t.color};"></div>
+
+        <!-- Cuerpo principal -->
+        <div style="padding:16px 18px;">
+
+          <!-- Fila: avatar + nombre + estado -->
+          <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px;">
+            ${fotoEl}
+            <div style="flex:1;min-width:0;">
+              <div style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.2px;
+                          white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.nombre}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.responsable||'Sin responsable asignado'}</div>
+            </div>
+            <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:4px;flex-shrink:0;letter-spacing:.5px;
+              background:${isActive?'#dcfce7':'#fee2e2'};color:${isActive?'#15803d':'#b91c1c'};">
+              ${isActive?'ACTIVA':'INACTIVA'}
+            </span>
           </div>
-          <span style="font-size:9px;font-weight:700;padding:3px 9px;border-radius:20px;flex-shrink:0;
-            background:${isActive?'var(--green-bg)':'var(--red-bg)'};color:${isActive?'var(--green)':'var(--red)'};">
-            ${isActive?'● ACTIVA':'● INACTIVA'}
-          </span>
-        </div>
-        <div style="display:flex;gap:8px;font-size:11px;color:var(--text2);margin-bottom:10px;flex-wrap:wrap;">
-          <span>📦 ${tv.length} ventas</span>
-          <span>💰 ${fmt(gan)}</span>
-          <span>💳 MP: ${fmt(mpSaldo)}</span>
-          ${reclamos>0?`<span style="color:var(--red);">⚠️ ${reclamos} reclamo(s)</span>`:''}
-          ${canceladas>0?`<span style="color:var(--yellow);">✖ ${canceladas} cancelación(es)</span>`:''}
-        </div>
-        <div style="display:flex;gap:6px;">
-          <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openModalTienda('${t.id}')">✏️ Editar</button>
-          <button class="btn btn-ghost btn-sm" onclick="toggleEstadoTienda('${t.id}')" style="color:${isActive?'var(--red)':'var(--green)'};">
-            ${isActive?'⏸':'▶️'}
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="deleteTienda('${t.id}')">🗑</button>
+
+          <!-- Métricas en grid -->
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;">
+            <div style="padding:10px 12px;border-right:1px solid var(--border);">
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:600;margin-bottom:4px;">Ventas</div>
+              <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1;">${tv.length}</div>
+            </div>
+            <div style="padding:10px 12px;border-right:1px solid var(--border);">
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:600;margin-bottom:4px;">Ganancia</div>
+              <div style="font-size:13px;font-weight:700;color:${gan>=0?'var(--green)':'var(--red)'};line-height:1.3;">${fmt(gan)}</div>
+            </div>
+            <div style="padding:10px 12px;cursor:pointer;" onclick="editarMPSaldo('${t.id}')" title="Clic para editar saldo"
+                 onmouseover="this.style.background='#f7fafa'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:600;margin-bottom:4px;">Saldo MP</div>
+              <div style="font-size:13px;font-weight:700;color:var(--teal);line-height:1.3;">${fmt(mpSaldo)}</div>
+            </div>
+          </div>
+
+          <!-- Alertas de reputación (solo si hay) -->
+          ${(reclamos>0||canceladas>0)?`
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+            ${reclamos>0?`<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:#fee2e2;color:#b91c1c;">${reclamos} reclamo${reclamos>1?'s':''}</span>`:''}
+            ${canceladas>0?`<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:#fef9c3;color:#92400e;">${canceladas} cancelación${canceladas>1?'es':''}</span>`:''}
+          </div>`:''}
+
+          <!-- Acciones -->
+          <div style="display:flex;gap:6px;padding-top:2px;">
+            <button class="btn btn-ghost btn-sm" style="flex:1;font-size:12px;" onclick="openModalTienda('${t.id}')">Editar</button>
+            <button class="btn btn-ghost btn-sm" style="font-size:12px;color:${isActive?'var(--red)':'var(--green)'};"
+              onclick="toggleEstadoTienda('${t.id}')" title="${isActive?'Desactivar tienda':'Activar tienda'}">
+              ${isActive?'Desactivar':'Activar'}
+            </button>
+            <button class="btn btn-danger btn-sm" style="font-size:12px;" onclick="deleteTienda('${t.id}')">Eliminar</button>
+          </div>
         </div>
       </div>`;
     }).join('');
@@ -2502,10 +2566,11 @@ async function guardarDolarCompras() {
     // Actualizar badge en modal de venta
     const badge = document.getElementById('trm-auto-badge');
     if(badge) { badge.textContent = 'FIJO BD'; badge.style.background = 'var(--green-bg)'; badge.style.color = 'var(--green)'; }
-    alert('✅ Valor del dólar guardado en la base de datos.');
+    showToast('✅ Dólar actualizado: $ ' + Number(val).toLocaleString('es-CO'), 'success');
+    await cargarDolarComprasEnConfig();
   } catch(e) {
     console.error(e);
-    alert('❌ Error al guardar. Verifica la conexión con Firebase.');
+    showToast('❌ Error al guardar. Verifica Firebase.', 'error');
   } finally {
     if(btn) { btn.textContent = 'Guardar'; btn.disabled = false; }
   }
@@ -2535,7 +2600,7 @@ async function saveVenta() {
   const tienda   = gv('v-tienda');
   const copVenta = parseFloat(gv('v-cop-venta')) || 0;
   if(!tienda)    { alert('Selecciona una tienda.'); return; }
-  if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
+  //if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
   const producto = ''; // campo eliminado del formulario
 
   const trm       = parseFloat(gv('v-trm')) || TRM_ACTUAL;
@@ -2578,7 +2643,7 @@ async function saveVenta() {
     monto_pago:    montoPago,
     ref_pago:      gv('v-ref-pago').trim(),
     nota:          gv('v-nota').trim(),
-    estado:        'pendiente',
+    estado:        _editVentaId ? ((await DB.ventas()).find(x=>x.id===_editVentaId)?.estado || 'pendiente') : 'pendiente',
     fecha_registro: new Date().toISOString(),
   });
 
@@ -2650,6 +2715,10 @@ async function renderVentas() {
   const fm  = gv('vf-mes');
   const fd  = gv('vf-dia');
 
+  // Mostrar botón Limpiar solo si hay algún filtro activo
+  const btnLimpiar = document.getElementById('btn-limpiar-ventas');
+  if(btnLimpiar) btnLimpiar.style.display = (s||ft||fe||fm||fd) ? 'inline-flex' : 'none';
+
   if(s)  ventas = ventas.filter(v=>(v.id_ml+v.telefono+v.nota).toLowerCase().includes(s));
   if(ft) ventas = ventas.filter(v=>v.tienda_id===ft);
   if(fe) ventas = ventas.filter(v=>v.estado===fe);
@@ -2664,14 +2733,15 @@ async function renderVentas() {
 
   document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
 
-  // Estilos de color por estado — solo para el select pill
+  // Estilos de color por estado — colores sólidos, letras blancas
   const ESTADO_PILL = {
-    pendiente: { bg:'#fff3e0', color:'#a0522d', border:'#ffcc80' },
-    en_camino: { bg:'#e8f5e9', color:'#2e7d32', border:'#a5d6a7' },
-    entregado: { bg:'#e3f2fd', color:'#1565c0', border:'#90caf9' },
-    cancelado: { bg:'#fde8ea', color:'#b0202e', border:'#f5c2c7' },
-    problema:  { bg:'#fffde7', color:'#7d5c00', border:'#ffe082' },
-    devuelto:  { bg:'#fce4ec', color:'#880e4f', border:'#f48fb1' },
+    pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800' },
+    en_camino: { bg:'#70ad47', color:'#fff', border:'#5a9438' },
+    entregado: { bg:'#002060', color:'#fff', border:'#001540' },
+    cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000' },
+    problema:  { bg:'#f9a825', color:'#000', border:'#e08c00' },
+    devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc' },
+    error:     { bg:'#a61c00', color:'#fff', border:'#7a1400' },
   };
 
   document.getElementById('ventas-tbody').innerHTML = ventasMostrar.map((v)=>{
@@ -2680,7 +2750,7 @@ async function renderVentas() {
     const isLoss = c.ganancia < 0;
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
     const pill = ESTADO_PILL[v.estado] || { bg:'#f3f8f8', color:'var(--text2)', border:'var(--border)' };
-    const selectStyle = `font-size:12px;padding:4px 8px;border-radius:20px;font-weight:700;cursor:pointer;`
+    const selectStyle = `font-size:12px;padding:4px 8px;border-radius:20px;font-weight:800;cursor:pointer;`
       + `background:${pill.bg};color:${pill.color};border:1.5px solid ${pill.border};outline:none;`
       + `appearance:none;-webkit-appearance:none;text-align:center;min-width:96px;`;
     return `<tr class="${isLoss?'loss-row':''}">
@@ -2695,11 +2765,13 @@ async function renderVentas() {
       <td style="text-align:center;"><span class="venta-id">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
       <td class="td-mono c-dim">${v.telefono||'—'}</td>
       <td class="td-mono">${fmt(c.precioCOP)}</td>
-      <td class="td-mono">${v.costo_usd?fmtU(v.costo_usd):'—'}</td>
+      <td class="td-mono">${fmtU(v.costo_usd||0)}</td>
       <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
       <td style="font-size:11px;text-align:center;vertical-align:middle;">
         <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
-        <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':'en_camino'}">${envioLabel}</span>
+        <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':v.envio_tipo==='aguachica'?'en_camino':''}"
+          ${v.envio_tipo==='otro'?`style="background:#f0f0f0;color:#555;border:1px solid #ccc;"`:''}
+        >${envioLabel}</span>
         ${v.envio_extra>0?`<div class="mono" style="font-size:11px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
         ${(v.envio_tipo==='aguachica'||v.envio_tipo==='servientrega') && v.envio_int_usd > 0
           ? v.envio_validado
@@ -2720,8 +2792,8 @@ async function renderVentas() {
       <td>
         <select style="${selectStyle}"
           onchange="_onEstadoChange(this,'${v.id}')">
-          ${['pendiente','en_camino','entregado','cancelado','problema','devuelto']
-            .map(e=>`<option value="${e}" ${v.estado===e?'selected':''}>${e}</option>`).join('')}
+          ${['pendiente','en_camino','entregado','cancelado','problema','devuelto','error']
+            .map(e=>{const lbl={'pendiente':'PENDIENTE','en_camino':'EN CAMINO','entregado':'ENTREGADA','cancelado':'CANCELADA','problema':'PROBLEMA','devuelto':'DEVUELTO','error':'ERROR'}[e]||e.toUpperCase();return `<option value="${e}" ${v.estado===e?'selected':''}>${lbl}</option>`;}).join('')}
         </select>
       </td>
       <td>
@@ -2737,12 +2809,13 @@ async function renderVentas() {
 }
 
 const _ESTADO_PILL_MAP = {
-  pendiente: { bg:'#fff3e0', color:'#a0522d', border:'#ffcc80' },
-  en_camino: { bg:'#e8f5e9', color:'#2e7d32', border:'#a5d6a7' },
-  entregado: { bg:'#e3f2fd', color:'#1565c0', border:'#90caf9' },
-  cancelado: { bg:'#fde8ea', color:'#b0202e', border:'#f5c2c7' },
-  problema:  { bg:'#fffde7', color:'#7d5c00', border:'#ffe082' },
-  devuelto:  { bg:'#fce4ec', color:'#880e4f', border:'#f48fb1' },
+  pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800' },
+  en_camino: { bg:'#70ad47', color:'#fff', border:'#5a9438' },
+  entregado: { bg:'#002060', color:'#fff', border:'#001540' },
+  cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000' },
+  problema:  { bg:'#f9a825', color:'#000', border:'#e08c00' },
+  devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc' },
+  error:     { bg:'#a61c00', color:'#fff', border:'#7a1400' },
 };
 
 function _onEstadoChange(selectEl, id) {
@@ -2916,6 +2989,8 @@ async function _confirmarValidarEnvio() {
 function clearVentaFilters() {
   ['vf-search','vf-mes','vf-dia'].forEach(i=>sv(i,''));
   ['vf-tienda','vf-estado'].forEach(i=>sv(i,''));
+  const btnLimpiar = document.getElementById('btn-limpiar-ventas');
+  if(btnLimpiar) btnLimpiar.style.display = 'none';
   renderVentas();
 }
 
@@ -3327,6 +3402,8 @@ function filtrarEnvios(empresa, pago) {
 function clearEnvioFilters() {
   ['ef-search','ef-mes'].forEach(i=>sv(i,''));
   ['ef-empresa','ef-tienda','ef-pago'].forEach(i=>sv(i,''));
+  const btnL = document.getElementById('btn-limpiar-envios');
+  if(btnL) btnL.style.display = 'none';
   renderEnvios();
 }
 
@@ -3334,8 +3411,12 @@ function clearEnvioFilters() {
 function _envioValorCOP(v) {
   if(v.envio_validado && v.envio_real_cop > 0) return v.envio_real_cop;
   const trm = parseFloat(v.trm) || TRM_ACTUAL;
-  if(v.envio_tipo === 'servientrega') return (parseFloat(v.envio_int_usd)||0) * trm;
-  return parseFloat(v.envio_int_usd) || 0;
+  const rawVal = parseFloat(v.envio_int_usd) || 0;
+  // Si se guardó como COP (flag envio_int_es_cop), no multiplicar por TRM
+  if(v.envio_int_es_cop) return rawVal;
+  // Datos legacy: servientrega antiguo puede estar en USD, convertir
+  if(v.envio_tipo === 'servientrega') return rawVal * trm;
+  return rawVal;
 }
 
 // Modal para registrar pago de envío
@@ -3434,6 +3515,10 @@ async function renderEnvios() {
   const ft  = gv('ef-tienda');
   const fm  = gv('ef-mes');
 
+  // Mostrar/ocultar botón Limpiar envíos
+  const btnLimpiarEnv = document.getElementById('btn-limpiar-envios');
+  if(btnLimpiarEnv) btnLimpiarEnv.style.display = (s||fe||fp||ft||fm) ? 'inline-flex' : 'none';
+
   if(s)   ventas = ventas.filter(v=>(v.id_ml+v.telefono+(v.nota||'')).toLowerCase().includes(s));
   if(fe)  ventas = ventas.filter(v=>v.envio_tipo===fe);
   if(fp === 'pendiente') ventas = ventas.filter(v=>!v.envio_pagado);
@@ -3452,9 +3537,9 @@ async function renderEnvios() {
       : `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`;
     const esAg  = v.envio_tipo==='aguachica';
     const label = esAg ? 'Aguachica' : 'Servientrega';
-    const bgCol = esAg ? '#eff6ff' : '#f0fdf4';
-    const txtCol= esAg ? '#1d4ed8' : '#15803d';
-    const borCol= esAg ? '#bfdbfe' : '#bbf7d0';
+    const bgCol = esAg ? '#1d4ed8' : '#16a34a';
+    const txtCol= '#fff';
+    const borCol= esAg ? '#1e40af' : '#15803d';
     const valorEnvio = _envioValorCOP(v);
     const pagado = v.envio_pagado;
 
@@ -3487,21 +3572,21 @@ async function renderEnvios() {
       <td>
         ${pagado
           ? `<span style="display:inline-flex;align-items:center;gap:4px;background:#dcfce7;color:#16a34a;
-               border:1px solid #bbf7d0;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;">
-               ✅ Pagado
+               border:1px solid #bbf7d0;border-radius:20px;padding:4px 11px;font-size:14px;font-weight:700;">
+               Pagado
              </span>
-             ${v.nota_envio_pago ? `<div style="font-size:12px;color:var(--text3);margin-top:2px;">${v.nota_envio_pago}</div>` : ''}`
+             ${v.nota_envio_pago ? `<div style="font-size:13px;color:var(--text3);margin-top:2px;">${v.nota_envio_pago}</div>` : ''}`
           : `<span style="display:inline-flex;align-items:center;gap:4px;background:#fef9c3;color:#854d0e;
-               border:1px solid #fde68a;border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;">
-               ⏳ Pendiente
+               border:1px solid #fde68a;border-radius:20px;padding:4px 11px;font-size:14px;font-weight:700;">
+               Pendiente
              </span>`
         }
       </td>
       <td>
         <div class="actions-cell">
           ${pagado
-            ? `<button class="btn btn-ghost btn-sm" style="font-size:12px;" onclick="desmarcarPagoEnvio('${v.id}')">↩ Desmarcar</button>`
-            : `<button class="btn btn-primary btn-sm" style="font-size:12px;" onclick="openPagoEnvio('${v.id}')">💰 Pagar</button>`
+            ? `<button class="btn btn-ghost btn-sm" style="font-size:13px;" onclick="desmarcarPagoEnvio('${v.id}')">Desmarcar</button>`
+            : `<button class="btn btn-primary btn-sm" style="font-size:13px;" onclick="openPagoEnvio('${v.id}')">Pagar</button>`
           }
         </div>
       </td>
@@ -3731,6 +3816,46 @@ function showSpinner(msg='Cargando...') {
 function hideSpinner() {
   const el = document.getElementById('_fb_spinner');
   if(el) el.remove();
+}
+
+// ── TOAST ──
+function showToast(msg, type='info', duration=3000) {
+  let el = document.getElementById('_toast');
+  if(!el) return;
+  el.textContent = msg;
+  el.className = `show ${type}`;
+  clearTimeout(el._timer);
+  el._timer = setTimeout(()=>{ el.className = type; }, duration);
+}
+
+// ── REFRESH MÓDULO ──
+async function refreshModulo(page) {
+  const btnId = `btn-actualizar-${page}`;
+  const btn = document.getElementById(btnId);
+  if(btn) {
+    const icon = btn.querySelector('._ri') || btn;
+    btn.disabled = true;
+    btn.style.opacity = '.6';
+    // Aplicar animación al ícono ↻
+    const span = document.createElement('span');
+    span.className = '_ri btn-refreshing';
+    span.style.display = 'inline-block';
+    span.textContent = '↻';
+    const originalHTML = btn.innerHTML;
+    btn.innerHTML = '';
+    btn.appendChild(span);
+    btn.appendChild(document.createTextNode(' Actualizando...'));
+    await new Promise(r => setTimeout(r, 500));
+    btn.innerHTML = originalHTML;
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+  // Forzar recarga desde Firebase
+  _cache[page === 'ventas' ? 'ventas' : page === 'envios' ? 'ventas' : page === 'problemas' ? 'problemas' : page] = null;
+  if(page === 'envios') _cache.ventas = null;
+  await _cargarTodo();
+  await render(page);
+  showToast('Datos actualizados', 'success', 2000);
 }
 
 // ── INIT ──
