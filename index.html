@@ -270,7 +270,10 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
 .venta-id{font-family:var(--font-mono);font-size:0.7rem;
           color:var(--teal);background:var(--teal-bg);
-          padding:2px 7px;border-radius:20px;border:1px solid rgba(0,137,123,.2);}
+          padding:2px 7px;border-radius:20px;border:1px solid rgba(0,137,123,.2);
+          cursor:pointer;user-select:none;transition:background .15s,box-shadow .15s;}
+.venta-id:hover{background:#b2dfdb;box-shadow:0 1px 4px rgba(0,137,123,.25);}
+.venta-id:active{transform:scale(0.97);}
 .tienda-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .actions-cell{display:flex;gap:4px;}
 .empty-state{text-align:center;padding:3rem 1.25rem;color:var(--text3);}
@@ -597,7 +600,8 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Valor COP</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">USD</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">TRM</th>
-            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Envío</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Importadora</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Valor Envío</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Costo Total</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Ganancia</th>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Estado</th>
@@ -1031,9 +1035,12 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     <div class="mc">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
       <div class="fg">
-        <label class="fl2">Valor real del envío pagado (COP$) *</label>
+        <label class="fl2" id="mpe-valor-label">Valor real del envío pagado (COP$) *</label>
         <input type="number" id="mpe-valor" placeholder="Ej: 19000" step="1">
-        <span style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span>
+        <span id="mpe-valor-hint" style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span>
+        <div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;">
+          <span id="mpe-diff-text"></span>
+        </div>
       </div>
       <div class="fg">
         <label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label>
@@ -1588,8 +1595,8 @@ function calcVenta(v) {
     envioIntCOP = envioVal;
   }
 
-  const totalVenta  = precioCOP * udes;
-  const totalCostos = (costoCOP * udes) + envioIntCOP + envioExtra;
+  const totalVenta  = precioCOP;
+  const totalCostos = costoCOP + envioIntCOP + envioExtra;
   const ganancia    = totalVenta - totalCostos;
   const margen      = totalVenta > 0 ? (ganancia / totalVenta) * 100 : 0;
   const usd         = trm > 0 ? precioCOP / trm : 0;
@@ -2520,8 +2527,8 @@ function recalcVenta() {
     }
   }
 
-  const totalV = copVenta * udes;
-  const totalC = (costoCOP * udes) + envioIntCOP + envExtra;
+  const totalV = copVenta;
+  const totalC = costoCOP + envioIntCOP + envExtra;
   const gan    = totalV - totalC;
   const mar    = totalV > 0 ? (gan / totalV) * 100 : 0;
 
@@ -2762,27 +2769,27 @@ async function renderVentas() {
           <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td style="text-align:center;"><span class="venta-id">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
+      <td style="text-align:center;"><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
       <td class="td-mono c-dim">${v.telefono||'—'}</td>
       <td class="td-mono">${fmt(c.precioCOP)}</td>
       <td class="td-mono">${fmtU(v.costo_usd||0)}</td>
       <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
       <td style="font-size:11px;text-align:center;vertical-align:middle;">
-        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
         <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':v.envio_tipo==='aguachica'?'en_camino':''}"
           ${v.envio_tipo==='otro'?`style="background:#f0f0f0;color:#555;border:1px solid #ccc;"`:''}
         >${envioLabel}</span>
-        ${v.envio_extra>0?`<div class="mono" style="font-size:11px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
+      </td>
+      <td style="font-size:11px;text-align:center;vertical-align:middle;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
         ${(v.envio_tipo==='aguachica'||v.envio_tipo==='servientrega') && v.envio_int_usd > 0
           ? v.envio_validado
-            ? `<div style="margin-top:2px;font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--green);"> ${fmt(v.envio_real_cop||v.envio_estimado_cop)}</div>`
-            : `<div style="margin-top:2px;">
-                <button class="btn btn-sm" style="font-size:11px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">
-                   ${fmt(v.envio_estimado_cop||v.envio_int_usd)}
-                </button>
-               </div>`
-          : ''
+            ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--green);">${fmt(v.envio_real_cop||v.envio_estimado_cop)}</div>`
+            : `<button class="btn btn-sm" style="font-size:11px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">
+                 ${fmt(v.envio_estimado_cop||v.envio_int_usd)}
+               </button>`
+          : '<span class="c-dim">—</span>'
         }
+        ${v.envio_extra>0?`<div class="mono" style="font-size:10px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
         </div>
       </td>
       <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
@@ -3372,6 +3379,33 @@ const st = (id,v) => { const el=document.getElementById(id); if(el) el.textConte
 function openModal(id)  { document.getElementById(id)?.classList.add('open'); }
 function closeModal(id) { document.getElementById(id)?.classList.remove('close'); document.getElementById(id)?.classList.remove('open'); }
 
+// ── COPIAR ID DE VENTA AL PORTAPAPELES ──
+function copiarIdVenta(id, el) {
+  const _flash = () => {
+    el.style.transition = 'background .12s, color .12s, border-color .12s';
+    el.style.background = '#a7d9b7';
+    el.style.color = '#1b7e4a';
+    el.style.borderColor = '#6cc490';
+    setTimeout(()=>{
+      el.style.background = '';
+      el.style.color = '';
+      el.style.borderColor = '';
+    }, 500);
+  };
+  navigator.clipboard.writeText(id).then(_flash).catch(()=>{
+    // Fallback para navegadores que no soporten clipboard API
+    const ta = document.createElement('textarea');
+    ta.value = id;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    _flash();
+  });
+}
+
 async function updateAlertaBadge() {
   document.getElementById('alertas-count').textContent = (await getAlertas()).length;
 }
@@ -3427,18 +3461,95 @@ async function openPagoEnvio(ventaId) {
   if(!v) return;
   const tiendas = await DB.tiendas();
   const t = tiendas.find(x=>x.id===v.tienda_id);
-  const estimado = _envioValorCOP(v);
-  const empresa = v.envio_tipo === 'servientrega' ? 'Servientrega' : 'Aguachica';
+  const estimadoCOP = _envioValorCOP(v);
+  const esServientrega = v.envio_tipo === 'servientrega';
+  const empresa = esServientrega ? 'Servientrega' : 'Aguachica';
+  const trm = parseFloat(v.trm) || getDolarComprasConfigurado() || TRM_ACTUAL;
+
+  // Para Servientrega: mostrar estimado en USD (igual que Gestor de Ventas)
+  let estimadoMostrar, estimadoLabel;
+  if(esServientrega) {
+    const estimadoUSD = estimadoCOP / trm;
+    estimadoMostrar = `$ ${estimadoUSD.toFixed(2)} USD`;
+    estimadoLabel = `$ ${estimadoUSD.toFixed(2)} USD <span style="color:var(--text3);font-size:10px;">(≈ ${fmt(estimadoCOP)} COP)</span>`;
+  } else {
+    estimadoMostrar = fmt(estimadoCOP);
+    estimadoLabel = fmt(estimadoCOP);
+  }
+
   document.getElementById('mpe-info').innerHTML = `
     <div style="display:flex;gap:12px;flex-wrap:wrap;">
       <div><span style="font-size:10px;color:var(--text3);">Venta</span><br><b>${v.id_ml||v.id}</b></div>
       <div><span style="font-size:10px;color:var(--text3);">Tienda</span><br><b>${t?.nombre||'?'}</b></div>
       <div><span style="font-size:10px;color:var(--text3);">Transportadora</span><br><b>${empresa}</b></div>
-      <div><span style="font-size:10px;color:var(--text3);">Valor estimado</span><br><b style="color:var(--teal);">${fmt(estimado)}</b></div>
-    </div>`;
-  sv('mpe-valor', estimado || '');
+      <div><span style="font-size:10px;color:var(--text3);">Valor estimado</span><br><b style="color:var(--teal);">${estimadoLabel}</b></div>
+      ${esServientrega ? `<div><span style="font-size:10px;color:var(--text3);">TRM usado</span><br><b>${fmt(trm)}</b></div>` : ''}
+    </div>
+    ${esServientrega ? `<div style="margin-top:8px;font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:6px 10px;border-radius:6px;border:1px solid #ffe08a;">
+      ⚠️ Servientrega: ingresa el valor en <strong>USD</strong> tal como aparece en Centris (Gestor de Ventas). Se convertirá automáticamente a COP.
+    </div>` : ''}`;
+
+  // Ajustar el label e input del valor según transportadora
+  const labelEl = document.getElementById('mpe-valor-label');
+  const inputEl = document.getElementById('mpe-valor');
+  const hintEl  = document.getElementById('mpe-valor-hint');
+  const diffEl  = document.getElementById('mpe-diff-box');
+  if(labelEl) labelEl.textContent = esServientrega
+    ? 'Valor real del envío pagado (USD$) *'
+    : 'Valor real del envío pagado (COP$) *';
+  if(inputEl) {
+    inputEl.placeholder = esServientrega ? 'Ej: 4.50' : 'Ej: 19000';
+    inputEl.step        = esServientrega ? '0.01' : '1';
+    // Pre-rellenar con estimado en la unidad correcta
+    inputEl.value       = esServientrega ? (estimadoCOP / trm).toFixed(2) : (estimadoCOP || '');
+    // Guardar contexto en el input para la conversión
+    inputEl.dataset.esServientrega = esServientrega ? '1' : '0';
+    inputEl.dataset.trm = trm;
+    inputEl.dataset.estimadoCOP = estimadoCOP;
+    // Listener para mostrar conversión en tiempo real
+    inputEl.oninput = () => _calcDiffPagoEnvio();
+  }
+  if(hintEl) hintEl.textContent = esServientrega
+    ? 'Valor en USD tal como aparece en Centris. Se convierte a COP automáticamente.'
+    : 'Deja en blanco para usar el valor estimado';
+  if(diffEl) diffEl.style.display = 'none';
+
   sv('mpe-nota', v.nota_envio_pago || '');
+  _calcDiffPagoEnvio();
   openModal('modal-pago-envio');
+}
+
+function _calcDiffPagoEnvio() {
+  const inputEl = document.getElementById('mpe-valor');
+  const diffEl  = document.getElementById('mpe-diff-box');
+  const diffTxt = document.getElementById('mpe-diff-text');
+  if(!inputEl || !diffEl) return;
+  const raw = parseFloat(inputEl.value);
+  if(isNaN(raw)) { diffEl.style.display = 'none'; return; }
+  const esServientrega = inputEl.dataset.esServientrega === '1';
+  const trm = parseFloat(inputEl.dataset.trm) || TRM_ACTUAL;
+  const estimadoCOP = parseFloat(inputEl.dataset.estimadoCOP) || 0;
+  const realCOP = esServientrega ? Math.round(raw * trm) : raw;
+  const diff = realCOP - estimadoCOP;
+  diffEl.style.display = 'block';
+  if(esServientrega) {
+    diffEl.style.background = '#f0f9ff';
+    diffTxt.style.color = 'var(--teal-dark)';
+    diffTxt.textContent = `= ${fmt(realCOP)} COP`;
+  }
+  if(Math.abs(diff) < 1) {
+    diffEl.style.background = '#e0f2f1';
+    diffTxt.style.color = '#00695c';
+    diffTxt.textContent = esServientrega ? `= ${fmt(realCOP)} COP ✔ Igual al estimado` : '✔ Igual al estimado';
+  } else if(diff > 0) {
+    diffEl.style.background = '#fde8ea';
+    diffTxt.style.color = '#b0202e';
+    diffTxt.textContent = (esServientrega ? `= ${fmt(realCOP)} COP — ` : '') + `▲ +${fmt(diff)} más caro que el estimado`;
+  } else {
+    diffEl.style.background = '#d1f0e0';
+    diffTxt.style.color = '#1b7e4a';
+    diffTxt.textContent = (esServientrega ? `= ${fmt(realCOP)} COP — ` : '') + `▼ ${fmt(Math.abs(diff))} más barato que el estimado`;
+  }
 }
 
 async function guardarPagoEnvio() {
@@ -3446,7 +3557,19 @@ async function guardarPagoEnvio() {
   const ventas = await DB.ventas();
   const v = ventas.find(x=>x.id===_pagoEnvioVentaId);
   if(!v) return;
-  const valorReal = parseFloat(gv('mpe-valor')) || _envioValorCOP(v);
+  const inputEl = document.getElementById('mpe-valor');
+  const rawVal  = parseFloat(gv('mpe-valor'));
+  const esServientrega = v.envio_tipo === 'servientrega';
+  const trm = parseFloat(v.trm) || getDolarComprasConfigurado() || TRM_ACTUAL;
+  let valorReal;
+  if(isNaN(rawVal)) {
+    valorReal = _envioValorCOP(v);
+  } else if(esServientrega) {
+    // El usuario ingresó en USD → convertir a COP
+    valorReal = Math.round(rawVal * trm);
+  } else {
+    valorReal = rawVal;
+  }
   v.envio_pagado      = true;
   v.envio_real_cop    = valorReal;
   v.envio_validado    = true;
@@ -3554,7 +3677,7 @@ async function renderEnvios() {
           <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td><span class="venta-id">${v.id_ml||v.id}</span></td>
+      <td><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span></td>
       <td class="td-dim">${v.fecha_venta||'—'}</td>
       <td>
         <span style="display:inline-flex;align-items:center;gap:4px;background:${bgCol};color:${txtCol};
