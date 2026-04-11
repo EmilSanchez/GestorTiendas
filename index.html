@@ -3121,7 +3121,7 @@ async function buscarVentaProblema() {
       style="padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
              margin-top:3px;cursor:pointer;font-size:12px;"
       onmouseover="this.style.background='var(--teal-bg)'" onmouseout="this.style.background='var(--bg)'">
-      <strong class="venta-id">${v.id_ml||v.id}</strong>
+      <strong class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</strong>
       <span class="c-dim" style="margin:0 6px;">·</span>${v.producto}
       <span class="c-dim" style="margin:0 4px;">·</span>
       <span style="font-size:10px;">${t?.nombre||'?'}</span>
@@ -3220,7 +3220,7 @@ async function renderProblemas() {
             ${p.valor_perdida>0?`<span class="badge badge-perdida">Pérdida: ${fmt(p.valor_perdida)}</span>`:''}
           </div>
           <div style="font-size:12px;color:var(--text2);">
-            Venta: <span class="venta-id">${p.id_ml_venta||p.venta_id||'—'}</span>
+            Venta: <span class="venta-id" onclick="copiarIdVenta('${p.id_ml_venta||p.venta_id||''}',this)" title="Clic para copiar ID">${p.id_ml_venta||p.venta_id||'—'}</span>
             ${p.producto?` — <strong>${p.producto}</strong>`:''}
             ${t?`<span class="c-dim" style="margin-left:6px;">· ${t.nombre}</span>`:''}
           </div>
@@ -3751,7 +3751,7 @@ async function openPagoMultiple() {
     const empresa = v.envio_tipo === 'servientrega' ? '📦 Servientrega' : '🏍 Aguachica';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;">
       <div>
-        <span class="venta-id">${v.id_ml||v.id}</span>
+        <span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span>
         <span class="c-dim" style="margin:0 6px;">·</span>
         <span style="font-size:11px;">${t?.nombre||'?'}</span>
         <span class="c-dim" style="margin:0 6px;">·</span>
