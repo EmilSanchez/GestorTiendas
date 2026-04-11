@@ -586,17 +586,14 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   </div>
 
   <!-- Control de escala — dentro del sidebar, sobre el pie -->
-  <div style="padding:0.5rem 0.9rem 0.3rem;border-top:1px solid rgba(255,255,255,0.06);">
-    <div style="font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.22);margin-bottom:0.4rem;">Escala interfaz</div>
-    <div style="display:flex;align-items:center;gap:8px;">
-      <input type="range" id="_scale-input" min="70" max="130" value="100" step="5"
-        style="-webkit-appearance:none;appearance:none;flex:1;height:3px;border-radius:3px;
-               background:rgba(255,255,255,0.15);outline:none;cursor:pointer;">
-      <span id="_scale-val" style="font-size:0.7rem;color:var(--teal-light);font-weight:700;min-width:32px;text-align:right;">100%</span>
-      <button id="_scale-btn-reset" title="Restablecer"
-        style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:0.75rem;cursor:pointer;padding:2px 3px;border-radius:4px;line-height:1;"
-        onmouseover="this.style.color='rgba(255,255,255,0.8)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">⟳</button>
-    </div>
+  <div style="padding:0.55rem 1rem 0.4rem;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;">
+    <span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.2);white-space:nowrap;">Escala</span>
+    <input type="range" id="_scale-input" min="70" max="130" value="100" step="5"
+      style="-webkit-appearance:none;appearance:none;flex:1;height:2px;border-radius:2px;
+             background:rgba(255,255,255,0.12);outline:none;cursor:pointer;">
+    <button id="_scale-btn-reset" title="Restablecer"
+      style="background:none;border:none;color:rgba(255,255,255,0.2);font-size:0.8rem;cursor:pointer;padding:0;line-height:1;transition:color .15s;"
+      onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">⟳</button>
   </div>
 
   <div class="sb-bottom">
@@ -4114,7 +4111,6 @@ function showConfirmAnim(tipo, esEdicion) {
 (function initScale() {
   const SCALE_KEY = 'mm_ui_scale';
   const slider = document.getElementById('_scale-input');
-  const valEl  = document.getElementById('_scale-val');
   const reset  = document.getElementById('_scale-btn-reset');
   const root   = document.documentElement;
 
@@ -4134,13 +4130,8 @@ function showConfirmAnim(tipo, esEdicion) {
   });
 
   function applyScale(v) {
-    valEl.textContent = v + '%';
-    // Aplicamos zoom-like via font-size en el html y transform en main
     root.style.fontSize = (v / 100 * 17) + 'px';
-    const main = document.getElementById('main');
-    if(main) {
-      // Ajustar el margen del main si el sidebar no cambia de tamaño
-    }
+  }
   }
 })();
 
