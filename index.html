@@ -333,12 +333,50 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 /* ── BOTÓN ACTUALIZAR girando ── */
 @keyframes _spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 .btn-refreshing{animation:_spin .5s linear;}
+
+/* ── ANIMACIÓN DE CONFIRMACIÓN DE REGISTRO ── */
+#_confirm-anim {
+  position:fixed;inset:0;z-index:99999;pointer-events:none;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s;
+}
+#_confirm-anim.show { opacity:1; }
+#_confirm-anim .ca-bubble {
+  background:rgba(22,163,74,0.97);
+  border-radius:50%;width:120px;height:120px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  box-shadow:0 8px 40px rgba(22,163,74,.45);
+  animation:ca-pop .45s cubic-bezier(.34,1.56,.64,1) forwards;
+}
+#_confirm-anim .ca-check { font-size:3rem;line-height:1; }
+#_confirm-anim .ca-label { font-size:0.65rem;font-weight:700;color:#fff;opacity:.85;margin-top:4px;letter-spacing:.5px;text-transform:uppercase; }
+@keyframes ca-pop {
+  0%   { transform:scale(.3);opacity:0; }
+  60%  { transform:scale(1.12);opacity:1; }
+  100% { transform:scale(1);opacity:1; }
+}
+
+/* ── SELECTOR DE MÓDULOS DESPLEGABLE (MOBILE / DROPDOWN) ── */
+
+/* ── CONTROL DE ESCALA (en sidebar) ── */
+#_scale-input::-webkit-slider-thumb { -webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--teal-light);box-shadow:0 1px 4px rgba(0,0,0,.4); }
 </style>
 </head>
 <body>
 
 <!-- TOAST -->
 <div id="_toast"></div>
+
+<!-- ANIMACIÓN CONFIRMACIÓN REGISTRO -->
+<div id="_confirm-anim">
+  <div class="ca-bubble">
+    <span class="ca-check">✓</span>
+    <span class="ca-label" id="_ca-label">Registrado</span>
+  </div>
+</div>
+
+<!-- CONTROL DE ESCALA -->
+
 
 <!-- ═══════════════════ PANTALLA DE ACCESO ═══════════════════ -->
 <div id="login-screen" style="
@@ -519,6 +557,20 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   <div class="sb-section" style="margin-top:auto;">
     <div class="sb-section-label">Sistema</div>
     <div class="nav-item" data-page="configuracion"><span class="ni"><img src="configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
+  </div>
+
+  <!-- Control de escala — dentro del sidebar, sobre el pie -->
+  <div style="padding:0.5rem 0.9rem 0.3rem;border-top:1px solid rgba(255,255,255,0.06);">
+    <div style="font-size:0.6rem;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.22);margin-bottom:0.4rem;">Escala interfaz</div>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <input type="range" id="_scale-input" min="70" max="130" value="100" step="5"
+        style="-webkit-appearance:none;appearance:none;flex:1;height:3px;border-radius:3px;
+               background:rgba(255,255,255,0.15);outline:none;cursor:pointer;">
+      <span id="_scale-val" style="font-size:0.7rem;color:var(--teal-light);font-weight:700;min-width:32px;text-align:right;">100%</span>
+      <button id="_scale-btn-reset" title="Restablecer"
+        style="background:none;border:none;color:rgba(255,255,255,0.3);font-size:0.75rem;cursor:pointer;padding:2px 3px;border-radius:4px;line-height:1;"
+        onmouseover="this.style.color='rgba(255,255,255,0.8)'" onmouseout="this.style.color='rgba(255,255,255,0.3)'">⟳</button>
+    </div>
   </div>
 
   <div class="sb-bottom">
@@ -791,6 +843,18 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           <option value="abierto" selected>Abierto</option>
           <option value="resuelto">Resuelto</option>
           <option value="perdida">Con Pérdida</option>
+        </select>
+        <span class="fl">Categoría</span>
+        <select id="pf-tipo" onchange="renderProblemas()">
+          <option value="">Todas</option>
+          <option value="producto_danado">Producto dañado</option>
+          <option value="devolucion">Devolución</option>
+          <option value="reclamo">Reclamo</option>
+          <option value="envio_perdido">Envío perdido</option>
+          <option value="no_recibio">Cliente no recibió</option>
+          <option value="diferencia_precio">Diferencia de precio</option>
+          <option value="cancelacion">Cancelación</option>
+          <option value="otro">Otro</option>
         </select>
         <span class="fl">Tienda</span>
         <select id="pf-tienda"><option value="">Todas</option></select>
@@ -2689,6 +2753,7 @@ async function saveVenta() {
   }
 
   closeModal('modal-venta');
+  showConfirmAnim('Venta registrada');
   await renderVentasGanancias();
   await updateAlertaBadge();
 }
@@ -2987,6 +3052,7 @@ async function _confirmarValidarEnvio() {
     vv.envio_validado      = true;
     vv.envio_estimado_cop  = _validarEnvioEstimado;
     await DB.saveVentas(ventas);
+    showConfirmAnim('Envío validado');
     await renderVentas();
   }
   _cancelValidarEnvio();
@@ -3181,6 +3247,7 @@ async function saveProblema() {
     fecha_registro: new Date().toISOString(),
   });
   closeModal('modal-problema');
+  showConfirmAnim('Problema registrado');
   await renderProblemas();
   await updateAlertaBadge();
 }
@@ -3190,13 +3257,15 @@ async function renderProblemas() {
   const ventas    = await DB.ventas();
   let   problemas = await DB.problemas();
 
-  const s  = gv('pf-search').toLowerCase();
-  const fe = gv('pf-estado');
-  const ft = gv('pf-tienda');
+  const s   = gv('pf-search').toLowerCase();
+  const fe  = gv('pf-estado');
+  const ft  = gv('pf-tienda');
+  const ftp = gv('pf-tipo');
 
-  if(s)  problemas = problemas.filter(p=>(p.id_ml_venta+p.producto+p.descripcion).toLowerCase().includes(s));
-  if(fe) problemas = problemas.filter(p=>p.estado===fe);
-  if(ft) problemas = problemas.filter(p=>p.tienda_id===ft);
+  if(s)   problemas = problemas.filter(p=>(p.id_ml_venta+p.producto+p.descripcion).toLowerCase().includes(s));
+  if(fe)  problemas = problemas.filter(p=>p.estado===fe);
+  if(ft)  problemas = problemas.filter(p=>p.tienda_id===ft);
+  if(ftp) problemas = problemas.filter(p=>p.tipo===ftp);
   problemas.sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||''));
 
   if(!problemas.length) {
@@ -3361,6 +3430,7 @@ async function confirmarResolver() {
 
   await DB.saveProblemas(probs);
   closeModal('modal-resolver-problema');
+  showConfirmAnim('Problema resuelto');
   await renderProblemas();
   await updateAlertaBadge();
 }
@@ -3575,6 +3645,7 @@ async function guardarPagoEnvio() {
   v.nota_envio_pago   = gv('mpe-nota').trim();
   await DB.saveVentas(ventas);
   closeModal('modal-pago-envio');
+  showConfirmAnim('Pago registrado');
   await renderEnvios();
 }
 
@@ -3980,6 +4051,58 @@ async function refreshModulo(page) {
   showToast('Datos actualizados', 'success', 2000);
 }
 
+// ── ANIMACIÓN DE CONFIRMACIÓN DE REGISTRO ──
+function showConfirmAnim(label = 'Registrado') {
+  const el = document.getElementById('_confirm-anim');
+  const lb = document.getElementById('_ca-label');
+  if(!el) return;
+  lb.textContent = label;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 600);
+}
+
+// ── CONTROL DE ESCALA ──
+(function initScale() {
+  const SCALE_KEY = 'mm_ui_scale';
+  const slider = document.getElementById('_scale-input');
+  const valEl  = document.getElementById('_scale-val');
+  const reset  = document.getElementById('_scale-btn-reset');
+  const root   = document.documentElement;
+
+  const saved = parseInt(localStorage.getItem(SCALE_KEY)) || 100;
+  slider.value = saved;
+  applyScale(saved);
+
+  slider.addEventListener('input', () => {
+    const v = parseInt(slider.value);
+    applyScale(v);
+    localStorage.setItem(SCALE_KEY, v);
+  });
+  reset.addEventListener('click', () => {
+    slider.value = 100;
+    applyScale(100);
+    localStorage.setItem(SCALE_KEY, 100);
+  });
+
+  function applyScale(v) {
+    valEl.textContent = v + '%';
+    // Aplicamos zoom-like via font-size en el html y transform en main
+    root.style.fontSize = (v / 100 * 17) + 'px';
+    const main = document.getElementById('main');
+    if(main) {
+      // Ajustar el margen del main si el sidebar no cambia de tamaño
+    }
+  }
+})();
+
+// ── INIT SCALE Y SIDEBAR ──
+document.addEventListener('DOMContentLoaded', () => {
+  // Navegación sidebar
+  document.querySelectorAll('.nav-item[data-page]').forEach(el=>{
+    el.addEventListener('click',()=>navigate(el.dataset.page));
+  });
+});
+
 // ── INIT ──
 async function init() {
   // ── Mostrar spinner encima (sin tocar el DOM de las secciones) ──
@@ -4051,7 +4174,7 @@ async function init() {
   });
 
   // Filtros problemas live
-  ['pf-search','pf-estado','pf-tienda'].forEach(id=>{
+  ['pf-search','pf-estado','pf-tienda','pf-tipo'].forEach(id=>{
     document.getElementById(id)?.addEventListener('input', ()=>renderProblemas());
     document.getElementById(id)?.addEventListener('change',()=>renderProblemas());
   });
