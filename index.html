@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Meli Manager</title>
 
-<link rel="icon" href="melimanager2.png" type="image/x-icon">
+<link rel="icon" href="img/melimanager2.png" type="image/x-icon">
 <style>
 /* ==============================================
    MELI MANAGER v6 — Tipografía y paleta renovada
@@ -380,9 +380,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 }
 
 /* ── SELECTOR DE MÓDULOS DESPLEGABLE (MOBILE / DROPDOWN) ── */
-
-/* ── CONTROL DE ESCALA (en sidebar) ── */
-#_scale-input::-webkit-slider-thumb { -webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--teal-light);box-shadow:0 1px 4px rgba(0,0,0,.4); }
 </style>
 </head>
 <body>
@@ -555,13 +552,11 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
     </div>
   </div>
 </div>
-<!-- Agregar ruta img/ a todos los archivos .png -->
-<link rel="icon" href="img/melimanager2.png" type="image/x-icon">
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
 <nav id="sidebar">
   <div class="sb-logo">
     <div class="sb-logo-icon" style="background:none;box-shadow:none;">
-      <img src="melimanager2.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+      <img src="img/melimanager2.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
     </div>
     <div>
       <div class="sb-logo-name">Meli Manager</div>
@@ -571,30 +566,19 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
   <div class="sb-section">
     <div class="sb-section-label">Principal</div>
-    <div class="nav-item active" data-page="ventas"><span class="ni"><img src="ventas.png" alt="Ventas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Gestor Ventas</span></div>
+    <div class="nav-item active" data-page="ventas"><span class="ni"><img src="img/ventas.png" alt="Ventas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Gestor Ventas</span></div>
   </div>
 
   <div class="sb-section">
     <div class="sb-section-label">Operación</div>
-    <div class="nav-item" data-page="envios"><span class="ni"><img src="envios.png" alt="Envíos" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Envíos</span></div>
-    <div class="nav-item" data-page="problemas"><span class="ni"><img src="problemas.png" alt="Problemas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Problemas</span></div>
-    <div class="nav-item" data-page="finanzas"><span class="ni"><img src="finanzas.png" alt="Finanzas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Finanzas</span></div>
+    <div class="nav-item" data-page="envios"><span class="ni"><img src="img/envios.png" alt="Envíos" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Envíos</span></div>
+    <div class="nav-item" data-page="problemas"><span class="ni"><img src="img/problemas.png" alt="Problemas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Problemas</span></div>
+    <div class="nav-item" data-page="finanzas"><span class="ni"><img src="img/finanzas.png" alt="Finanzas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Finanzas</span></div>
   </div>
 
   <div class="sb-section" style="margin-top:auto;">
     <div class="sb-section-label">Sistema</div>
-    <div class="nav-item" data-page="configuracion"><span class="ni"><img src="configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
-  </div>
-
-  <!-- Control de escala — dentro del sidebar, sobre el pie -->
-  <div style="padding:0.55rem 1rem 0.4rem;border-top:1px solid rgba(255,255,255,0.06);display:flex;align-items:center;gap:8px;">
-    <span style="font-size:0.6rem;text-transform:uppercase;letter-spacing:1px;color:rgba(255,255,255,0.2);white-space:nowrap;">Escala</span>
-    <input type="range" id="_scale-input" min="70" max="130" value="100" step="5"
-      style="-webkit-appearance:none;appearance:none;flex:1;height:2px;border-radius:2px;
-             background:rgba(255,255,255,0.12);outline:none;cursor:pointer;">
-    <button id="_scale-btn-reset" title="Restablecer"
-      style="background:none;border:none;color:rgba(255,255,255,0.2);font-size:0.8rem;cursor:pointer;padding:0;line-height:1;transition:color .15s;"
-      onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.2)'">⟳</button>
+    <div class="nav-item" data-page="configuracion"><span class="ni"><img src="img/configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
   </div>
 
   <div class="sb-bottom">
@@ -902,7 +886,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           display:flex;align-items:center;justify-content:center;font-size:42px;
           box-shadow:0 4px 24px rgba(0,137,123,.18);
           animation:_finPulse 2.4s ease-in-out infinite;
-        "><img src="cerrado.png" alt="Construcción" style="width:100%;height:100%;object-fit:contain;"></div>
+        "><img src="img/cerrado.png" alt="Construcción" style="width:100%;height:100%;object-fit:contain;"></div>
 
         <!-- Título -->
         <div>
@@ -2893,10 +2877,10 @@ async function renderVentas() {
       </td>
       <td>
         <div class="actions-cell">
-            <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
-          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
-          <button class="btn btn-ghost btn-icon btn-sm" title="Registrar problema" onclick="openModalProblema('${v.id}')"><img src="advertencia.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
-          <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+            <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="img/editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Registrar problema" onclick="openModalProblema('${v.id}')"><img src="img/advertencia.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
     </tr>`;
@@ -4107,33 +4091,6 @@ function showConfirmAnim(tipo, esEdicion) {
     setTimeout(() => toast.classList.remove('show'), 2400);
   }, 500);
 }
-
-// ── CONTROL DE ESCALA ──
-(function initScale() {
-  const SCALE_KEY = 'mm_ui_scale';
-  const slider = document.getElementById('_scale-input');
-  const reset  = document.getElementById('_scale-btn-reset');
-  const root   = document.documentElement;
-
-  const saved = parseInt(localStorage.getItem(SCALE_KEY)) || 100;
-  slider.value = saved;
-  applyScale(saved);
-
-  slider.addEventListener('input', () => {
-    const v = parseInt(slider.value);
-    applyScale(v);
-    localStorage.setItem(SCALE_KEY, v);
-  });
-  reset.addEventListener('click', () => {
-    slider.value = 100;
-    applyScale(100);
-    localStorage.setItem(SCALE_KEY, 100);
-  });
-
-  function applyScale(v) {
-    root.style.fontSize = (v / 100 * 17) + 'px';
-  }
-})();
 
 // ── INIT SCALE Y SIDEBAR ──
 document.addEventListener('DOMContentLoaded', () => {
