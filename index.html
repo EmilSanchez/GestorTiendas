@@ -334,91 +334,41 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 @keyframes _spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
 .btn-refreshing{animation:_spin .5s linear;}
 
-/* ── ANIMACIÓN DE CONFIRMACIÓN DE REGISTRO — PREMIUM ── */
+/* ── ANIMACIÓN DE CONFIRMACIÓN — LOADER + TOAST ── */
 #_confirm-anim {
   position:fixed;inset:0;z-index:99999;pointer-events:none;
   display:flex;align-items:center;justify-content:center;
-  opacity:0;transition:opacity .2s;
+  opacity:0;transition:opacity .15s;
 }
 #_confirm-anim.show { opacity:1; }
 
-#_confirm-anim .ca-backdrop {
-  position:absolute;inset:0;
-  background:rgba(0,0,0,0);
-  transition:background .3s;
+/* Spinner central */
+#_ca-spinner {
+  width:44px;height:44px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.25);
+  border-top-color:#fff;
+  background:rgba(15,31,30,.82);
+  backdrop-filter:blur(6px);
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  animation:_ca-spin .55s linear infinite;
+  transition:opacity .2s;
 }
-#_confirm-anim.show .ca-backdrop {
-  background:rgba(0,0,0,0.18);
-}
+@keyframes _ca-spin { to { transform:rotate(360deg); } }
+#_ca-spinner.done { animation:none;opacity:0; }
 
-#_confirm-anim .ca-card {
-  position:relative;z-index:1;
-  background:#fff;
-  border-radius:20px;
-  padding:36px 48px 32px;
-  display:flex;flex-direction:column;align-items:center;gap:14px;
-  box-shadow:0 24px 60px rgba(0,0,0,0.18),0 4px 16px rgba(0,0,0,0.08);
-  transform:scale(0.6) translateY(20px);
-  opacity:0;
-  transition:transform .4s cubic-bezier(.34,1.56,.64,1), opacity .25s ease;
-  min-width:220px;
+/* Toast abajo derecha */
+#_ca-toast {
+  position:fixed;bottom:28px;right:28px;z-index:99999;
+  display:flex;align-items:center;gap:10px;
+  padding:11px 16px;border-radius:10px;
+  font-size:13px;font-weight:600;color:#fff;
+  box-shadow:0 4px 20px rgba(0,0,0,.25);
+  transform:translateY(80px);opacity:0;pointer-events:none;
+  transition:transform .28s cubic-bezier(.4,0,.2,1), opacity .25s;
 }
-#_confirm-anim.show .ca-card {
-  transform:scale(1) translateY(0);
-  opacity:1;
-}
-
-.ca-icon-ring {
-  width:72px;height:72px;border-radius:50%;
-  display:flex;align-items:center;justify-content:center;
-  position:relative;flex-shrink:0;
-}
-.ca-icon-ring svg { position:relative;z-index:1; }
-
-@keyframes ca-ring-pulse {
-  0%   { transform:scale(1);   opacity:.5; }
-  100% { transform:scale(1.9); opacity:0;  }
-}
-.ca-pulse-ring {
-  position:absolute;inset:0;border-radius:50%;
-  animation:ca-ring-pulse .55s ease-out forwards;
-}
-
-@keyframes ca-check-draw {
-  from { stroke-dashoffset:50; }
-  to   { stroke-dashoffset:0;  }
-}
-.ca-check-path {
-  stroke-dasharray:50;stroke-dashoffset:50;
-  animation:ca-check-draw .35s .18s cubic-bezier(.4,0,.2,1) forwards;
-}
-
-.ca-label-main {
-  font-size:1rem;font-weight:700;letter-spacing:-.2px;text-align:center;
-}
-.ca-label-sub {
-  font-size:0.72rem;font-weight:500;letter-spacing:.3px;text-transform:uppercase;
-  opacity:.5;margin-top:-8px;
-}
-
-@keyframes ca-particle {
-  0%   { transform:translate(0,0) scale(1); opacity:1; }
-  100% { transform:translate(var(--dx),var(--dy)) scale(0); opacity:0; }
-}
-.ca-particle {
-  position:absolute;width:8px;height:8px;border-radius:50%;
-  animation:ca-particle .6s ease-out forwards;
-  animation-delay:var(--delay);
-}
-
-@keyframes ca-bar-grow {
-  from { transform:scaleX(0); }
-  to   { transform:scaleX(1); }
-}
-.ca-progress-bar {
-  height:3px;border-radius:3px;transform-origin:left;
-  animation:ca-bar-grow .5s .1s cubic-bezier(.4,0,.2,1) forwards;
-  transform:scaleX(0);
+#_ca-toast.show { transform:translateY(0);opacity:1; }
+#_ca-toast .ca-dot {
+  width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.5);flex-shrink:0;
 }
 
 /* ── SELECTOR DE MÓDULOS DESPLEGABLE (MOBILE / DROPDOWN) ── */
@@ -432,25 +382,13 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 <!-- TOAST -->
 <div id="_toast"></div>
 
-<!-- ANIMACIÓN CONFIRMACIÓN REGISTRO -->
+<!-- SPINNER CENTRAL (carga breve) -->
 <div id="_confirm-anim">
-  <div class="ca-backdrop"></div>
-  <div class="ca-card" id="_ca-card">
-    <div class="ca-icon-ring" id="_ca-ring">
-      <div class="ca-pulse-ring" id="_ca-pulse"></div>
-      <svg id="_ca-svg" width="72" height="72" viewBox="0 0 72 72" fill="none">
-        <circle id="_ca-circle" cx="36" cy="36" r="32" stroke-width="3" fill="none"/>
-        <polyline id="_ca-check" class="ca-check-path" points="22,37 31,46 50,27"
-          stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-      </svg>
-    </div>
-    <div class="ca-label-main" id="_ca-label">Registrado</div>
-    <div class="ca-label-sub" id="_ca-sub">guardado correctamente</div>
-    <div style="width:100%;background:rgba(0,0,0,.06);border-radius:3px;overflow:hidden;height:3px;">
-      <div class="ca-progress-bar" id="_ca-bar" style="width:100%;"></div>
-    </div>
-  </div>
+  <div id="_ca-spinner"></div>
 </div>
+
+<!-- TOAST CONFIRMACIÓN (abajo derecha) -->
+<div id="_ca-toast"><span class="ca-dot"></span><span id="_ca-toast-msg">Registrado</span></div>
 
 <!-- CONTROL DE ESCALA -->
 
@@ -4128,71 +4066,41 @@ async function refreshModulo(page) {
   showToast('Datos actualizados', 'success', 2000);
 }
 
-// ── ANIMACIÓN DE CONFIRMACIÓN DE REGISTRO — PREMIUM ──
+// ── ANIMACIÓN DE CONFIRMACIÓN — SPINNER + TOAST ──
 const _CA_THEMES = {
-  venta:    { bg:'#0f4c2a', ring:'#22c55e', pulse:'rgba(34,197,94,.35)', bar:'#22c55e', label:'Venta registrada',    sub:'guardada en Firebase' },
-  problema: { bg:'#7c2d12', ring:'#f97316', pulse:'rgba(249,115,22,.35)', bar:'#f97316', label:'Problema registrado', sub:'guardado correctamente' },
-  resuelto: { bg:'#0c3358', ring:'#3b82f6', pulse:'rgba(59,130,246,.35)', bar:'#3b82f6', label:'Problema resuelto',   sub:'estado actualizado' },
-  validado: { bg:'#134e4a', ring:'#14b8a6', pulse:'rgba(20,184,166,.35)', bar:'#14b8a6', label:'Envío validado',      sub:'valor confirmado' },
-  pago:     { bg:'#312e81', ring:'#8b5cf6', pulse:'rgba(139,92,246,.35)', bar:'#8b5cf6', label:'Pago registrado',     sub:'envío marcado como pagado' },
+  venta:    { color:'#16a34a', msg:'✓  Venta registrada' },
+  problema: { color:'#d97706', msg:'✓  Problema registrado' },
+  resuelto: { color:'#2563eb', msg:'✓  Problema resuelto' },
+  validado: { color:'#0f766e', msg:'✓  Envío validado' },
+  pago:     { color:'#7c3aed', msg:'✓  Pago de envío registrado' },
 };
 
 function showConfirmAnim(tipo) {
-  const th  = _CA_THEMES[tipo] || _CA_THEMES.venta;
-  const el  = document.getElementById('_confirm-anim');
-  const card= document.getElementById('_ca-card');
-  const ring= document.getElementById('_ca-ring');
-  const pulse=document.getElementById('_ca-pulse');
-  const svg = document.getElementById('_ca-svg');
-  const circ= document.getElementById('_ca-circle');
-  const chk = document.getElementById('_ca-check');
-  const bar = document.getElementById('_ca-bar');
-  const lbl = document.getElementById('_ca-label');
-  const sub = document.getElementById('_ca-sub');
-  if(!el) return;
+  const th      = _CA_THEMES[tipo] || _CA_THEMES.venta;
+  const overlay = document.getElementById('_confirm-anim');
+  const spinner = document.getElementById('_ca-spinner');
+  const toast   = document.getElementById('_ca-toast');
+  const toastMsg= document.getElementById('_ca-toast-msg');
+  if(!overlay || !spinner || !toast) return;
 
-  // Aplicar tema
-  ring.style.background  = th.bg;
-  pulse.style.background = th.pulse;
-  circ.setAttribute('stroke', th.ring);
-  chk.setAttribute('stroke', th.ring);
-  bar.style.background   = th.ring;
-  lbl.textContent        = th.label;
-  lbl.style.color        = th.bg;
-  sub.textContent        = th.sub;
+  // 1. Mostrar spinner 500ms
+  spinner.classList.remove('done');
+  spinner.style.borderTopColor = th.color;
+  overlay.classList.add('show');
 
-  // Reiniciar animaciones clonando elementos
-  const newPulse = pulse.cloneNode(true);
-  pulse.parentNode.replaceChild(newPulse, pulse);
-  const newChk = chk.cloneNode(true);
-  chk.parentNode.replaceChild(newChk, chk);
-  const newBar = bar.cloneNode(true);
-  bar.parentNode.replaceChild(newBar, bar);
-  newBar.style.background = th.ring;
+  setTimeout(() => {
+    // 2. Ocultar spinner
+    spinner.classList.add('done');
+    overlay.classList.remove('show');
 
-  // Lanzar partículas
-  const oldParticles = card.querySelectorAll('.ca-particle');
-  oldParticles.forEach(p=>p.remove());
-  const colors = [th.ring, th.bg, '#fff'];
-  for(let i=0;i<12;i++){
-    const p = document.createElement('div');
-    p.className = 'ca-particle';
-    const angle = (i/12)*360;
-    const dist  = 60+Math.random()*40;
-    const dx    = Math.cos(angle*Math.PI/180)*dist;
-    const dy    = Math.sin(angle*Math.PI/180)*dist;
-    p.style.cssText = `
-      --dx:${dx}px;--dy:${dy}px;
-      --delay:${0.05+i*0.03}s;
-      background:${colors[i%3]};
-      top:calc(50% - 4px);left:calc(50% - 4px);
-      width:${5+Math.random()*5}px;height:${5+Math.random()*5}px;
-    `;
-    card.appendChild(p);
-  }
+    // 3. Mostrar toast
+    toast.style.background = th.color;
+    toastMsg.textContent   = th.msg;
+    toast.classList.add('show');
 
-  el.classList.add('show');
-  setTimeout(() => el.classList.remove('show'), 1400);
+    // 4. Ocultar toast después de 2.2s
+    setTimeout(() => toast.classList.remove('show'), 2200);
+  }, 500);
 }
 
 // ── CONTROL DE ESCALA ──
