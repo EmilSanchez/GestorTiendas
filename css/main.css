@@ -336,7 +336,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 .ayuda-card-preview {
   font-size:0.78rem;color:var(--text2);line-height:1.55;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
-  white-space:pre-wrap;
 }
 .ayuda-card-footer {
   display:flex;align-items:center;gap:8px;padding:8px 16px;

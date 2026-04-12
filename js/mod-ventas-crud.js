@@ -671,8 +671,12 @@ function _drpToggle() {
   const panel = document.getElementById('drp-panel');
   panel.style.display = 'block';
   _drpRender();
-  // Cerrar al click fuera
-  setTimeout(() => document.addEventListener('click', _drpOutside), 10);
+  // Cerrar al click fuera — usamos flag para ignorar el click que abrió el panel
+  _DRP._ignoreNext = true;
+  setTimeout(() => {
+    _DRP._ignoreNext = false;
+    document.addEventListener('click', _drpOutside);
+  }, 10);
 }
 
 function _drpClose() {
@@ -682,12 +686,17 @@ function _drpClose() {
 }
 
 function _drpOutside(e) {
-  if (!document.getElementById('drp-wrap')?.contains(e.target)) _drpClose();
+  // Si el click ocurrió dentro del wrapper no cerrar
+  const wrap = document.getElementById('drp-wrap');
+  if (wrap && wrap.contains(e.target)) return;
+  _drpClose();
 }
 
 function _drpRender() {
   const panel = document.getElementById('drp-panel');
   if (!panel) return;
+  // Interceptar clicks dentro del panel para que no lleguen a _drpOutside
+  panel.onclick = e => e.stopPropagation();
 
   const leftY = _DRP.viewY, leftM = _DRP.viewM;
   let rightM = leftM + 1, rightY = leftY;
@@ -868,15 +877,12 @@ function _drpApplyShortcut(k, render=true) {
 function _drpApply() {
   const desde = _DRP.selStart || '';
   const hasta = _DRP.selEnd   || _DRP.selStart || '';
-  // Escribir en campos ocultos que la lógica existente lee
   const elDesde = document.getElementById('vf-desde');
   const elHasta = document.getElementById('vf-hasta');
   const elMes   = document.getElementById('vf-mes');
   if (elDesde) elDesde.value = desde;
   if (elHasta) elHasta.value = hasta;
   if (elMes)   elMes.value   = '';
-
-  // Actualizar label del botón
   _drpUpdateLabel();
   _drpClose();
   renderVentasGanancias();
