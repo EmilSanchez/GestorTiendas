@@ -1,0 +1,623 @@
+/* Módulo Ventas CRUD — modal registro */
+
+// ── VENTAS ──
+let _editVentaId = null;
+
+async function openModalVenta(id) {
+  _editVentaId = id||null;
+  document.getElementById('mv-title').textContent = id ? 'Editar Venta' : 'Nueva Venta';
+  const tiendas = await DB.tiendas();
+  document.getElementById('v-tienda').innerHTML = tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
+
+  if(id) {
+    const v = (await DB.ventas()).find(x=>x.id===id);
+    if(v) {
+      sv('v-id', v.id_ml||''); sv('v-tienda', v.tienda_id||'');
+      sv('v-fecha', v.fecha_venta||hoy());
+      sv('v-tel', v.telefono||'');
+      sv('v-udes', v.udes||1);
+      sv('v-nota', v.nota||'');
+      sv('v-envio-tipo', v.envio_tipo||'aguachica'); sv('v-envio-extra', v.envio_extra||0);
+      sv('v-envio-validado', v.envio_validado ? '1' : '0');
+      const trm = v.trm || getDolarComprasConfigurado();
+      const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
+      sv('v-cop-venta', copVenta || '');
+      sv('v-trm', getDolarComprasConfigurado());
+      sv('v-costo-usd', v.costo_usd||''); sv('v-envio-int-usd', v.envio_int_usd||'');
+      // Financiación
+      sv('v-fuente-pago', v.fuente_pago||''); sv('v-monto-pago', v.monto_pago||'');
+      sv('v-ref-pago', v.ref_pago||'');
+      // Validación envío
+      sv('v-envio-estimado', v.envio_estimado_cop||'');
+      sv('v-envio-validado', v.envio_validado ? '1' : '0');
+    }
+  } else {
+    ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota'].forEach(i=>sv(i,''));
+    sv('v-fecha', hoy()); sv('v-udes',1);
+    sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
+    sv('v-envio-validado','0');
+    // Prellenar TRM con el dólar fijo configurado en BD
+    sv('v-trm', getDolarComprasConfigurado());
+    // Actualizar badge del TRM
+    const badge = document.getElementById('trm-auto-badge');
+    if(badge) {
+      const desdeBD = parseFloat((_cache.ajustes||{}).dolar_compras_cop) > 0;
+      badge.textContent = desdeBD ? 'FIJO BD' : 'MANUAL';
+      badge.style.background = desdeBD ? 'var(--green-bg)' : 'var(--yellow-bg)';
+      badge.style.color      = desdeBD ? 'var(--green)'    : 'var(--yellow)';
+    }
+  }
+  recalcVenta();
+  openModal('modal-venta');
+}
+
+function recalcVenta() {
+  const copVenta = parseFloat(gv('v-cop-venta'))    || 0;
+  const trm      = parseFloat(gv('v-trm')) || getDolarComprasConfigurado();
+  const costoUsd = parseFloat(gv('v-costo-usd'))     || 0;
+  const envioVal = parseFloat(gv('v-envio-int-usd')) || 0;
+  const envExtra = parseFloat(gv('v-envio-extra'))   || 0;
+  const udes     = parseFloat(gv('v-udes'))           || 1;
+  const envTipo  = gv('v-envio-tipo');
+
+  // Costo producto: USD × TRM
+  const costoCOP = costoUsd * trm;
+
+  // Envío: ahora TODOS los tipos ingresan en COP en el registro
+  const envioIntCOP = envioVal; // ya es COP para todos
+
+  // Actualizar label del campo según tipo
+  const lblEnvio = document.getElementById('lbl-envio-int');
+  if(lblEnvio) {
+    lblEnvio.textContent = envTipo === 'servientrega'
+      ? 'Envío Servientrega (COP$) — estimado'
+      : 'Precio envío internacional (COP$)';
+    const envInputEl = document.getElementById('v-envio-int-usd');
+    if(envInputEl) {
+      envInputEl.step        = '1';
+      envInputEl.placeholder = '0';
+    }
+  }
+
+  const totalV = copVenta;
+  const totalC = costoCOP + envioIntCOP + envExtra;
+  const gan    = totalV - totalC;
+  const mar    = totalV > 0 ? (gan / totalV) * 100 : 0;
+
+  // Resultado compacto
+  const ganEl = document.getElementById('c-rv-gan');
+  const totEl = document.getElementById('c-rv-total');
+  const cosEl = document.getElementById('c-total-costos');
+  const marEl = document.getElementById('c-rv-margen');
+  if(ganEl) { ganEl.textContent = fmt(gan); ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'; }
+  if(totEl)  totEl.textContent  = fmt(totalV);
+  if(cosEl)  cosEl.textContent  = fmt(totalC);
+  if(marEl)  marEl.textContent  = fmtP(mar);
+
+  // Sincronizar campos hidden
+  const elEstimado = document.getElementById('v-envio-estimado');
+  if(elEstimado) elEstimado.value = Math.round(envioIntCOP) || '';
+}
+
+function getDolarComprasConfigurado() {
+  // Primero intenta desde el cache de Firebase (ajustes), luego localStorage como fallback
+  const ajustes = _cache.ajustes || {};
+  const fromDB  = parseFloat(ajustes.dolar_compras_cop);
+  if(fromDB > 0) return fromDB;
+  const fromLocal = parseFloat(localStorage.getItem('dolar_compras_cop'));
+  return fromLocal > 0 ? fromLocal : TRM_ACTUAL || 3800;
+}
+
+async function guardarDolarCompras() {
+  const val = parseFloat(document.getElementById('cfg-dolar-compras').value) || 0;
+  if(val <= 0) {
+    alert('Ingresa un valor válido para el dólar.');
+    return;
+  }
+  const btn = document.querySelector('[onclick="guardarDolarCompras()"]');
+  if(btn) { btn.textContent = 'Guardando...'; btn.disabled = true; }
+  try {
+    const ajustes = await DB.ajustes();
+    ajustes.dolar_compras_cop = val;
+    await DB.saveAjustes(ajustes);
+    // También guardar en localStorage como respaldo offline
+    localStorage.setItem('dolar_compras_cop', val);
+    // Actualizar badge en modal de venta
+    const badge = document.getElementById('trm-auto-badge');
+    if(badge) { badge.textContent = 'FIJO BD'; badge.style.background = 'var(--green-bg)'; badge.style.color = 'var(--green)'; }
+    showToast('✅ Dólar actualizado: $ ' + Number(val).toLocaleString('es-CO'), 'success');
+    await cargarDolarComprasEnConfig();
+  } catch(e) {
+    console.error(e);
+    showToast('❌ Error al guardar. Verifica Firebase.', 'error');
+  } finally {
+    if(btn) { btn.textContent = 'Guardar'; btn.disabled = false; }
+  }
+}
+
+async function cargarDolarComprasEnConfig() {
+  // Cargar desde BD (cache) con fallback a localStorage
+  const el = document.getElementById('cfg-dolar-compras');
+  if(!el) return;
+  const ajustes = await DB.ajustes();
+  const val = parseFloat(ajustes.dolar_compras_cop) || parseFloat(localStorage.getItem('dolar_compras_cop')) || '';
+  el.value = val || '';
+  // Mostrar origen del valor
+  const infoEl = document.getElementById('cfg-dolar-origen');
+  if(infoEl) {
+    if(ajustes.dolar_compras_cop > 0) {
+      infoEl.textContent = `✅ Valor guardado en Firebase: $ ${Number(ajustes.dolar_compras_cop).toLocaleString('es-CO')}`;
+      infoEl.style.color = 'var(--green)';
+    } else {
+      infoEl.textContent = `⚠️ Sin valor en BD — usando TRM del día: $ ${Number(TRM_ACTUAL).toLocaleString('es-CO')}`;
+      infoEl.style.color = 'var(--yellow)';
+    }
+  }
+}
+
+async function saveVenta() {
+  const tienda   = gv('v-tienda');
+  const copVenta = parseFloat(gv('v-cop-venta')) || 0;
+  if(!tienda)    { alert('Selecciona una tienda.'); return; }
+  //if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
+  const producto = ''; // campo eliminado del formulario
+
+  const trm       = parseFloat(gv('v-trm')) || TRM_ACTUAL;
+  const envioTipo = gv('v-envio-tipo');
+  const envioVal  = parseFloat(gv('v-envio-int-usd'))||0;
+  const envioReal = parseFloat(gv('v-envio-real'))||0;
+
+  // Calcular envio en COP: ahora todos los tipos ingresan en COP en el registro
+  const envioEstimadoCOP = envioVal; // ya es COP para todos (Servientrega también)
+  const envioFinalCOP    = envioReal > 0 ? envioReal : envioEstimadoCOP;
+
+  const fuentePago = gv('v-fuente-pago');
+  const montoPago  = parseFloat(gv('v-monto-pago'))||0;
+  const costoUsd   = parseFloat(gv('v-costo-usd'))||0;
+  const costoCOP   = costoUsd * trm;
+
+  await DB.upsertVenta({
+    id:            _editVentaId || uid(),
+    id_ml:         gv('v-id').trim(),
+    tienda_id:     tienda,
+    fecha_venta:   gv('v-fecha'),
+    fecha_entrega: gv('v-fecha-entrega'),
+    cliente:       gv('v-cliente').trim(),
+    telefono:      gv('v-tel').trim(),
+    producto,
+    udes:          parseFloat(gv('v-udes'))||1,
+    envio_tipo:    envioTipo,
+    envio_extra:   parseFloat(gv('v-envio-extra'))||0,
+    precio_cop:    copVenta,
+    precio_usd:    trm > 0 ? copVenta / trm : 0,
+    trm,
+    precio_venta:  copVenta,
+    costo_usd:     costoUsd,
+    envio_int_usd: envioVal,            // en COP para todos los tipos (registro inicial)
+    envio_int_es_cop: true,             // siempre COP al registrar
+    envio_estimado_cop: envioEstimadoCOP,
+    envio_real_cop:     envioReal,
+    envio_validado:     gv('v-envio-validado') === '1',
+    fuente_pago:   fuentePago,
+    monto_pago:    montoPago,
+    ref_pago:      gv('v-ref-pago').trim(),
+    nota:          gv('v-nota').trim(),
+    estado:        _editVentaId ? ((await DB.ventas()).find(x=>x.id===_editVentaId)?.estado || 'pendiente') : 'pendiente',
+    fecha_registro: new Date().toISOString(),
+  });
+
+  // Registrar egreso automático si se indicó fuente de pago
+  if(fuentePago && montoPago > 0 && !_editVentaId) {
+    // Descontar del saldo de la fuente de pago (gasto en producto)
+    const saldos = await DB.saldos();
+    saldos[fuentePago] = (parseFloat(saldos[fuentePago])||0) - montoPago;
+    await DB.saveSaldos(saldos);
+
+    await DB.upsertMovimiento({
+      id: uid(), fecha: gv('v-fecha'), tipo:'egreso',
+      fuente: fuentePago, valor: montoPago,
+      concepto: `Compra · Tienda ${tienda} · ${gv('v-id')||'sin ID'}`.slice(0,60),
+      notas: `Venta ${gv('v-id')||'—'} · costo $${costoUsd} USD`,
+      fecha_registro: new Date().toISOString(),
+    });
+  }
+
+  // ── Auto-sumar pago de ML al Mercado Pago de la tienda correspondiente ──
+  // Si ML pagó (precio_cop > 0), sumarlo al saldo MP de esa tienda
+  if(copVenta > 0 && !_editVentaId) {
+    const saldos = await DB.saldos();
+    const mpKey  = 'mercadopago_' + tienda;
+    saldos[mpKey] = (parseFloat(saldos[mpKey])||0) + copVenta;
+    // También al mercadopago global
+    saldos['mercadopago'] = (parseFloat(saldos['mercadopago'])||0) + copVenta;
+    await DB.saveSaldos(saldos);
+
+    await DB.upsertMovimiento({
+      id: uid(), fecha: gv('v-fecha'), tipo:'ingreso',
+      fuente: 'mercadopago', valor: copVenta,
+      concepto: `Pago ML · ${gv('v-id')||'sin ID'}`,
+      notas: `Venta ${gv('v-id')||'—'} · Tienda: ${tienda}`,
+      fecha_registro: new Date().toISOString(),
+    });
+  }
+
+  closeModal('modal-venta');
+  showConfirmAnim('venta', !!_editVentaId);
+  await renderVentasGanancias();
+  await updateAlertaBadge();
+}
+
+async function renderVentas() {
+  // Refresh the banner totals too
+  const tiendas = await DB.tiendas();
+  let ventas    = await DB.ventas();
+
+  const m  = mes();
+  const vm = ventas.filter(v=>v.fecha_venta?.startsWith(m));
+  const totalGan    = vm.reduce((s,v)=>s+calcVenta(v).ganancia,0);
+  const totalVenta  = vm.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
+  const totalCostos = vm.reduce((s,v)=>s+calcVenta(v).totalCostos,0);
+  const marGen      = totalVenta>0?(totalGan/totalVenta)*100:0;
+  const elGan = document.getElementById('vg-total-gan');
+  const elIng = document.getElementById('vg-total-ing');
+  const elCos = document.getElementById('vg-total-cos');
+  const elMar = document.getElementById('vg-total-mar');
+  const elCnt = document.getElementById('vg-total-cnt');
+  if(elGan) elGan.textContent = fmt(totalGan);
+  if(elIng) elIng.textContent = fmt(totalVenta);
+  if(elCos) elCos.textContent = fmt(totalCostos);
+  if(elMar) elMar.textContent = fmtP(marGen);
+  if(elCnt) elCnt.textContent = vm.length;
+
+  const s   = gv('vf-search').toLowerCase();
+  const ft  = gv('vf-tienda');
+  const fe  = gv('vf-estado');
+  const fm  = gv('vf-mes');
+  const fd  = gv('vf-dia');
+
+  // Mostrar botón Limpiar solo si hay algún filtro activo
+  const btnLimpiar = document.getElementById('btn-limpiar-ventas');
+  if(btnLimpiar) btnLimpiar.style.display = (s||ft||fe||fm||fd) ? 'inline-flex' : 'none';
+
+  if(s)  ventas = ventas.filter(v=>(v.id_ml+v.telefono+v.nota).toLowerCase().includes(s));
+  if(ft) ventas = ventas.filter(v=>v.tienda_id===ft);
+  if(fe) ventas = ventas.filter(v=>v.estado===fe);
+  if(fd) ventas = ventas.filter(v=>v.fecha_venta===fd);          // día exacto
+  else if(fm) ventas = ventas.filter(v=>v.fecha_venta?.startsWith(fm)); // mes si no hay día
+  // Ordenar de más antigua a más reciente para asignar número cronológico
+  ventas.sort((a,b)=>(a.fecha_venta||'').localeCompare(b.fecha_venta||''));
+  // Asignar número cronológico (1 = primera venta del período)
+  const ventasConNum = ventas.map((v,i)=>({ ...v, _num: i+1 }));
+  // Invertir para mostrar la más reciente arriba
+  const ventasMostrar = [...ventasConNum].reverse();
+
+  document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
+
+  // Estilos de color por estado — colores sólidos, letras blancas
+  const ESTADO_PILL = {
+    pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800' },
+    en_camino: { bg:'#70ad47', color:'#fff', border:'#5a9438' },
+    entregado: { bg:'#002060', color:'#fff', border:'#001540' },
+    cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000' },
+    problema:  { bg:'#f9a825', color:'#000', border:'#e08c00' },
+    devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc' },
+    error:     { bg:'#a61c00', color:'#fff', border:'#7a1400' },
+  };
+
+  document.getElementById('ventas-tbody').innerHTML = ventasMostrar.map((v)=>{
+    const t = tiendas.find(x=>x.id===v.tienda_id);
+    const c = calcVenta(v);
+    const isLoss = c.ganancia < 0;
+    const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
+    const pill = ESTADO_PILL[v.estado] || { bg:'#f3f8f8', color:'var(--text2)', border:'var(--border)' };
+    const selectStyle = `font-size:12px;padding:4px 8px;border-radius:20px;font-weight:800;cursor:pointer;`
+      + `background:${pill.bg};color:${pill.color};border:1.5px solid ${pill.border};outline:none;`
+      + `appearance:none;-webkit-appearance:none;text-align:center;min-width:96px;`;
+    return `<tr class="${isLoss?'loss-row':''}">
+      <td class="td-mono c-dim" style="text-align:center;">${v._num}</td>
+      <td>
+        <span style="display:flex;align-items:center;gap:5px;">
+          ${t?.foto?`<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;flex-shrink:0;">`:
+            `<span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>`}
+          <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
+        </span>
+      </td>
+      <td style="text-align:center;"><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
+      <td class="td-mono c-dim">${v.telefono||'—'}</td>
+      <td class="td-mono">${fmt(c.precioCOP)}</td>
+      <td class="td-mono">${fmtU(v.costo_usd||0)}</td>
+      <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
+      <td style="font-size:11px;text-align:center;vertical-align:middle;">
+        <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':v.envio_tipo==='aguachica'?'en_camino':''}"
+          ${v.envio_tipo==='otro'?`style="background:#f0f0f0;color:#555;border:1px solid #ccc;"`:''}
+        >${envioLabel}</span>
+      </td>
+      <td style="font-size:11px;text-align:center;vertical-align:middle;">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:2px;">
+        ${(v.envio_tipo==='aguachica'||v.envio_tipo==='servientrega') && v.envio_int_usd > 0
+          ? v.envio_validado
+            ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--green);">${fmt(v.envio_real_cop||v.envio_estimado_cop)}</div>`
+            : `<button class="btn btn-sm" style="font-size:11px;padding:2px 6px;background:var(--yellow-bg);color:var(--yellow);border:1px solid #ffe08a;" onclick="openValidarEnvio('${v.id}')">
+                 ${fmt(v.envio_estimado_cop||v.envio_int_usd)}
+               </button>`
+          : '<span class="c-dim">—</span>'
+        }
+        ${v.envio_extra>0?`<div class="mono" style="font-size:10px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
+        </div>
+      </td>
+      <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
+      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
+        ${fmt(c.ganancia)}
+      </td>
+      <td>
+        <select style="${selectStyle}"
+          onchange="_onEstadoChange(this,'${v.id}')">
+          ${['pendiente','en_camino','entregado','cancelado','problema','devuelto','error']
+            .map(e=>{const lbl={'pendiente':'PENDIENTE','en_camino':'EN CAMINO','entregado':'ENTREGADA','cancelado':'CANCELADA','problema':'PROBLEMA','devuelto':'DEVUELTO','error':'ERROR'}[e]||e.toUpperCase();return `<option value="${e}" ${v.estado===e?'selected':''}>${lbl}</option>`;}).join('')}
+        </select>
+      </td>
+      <td>
+        <div class="actions-cell">
+            <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="img/editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Registrar problema" onclick="openModalProblema('${v.id}')"><img src="img/advertencia.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
+}
+
+const _ESTADO_PILL_MAP = {
+  pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800' },
+  en_camino: { bg:'#70ad47', color:'#fff', border:'#5a9438' },
+  entregado: { bg:'#002060', color:'#fff', border:'#001540' },
+  cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000' },
+  problema:  { bg:'#f9a825', color:'#000', border:'#e08c00' },
+  devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc' },
+  error:     { bg:'#a61c00', color:'#fff', border:'#7a1400' },
+};
+
+function _onEstadoChange(selectEl, id) {
+  const estado = selectEl.value;
+  const pill = _ESTADO_PILL_MAP[estado] || { bg:'#f3f8f8', color:'var(--text2)', border:'var(--border)' };
+  selectEl.style.background = pill.bg;
+  selectEl.style.color      = pill.color;
+  selectEl.style.borderColor= pill.border;
+  cambiarEstado(id, estado);
+}
+
+async function cambiarEstado(id, estado) {
+  const ventas = await DB.ventas();
+  const v = ventas.find(x=>x.id===id);
+  if(v) { v.estado = estado; await DB.saveVentas(ventas); await updateAlertaBadge(); }
+}
+
+// ── ELIMINAR VENTA CON CÓDIGO DE ACCESO ──
+let _pendingDeleteId = null;
+
+function deleteVenta(id) {
+  _pendingDeleteId = id;
+  const modal = document.getElementById('modal-delete-confirm');
+  const input = document.getElementById('delete-code-input');
+  const errEl = document.getElementById('delete-code-error');
+  errEl.textContent = '';
+  input.value = '';
+  modal.style.display = 'flex';
+  setTimeout(() => input.focus(), 80);
+}
+
+function _cancelDeleteVenta() {
+  _pendingDeleteId = null;
+  document.getElementById('modal-delete-confirm').style.display = 'none';
+  document.getElementById('delete-code-input').value = '';
+  document.getElementById('delete-code-error').textContent = '';
+}
+
+async function _confirmDeleteVenta() {
+  const input  = document.getElementById('delete-code-input');
+  const errEl  = document.getElementById('delete-code-error');
+  const btn    = document.getElementById('delete-confirm-btn');
+  const codigo = input.value.trim();
+
+  if(!codigo) { errEl.textContent = 'Ingresa el código de acceso.'; return; }
+
+  btn.textContent = 'Verificando...';
+  btn.disabled = true;
+  errEl.textContent = '';
+
+  try {
+    const snap = await _db.collection('config').doc('auth').get();
+    if(!snap.exists) { errEl.textContent = '⚠️ No hay código configurado.'; btn.textContent = 'Eliminar'; btn.disabled = false; return; }
+    const hashGuardado  = snap.data().hash;
+    const hashIngresado = await _hashCode(codigo);
+
+    if(hashIngresado === hashGuardado) {
+      await DB.deleteVenta(_pendingDeleteId);
+      _cancelDeleteVenta();
+      await renderVentas();
+      await updateAlertaBadge();
+    } else {
+      errEl.textContent = 'Código incorrecto. Intenta de nuevo.';
+      input.value = '';
+      input.focus();
+    }
+  } catch(e) {
+    errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+    console.error(e);
+  }
+
+  btn.textContent = 'Eliminar';
+  btn.disabled = false;
+}
+
+let _validarEnvioId = null;
+let _validarEnvioEstimado = 0;
+let _validarEnvioEsServientrega = false;
+let _validarEnvioTRM = 0;
+
+async function openValidarEnvio(id) {
+  const v = (await DB.ventas()).find(x=>x.id===id);
+  if(!v) return;
+  const trm = v.trm || TRM_ACTUAL;
+  // El estimado siempre está en COP
+  const estimado = v.envio_estimado_cop || v.envio_int_usd || 0;
+  const esServientrega = v.envio_tipo === 'servientrega';
+
+  _validarEnvioId            = id;
+  _validarEnvioEstimado      = estimado;
+  _validarEnvioEsServientrega = esServientrega;
+  _validarEnvioTRM           = trm;
+
+  document.getElementById('ve-subtitulo').textContent =
+    `${esServientrega ? 'Servientrega' : 'Aguachica'} · ${v.id_ml||v.id}`;
+  document.getElementById('ve-estimado').textContent = fmt(estimado);
+
+  // Cambiar el label según transportadora
+  const labelEl = document.getElementById('ve-input-label');
+  if(labelEl) {
+    labelEl.textContent = esServientrega
+      ? 'Valor REAL confirmado en Centris (USD$)'
+      : 'Valor REAL confirmado en Centris (COP$)';
+  }
+  // Cambiar placeholder e input
+  const inputEl = document.getElementById('ve-input');
+  if(inputEl) {
+    inputEl.placeholder = esServientrega ? 'Ej: 4.50' : 'Ej: 19000';
+    inputEl.step        = esServientrega ? '0.01' : '1';
+    inputEl.value       = esServientrega ? (estimado / trm).toFixed(2) : (estimado || '');
+  }
+  document.getElementById('ve-diff-box').style.display = 'none';
+
+  const modal = document.getElementById('modal-validar-envio');
+  modal.style.display = 'flex';
+  setTimeout(()=>document.getElementById('ve-input').focus(), 80);
+  _calcDiffEnvio();
+}
+
+function _calcDiffEnvio() {
+  const raw  = parseFloat(document.getElementById('ve-input').value);
+  const box  = document.getElementById('ve-diff-box');
+  const txt  = document.getElementById('ve-diff-text');
+  if(isNaN(raw)) { box.style.display='none'; return; }
+  // Convertir a COP si es Servientrega (el input es USD)
+  const val = _validarEnvioEsServientrega ? raw * _validarEnvioTRM : raw;
+  const diff = val - _validarEnvioEstimado;
+  box.style.display = 'block';
+  if(Math.abs(diff) < 1) {
+    box.style.background = '#e0f2f1';
+    txt.style.color = '#00695c';
+    txt.textContent = '✔ Igual al estimado';
+  } else if(diff > 0) {
+    box.style.background = '#fde8ea';
+    txt.style.color = '#b0202e';
+    txt.textContent = `▲ +${fmt(diff)} más caro que el estimado`;
+  } else {
+    box.style.background = '#d1f0e0';
+    txt.style.color = '#1b7e4a';
+    txt.textContent = `▼ ${fmt(diff)} más barato que el estimado`;
+  }
+}
+
+function _cancelValidarEnvio() {
+  document.getElementById('modal-validar-envio').style.display = 'none';
+  _validarEnvioId = null;
+}
+
+async function _confirmarValidarEnvio() {
+  const raw = parseFloat(document.getElementById('ve-input').value);
+  if(isNaN(raw) || raw < 0) {
+    document.getElementById('ve-input').style.borderColor = '#dc3545';
+    setTimeout(()=>document.getElementById('ve-input').style.borderColor='#d8e4e3', 1200);
+    return;
+  }
+  // Si es Servientrega el input está en USD → convertir a COP
+  const realCOP = _validarEnvioEsServientrega ? Math.round(raw * _validarEnvioTRM) : raw;
+  const ventas = await DB.ventas();
+  const vv = ventas.find(x=>x.id===_validarEnvioId);
+  if(vv) {
+    vv.envio_real_cop      = realCOP;
+    vv.envio_real_usd      = _validarEnvioEsServientrega ? raw : null;
+    vv.envio_validado      = true;
+    vv.envio_estimado_cop  = _validarEnvioEstimado;
+    await DB.saveVentas(ventas);
+    showConfirmAnim('validado', false);
+    await renderVentas();
+  }
+  _cancelValidarEnvio();
+}
+
+function clearVentaFilters() {
+  ['vf-search','vf-mes','vf-dia'].forEach(i=>sv(i,''));
+  ['vf-tienda','vf-estado'].forEach(i=>sv(i,''));
+  const btnLimpiar = document.getElementById('btn-limpiar-ventas');
+  if(btnLimpiar) btnLimpiar.style.display = 'none';
+  renderVentas();
+}
+
+async function verDetalleVenta(id) {
+  const v = (await DB.ventas()).find(x=>x.id===id);
+  if(!v) return;
+  const t = (await DB.tiendas()).find(x=>x.id===v.tienda_id);
+  const c = calcVenta(v);
+  const problemas = (await DB.problemas()).filter(p=>p.venta_id===id);
+
+  document.getElementById('md-title').textContent = `Detalle — ${v.id_ml||v.id}`;
+  document.getElementById('md-btn-editar').onclick = ()=>{ closeModal('modal-detalle'); openModalVenta(id); };
+  document.getElementById('md-btn-problema').onclick = ()=>{ closeModal('modal-detalle'); openModalProblema(id); };
+
+  document.getElementById('md-body').innerHTML = `
+    <div class="g2" style="margin-bottom:16px;">
+      <div>
+        <div class="fsec" style="margin-top:0;">Información de la venta</div>
+        ${dr('ID Venta ML', `<span class="venta-id">${v.id_ml||v.id}</span>`)}
+        ${dr('Tienda', `<span style="display:flex;align-items:center;gap:5px;"><span class="tienda-dot" style="background:${t?.color||'#aaa'}"></span>${t?.nombre||'?'}</span>`)}
+        ${dr('Fecha venta', v.fecha_venta||'—')}
+        ${dr('Fecha entrega', v.fecha_entrega||'—')}
+        ${dr('Cliente', v.cliente||'—')}
+        ${dr('Teléfono', v.telefono||'—')}
+        ${dr('Producto', `<strong>${v.producto}</strong>`)}
+        ${dr('Unidades', v.udes||1)}
+        ${dr('Estado', `<span class="badge badge-${v.estado||'pendiente'}">${v.estado||'pendiente'}</span>`)}
+        ${dr('Tipo de envío', v.envio_tipo||'ml')}
+      </div>
+      <div>
+        <div class="fsec" style="margin-top:0;">Resultado financiero</div>
+        <div class="calc-box">
+          <div class="cr"><span class="cr-label">Precio USD</span><span class="cr-val neu">${fmtU(v.precio_usd)}</span></div>
+          <div class="cr"><span class="cr-label">TRM aplicado</span><span class="cr-val neu">${fmt(v.trm)}</span></div>
+          <div class="cr"><span class="cr-label">Precio COP</span><span class="cr-val neu fw7">${fmt(c.precioCOP)}</span></div>
+          <div class="cr"><span class="cr-label">Unidades</span><span class="cr-val neu">× ${c.udes}</span></div>
+          <div class="cr total"><span class="cr-label">Total Venta</span><span class="cr-val neu">${fmt(c.totalVenta)}</span></div>
+          <div class="cr"><span class="cr-label">Costo producto</span><span class="cr-val neg">−${fmt(c.costoCOP*c.udes)}</span></div>
+          <div class="cr"><span class="cr-label">Envío internacional</span><span class="cr-val neg">−${fmt(c.envioIntCOP)}</span></div>
+          <div class="cr"><span class="cr-label">Envío extra local</span><span class="cr-val neg">−${fmt(c.envioExtra)}</span></div>
+          <div class="cr total">
+            <span class="cr-label fw7">GANANCIA NETA</span>
+            <span class="cr-val fw7" style="color:${c.ganancia>=0?'var(--green)':'var(--red)'};">${fmt(c.ganancia)}</span>
+          </div>
+          <div class="cr"><span class="cr-label">Margen</span><span class="cr-val neu">${fmtP(c.margen)}</span></div>
+        </div>
+      </div>
+    </div>
+    ${problemas.length ? `
+    <div class="fsec">Problemas registrados (${problemas.length})</div>
+    ${problemas.map(p=>`
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px;margin-bottom:6px;">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+          <span class="badge badge-${p.estado}">${p.estado}</span>
+          <span style="font-size:11px;color:var(--text2);">${p.tipo_label||p.tipo}</span>
+          <span class="c-dim" style="font-size:10px;">${p.fecha||'—'}</span>
+          ${p.valor_perdida>0?`<span class="badge badge-perdida">Pérdida: ${fmt(p.valor_perdida)}</span>`:''}
+        </div>
+        <div style="font-size:12px;margin-bottom:4px;"><strong>Problema:</strong> ${p.descripcion}</div>
+        ${p.solucion?`<div style="font-size:12px;color:var(--text2);"><strong>Solución:</strong> ${p.solucion}</div>`:''}
+      </div>`).join('')}` : ''}`;
+  openModal('modal-detalle');
+}
+
+function dr(label, val) {
+  return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
+    <span class="c-dim">${label}</span><span>${val}</span></div>`;
+}
+

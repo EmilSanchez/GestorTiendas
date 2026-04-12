@@ -1,0 +1,1183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meli Manager</title>
+<link rel="icon" href="img/melimanager2.png" type="image/x-icon">
+<link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<!-- TOAST -->
+<div id="_toast"></div>
+
+<!-- SPINNER CENTRAL (carga breve) -->
+<div id="_confirm-anim">
+  <div id="_ca-spinner"></div>
+</div>
+
+<!-- TOAST CONFIRMACIÓN (abajo derecha) -->
+<div id="_ca-toast">
+  <span id="_ca-toast-icon">✓</span>
+  <span id="_ca-toast-msg">Registrado</span>
+</div>
+
+<!-- CONTROL DE ESCALA -->
+
+<!-- ═══════════════════ MODAL VALIDAR ENVÍO ═══════════════════ -->
+<div id="modal-validar-envio" style="
+  display:none;position:fixed;inset:0;z-index:99997;
+  background:rgba(0,0,0,.5);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;width:420px;
+              box-shadow:0 24px 60px rgba(0,0,0,.3);animation:mIn .18s ease;overflow:hidden;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#1a2332,#1e3a5f);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div style="font-size:14px;font-weight:800;color:#fff;">✅ Validar Envío</div>
+        <div id="ve-subtitulo" style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;"></div>
+      </div>
+      <button onclick="_cancelValidarEnvio()" style="background:rgba(255,255,255,.1);border:none;color:#fff;
+        width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+
+    <!-- Info estimado -->
+    <div style="padding:18px 22px 0;">
+      <div style="background:#f0f4f4;border-radius:10px;padding:12px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#8aabaa;font-weight:600;margin-bottom:3px;">Valor estimado</div>
+          <div id="ve-estimado" style="font-size:20px;font-weight:800;color:#0d2020;">$ 0</div>
+        </div>
+        <div style="font-size:28px;opacity:.3;">📦</div>
+      </div>
+
+      <!-- Input valor real -->
+      <div style="margin-bottom:6px;">
+        <label id="ve-input-label" style="font-size:11px;font-weight:700;color:#476060;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">
+          Valor REAL confirmado en Centris (COP$)
+        </label>
+        <input type="number" id="ve-input" placeholder="Ej: 19000"
+          style="width:100%;padding:12px 14px;border:2px solid #d8e4e3;border-radius:10px;
+                 font-size:18px;font-weight:700;outline:none;color:#0d2020;
+                 text-align:center;transition:border-color .2s;"
+          onfocus="this.style.borderColor='#00897b'"
+          onblur="this.style.borderColor='#d8e4e3'"
+          oninput="_calcDiffEnvio()"
+          onkeydown="if(event.key==='Enter')_confirmarValidarEnvio()">
+      </div>
+
+      <!-- Diferencia en tiempo real -->
+      <div id="ve-diff-box" style="display:none;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;">
+        <span id="ve-diff-text" style="font-size:12px;font-weight:700;"></span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:16px 22px;display:flex;gap:10px;margin-top:8px;">
+      <button onclick="_cancelValidarEnvio()" style="
+        flex:1;padding:11px;border:1px solid #d8e4e3;border-radius:10px;
+        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:pointer;">
+        Cancelar
+      </button>
+      <button onclick="_confirmarValidarEnvio()" style="
+        flex:2;padding:11px;border:none;border-radius:10px;
+        background:linear-gradient(135deg,#00897b,#00695c);color:#fff;
+        font-size:13px;font-weight:700;cursor:pointer;
+        box-shadow:0 4px 12px rgba(0,137,123,.35);">
+        ✅ Confirmar valor real
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL CONFIRMAR ELIMINACIÓN ═══════════════════ -->
+<div id="modal-delete-confirm" style="
+  display:none;position:fixed;inset:0;z-index:99998;
+  background:rgba(0,0,0,.55);backdrop-filter:blur(3px);
+  align-items:center;justify-content:center;">
+  <div style="background:#fff;border-radius:16px;padding:36px 40px;width:320px;
+              box-shadow:0 20px 60px rgba(0,0,0,.35);text-align:center;animation:mIn .18s ease;">
+    <img src="img/eliminar.png" alt="Eliminar" style="width:48px;height:48px;object-fit:contain;margin-bottom:10px;">
+    <div style="font-size:16px;font-weight:800;color:#0d2020;margin-bottom:4px;">Eliminar venta</div>
+    <div style="font-size:12px;color:#8aabaa;margin-bottom:22px;">Ingresa tu código de acceso para confirmar</div>
+    <input type="password" id="delete-code-input" placeholder="Código de acceso"
+      style="width:100%;padding:11px 14px;border:2px solid #d8e4e3;border-radius:10px;
+             font-size:14px;outline:none;text-align:center;letter-spacing:1px;
+             color:#0d2020;transition:border-color .2s;"
+      onfocus="this.style.borderColor='#dc3545'"
+      onblur="this.style.borderColor='#d8e4e3'"
+      onkeydown="if(event.key==='Enter')_confirmDeleteVenta()">
+    <div id="delete-code-error" style="color:#b0202e;font-size:11px;margin-top:7px;min-height:16px;"></div>
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button onclick="_cancelDeleteVenta()" style="
+        flex:1;padding:11px;border:1px solid #d8e4e3;border-radius:10px;
+        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:pointer;">
+        Cancelar
+      </button>
+      <button id="delete-confirm-btn" onclick="_confirmDeleteVenta()" style="
+        flex:1;padding:11px;border:none;border-radius:10px;
+        background:linear-gradient(135deg,#dc3545,#b02a37);color:#fff;
+        font-size:13px;font-weight:700;cursor:pointer;
+        box-shadow:0 4px 12px rgba(220,53,69,.35);">
+        Eliminar
+      </button>
+    </div>
+  </div>
+</div>
+<!-- ═══════════════════ SIDEBAR ═══════════════════ -->
+<nav id="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-icon" style="background:none;box-shadow:none;">
+      <img src="img/melimanager2.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+    </div>
+    <div>
+      <div class="sb-logo-name">Meli Manager</div>
+      <div class="sb-logo-sub">Control ML</div>
+    </div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Principal</div>
+    <div class="nav-item active" data-page="ventas"><span class="ni"><img src="img/ventas.png" alt="Ventas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Gestor Ventas</span></div>
+  </div>
+
+  <div class="sb-section">
+    <div class="sb-section-label">Operación</div>
+    <div class="nav-item" data-page="envios"><span class="ni"><img src="img/envios.png" alt="Envíos" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Envíos</span></div>
+    <div class="nav-item" data-page="problemas"><span class="ni"><img src="img/problemas.png" alt="Problemas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Problemas</span></div>
+    <div class="nav-item" data-page="ayudas"><span class="ni"><img src="img/ayuda.png" alt="Ayudas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Ayudas</span></div>
+    <div class="nav-item" data-page="finanzas"><span class="ni"><img src="img/finanzas.png" alt="Finanzas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Finanzas</span></div>
+  </div>
+
+  <div class="sb-section" style="margin-top:auto;">
+    <div class="sb-section-label">Sistema</div>
+    <div class="nav-item" data-page="configuracion"><span class="ni"><img src="img/configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
+  </div>
+
+  <div class="sb-bottom">
+    <div class="sb-ver" id="db-status">v6.0 · Conectando...</div>
+  </div>
+</nav>
+
+<!-- ═══════════════════ MAIN ═══════════════════ -->
+<div id="main">
+
+  <!-- PAGE CONTENT -->
+  <div id="page-content">
+
+    <!-- ══════════════ DASHBOARD ══════════════ -->
+    <!-- ══════════════ VENTAS & GANANCIAS (FUSIONADO) ══════════════ -->
+    <section class="page-section active" id="page-ventas">
+
+      <!-- Banner total ganancia todas las tiendas -->
+      <div id="vg-banner" style="
+        background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%);
+        border-radius:var(--radius-lg);padding:18px 24px;margin-bottom:18px;
+        display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+        box-shadow:0 4px 20px rgba(0,137,123,.25);color:#fff;
+      ">
+        <div style="flex:1;min-width:180px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:.7;margin-bottom:4px;">Ganancia Todas las tiendas</div>
+          <div id="vg-total-gan" style="font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;">$ 0</div>
+          <div id="vg-total-sub" style="font-size:11px;opacity:.65;margin-top:4px;">mes actual</div>
+        </div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <div style="text-align:center;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Ingresos</div>
+            <div id="vg-total-ing" style="font-size:19px;font-weight:700;">$ 0</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Gastos</div>
+            <div id="vg-total-cos" style="font-size:19px;font-weight:700;opacity:.8;">$ 0</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Ventas del mes</div>
+            <div id="vg-total-cnt" style="font-size:19px;font-weight:700;">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ganancia por tienda (compacto) -->
+      <div id="vg-por-tienda" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;"></div>
+
+      <!-- Filtros -->
+      <div class="filters-bar">
+        <input type="text" placeholder="Buscar ID, producto, cliente..." id="vf-search" style="min-width:200px;">
+        <span class="fl">Tienda</span>
+        <select id="vf-tienda"><option value="">Todas</option></select>
+        <span class="fl">Estado</span>
+        <select id="vf-estado">
+          <option value="">Todos</option>
+          <option value="entregado">ENTREGADA</option>
+          <option value="pendiente">PENDIENTE</option>
+          <option value="en_camino">EN CAMINO</option>
+          <option value="cancelado">CANCELADA</option>
+          <option value="problema">PROBLEMA</option>
+          <option value="devuelto">DEVUELTO</option>
+          <option value="error">ERROR</option>
+        </select>
+        <span class="fl">Día</span>
+        <input type="date" id="vf-dia" style="padding:0.4rem 0.65rem;font-size:0.85rem;">
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" id="btn-limpiar-ventas" style="display:none;" onclick="clearVentaFilters()">✕ Limpiar</button>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar datos">↻ Actualizar</button>
+        <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
+      </div>
+      <div class="table-wrap" style="max-height:calc(100vh - 370px);overflow-y:auto;">
+        <table>
+          <thead><tr>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">#</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Tienda</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">ID Venta ML</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Teléfono</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Valor COP</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">USD</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">TRM</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Importadora</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;text-align:center;">Valor Envío</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Costo Total</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Ganancia</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">Estado</th>
+            <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;"></th>
+          </tr></thead>
+          <tbody id="ventas-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:8px;font-size:11px;color:var(--text3);" id="ventas-count"></div>
+    </section>
+
+    <!-- ══════════════ ENVÍOS ══════════════ -->
+    <section class="page-section" id="page-envios">
+      <div class="c-dim" style="font-size:12px;margin-bottom:14px;">Ventas registradas agrupadas por transportadora · gestiona el estado de pago de cada envío</div>
+
+      <!-- Tarjetas resumen por transportadora -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="envios-resumen-grid">
+        <!-- Aguachica -->
+        <div style="background:#111827;border:1px solid #1f2937;border-radius:var(--radius-lg);overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1f2937;">
+            <span style="font-size:12px;font-weight:700;color:#e5e7eb;letter-spacing:1.5px;text-transform:uppercase;">Aguachica</span>
+            <span id="env-ag-total-count" style="font-size:11px;background:#1f2937;color:#9ca3af;padding:2px 10px;border-radius:20px;font-weight:600;">0 envíos</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;">
+            <div style="padding:14px 16px;cursor:pointer;border-right:1px solid #1f2937;transition:background .15s;"
+                 onclick="filtrarEnvios('aguachica','pendiente')"
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pendiente pago</div>
+              <div id="env-ag-pend-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;">0</div>
+              <div id="env-ag-pend-total" style="font-size:13px;font-weight:600;color:#d97706;margin-top:5px;">$ 0</div>
+            </div>
+            <div style="padding:14px 16px;cursor:pointer;transition:background .15s;"
+                 onclick="filtrarEnvios('aguachica','pagado')"
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pagado</div>
+              <div id="env-ag-pag-count" style="font-size:28px;font-weight:800;color:#22c55e;line-height:1;">0</div>
+              <div id="env-ag-pag-total" style="font-size:13px;font-weight:600;color:#16a34a;margin-top:5px;">$ 0</div>
+            </div>
+          </div>
+        </div>
+        <!-- Servientrega -->
+        <div style="background:#111827;border:1px solid #1f2937;border-radius:var(--radius-lg);overflow:hidden;">
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1f2937;">
+            <span style="font-size:12px;font-weight:700;color:#e5e7eb;letter-spacing:1.5px;text-transform:uppercase;">Servientrega</span>
+            <span id="env-sv-total-count" style="font-size:11px;background:#1f2937;color:#9ca3af;padding:2px 10px;border-radius:20px;font-weight:600;">0 envíos</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;">
+            <div style="padding:14px 16px;cursor:pointer;border-right:1px solid #1f2937;transition:background .15s;"
+                 onclick="filtrarEnvios('servientrega','pendiente')"
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pendiente pago</div>
+              <div id="env-sv-pend-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;">0</div>
+              <div id="env-sv-pend-total" style="font-size:13px;font-weight:600;color:#d97706;margin-top:5px;">$ 0</div>
+            </div>
+            <div style="padding:14px 16px;cursor:pointer;transition:background .15s;"
+                 onclick="filtrarEnvios('servientrega','pagado')"
+                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
+              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pagado</div>
+              <div id="env-sv-pag-count" style="font-size:28px;font-weight:800;color:#22c55e;line-height:1;">0</div>
+              <div id="env-sv-pag-total" style="font-size:13px;font-weight:600;color:#16a34a;margin-top:5px;">$ 0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filters-bar">
+        <input type="text" placeholder="Buscar ID venta, teléfono..." id="ef-search" style="min-width:200px;">
+        <span class="fl">Transportadora</span>
+        <select id="ef-empresa">
+          <option value="">Todas</option>
+          <option value="aguachica">Aguachica</option>
+          <option value="servientrega">Servientrega</option>
+        </select>
+        <span class="fl">Pago envío</span>
+        <select id="ef-pago">
+          <option value="">Todos</option>
+          <option value="pendiente">Pendiente</option>
+          <option value="pagado">Pagado</option>
+        </select>
+        <span class="fl">Tienda</span>
+        <select id="ef-tienda"><option value="">Todas</option></select>
+        <span class="fl">Mes</span>
+        <input type="month" id="ef-mes">
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" id="btn-limpiar-envios" style="display:none;" onclick="clearEnvioFilters()">✕ Limpiar</button>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-envios" onclick="refreshModulo('envios')" title="Actualizar datos">↻ Actualizar</button>
+        <button class="btn btn-success btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">Pagar seleccionados (<span id="selected-count">0</span>)</button>
+      </div>
+
+      <!-- Tabla -->
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th style="width:36px;text-align:center;"><input type="checkbox" id="chk-all-envios" title="Seleccionar todos" onchange="toggleAllEnvios(this.checked)" style="cursor:pointer;"></th>
+            <th>#</th>
+            <th>Tienda</th>
+            <th>ID Venta ML</th>
+            <th>Fecha Venta</th>
+            <th>Transportadora</th>
+            <th>Valor Envío (COP)</th>
+            <th>Estado Venta</th>
+            <th>Pago Envío</th>
+            <th>Acc.</th>
+          </tr></thead>
+          <tbody id="envios-tbody"></tbody>
+        </table>
+      </div>
+      <div style="margin-top:8px;font-size:13px;color:var(--text3);" id="envios-count"></div>
+    </section>
+
+    <!-- ══════════════ CONFIGURACIÓN ══════════════ -->
+    <section class="page-section" id="page-configuracion">
+      <div class="frow mb16">
+        <div class="c-dim" style="font-size:12px;">Ajustes del sistema, sesión y gestión de tiendas</div>
+      </div>
+
+      <!-- Sesión activa -->
+      <div class="card mb16" style="margin-bottom:14px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Sesión Activa</div>
+            <div class="card-sub">Estado de tu sesión actual</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;">
+          <div style="flex:1;min-width:180px;">
+            <div style="font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.7px;margin-bottom:4px;">Tiempo de sesión</div>
+            <div id="cfg-session-time" style="font-size:22px;font-weight:700;color:var(--teal);">—</div>
+            <div id="cfg-session-expiry" style="font-size:11px;color:var(--text3);margin-top:2px;">Calculando...</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-ghost btn-sm" onclick="_lockApp()" style="display:flex;align-items:center;gap:5px;">
+              Bloquear App
+            </button>
+            <button class="btn btn-ghost btn-sm" onclick="openModalCambiarCodigo()" style="display:flex;align-items:center;gap:5px;">
+              Cambiar Código
+            </button>
+          </div>
+        </div>
+      </div>
+      <div class="card mb16" style="margin-bottom:14px;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Dólar para compras</div>
+            <div class="card-sub">Valor fijo en COP usado para calcular compras y envíos Servientrega</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;align-items:end;flex-wrap:wrap;">
+          <div class="fg" style="min-width:220px;margin-bottom:0;">
+            <label class="fl2">Valor dólar (COP)</label>
+            <input type="number" id="cfg-dolar-compras" placeholder="3800">
+            <div id="cfg-dolar-origen" style="font-size:11px;margin-top:4px;color:var(--text3);">Cargando...</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="guardarDolarCompras()">Guardar</button>
+        </div>
+      </div>
+      
+
+      <!-- Tiendas registradas -->
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Tiendas Registradas</div>
+            <div class="card-sub">Tiendas de Mercado Libre vinculadas al sistema</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModalTienda()">+ Nueva Tienda</button>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px;" id="cfg-tiendas-grid"></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ PROBLEMAS ══════════════ -->
+    <section class="page-section" id="page-problemas">
+      <div class="frow mb16">
+        <div class="c-dim" style="font-size:12px;">Registro de problemas, novedades y su resolución por venta</div>
+        <div class="spacer"></div>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-problemas" onclick="refreshModulo('problemas')" title="Actualizar datos">↻ Actualizar</button>
+        <button class="btn btn-primary btn-sm" onclick="openModalProblema()">+ Registrar Problema</button>
+      </div>
+
+      <div class="filters-bar">
+        <input type="text" placeholder="Buscar ID venta, descripción..." id="pf-search" style="min-width:200px;">
+        <span class="fl">Estado</span>
+        <select id="pf-estado" onchange="renderProblemas()">
+          <option value="">Todos</option>
+          <option value="abierto" selected>Abierto</option>
+          <option value="resuelto">Resuelto</option>
+          <option value="perdida">Con Pérdida</option>
+        </select>
+        <span class="fl">Categoría</span>
+        <select id="pf-tipo" onchange="renderProblemas()">
+          <option value="">Todas</option>
+          <option value="producto_danado">Producto dañado</option>
+          <option value="devolucion">Devolución</option>
+          <option value="reclamo">Reclamo</option>
+          <option value="envio_perdido">Envío perdido</option>
+          <option value="no_recibio">Cliente no recibió</option>
+          <option value="diferencia_precio">Diferencia de precio</option>
+          <option value="cancelacion">Cancelación</option>
+          <option value="otro">Otro</option>
+        </select>
+        <span class="fl">Tienda</span>
+        <select id="pf-tienda"><option value="">Todas</option></select>
+        <div class="spacer"></div>
+      </div>
+
+      <div id="problemas-container"></div>
+    </section>
+
+    <!-- ══════════════ FINANZAS ══════════════ -->
+    <section class="page-section" id="page-finanzas">
+      <!-- ╔══ PLACEHOLDER "EN DESARROLLO" — el código original está intacto abajo ══╗ -->
+      <div style="
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        min-height:60vh;gap:24px;text-align:center;padding:40px 20px;
+      ">
+        <!-- Icono animado -->
+        <div style="
+          width:90px;height:90px;border-radius:50%;
+          background:linear-gradient(135deg,var(--teal-bg),#b2dfdb);
+          display:flex;align-items:center;justify-content:center;font-size:42px;
+          box-shadow:0 4px 24px rgba(0,137,123,.18);
+          animation:_finPulse 2.4s ease-in-out infinite;
+        "><img src="img/cerrado.png" alt="Construcción" style="width:100%;height:100%;object-fit:contain;"></div>
+
+        <!-- Título -->
+        <div>
+          <div style="font-size:26px;font-weight:800;color:var(--text);letter-spacing:-.5px;margin-bottom:8px;">
+            Finanzas en Desarrollo...
+          </div>
+          <div style="font-size:14px;color:var(--text3);max-width:380px;line-height:1.6;">
+            Estamos construyendo el módulo de control de saldos, pagos y gastos operativos.
+            Pronto estará disponible.
+          </div>
+        </div>
+
+        <!-- Barra de progreso decorativa -->
+        <div style="width:280px;max-width:90vw;">
+          <div style="
+            height:6px;border-radius:3px;background:var(--border);overflow:hidden;
+          ">
+            <div style="
+              height:100%;width:40%;border-radius:3px;
+              background:linear-gradient(90deg,var(--teal),var(--teal-light));
+              animation:_finBar 2s ease-in-out infinite alternate;
+            "></div>
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:8px;">Módulo en preparación</div>
+        </div>
+      </div>
+
+      <style>
+        @keyframes _finPulse {
+          0%,100%{transform:scale(1);box-shadow:0 4px 24px rgba(0,137,123,.18);}
+          50%{transform:scale(1.07);box-shadow:0 8px 36px rgba(0,137,123,.30);}
+        }
+        @keyframes _finBar {
+          from{width:25%;} to{width:65%;}
+        }
+      </style>
+
+      <!-- ╚══ CÓDIGO ORIGINAL PRESERVADO (oculto) ══╝ -->
+      <div style="display:none;" aria-hidden="true">
+        <div class="frow mb16">
+          <div class="c-dim" style="font-size:12px;">Control de saldos, pagos y gastos operativos del mes</div>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost btn-sm" onclick="renderFinanzas()">Actualizar</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModalNuevaBilletera()">+ Billetera</button>
+          <button class="btn btn-primary btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
+        </div>
+        <div class="stat-grid" id="fin-saldos" style="margin-bottom:16px;"></div>
+        <div class="card mb16" style="margin-bottom:14px;">
+          <div class="card-header">
+            <div><div class="card-title">Membresía Centris</div><div class="card-sub">Pago mensual del software de gestión de tiendas</div></div>
+            <button class="btn btn-ghost btn-sm" onclick="openModalMembresia()">Registrar pago</button>
+          </div>
+          <div id="fin-membresia"></div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="card-header"><div class="card-title">📋 Movimientos del mes</div><div><select id="fin-filtro-mes" style="font-size:11px;padding:3px 8px;" onchange="renderFinanzas()"></select></div></div>
+            <div id="fin-movimientos"></div>
+          </div>
+          <div class="card"><div class="card-header"><div class="card-title">📊 Resumen por fuente</div></div><div id="fin-por-fuente"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ AYUDAS ══════════════ -->
+    <section class="page-section" id="page-ayudas">
+      <!-- Header -->
+      <div class="frow mb16" style="align-items:flex-start;gap:12px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:200px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:3px;">Base de Conocimiento</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Mensajes & Ayudas</div>
+        </div>
+        <div class="spacer"></div>
+        <!-- Buscador Ayudas -->
+        <input type="text" id="ayuda-search" placeholder="Buscar ayuda..." style="min-width:220px;border-radius:20px;padding:0.4rem 1rem;font-size:0.85rem;"
+          oninput="renderAyudasFiltradas()">
+        <button class="btn btn-primary btn-sm" onclick="openModalAyuda()" style="border-radius:20px;gap:6px;">
+          <span style="font-size:1rem;">＋</span> Nueva Ayuda
+        </button>
+      </div>
+
+      <!-- Categorías (chips) -->
+      <div id="ayuda-cats-bar" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1.1rem;"></div>
+
+      <!-- Grid de tarjetas -->
+      <div id="ayudas-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:14px;"></div>
+
+      <!-- Empty state -->
+      <div id="ayudas-empty" class="empty-state hidden">
+        <div class="empty-icon"></div>
+        <div class="empty-title">No hay ayudas aún</div>
+        <div class="c-dim" style="font-size:0.8rem;">Crea la primera ayuda con el botón de arriba</div>
+      </div>
+    </section>
+
+  </div><!-- /page-content -->
+</div><!-- /main -->
+
+<!-- ═══════════════════ MODAL: RESOLVER PROBLEMA ═══════════════════ -->
+<div class="overlay" id="modal-resolver-problema">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
+      <div class="mh-title" id="mrp-title" style="color:#fff;font-size:15px;">✅ Resolver Problema</div>
+      <button class="mclose" onclick="closeModal('modal-resolver-problema')" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div class="mc" style="padding:20px 22px;">
+      <!-- Info del problema -->
+      <div id="mrp-info" style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--text2);"></div>
+
+      <!-- Solución obligatoria -->
+      <div class="fg" style="margin-bottom:14px;">
+        <label class="fl2" style="font-weight:700;color:var(--text);">
+          Descripción de la solución <span style="color:var(--red);">*</span>
+        </label>
+        <textarea id="mrp-solucion" rows="4" style="width:100%;resize:vertical;border:2px solid var(--border);border-radius:var(--radius);padding:8px 10px;font-size:13px;font-family:inherit;"
+          placeholder=""></textarea>
+        <div id="mrp-solucion-error" style="color:var(--red);font-size:11px;margin-top:4px;display:none;">⚠️ La solución es obligatoria para resolver el problema.</div>
+      </div>
+
+      <!-- Pérdida — solo para estado "perdida" -->
+      <div id="mrp-perdida-group" style="display:none;margin-bottom:14px;">
+        <div class="fg">
+          <label class="fl2" style="font-weight:700;color:var(--red);">
+            Valor de la pérdida (COP$) <span style="color:var(--red);">*</span>
+          </label>
+          <input type="number" id="mrp-perdida" placeholder="0" step="1000"
+            style="border:2px solid var(--red-bg);border-radius:var(--radius);padding:7px 10px;font-size:13px;width:100%;">
+          <div style="font-size:11px;color:var(--text3);margin-top:4px;">Ingresa cuánto dinero se perdió en esta novedad</div>
+        </div>
+      </div>
+
+      <!-- Resumen visual del nuevo estado -->
+      <div id="mrp-estado-preview" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius);font-size:12px;font-weight:600;"></div>
+    </div>
+    <div class="mf" style="gap:10px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-resolver-problema')">Cancelar</button>
+      <button class="btn btn-primary" id="mrp-confirmar-btn" onclick="confirmarResolver()">Confirmar</button>
+    </div>
+    <input type="hidden" id="mrp-prob-id">
+    <input type="hidden" id="mrp-estado-nuevo">
+  </div>
+</div>
+
+</body>
+</html>
+
+
+<!-- ═══════════════════ MODALES ═══════════════════ -->
+<!-- ═══════════════════ MODAL: NUEVA / EDITAR AYUDA ═══════════════════ -->
+<div class="overlay" id="modal-ayuda">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
+      <div>
+        <div class="mh-title" id="ma-title" style="color:#fff;font-size:15px;">📋 Nueva Ayuda</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Agrega un mensaje o instrucción reutilizable</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+        onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc">
+      <!-- Título -->
+      <div class="fg">
+        <label class="fl2">Título de la ayuda <span style="color:var(--red);">*</span></label>
+        <input type="text" id="ma-titulo" placeholder="Ej: Para pedir reembolso en Amazon">
+      </div>
+      <!-- Categoría -->
+      <div class="fg">
+        <label class="fl2">Categoría</label>
+        <div style="display:flex;gap:8px;">
+          <select id="ma-categoria" style="flex:1;">
+            <option value="general">General</option>
+            <option value="reembolso">Reembolso</option>
+            <option value="demoras">Demoras</option>
+            <option value="cliente">Cliente</option>
+            <option value="amazon">Amazon</option>
+            <option value="mercadolibre">Mercado Libre</option>
+            <option value="envios">Envíos</option>
+            <option value="rastreo">Rastreo</option>
+            <option value="infracciones">Infracciones</option>
+            <option value="otro">Otro</option>
+          </select>
+          <input type="text" id="ma-cat-nueva" placeholder="O escribe una nueva..." style="flex:1;">
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">Selecciona una existente <em>o</em> escribe una nueva en el campo de la derecha.</div>
+      </div>
+      <!-- Color de la tarjeta -->
+      <div class="fg">
+        <label class="fl2">Color de categoría</label>
+        <div id="ma-colores" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;"></div>
+      </div>
+      <!-- Contenido -->
+      <div class="fg">
+        <label class="fl2">Contenido / Mensaje <span style="color:var(--red);">*</span></label>
+        <textarea id="ma-contenido" rows="7" placeholder="Escribe aquí el mensaje o instrucción..." style="width:100%;resize:vertical;font-size:0.85rem;border-radius:8px;"></textarea>
+      </div>
+      <input type="hidden" id="ma-id">
+      <input type="hidden" id="ma-color" value="#00897b">
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ayuda')">Cancelar</button>
+      <button class="btn btn-primary" id="ma-guardar-btn" onclick="guardarAyuda()">Guardar Ayuda</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: VER AYUDA ═══════════════════ -->
+<div class="overlay" id="modal-ver-ayuda">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh" id="mva-header" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
+      <div style="flex:1;min-width:0;">
+        <div class="mh-title" id="mva-titulo" style="color:#fff;font-size:15px;"></div>
+        <div id="mva-cat-badge" style="margin-top:4px;"></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-ver-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+        onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc">
+      <pre id="mva-contenido" style="
+        white-space:pre-wrap;word-break:break-word;font-family:var(--font);font-size:0.9rem;
+        line-height:1.7;color:var(--text);background:var(--bg);
+        border:1px solid var(--border);border-radius:8px;padding:14px 16px;
+        max-height:55vh;overflow-y:auto;margin:0;
+      "></pre>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-ver-ayuda')">Cerrar</button>
+      <button class="btn btn-ghost" id="mva-edit-btn" onclick="" style="gap:5px;">Editar</button>
+      <button class="btn btn-primary" id="mva-copy-btn" onclick="" style="gap:5px;border-radius:20px;">
+        <span id="mva-copy-icon"></span> Copiar texto
+      </button>
+    </div>
+    <input type="hidden" id="mva-id">
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: NUEVA VENTA ═══════════════════ -->
+<div class="overlay" id="modal-venta">
+  <div class="modal modal-lg" style="border-radius:18px;overflow:hidden;border:none;max-height:95vh;">
+
+    <!-- Header oscuro -->
+    <div style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div>
+        <div class="mh-title" id="mv-title" style="color:#fff;font-size:16px;font-weight:800;letter-spacing:-.2px;">Nueva Venta</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;">Completa los campos para registrar</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-venta')" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:10px;font-size:16px;">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div class="mc" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
+
+      <!-- Sección 1: Información general -->
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Información general</div>
+      <div class="grid3" style="margin-bottom:16px;">
+        <div class="fg">
+          <label class="fl2">Tienda *</label>
+          <select id="v-tienda"></select>
+        </div>
+        <div class="fg">
+          <label class="fl2">ID Venta ML *</label>
+          <input type="text" id="v-id" placeholder="Ej: 2000015788963928">
+        </div>
+        <div class="fg">
+          <label class="fl2">Fecha de venta *</label>
+          <input type="date" id="v-fecha">
+        </div>
+        <div class="fg">
+          <label class="fl2">Unidades *</label>
+          <input type="number" id="v-udes" value="1" min="1" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">Precio de venta (COP$) *</label>
+          <input type="number" id="v-cop-venta" placeholder="0" step="1" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">TRM del día <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span></label>
+          <input type="number" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">Costo producto Amazon (USD$) *</label>
+          <input type="number" id="v-costo-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">Empresa de envío *</label>
+          <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
+            <option value="aguachica" selected>Aguachica</option>
+            <option value="servientrega">Servientrega</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label>
+          <input type="number" id="v-envio-int-usd" placeholder="0" step="1" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label>
+          <input type="number" id="v-envio-extra" placeholder="0" oninput="recalcVenta()">
+        </div>
+        <div class="fg">
+          <label class="fl2">Validación de envío</label>
+          <select id="v-envio-validado">
+            <option value="0">Sin validar</option>
+            <option value="1">Validado</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Teléfono del cliente</label>
+          <input type="tel" id="v-tel" placeholder="3001234567">
+        </div>
+        <div class="fg">
+          <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
+          <input type="text" id="v-nota" placeholder="Ej: empaque especial">
+        </div>
+      </div>
+
+      <!-- Resultado en tiempo real -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:14px;overflow:hidden;border:1.5px solid var(--border);background:var(--white);box-shadow:0 2px 12px rgba(0,137,123,.08);">
+        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#f0fdf9,#fff);">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ingresos</div>
+          <div id="c-rv-total" style="font-size:20px;font-weight:800;color:var(--teal);">$ 0</div>
+        </div>
+        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#fff5f5,#fff);">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Costos</div>
+          <div id="c-total-costos" style="font-size:20px;font-weight:800;color:var(--red);">$ 0</div>
+        </div>
+        <div style="padding:14px 16px;text-align:center;background:linear-gradient(135deg,#f0fdf4,#fff);">
+          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ganancia</div>
+          <div id="c-rv-gan" style="font-size:20px;font-weight:800;color:var(--green);">$ 0</div>
+        </div>
+      </div>
+
+      <!-- campos ocultos -->
+      <input type="hidden" id="v-envio-estimado">
+      <input type="hidden" id="v-envio-real">
+      <input type="hidden" id="v-fuente-pago">
+      <input type="hidden" id="v-monto-pago">
+      <input type="hidden" id="v-ref-pago">
+      <input type="hidden" id="v-costo-cop">
+      <input type="hidden" id="c-rv-margen">
+
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:14px 24px;border-top:1px solid var(--border);background:#f7fafa;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-venta')" style="padding:10px 20px;font-size:13px;">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveVenta()" style="padding:10px 24px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,137,123,.3);">Guardar Venta</button>
+    </div>
+
+  </div>
+</div>
+
+
+<!-- ═══════════════════ MODAL: PAGO MÚLTIPLE ENVÍOS ═══════════════════ -->
+<div class="overlay" id="modal-pago-multiple">
+  <div class="modal modal-lg">
+    <div class="mh">
+      <div class="mh-title">💰 Pago múltiple de envíos</div>
+      <button class="mclose" onclick="closeModal('modal-pago-multiple')">✕</button>
+    </div>
+    <div class="mc">
+      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:600;color:var(--teal-dark);">Total a pagar por los envíos seleccionados</span>
+        <span id="mpm-total" style="font-size:20px;font-weight:700;color:var(--teal-dark);">$ 0</span>
+      </div>
+      <div style="max-height:300px;overflow-y:auto;margin-bottom:14px;" id="mpm-lista"></div>
+      <div class="fg">
+        <label class="fl2">Nota del pago <small class="c-dim">(opcional, aplica a todos)</small></label>
+        <input type="text" id="mpm-nota" placeholder="Ej: pago en efectivo lote marzo...">
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pago-multiple')">Cancelar</button>
+      <button class="btn btn-success" onclick="confirmarPagoMultiple()">✅ Confirmar pago de todos</button>
+    </div>
+  </div>
+</div>
+
+
+<div class="overlay" id="modal-pago-envio">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-title">Registrar pago de envío</div>
+      <button class="mclose" onclick="closeModal('modal-pago-envio')">✕</button>
+    </div>
+    <div class="mc">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
+      <div class="fg">
+        <label class="fl2" id="mpe-valor-label">Valor real del envío pagado (COP$) *</label>
+        <input type="number" id="mpe-valor" placeholder="Ej: 19000" step="1">
+        <span id="mpe-valor-hint" style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span>
+        <div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;">
+          <span id="mpe-diff-text"></span>
+        </div>
+      </div>
+      <div class="fg">
+        <label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label>
+        <input type="text" id="mpe-nota" placeholder="Ej: pagado en efectivo, guía 12345...">
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-pago-envio')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPagoEnvio()">✅ Marcar como pagado</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="modal-tienda">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-title" id="mt-title">Nueva Tienda</div>
+      <button class="mclose" onclick="closeModal('modal-tienda')">✕</button>
+    </div>
+    <div class="mc">
+      <!-- Foto de perfil -->
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:18px;">
+        <div id="t-foto-preview" onclick="document.getElementById('t-foto-input').click()"
+          style="width:80px;height:80px;border-radius:50%;border:3px dashed var(--border);
+                 background:var(--bg);display:flex;align-items:center;justify-content:center;
+                 cursor:pointer;overflow:hidden;transition:border-color .2s;"
+          onmouseover="this.style.borderColor='var(--teal)'"
+          onmouseout="this.style.borderColor='var(--border)'">
+          <span style="font-size:28px;opacity:.4;">📷</span>
+        </div>
+        <input type="file" id="t-foto-input" accept="image/*" style="display:none"
+          onchange="previewFotoTienda(this)">
+        <span style="font-size:10px;color:var(--text3);">Clic para subir foto de perfil</span>
+        <input type="hidden" id="t-foto-data">
+      </div>
+      <div class="grid2">
+        <div class="fg span2"><label class="fl2">Nombre de la tienda *</label><input type="text" id="t-nombre" placeholder="Ej: SATARDSHOP"></div>
+        <div class="fg"><label class="fl2">Responsable</label><input type="text" id="t-resp" placeholder="Nombre del encargado"></div>
+        <div class="fg">
+          <label class="fl2">Estado de la tienda</label>
+          <select id="t-estado">
+            <option value="activa">🟢 Activa</option>
+            <option value="inactiva">🔴 Inactiva</option>
+          </select>
+        </div>
+        <div class="fg"><label class="fl2">Plataforma Mercado Pago</label><input type="text" id="t-mp-cuenta" placeholder="Ej: @satardshop"></div>
+        <div class="fg"><label class="fl2">Color identificativo</label><input type="color" id="t-color" value="#00897b" style="height:36px;padding:3px;"></div>
+        <div class="fg span2"><label class="fl2">Observaciones</label><textarea id="t-obs" rows="2" style="width:100%;resize:none;"></textarea></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tienda')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveTienda()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: PROBLEMA ═══════════════════ -->
+<div class="overlay" id="modal-problema">
+  <div class="modal modal-lg">
+    <div class="mh">
+      <div class="mh-title" id="mp-title">Registrar Problema</div>
+      <button class="mclose" onclick="closeModal('modal-problema')">✕</button>
+    </div>
+    <div class="mc">
+      <div class="fsec">🔍 Buscar venta relacionada</div>
+      <div class="fg">
+        <label class="fl2">ID de la venta o nombre del producto</label>
+        <div class="frow" style="gap:6px;">
+          <input type="text" id="p-buscar" placeholder="Ej: 2000015788963928 o 'Teclado'" style="flex:1;">
+          <button class="btn btn-ghost btn-sm" onclick="buscarVentaProblema()">Buscar</button>
+        </div>
+        <div id="p-buscar-resultado" style="margin-top:6px;"></div>
+      </div>
+      <div class="fg">
+        <label class="fl2">Número de venta <small class="c-dim">(opcional — si no está en Gestor de Ventas, escríbelo manualmente)</small></label>
+        <input type="text" id="p-num-venta-manual" placeholder="Ej: 2000015788963928 o referencia propia">
+      </div>
+
+      <div class="fsec">📋 Datos del problema</div>
+      <div class="grid2">
+        <div class="fg">
+          <label class="fl2">Fecha del problema</label>
+          <input type="date" id="p-fecha">
+        </div>
+        <div class="fg">
+          <label class="fl2">Tipo de problema *</label>
+          <select id="p-tipo">
+            <option value="producto_danado">Producto dañado</option>
+            <option value="devolucion">Devolución</option>
+            <option value="reclamo">Reclamo del cliente</option>
+            <option value="envio_perdido">Envío perdido</option>
+            <option value="no_recibio">Cliente no recibió</option>
+            <option value="diferencia_precio">Diferencia de precio</option>
+            <option value="cancelacion">Cancelación</option>
+            <option value="otro">Otro</option>
+          </select>
+        </div>
+        <div class="fg span2">
+          <label class="fl2">¿Qué sucedió? *</label>
+          <textarea id="p-descripcion" rows="3" style="width:100%;resize:none;" placeholder="Describe con detalle el problema..."></textarea>
+        </div>
+        <div class="fg span2">
+          <label class="fl2">Solución planteada</label>
+          <textarea id="p-solucion" rows="2" style="width:100%;resize:none;" placeholder="¿Qué se hará o qué se hizo?"></textarea>
+        </div>
+        <div class="fg">
+          <label class="fl2">Estado</label>
+          <select id="p-estado">
+            <option value="abierto">Abierto — sin resolver</option>
+            <option value="resuelto">Resuelto</option>
+            <option value="perdida">Resuelto con pérdida</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor de la pérdida (COP) <small class="c-dim">si aplica</small></label>
+          <input type="number" id="p-perdida" placeholder="0">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveProblema()">Guardar Problema</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: DETALLE VENTA ═══════════════════ -->
+<div class="overlay" id="modal-detalle">
+  <div class="modal modal-xl">
+    <div class="mh">
+      <div class="mh-title" id="md-title">Detalle de Venta</div>
+      <button class="mclose" onclick="closeModal('modal-detalle')">✕</button>
+    </div>
+    <div class="mc" id="md-body"></div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
+      <button class="btn btn-primary btn-sm" id="md-btn-problema"> Registrar Problema</button>
+      <button class="btn btn-ghost btn-sm" id="md-btn-editar"> Editar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: MOVIMIENTO FINANCIERO ═══════════════════ -->
+<div class="overlay" id="modal-movimiento">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-title" id="mov-title">Nuevo Movimiento</div>
+      <button class="mclose" onclick="closeModal('modal-movimiento')">✕</button>
+    </div>
+    <div class="mc">
+      <div class="grid2">
+        <div class="fg">
+          <label class="fl2">Fecha</label>
+          <input type="date" id="mov-fecha">
+        </div>
+        <div class="fg">
+          <label class="fl2">Tipo *</label>
+          <select id="mov-tipo">
+            <option value="ingreso">⬆️ Ingreso</option>
+            <option value="egreso" selected>⬇️ Egreso / Gasto</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Fuente / Cuenta *</label>
+          <select id="mov-fuente">
+            <option value="mercadopago">💳 Mercado Pago</option>
+            <option value="bancolombia">🏦 Bancolombia</option>
+            <option value="nequi">📱 Nequi</option>
+            <option value="daviplata">📱 Daviplata</option>
+            <option value="efectivo">💵 Efectivo</option>
+            <option value="tarjeta_credito">💳 Tarjeta de crédito</option>
+            <option value="otro">🔄 Otro</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor (COP$) *</label>
+          <input type="number" id="mov-valor" placeholder="0" step="1">
+        </div>
+        <div class="fg span2">
+          <label class="fl2">Concepto *</label>
+          <input type="text" id="mov-concepto" placeholder="Ej: Pago Amazon, recarga MP, comisión ML...">
+        </div>
+        <div class="fg span2">
+          <label class="fl2">Notas</label>
+          <textarea id="mov-notas" rows="2" style="width:100%;resize:none;" placeholder="Observaciones adicionales..."></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-movimiento')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMovimiento()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: MEMBRESÍA CENTRIS ═══════════════════ -->
+<div class="overlay" id="modal-membresia">
+  <div class="modal">
+    <div class="mh" style="background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%); color:#fff;">
+      <div class="mh-title" style="color:#fff;">Pago Membresía Centris</div>
+      <button class="mclose" onclick="closeModal('modal-membresia')" style="background:rgba(255,255,255,.1); border:none; color:#fff;">✕</button>
+    </div>
+    <div class="mc">
+      <div style="background:var(--teal-bg);border:1px solid #b8d8d8;border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--teal-dark);">
+        ℹ️ Registra el pago mensual del software Centris para el manejo de tus tiendas ML.
+      </div>
+      <div class="grid2">
+        <div class="fg">
+          <label class="fl2">Mes correspondiente</label>
+          <input type="month" id="mem-mes">
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor pagado (COP$) *</label>
+          <input type="number" id="mem-valor" placeholder="0" step="1">
+        </div>
+        <div class="fg">
+          <label class="fl2">Pagado con</label>
+          <select id="mem-fuente">
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl2">Fecha de pago</label>
+          <input type="date" id="mem-fecha">
+        </div>
+        <div class="fg span2">
+          <label class="fl2">Observaciones</label>
+          <input type="text" id="mem-obs" placeholder="Ej: Plan pro, descuento aplicado...">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-membresia')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveMembresia()"> Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: NUEVA BILLETERA ═══════════════════ -->
+<div class="overlay" id="modal-billetera">
+  <div class="modal">
+    <div class="mh">
+      <div class="mh-title">Nueva Billetera / Cuenta</div>
+      <button class="mclose" onclick="closeModal('modal-billetera')">✕</button>
+    </div>
+    <div class="mc">
+      <div class="grid2">
+        <div class="fg span2">
+          <label class="fl2">Nombre de la billetera *</label>
+          <input type="text" id="bw-nombre" placeholder="Ej: Wompi, PayU, Bancolombia Ahorro...">
+        </div>
+        <div class="fg">
+          <label class="fl2">Ícono (emoji)</label>
+          <input type="text" id="bw-icono" placeholder="💳" maxlength="4" style="font-size:20px;text-align:center;">
+        </div>
+        <div class="fg">
+          <label class="fl2">Saldo inicial (COP$)</label>
+          <input type="number" id="bw-saldo" placeholder="0" step="1">
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-billetera')">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNuevaBilletera()">Agregar Billetera</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: CAMBIAR CÓDIGO ═══════════════════ -->
+<div class="overlay" id="modal-cambiar-codigo">
+  <div class="modal" style="max-width:420px;">
+    <div class="mh">
+      <div class="mh-title">Cambiar Código de Acceso</div>
+      <button class="mclose" onclick="closeModal('modal-cambiar-codigo')">✕</button>
+    </div>
+    <div class="mc">
+      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--teal-dark);">
+        ℹ️ El nuevo código se guardará de forma segura (cifrado SHA-256) en Firebase.
+      </div>
+      <div class="fg">
+        <label class="fl2">Código actual *</label>
+        <input type="password" id="cc-actual" placeholder="Ingresa el código actual">
+      </div>
+      <div class="fg">
+        <label class="fl2">Nuevo código *</label>
+        <input type="password" id="cc-nuevo" placeholder="Mínimo 4 caracteres">
+      </div>
+      <div class="fg">
+        <label class="fl2">Confirmar nuevo código *</label>
+        <input type="password" id="cc-confirmar" placeholder="Repite el nuevo código">
+      </div>
+      <div id="cc-error" style="font-size:12px;color:var(--red);margin-top:4px;min-height:18px;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-cambiar-codigo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNuevoCodigo()">Guardar Código</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<!-- 1. Firebase: config, caché, DB -->
+<script src="js/firebase.js"></script>
+
+<!-- 2. Core: utils, TRM, calcVenta, navegación -->
+<script src="js/core.js"></script>
+
+<!-- 3. Módulos de negocio -->
+<script src="js/mod-finanzas.js"></script>
+<script src="js/mod-ventas.js"></script>
+<script src="js/mod-configuracion.js"></script>
+<script src="js/mod-ventas-crud.js"></script>
+<script src="js/mod-problemas.js"></script>
+<script src="js/mod-envios.js"></script>
+<script src="js/mod-ayudas.js"></script>
+
+<!-- 4. Init: autenticación, toast, spinner, arranque -->
+<script src="js/app-init.js"></script>
+
+</body>
+</html>
