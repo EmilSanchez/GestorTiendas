@@ -215,12 +215,19 @@
           <option value="devuelto">DEVUELTO</option>
           <option value="error">ERROR</option>
         </select>
-        <span class="fl">Mes</span>
-        <input type="month" id="vf-mes" style="padding:0.4rem 0.65rem;font-size:0.85rem;">
-        <span class="fl" id="lbl-vf-desde" style="color:var(--text3);">Desde</span>
-        <input type="date" id="vf-desde" style="padding:0.4rem 0.65rem;font-size:0.85rem;" title="Fecha desde">
-        <span class="fl" style="color:var(--text3);">Hasta</span>
-        <input type="date" id="vf-hasta" style="padding:0.4rem 0.65rem;font-size:0.85rem;" title="Fecha hasta">
+        <!-- Campos ocultos — la lógica JS los sigue leyendo -->
+        <input type="hidden" id="vf-mes">
+        <input type="hidden" id="vf-desde">
+        <input type="hidden" id="vf-hasta">
+        <!-- Date Range Picker -->
+        <div style="position:relative;" id="drp-wrap">
+          <button id="drp-btn" onclick="_drpToggle()" class="btn btn-ghost btn-sm" style="gap:6px;min-width:180px;justify-content:flex-start;">
+            <span style="opacity:.5;"></span>
+            <span id="drp-label">Período: mes actual</span>
+            <span id="drp-clear" onclick="event.stopPropagation();_drpClear()" style="display:none;margin-left:auto;opacity:.5;font-size:11px;padding:1px 5px;border-radius:4px;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=.5">✕</span>
+          </button>
+          <div id="drp-panel" style="display:none;"></div>
+        </div>
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" id="btn-limpiar-ventas" style="display:none;" onclick="clearVentaFilters()">✕ Limpiar</button>
         <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar datos">↻ Actualizar</button>
