@@ -143,14 +143,14 @@ function renderAyudasFiltradas() {
     <div class="ayuda-card" style="animation-delay:${delay}ms;" onclick="verAyuda('${a.id}')">
       <div class="ayuda-card-bar" style="background:${color};"></div>
       <div class="ayuda-card-body">
-      <div class="ayuda-card-titulo">${_esc(a.titulo)}</div>
-      <div class="ayuda-card-preview">${preview}</div>
+        <div class="ayuda-card-titulo">${_esc(a.titulo)}</div>
+        <div class="ayuda-card-preview">${preview}</div>
       </div>
       <div class="ayuda-card-footer">
-      <span class="ayuda-cat-chip" style="background:${color}22;color:${color};border-color:${color}44;">${cat}</span>
-      <button class="ayuda-copy-btn" id="copy-btn-${a.id}" onclick="event.stopPropagation();copiarAyuda('${a.id}',this)" title="Copiar mensaje">Copiar</button>
-      <button class="ayuda-edit-btn" onclick="event.stopPropagation();openModalAyuda('${a.id}')" title="Editar"><img src="img/editar.png" alt=""/></button>
-      <button class="ayuda-del-btn"  onclick="event.stopPropagation();eliminarAyuda('${a.id}')" title="Eliminar"><img src="img/eliminar.png" alt=""/></button>
+        <span class="ayuda-cat-chip" style="background:${color}22;color:${color};border-color:${color}44;">${cat}</span>
+        <button class="ayuda-copy-btn" id="copy-btn-${a.id}" onclick="event.stopPropagation();copiarAyuda('${a.id}',this)" title="Copiar mensaje">📋 Copiar</button>
+        <button class="ayuda-edit-btn" onclick="event.stopPropagation();openModalAyuda('${a.id}')" title="Editar">✏️</button>
+        <button class="ayuda-del-btn"  onclick="event.stopPropagation();eliminarAyuda('${a.id}')" title="Eliminar">🗑</button>
       </div>
     </div>`;
   }).join('');
@@ -340,13 +340,36 @@ function copiarAyuda(id, btn) {
   });
 }
 
-// ── ELIMINAR ──
+// ── ELIMINAR — modal elegante ──
+let _ayudaIdPendienteEliminar = null;
+
 function eliminarAyuda(id) {
-  const a = _ayudas.find(x=>x.id===id);
-  if(!a) return;
-  if(!confirm(`¿Eliminar la ayuda "${a.titulo}"?`)) return;
-  _ayudas = _ayudas.filter(x=>x.id!==id);
+  const a = _ayudas.find(x => x.id === id);
+  if (!a) return;
+  _ayudaIdPendienteEliminar = id;
+
+  // Poblar modal de confirmación
+  document.getElementById('mdel-ayuda-nombre').textContent = a.titulo;
+  const color = a.color || '#00897b';
+  document.getElementById('mdel-ayuda-cat').innerHTML =
+    `<span class="ayuda-cat-chip" style="background:${color}22;color:${color};border-color:${color}44;font-size:0.7rem;">
+      ${_catLabel(a.categoria)}
+    </span>`;
+
+  document.getElementById('modal-delete-ayuda').classList.add('open');
+}
+
+function _confirmarEliminarAyuda() {
+  if (!_ayudaIdPendienteEliminar) return;
+  _ayudas = _ayudas.filter(x => x.id !== _ayudaIdPendienteEliminar);
   _saveAyudas();
+  _ayudaIdPendienteEliminar = null;
+  closeModal('modal-delete-ayuda');
   showToast('🗑 Ayuda eliminada', 'info', 2000);
   renderAyudasFiltradas();
+}
+
+function _cancelarEliminarAyuda() {
+  _ayudaIdPendienteEliminar = null;
+  closeModal('modal-delete-ayuda');
 }

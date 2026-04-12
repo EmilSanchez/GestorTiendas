@@ -95,29 +95,92 @@ function showToast(msg, type = 'info', duration = 3000) {
 // ══════════════════════════════════════════════════════════
 // REFRESH MÓDULO
 // ══════════════════════════════════════════════════════════
+// ── ANIMACIÓN SLIDE-UP por ítem al actualizar ──
+const _REFRESH_STYLE_ID = '_refresh-anim-style';
+
+function _injectRefreshStyle() {
+  if (document.getElementById(_REFRESH_STYLE_ID)) return;
+  const s = document.createElement('style');
+  s.id = _REFRESH_STYLE_ID;
+  s.textContent = `
+    @keyframes _slideUp {
+      from { opacity:0; transform:translateY(18px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    ._refresh-item {
+      animation: _slideUp .22s cubic-bezier(.25,.46,.45,.94) both;
+    }
+  `;
+  document.head.appendChild(s);
+}
+
+// Aplica animación escalonada a los hijos directos de un contenedor
+function _animateContainer(containerId, childSelector) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const items = childSelector
+    ? container.querySelectorAll(childSelector)
+    : container.children;
+  Array.from(items).forEach((el, i) => {
+    el.classList.remove('_refresh-item');
+    // Forzar reflow para reiniciar la animación
+    void el.offsetWidth;
+    el.style.animationDelay = `${i * 30}ms`;
+    el.classList.add('_refresh-item');
+  });
+}
+
 async function refreshModulo(page) {
+  _injectRefreshStyle();
+
   const btn = document.getElementById(`btn-actualizar-${page}`);
+  const originalHTML = btn ? btn.innerHTML : null;
+
+  // ── Deshabilitar botón brevemente ──
   if (btn) {
     btn.disabled = true;
-    btn.style.opacity = '.6';
-    const originalHTML = btn.innerHTML;
-    const span = document.createElement('span');
-    span.className = '_ri btn-refreshing';
-    span.style.display = 'inline-block';
-    span.textContent = '↻';
-    btn.innerHTML = '';
-    btn.appendChild(span);
-    btn.appendChild(document.createTextNode(' Actualizando...'));
-    await new Promise(r => setTimeout(r, 500));
+    btn.style.opacity = '.5';
+  }
+
+  // ── Limpiar TODO el caché y recargar desde Firebase ──
+  Object.keys(_cache).forEach(k => { _cache[k] = null; });
+  await _cargarTodo();
+  await render(page);
+
+  // ── Animar los ítems del módulo recién renderizado ──
+  switch (page) {
+    case 'ventas':
+      _animateContainer('ventas-tbody', 'tr');
+      break;
+    case 'envios':
+      _animateContainer('envios-tbody', 'tr');
+      break;
+    case 'problemas':
+      _animateContainer('problemas-container', '.prob-card');
+      break;
+    case 'ayudas':
+      _animateContainer('ayudas-grid', '.ayuda-card');
+      break;
+    case 'configuracion':
+      _animateContainer('cfg-tiendas-grid', ':scope > div');
+      break;
+    case 'finanzas':
+      _animateContainer('fin-saldos', '.stat-card');
+      _animateContainer('fin-movimientos', ':scope > *');
+      break;
+    default:
+      // Animar cualquier hijo directo del page-section
+      _animateContainer(`page-${page}`, ':scope > *');
+  }
+
+  // ── Restaurar botón ──
+  if (btn) {
     btn.innerHTML = originalHTML;
     btn.disabled = false;
     btn.style.opacity = '1';
   }
-  _cache[page === 'ventas' ? 'ventas' : page === 'envios' ? 'ventas' : page === 'problemas' ? 'problemas' : page] = null;
-  if (page === 'envios') _cache.ventas = null;
-  await _cargarTodo();
-  await render(page);
-  showToast('Datos actualizados', 'success', 2000);
+
+  showToast('✅ Datos actualizados', 'success', 2000);
 }
 
 // ══════════════════════════════════════════════════════════

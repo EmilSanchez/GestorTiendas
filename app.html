@@ -412,6 +412,9 @@
         <div class="c-dim" style="font-size:12px;">Registro de problemas, novedades y su resolución por venta</div>
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" id="btn-actualizar-problemas" onclick="refreshModulo('problemas')" title="Actualizar datos">↻ Actualizar</button>
+        <button class="btn btn-ghost btn-sm" onclick="openModalCategorias()" title="Gestionar categorías de problema" style="gap:5px;">
+          🏷 Categorías
+        </button>
         <button class="btn btn-primary btn-sm" onclick="openModalProblema()">+ Registrar Problema</button>
       </div>
 
@@ -427,14 +430,6 @@
         <span class="fl">Categoría</span>
         <select id="pf-tipo" onchange="renderProblemas()">
           <option value="">Todas</option>
-          <option value="producto_danado">Producto dañado</option>
-          <option value="devolucion">Devolución</option>
-          <option value="reclamo">Reclamo</option>
-          <option value="envio_perdido">Envío perdido</option>
-          <option value="no_recibio">Cliente no recibió</option>
-          <option value="diferencia_precio">Diferencia de precio</option>
-          <option value="cancelacion">Cancelación</option>
-          <option value="otro">Otro</option>
         </select>
         <span class="fl">Tienda</span>
         <select id="pf-tienda"><option value="">Todas</option></select>
@@ -940,14 +935,6 @@
         <div class="fg">
           <label class="fl2">Tipo de problema *</label>
           <select id="p-tipo">
-            <option value="producto_danado">Producto dañado</option>
-            <option value="devolucion">Devolución</option>
-            <option value="reclamo">Reclamo del cliente</option>
-            <option value="envio_perdido">Envío perdido</option>
-            <option value="no_recibio">Cliente no recibió</option>
-            <option value="diferencia_precio">Diferencia de precio</option>
-            <option value="cancelacion">Cancelación</option>
-            <option value="otro">Otro</option>
           </select>
         </div>
         <div class="fg span2">
@@ -1174,6 +1161,79 @@
 
 <!-- 4. Init: autenticación, toast, spinner, arranque -->
 <script src="js/app-init.js"></script>
+
+<!-- ═══════════════════ MODAL: GESTIONAR CATEGORÍAS DE PROBLEMA ═══════════════════ -->
+<div class="overlay" id="modal-categorias">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:15px;">🏷 Categorías de Problema</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-categorias')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
+               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+        onmouseover="this.style.background='rgba(255,255,255,.25)'"
+        onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="padding:16px 20px;">
+      <div id="cat-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div>
+      <div style="border-top:1px solid var(--border);padding-top:14px;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
+                    color:var(--text2);margin-bottom:8px;">Nueva categoría</div>
+        <div style="display:flex;gap:8px;">
+          <input type="text" id="cat-nueva-label" placeholder="Ej: Fraude, Garantía..."
+            style="flex:1;border-radius:8px;"
+            onkeydown="if(event.key==='Enter') agregarCat()"
+            onfocus="this.style.borderColor='var(--teal)'"
+            onblur="this.style.borderColor='var(--border)'">
+          <button onclick="agregarCat()" class="btn btn-primary btn-sm" style="border-radius:8px;white-space:nowrap;">+ Agregar</button>
+        </div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-categorias')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: CONFIRMAR ELIMINAR AYUDA ═══════════════════ -->
+<div class="overlay" id="modal-delete-ayuda">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 100%);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:15px;">🗑 Eliminar ayuda</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Esta acción no se puede deshacer</div>
+      </div>
+      <button class="mclose" onclick="_cancelarEliminarAyuda()"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
+               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'"
+        onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:28px 24px 20px;">
+      <div style="font-size:36px;margin-bottom:14px;animation:ayudaIn .3s ease;">🗑️</div>
+      <div style="font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.4;"
+           id="mdel-ayuda-nombre"></div>
+      <div id="mdel-ayuda-cat" style="margin-bottom:16px;"></div>
+      <div style="font-size:0.82rem;color:var(--text2);background:var(--red-bg);
+                  border:1px solid #fecaca;border-radius:8px;padding:10px 14px;">
+        ¿Estás seguro que quieres eliminar esta ayuda?
+      </div>
+    </div>
+    <div class="mf" style="gap:10px;">
+      <button class="btn btn-ghost" onclick="_cancelarEliminarAyuda()" style="flex:1;">Cancelar</button>
+      <button onclick="_confirmarEliminarAyuda()" style="
+        flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;
+        font-size:0.85rem;font-weight:700;font-family:inherit;
+        background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;
+        box-shadow:0 3px 10px rgba(220,38,38,.35);transition:opacity .15s;"
+        onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
+        Sí, eliminar
+      </button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>
