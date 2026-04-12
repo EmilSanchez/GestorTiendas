@@ -248,47 +248,62 @@ async function saveVenta() {
 }
 
 async function renderVentas() {
-  // Refresh the banner totals too
   const tiendas = await DB.tiendas();
   let ventas    = await DB.ventas();
 
-  const m  = mes();
-  const vm = ventas.filter(v=>v.fecha_venta?.startsWith(m));
-  const totalGan    = vm.reduce((s,v)=>s+calcVenta(v).ganancia,0);
-  const totalVenta  = vm.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
-  const totalCostos = vm.reduce((s,v)=>s+calcVenta(v).totalCostos,0);
-  const marGen      = totalVenta>0?(totalGan/totalVenta)*100:0;
+  // ── Banner: usar el período activo (igual que renderVentasGanancias) ──
+  const periodo     = _getPeriodoActivo();
+  const ventasPer   = _filtrarPorPeriodo(ventas, periodo);
+  const labelPer    = _labelPeriodo(periodo);
+  const totalGan    = ventasPer.reduce((s,v) => s + calcVenta(v).ganancia,    0);
+  const totalVenta  = ventasPer.reduce((s,v) => s + calcVenta(v).totalVenta,  0);
+  const totalCostos = ventasPer.reduce((s,v) => s + calcVenta(v).totalCostos, 0);
+  const marGen      = totalVenta > 0 ? (totalGan / totalVenta) * 100 : 0;
   const elGan = document.getElementById('vg-total-gan');
   const elIng = document.getElementById('vg-total-ing');
   const elCos = document.getElementById('vg-total-cos');
   const elMar = document.getElementById('vg-total-mar');
   const elCnt = document.getElementById('vg-total-cnt');
-  if(elGan) elGan.textContent = fmt(totalGan);
-  if(elIng) elIng.textContent = fmt(totalVenta);
-  if(elCos) elCos.textContent = fmt(totalCostos);
-  if(elMar) elMar.textContent = fmtP(marGen);
-  if(elCnt) elCnt.textContent = vm.length;
+  const elSub = document.getElementById('vg-total-sub');
+  if (elGan) elGan.textContent = fmt(totalGan);
+  if (elIng) elIng.textContent = fmt(totalVenta);
+  if (elCos) elCos.textContent = fmt(totalCostos);
+  if (elMar) elMar.textContent = fmtP(marGen);
+  if (elCnt) elCnt.textContent = ventasPer.length;
+  if (elSub) elSub.textContent = labelPer;
 
-  const s   = gv('vf-search').toLowerCase();
-  const ft  = gv('vf-tienda');
-  const fe  = gv('vf-estado');
-  const fm  = gv('vf-mes');
-  const fd  = gv('vf-dia');
+  // ── Filtros de tabla ──
+  const s      = (document.getElementById('vf-search')?.value  || '').toLowerCase();
+  const ft     = document.getElementById('vf-tienda')?.value   || '';
+  const fe     = document.getElementById('vf-estado')?.value   || '';
+  const fm     = document.getElementById('vf-mes')?.value      || '';
+  const fDesde = document.getElementById('vf-desde')?.value    || '';
+  const fHasta = document.getElementById('vf-hasta')?.value    || '';
 
-  // Mostrar botón Limpiar solo si hay algún filtro activo
+  const hayFiltro = s || ft || fe || fm || fDesde || fHasta;
   const btnLimpiar = document.getElementById('btn-limpiar-ventas');
-  if(btnLimpiar) btnLimpiar.style.display = (s||ft||fe||fm||fd) ? 'inline-flex' : 'none';
+  if (btnLimpiar) btnLimpiar.style.display = hayFiltro ? 'inline-flex' : 'none';
 
-  if(s)  ventas = ventas.filter(v=>(v.id_ml+v.telefono+v.nota).toLowerCase().includes(s));
-  if(ft) ventas = ventas.filter(v=>v.tienda_id===ft);
-  if(fe) ventas = ventas.filter(v=>v.estado===fe);
-  if(fd) ventas = ventas.filter(v=>v.fecha_venta===fd);          // día exacto
-  else if(fm) ventas = ventas.filter(v=>v.fecha_venta?.startsWith(fm)); // mes si no hay día
-  // Ordenar de más antigua a más reciente para asignar número cronológico
-  ventas.sort((a,b)=>(a.fecha_venta||'').localeCompare(b.fecha_venta||''));
-  // Asignar número cronológico (1 = primera venta del período)
-  const ventasConNum = ventas.map((v,i)=>({ ...v, _num: i+1 }));
-  // Invertir para mostrar la más reciente arriba
+  // Aplicar filtros sobre el total de ventas
+  if (s)  ventas = ventas.filter(v => (v.id_ml+v.telefono+v.nota).toLowerCase().includes(s));
+  if (ft) ventas = ventas.filter(v => v.tienda_id === ft);
+  if (fe) ventas = ventas.filter(v => v.estado    === fe);
+
+  // Período: rango tiene prioridad sobre mes
+  if (fDesde || fHasta) {
+    ventas = ventas.filter(v => {
+      const f = v.fecha_venta || '';
+      if (fDesde && f < fDesde) return false;
+      if (fHasta && f > fHasta) return false;
+      return true;
+    });
+  } else if (fm) {
+    ventas = ventas.filter(v => v.fecha_venta?.startsWith(fm));
+  }
+
+  // Ordenar cronológico → invertir para mostrar más reciente arriba
+  ventas.sort((a,b) => (a.fecha_venta||'').localeCompare(b.fecha_venta||''));
+  const ventasConNum  = ventas.map((v,i) => ({ ...v, _num: i+1 }));
   const ventasMostrar = [...ventasConNum].reverse();
 
   document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
@@ -548,11 +563,9 @@ async function _confirmarValidarEnvio() {
 }
 
 function clearVentaFilters() {
-  ['vf-search','vf-mes','vf-dia'].forEach(i=>sv(i,''));
-  ['vf-tienda','vf-estado'].forEach(i=>sv(i,''));
-  const btnLimpiar = document.getElementById('btn-limpiar-ventas');
-  if(btnLimpiar) btnLimpiar.style.display = 'none';
-  renderVentas();
+  ['vf-search','vf-mes','vf-desde','vf-hasta'].forEach(i => sv(i,''));
+  ['vf-tienda','vf-estado'].forEach(i => sv(i,''));
+  renderVentasGanancias();
 }
 
 async function verDetalleVenta(id) {
@@ -620,4 +633,3 @@ function dr(label, val) {
   return `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:12px;">
     <span class="c-dim">${label}</span><span>${val}</span></div>`;
 }
-

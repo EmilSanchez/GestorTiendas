@@ -259,7 +259,7 @@ async function init() {
     if (refEl && !refEl.value) refEl.value = this.value ? '#' + this.value : '';
   });
 
-  ['vf-search','vf-tienda','vf-estado','vf-mes','vf-dia'].forEach(id => {
+  ['vf-search','vf-tienda','vf-estado','vf-mes','vf-desde','vf-hasta'].forEach(id => {
     document.getElementById(id)?.addEventListener('input',  () => renderVentasGanancias());
     document.getElementById(id)?.addEventListener('change', () => renderVentasGanancias());
   });

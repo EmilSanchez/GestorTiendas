@@ -201,7 +201,7 @@
 
       <!-- Filtros -->
       <div class="filters-bar">
-        <input type="text" placeholder="Buscar ID, producto, cliente..." id="vf-search" style="min-width:200px;">
+        <input type="text" placeholder="Buscar ID, teléfono..." id="vf-search" style="min-width:160px;">
         <span class="fl">Tienda</span>
         <select id="vf-tienda"><option value="">Todas</option></select>
         <span class="fl">Estado</span>
@@ -215,8 +215,12 @@
           <option value="devuelto">DEVUELTO</option>
           <option value="error">ERROR</option>
         </select>
-        <span class="fl">Día</span>
-        <input type="date" id="vf-dia" style="padding:0.4rem 0.65rem;font-size:0.85rem;">
+        <span class="fl">Mes</span>
+        <input type="month" id="vf-mes" style="padding:0.4rem 0.65rem;font-size:0.85rem;">
+        <span class="fl" id="lbl-vf-desde" style="color:var(--text3);">Desde</span>
+        <input type="date" id="vf-desde" style="padding:0.4rem 0.65rem;font-size:0.85rem;" title="Fecha desde">
+        <span class="fl" style="color:var(--text3);">Hasta</span>
+        <input type="date" id="vf-hasta" style="padding:0.4rem 0.65rem;font-size:0.85rem;" title="Fecha hasta">
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" id="btn-limpiar-ventas" style="display:none;" onclick="clearVentaFilters()">✕ Limpiar</button>
         <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar datos">↻ Actualizar</button>
