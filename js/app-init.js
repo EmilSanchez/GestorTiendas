@@ -136,10 +136,10 @@ async function refreshModulo(page) {
   const btn = document.getElementById(`btn-actualizar-${page}`);
   const originalHTML = btn ? btn.innerHTML : null;
 
-  // ── Deshabilitar botón brevemente ──
+  // ── Girar el ícono ↻ mientras carga ──
   if (btn) {
     btn.disabled = true;
-    btn.style.opacity = '.5';
+    btn.innerHTML = `<span style="display:inline-block;animation:_spin .6s linear infinite;">↻</span> Actualizar`;
   }
 
   // ── Limpiar TODO el caché y recargar desde Firebase ──
@@ -177,7 +177,6 @@ async function refreshModulo(page) {
   if (btn) {
     btn.innerHTML = originalHTML;
     btn.disabled = false;
-    btn.style.opacity = '1';
   }
 
   showToast('✅ Datos actualizados', 'success', 2000);
