@@ -183,7 +183,7 @@ function openModalAyuda(id) {
   const modal = document.getElementById('modal-ayuda');
   const ayuda = id ? _ayudas.find(a=>a.id===id) : null;
 
-  document.getElementById('ma-title').textContent    = ayuda ? '✏️ Editar Ayuda' : '📋 Nueva Ayuda';
+  document.getElementById('ma-title').textContent    = ayuda ? 'Editar Ayuda' : 'Nueva Ayuda';
   document.getElementById('ma-titulo').value         = ayuda?.titulo    || '';
   document.getElementById('ma-contenido').value      = ayuda?.contenido || '';
   document.getElementById('ma-id').value             = ayuda?.id        || '';
@@ -281,7 +281,7 @@ async function guardarAyuda() {
 
   // Confirmación elegante
   showConfirmAnim(id ? 'edit' : 'venta', !!id);
-  showToast(id ? '✏️ Ayuda actualizada' : '✅ Ayuda guardada', 'success', 2200);
+  showToast(id ? '✏️ Ayuda actualizada' : 'Ayuda guardada', 'success', 2200);
 
   renderAyudasFiltradas();
 }
@@ -315,15 +315,15 @@ function verAyuda(id) {
   const copyIcon = document.getElementById('mva-copy-icon');
   copyBtn.onclick = () => {
     navigator.clipboard.writeText(a.contenido).then(()=>{
-      copyIcon.textContent = '✅';
+      copyIcon.textContent = '';
       copyBtn.style.background = 'var(--green)';
       copyBtn.style.borderColor = '#157347';
       setTimeout(()=>{
-        copyIcon.textContent = '📋';
+        copyIcon.textContent = '';
         copyBtn.style.background = '';
         copyBtn.style.borderColor = '';
       }, 1800);
-      showToast('📋 Texto copiado al portapapeles', 'success', 2000);
+      showToast('Texto copiado al portapapeles', 'success', 2000);
     });
   };
 
