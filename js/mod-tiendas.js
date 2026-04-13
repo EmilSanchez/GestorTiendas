@@ -70,7 +70,7 @@ async function deleteTienda(id) {
   if(!t) return;
   const ventasAsociadas = (await DB.ventas()).filter(v=>v.tienda_id===id).length;
   const msg = ventasAsociadas > 0
-    ? `⚠️ La tienda "${t.nombre}" tiene ${ventasAsociadas} venta(s) asociada(s).\n¿Seguro que deseas eliminarla? Las ventas no se borrarán.`
+    ? `¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿¿La tienda "${t.nombre}" tiene ${ventasAsociadas} venta(s) asociada(s).\n¿Seguro que deseas eliminarla? Las ventas no se borrarán.`
     : `¿Eliminar la tienda "${t.nombre}"?`;
   if(!confirm(msg)) return;
   await DB.saveTiendas((await DB.tiendas()).filter(x=>x.id!==id));

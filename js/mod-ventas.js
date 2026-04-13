@@ -158,7 +158,7 @@ async function renderAlertas() {
         </div>
         <span style="font-size:11px;color:var(--teal);">Ir →</span>
       </div>`).join('')
-    : '<div class="empty-state"><div class="empty-icon">✅</div><div class="empty-title">Sin alertas activas</div><div class="c-dim" style="font-size:12px;">Tu operación está al día</div></div>';
+    : '<div class="empty-state"><div class="empty-icon"></div><div class="empty-title">Sin alertas activas</div><div class="c-dim" style="font-size:12px;">Tu operación está al día</div></div>';
 }
 
 // ── TIENDAS ──

@@ -125,11 +125,11 @@ async function guardarDolarCompras() {
     // Actualizar badge en modal de venta
     const badge = document.getElementById('trm-auto-badge');
     if(badge) { badge.textContent = 'FIJO BD'; badge.style.background = 'var(--green-bg)'; badge.style.color = 'var(--green)'; }
-    showToast('✅ Dólar actualizado: $ ' + Number(val).toLocaleString('es-CO'), 'success');
+    showToast('Dólar actualizado: $ ' + Number(val).toLocaleString('es-CO'), 'success');
     await cargarDolarComprasEnConfig();
   } catch(e) {
     console.error(e);
-    showToast('❌ Error al guardar. Verifica Firebase.', 'error');
+    showToast('Error al guardar. Verifica Firebase.', 'error');
   } finally {
     if(btn) { btn.textContent = 'Guardar'; btn.disabled = false; }
   }
@@ -146,10 +146,10 @@ async function cargarDolarComprasEnConfig() {
   const infoEl = document.getElementById('cfg-dolar-origen');
   if(infoEl) {
     if(ajustes.dolar_compras_cop > 0) {
-      infoEl.textContent = `✅ Valor guardado en Firebase: $ ${Number(ajustes.dolar_compras_cop).toLocaleString('es-CO')}`;
+      infoEl.textContent = `Valor guardado en Firebase: $ ${Number(ajustes.dolar_compras_cop).toLocaleString('es-CO')}`;
       infoEl.style.color = 'var(--green)';
     } else {
-      infoEl.textContent = `⚠️ Sin valor en BD — usando TRM del día: $ ${Number(TRM_ACTUAL).toLocaleString('es-CO')}`;
+      infoEl.textContent = `Sin valor en BD — usando TRM del día: $ ${Number(TRM_ACTUAL).toLocaleString('es-CO')}`;
       infoEl.style.color = 'var(--yellow)';
     }
   }
@@ -443,7 +443,7 @@ async function _confirmDeleteVenta() {
 
   try {
     const snap = await _db.collection('config').doc('auth').get();
-    if(!snap.exists) { errEl.textContent = '⚠️ No hay código configurado.'; btn.textContent = 'Eliminar'; btn.disabled = false; return; }
+    if(!snap.exists) { errEl.textContent = 'No hay código configurado.'; btn.textContent = 'Eliminar'; btn.disabled = false; return; }
     const hashGuardado  = snap.data().hash;
     const hashIngresado = await _hashCode(codigo);
 

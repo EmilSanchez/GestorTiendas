@@ -179,7 +179,7 @@ async function refreshModulo(page) {
     btn.disabled = false;
   }
 
-  showToast('✅ Datos actualizados', 'success', 2000);
+  showToast('Datos actualizados', 'success', 2000);
 }
 
 // ══════════════════════════════════════════════════════════
