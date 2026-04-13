@@ -148,9 +148,15 @@ function renderAyudasFiltradas() {
       </div>
       <div class="ayuda-card-footer">
         <span class="ayuda-cat-chip" style="background:${color}22;color:${color};border-color:${color}44;">${cat}</span>
-        <button class="ayuda-copy-btn" id="copy-btn-${a.id}" onclick="event.stopPropagation();copiarAyuda('${a.id}',this)" title="Copiar mensaje">📋 Copiar</button>
-        <button class="ayuda-edit-btn" onclick="event.stopPropagation();openModalAyuda('${a.id}')" title="Editar">✏️</button>
-        <button class="ayuda-del-btn"  onclick="event.stopPropagation();eliminarAyuda('${a.id}')" title="Eliminar">🗑</button>
+      <button class="ayuda-copy-btn" id="copy-btn-${a.id}" onclick="event.stopPropagation();copiarAyuda('${a.id}',this)" title="Copiar mensaje">
+        <img src="img/copiar.png" alt="Copiar" style="width:13px;height:13px;object-fit:contain;opacity:.7;">
+      </button>
+      <button class="ayuda-edit-btn" onclick="event.stopPropagation();openModalAyuda('${a.id}')" title="Editar">
+        <img src="img/editar.png" alt="Editar" style="width:13px;height:13px;object-fit:contain;opacity:.7;">
+      </button>
+      <button class="ayuda-del-btn"  onclick="event.stopPropagation();eliminarAyuda('${a.id}')" title="Eliminar">
+        <img src="img/eliminar.png" alt="Eliminar" style="width:13px;height:13px;object-fit:contain;opacity:.7;">
+      </button>
       </div>
     </div>`;
   }).join('');
@@ -326,17 +332,19 @@ function verAyuda(id) {
 
 // ── COPIAR DESDE TARJETA ──
 function copiarAyuda(id, btn) {
-  const a = _ayudas.find(x=>x.id===id);
-  if(!a) return;
-  navigator.clipboard.writeText(a.contenido).then(()=>{
-    const orig = btn.innerHTML;
+  const a = _ayudas.find(x => x.id === id);
+  if (!a) return;
+  navigator.clipboard.writeText(a.contenido).then(() => {
+    const img = btn.querySelector('img');
+    if (img) img.style.opacity = '1';
     btn.classList.add('copied');
-    btn.innerHTML = '✅ Copiado';
-    setTimeout(()=>{
+    btn.title = 'Copiado!';
+    setTimeout(() => {
       btn.classList.remove('copied');
-      btn.innerHTML = orig;
+      if (img) img.style.opacity = '.7';
+      btn.title = 'Copiar mensaje';
     }, 1800);
-    showToast('📋 Mensaje copiado', 'success', 2000);
+    showToast('Mensaje copiado', 'success', 2000);
   });
 }
 

@@ -23,7 +23,10 @@ const _CATS_DEFAULT = [
 function _getCats() {
   try {
     const raw = localStorage.getItem(_CATS_KEY);
-    return raw ? JSON.parse(raw) : [..._CATS_DEFAULT];
+    if (raw) return JSON.parse(raw);
+    // Primera vez: guardar los defaults para que persistan
+    localStorage.setItem(_CATS_KEY, JSON.stringify(_CATS_DEFAULT));
+    return [..._CATS_DEFAULT];
   } catch { return [..._CATS_DEFAULT]; }
 }
 
@@ -31,7 +34,7 @@ function _saveCats(cats) {
   localStorage.setItem(_CATS_KEY, JSON.stringify(cats));
 }
 
-// Sincroniza el objeto TIPO_LABELS con las categorías actuales
+// Sincroniza TIPO_LABELS con las categorías actuales
 function _buildTipoLabels() {
   const obj = {};
   _getCats().forEach(c => { obj[c.id] = c.label; });
@@ -46,7 +49,6 @@ function _fillTipoSelects() {
   const optsFilter = '<option value="">Todas</option>' +
     cats.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
   const optsForm = cats.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
-
   const pf = document.getElementById('pf-tipo');
   const pt = document.getElementById('p-tipo');
   if (pf) pf.innerHTML = optsFilter;
@@ -92,7 +94,7 @@ function _renderCatList() {
   `).join('');
 }
 
-function guardarCat(i) {
+async function guardarCat(i) {
   const cats = _getCats();
   const input = document.getElementById(`cat-label-${i}`);
   if (!input) return;
@@ -103,9 +105,24 @@ function guardarCat(i) {
     setTimeout(() => { input.style.borderColor = 'var(--border)'; input.classList.remove('shake'); }, 500);
     return;
   }
-  cats[i].label = newLabel;
+  const oldId    = cats[i].id;
+  const oldLabel = cats[i].label;
+  cats[i].label  = newLabel;
   _saveCats(cats);
   _fillTipoSelects();
+
+  // Actualizar tipo_label en todos los problemas de Firebase que usen este tipo
+  if (oldLabel !== newLabel) {
+    try {
+      const problemas = await DB.problemas();
+      let cambios = 0;
+      problemas.forEach(p => {
+        if (p.tipo === oldId) { p.tipo_label = newLabel; cambios++; }
+      });
+      if (cambios > 0) await DB.saveProblemas(problemas);
+    } catch(e) { console.warn('No se pudo actualizar tipo_label en Firebase:', e); }
+  }
+
   // Flash verde en la fila
   const row = document.getElementById(`cat-row-${i}`);
   if (row) {
@@ -116,7 +133,7 @@ function guardarCat(i) {
   showToast('✅ Categoría actualizada', 'success', 1800);
 }
 
-function _eliminarCat(i) {
+async function _eliminarCat(i) {
   const cats = _getCats();
   if (cats.length <= 1) return;
   cats.splice(i, 1);
@@ -126,7 +143,7 @@ function _eliminarCat(i) {
   showToast('Categoría eliminada', 'info', 1800);
 }
 
-function agregarCat() {
+async function agregarCat() {
   const input = document.getElementById('cat-nueva-label');
   if (!input) return;
   const label = input.value.trim();
@@ -136,7 +153,7 @@ function agregarCat() {
     setTimeout(() => { input.style.borderColor = 'var(--border)'; input.classList.remove('shake'); }, 500);
     return;
   }
-  const id = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '');
+  const id = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_áéíóúñ]/g, '').replace(/[áéíóúñ]/g, c => ({á:'a',é:'e',í:'i',ó:'o',ú:'u',ñ:'n'}[c]||c));
   const cats = _getCats();
   if (cats.find(c => c.id === id)) { showToast('Ya existe una categoría con ese nombre', 'error', 2000); return; }
   cats.push({ id, label });
@@ -295,7 +312,7 @@ async function renderProblemas() {
         <div>
           <div style="display:flex;gap:8px;align-items:center;margin-bottom:5px;">
             <span class="badge badge-${p.estado}">${p.estado}</span>
-            <span style="font-size:11px;font-weight:600;color:var(--teal);">${p.tipo_label||p.tipo}</span>
+            <span style="font-size:11px;font-weight:600;color:var(--teal);">${TIPO_LABELS[p.tipo] || p.tipo_label || p.tipo}</span>
             ${p.valor_perdida>0?`<span class="badge badge-perdida">Pérdida: ${fmt(p.valor_perdida)}</span>`:''}
           </div>
           <div style="font-size:12px;color:var(--text2);">
