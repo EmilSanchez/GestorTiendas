@@ -162,6 +162,7 @@ async function saveVenta() {
   //if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
   const producto = ''; // campo eliminado del formulario
 
+  const ventaExistente = _editVentaId ? (await DB.ventas()).find(x => x.id === _editVentaId) : null;
   const trm       = parseFloat(gv('v-trm')) || TRM_ACTUAL;
   const envioTipo = gv('v-envio-tipo');
   const envioVal  = parseFloat(gv('v-envio-int-usd'))||0;
