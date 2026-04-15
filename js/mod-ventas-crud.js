@@ -276,11 +276,12 @@ async function renderVentas() {
   const s      = (document.getElementById('vf-search')?.value  || '').toLowerCase();
   const ft     = document.getElementById('vf-tienda')?.value   || '';
   const fe     = document.getElementById('vf-estado')?.value   || '';
+  const fTrans = document.getElementById('vf-trans')?.value    || '';
   const fm     = document.getElementById('vf-mes')?.value      || '';
   const fDesde = document.getElementById('vf-desde')?.value    || '';
   const fHasta = document.getElementById('vf-hasta')?.value    || '';
 
-  const hayFiltro = s || ft || fe || fm || fDesde || fHasta;
+  const hayFiltro = s || ft || fe || fTrans || fm || fDesde || fHasta;
   const btnLimpiar = document.getElementById('btn-limpiar-ventas');
   if (btnLimpiar) btnLimpiar.style.display = hayFiltro ? 'inline-flex' : 'none';
 
@@ -288,6 +289,7 @@ async function renderVentas() {
   if (s)  ventas = ventas.filter(v => (v.id_ml+v.telefono+v.nota).toLowerCase().includes(s));
   if (ft) ventas = ventas.filter(v => v.tienda_id === ft);
   if (fe) ventas = ventas.filter(v => v.estado    === fe);
+  if (fTrans) ventas = ventas.filter(v => v.envio_tipo === fTrans); 
 
   // Período: rango tiene prioridad sobre mes
   if (fDesde || fHasta) {
@@ -555,6 +557,9 @@ async function _confirmarValidarEnvio() {
     vv.envio_real_usd      = _validarEnvioEsServientrega ? raw : null;
     vv.envio_validado      = true;
     vv.envio_estimado_cop  = _validarEnvioEstimado;
+    if (_validarEnvioEsServientrega) {
+      vv.envio_pagado = true;   // ← AGREGAR ESTA LÍNEA
+    }
     await DB.saveVentas(ventas);
     showConfirmAnim('validado', false);
     await renderVentas();
@@ -564,7 +569,7 @@ async function _confirmarValidarEnvio() {
 
 function clearVentaFilters() {
   ['vf-search','vf-mes','vf-desde','vf-hasta'].forEach(i => sv(i,''));
-  ['vf-tienda','vf-estado'].forEach(i => sv(i,''));
+  ['vf-tienda','vf-estado','vf-trans'].forEach(i => sv(i,'')); 
   // Resetear DRP visual
   if (typeof _DRP !== 'undefined') {
     _DRP.selStart = null; _DRP.selEnd = null; _DRP.activeShortcut = 'month';

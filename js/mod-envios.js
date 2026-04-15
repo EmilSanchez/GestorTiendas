@@ -18,6 +18,24 @@ function clearEnvioFilters() {
   if(btnL) btnL.style.display = 'none';
   renderEnvios();
 }
+// MIGRACIÓN — ejecutar UNA sola vez desde la consola del navegador
+async function migrarServientregaValidados() {
+  const ventas = await DB.ventas();
+  let count = 0;
+  ventas.forEach(v => {
+    if (v.envio_tipo === 'servientrega' && v.envio_validado && !v.envio_pagado) {
+      v.envio_pagado = true;
+      count++;
+    }
+  });
+  if (count === 0) {
+    console.log('No hay registros que migrar.');
+    return;
+  }
+  await DB.saveVentas(ventas);
+  console.log(`✅ Migración completa: ${count} envío(s) de Servientrega marcados como pagados.`);
+  await renderEnvios();
+}
 
 // ── Obtener el valor del envío de una venta (en COP) ──
 function _envioValorCOP(v) {

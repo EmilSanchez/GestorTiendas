@@ -215,6 +215,13 @@
           <option value="devuelto">DEVUELTO</option>
           <option value="error">ERROR</option>
         </select>
+        <span class="fl">Transportadora</span>
+          <select id="vf-trans" onchange="renderVentasGanancias()">
+          <option value="">Todas</option>
+          <option value="servientrega">Servientrega</option>
+          <option value="aguachica">Aguachica</option>
+          <option value="otro">Otro</option>
+        </select>
         <!-- Campos ocultos — la lógica JS los sigue leyendo -->
         <input type="hidden" id="vf-mes">
         <input type="hidden" id="vf-desde">
