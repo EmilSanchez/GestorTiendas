@@ -198,6 +198,9 @@ async function saveVenta() {
     envio_estimado_cop: envioEstimadoCOP,
     envio_real_cop:     envioReal,
     envio_validado:     gv('v-envio-validado') === '1',
+    envio_pagado: gv('v-envio-validado') === '1' && envioTipo === 'servientrega'
+      ? true
+      : (ventaExistente?.envio_pagado || false),
     fuente_pago:   fuentePago,
     monto_pago:    montoPago,
     ref_pago:      gv('v-ref-pago').trim(),
