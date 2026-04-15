@@ -199,8 +199,8 @@ async function saveVenta() {
     envio_estimado_cop: envioEstimadoCOP,
     envio_real_cop:     envioReal,
     envio_validado:     gv('v-envio-validado') === '1',
-    envio_pagado: gv('v-envio-validado') === '1' && envioTipo === 'servientrega'
-      ? true
+    envio_pagado: envioTipo === 'servientrega'
+      ? (gv('v-envio-validado') === '1')   // si es Servientrega, pagado = exactamente lo que diga validado
       : (ventaExistente?.envio_pagado || false),
     fuente_pago:   fuentePago,
     monto_pago:    montoPago,
