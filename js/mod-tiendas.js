@@ -20,13 +20,13 @@ async function openModalTienda(id) {
         document.getElementById('t-foto-data').value = t.foto;
         prevEl.innerHTML = `<img src="${t.foto}" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">`;
       } else {
-        prevEl.innerHTML = '<span style="font-size:28px;opacity:.4;">📷</span>';
+        prevEl.innerHTML = '<span style="font-size:28px;opacity:.4;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>';
       }
     }
   } else {
     sv('t-nombre',''); sv('t-resp',''); sv('t-color','#00897b'); sv('t-obs','');
     sv('t-estado','activa'); sv('t-mp-cuenta','');
-    prevEl.innerHTML = '<span style="font-size:28px;opacity:.4;">📷</span>';
+    prevEl.innerHTML = '<span style="font-size:28px;opacity:.4;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>';
   }
   openModal('modal-tienda');
 }
@@ -83,7 +83,7 @@ async function editarMPSaldo(tiendaId) {
   const mpKey  = 'mercadopago_' + tiendaId;
   const actual = parseFloat(saldos[mpKey]) || 0;
   const t      = (await DB.tiendas()).find(x=>x.id===tiendaId);
-  const nuevo  = prompt(`💳 Saldo Mercado Pago — ${t?.nombre||tiendaId}\nSaldo actual: ${fmt(actual)}\n\nIngresa el nuevo saldo (COP$):`, actual||'');
+  const nuevo  = prompt(`<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Saldo Mercado Pago — ${t?.nombre||tiendaId}\nSaldo actual: ${fmt(actual)}\n\nIngresa el nuevo saldo (COP$):`, actual||'');
   if(nuevo===null) return;
   const val = parseFloat(nuevo);
   if(isNaN(val)) { alert('Valor inválido'); return; }
@@ -128,7 +128,7 @@ async function renderTiendas() {
     const fotoEl = t.foto
       ? `<img src="${t.foto}" style="width:64px;height:64px;border-radius:50%;object-fit:cover;border:2px solid ${t.color};">`
       : `<div style="width:64px;height:64px;border-radius:50%;background:${t.color}22;border:2px solid ${t.color};
-           display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;">🏪</div>`;
+           display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0;"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></div>`;
 
     return `
     <div style="background:#fff;border:1px solid var(--border);border-radius:14px;
@@ -189,20 +189,81 @@ async function renderTiendas() {
       <div onclick="editarMPSaldo('${t.id}')" style="display:flex;align-items:center;justify-content:space-between;
            padding:8px 12px;border-radius:8px;background:var(--teal-bg);cursor:pointer;margin-bottom:12px;"
            onmouseover="this.style.background='#c8e8e6'" onmouseout="this.style.background='var(--teal-bg)'">
-        <span style="font-size:10px;font-weight:600;color:var(--teal-dark);">💳 Saldo Mercado Pago</span>
+        <span style="font-size:10px;font-weight:600;color:var(--teal-dark);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Saldo Mercado Pago</span>
         <span style="font-size:13px;font-weight:800;color:var(--teal-dark);font-family:var(--font-mono);">${fmt(mpSaldo)}</span>
       </div>
 
       <!-- Acciones -->
       <div style="display:flex;gap:6px;">
-        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openModalTienda('${t.id}')">✏️ Editar</button>
-        <button class="btn btn-ghost btn-sm" onclick="toggleEstadoTienda('${t.id}')"
+        <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openModalTienda('${t.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="_pedirCodigoToggleTienda('${t.id}')"
           style="color:${isActive?'var(--red)':'var(--green)'};">
-          ${isActive?'⏸':'▶️'}
+          ${isActive?'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> Desactivar':'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Activar'}
         </button>
-        <button class="btn btn-danger btn-sm" onclick="deleteTienda('${t.id}')">🗑</button>
       </div>
     </div>`;
   }).join('');
 }
 
+// ── TOGGLE CON CÓDIGO DE ACCESO ──
+let _toggleTiendaId = null;
+
+function _pedirCodigoToggleTienda(id) {
+  _toggleTiendaId = id;
+  const inp = document.getElementById('toggle-tienda-code-input');
+  const err = document.getElementById('toggle-tienda-code-error');
+  if (inp) inp.value = '';
+  if (err) err.textContent = '';
+  // Actualizar texto del modal según estado actual
+  DB.tiendas().then(tiendas => {
+    const t = tiendas.find(x => x.id === id);
+    if (!t) return;
+    const isActive = t.estado !== 'inactiva';
+    const titleEl  = document.getElementById('toggle-tienda-title');
+    const subEl    = document.getElementById('toggle-tienda-sub');
+    const btnEl    = document.getElementById('toggle-tienda-confirm-btn');
+    if (titleEl) titleEl.textContent = isActive ? 'Desactivar tienda' : 'Activar tienda';
+    if (subEl)   subEl.textContent   = `"${t.nombre}"`;
+    if (btnEl) {
+      btnEl.textContent = isActive ? 'Desactivar' : 'Activar';
+      btnEl.style.background = isActive
+        ? 'linear-gradient(135deg,#dc2626,#b91c1c)'
+        : 'linear-gradient(135deg,#16a34a,#15803d)';
+    }
+  });
+  openModal('modal-toggle-tienda');
+  setTimeout(() => { const inp = document.getElementById('toggle-tienda-code-input'); if(inp) inp.focus(); }, 150);
+}
+
+async function _confirmToggleTienda() {
+  const inp    = document.getElementById('toggle-tienda-code-input');
+  const err    = document.getElementById('toggle-tienda-code-error');
+  const btn    = document.getElementById('toggle-tienda-confirm-btn');
+  const codigo = inp ? inp.value.trim() : '';
+
+  if (!codigo) {
+    if (err) err.textContent = 'Ingresa el código de acceso.';
+    if (inp) { inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 400); }
+    return;
+  }
+
+  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
+  if (err) err.textContent = '';
+
+  try {
+    const ok = await _verificarCodigoAcceso(codigo);
+    if (!ok) {
+      if (err) err.textContent = 'Código incorrecto. Intenta de nuevo.';
+      if (inp) { inp.value = ''; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 400); inp.focus(); }
+      return;
+    }
+    closeModal('modal-toggle-tienda');
+    await toggleEstadoTienda(_toggleTiendaId);
+    _toggleTiendaId = null;
+  } catch(e) {
+    if (err) err.textContent = 'Error al verificar. Intenta de nuevo.';
+    console.error(e);
+  } finally {
+    if (btn) { btn.textContent = 'Confirmar'; btn.disabled = false; }
+  }
+}

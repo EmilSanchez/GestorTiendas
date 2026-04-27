@@ -252,8 +252,9 @@ async function saveVenta() {
 }
 
 async function renderVentas() {
-  const tiendas = await DB.tiendas();
-  let ventas    = await DB.ventas();
+  const tiendas   = await DB.tiendas();
+  let ventas      = await DB.ventas();
+  const problemas = await DB.problemas();
 
   // ── Banner: usar el período activo (igual que renderVentasGanancias) ──
   const periodo     = _getPeriodoActivo();
@@ -381,7 +382,7 @@ async function renderVentas() {
         <div class="actions-cell">
             <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
           <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="img/editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
-          <button class="btn btn-ghost btn-icon btn-sm" title="Registrar problema" onclick="openModalProblema('${v.id}')"><img src="img/advertencia.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          ${(()=>{ const prob = problemas.find(p=>p.venta_id===v.id); const hasProb = !!prob; const onclick = hasProb ? `openModalProblema(null,'${prob.id}')` : `openModalProblema('${v.id}')`; return `<button class="btn btn-ghost btn-icon btn-sm" title="${hasProb?'Ver problema registrado':'Registrar problema'}" onclick="${onclick}" style="${hasProb?'background:#fee2e2;border-color:#fca5a5;':''}"><img src="img/advertencia.png" alt="Problema" style="width:1rem;height:1rem;object-fit:contain;${hasProb?'filter:sepia(1) saturate(5) hue-rotate(-30deg);':''}"></button>`; })()}
           <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
@@ -528,7 +529,7 @@ function _calcDiffEnvio() {
   if(Math.abs(diff) < 1) {
     box.style.background = '#e0f2f1';
     txt.style.color = '#00695c';
-    txt.textContent = '✔ Igual al estimado';
+    txt.textContent = ' Igual al estimado';
   } else if(diff > 0) {
     box.style.background = '#fde8ea';
     txt.style.color = '#b0202e';

@@ -33,7 +33,7 @@ async function migrarServientregaValidados() {
     return;
   }
   await DB.saveVentas(ventas);
-  console.log(`✅ Migración completa: ${count} envío(s) de Servientrega marcados como pagados.`);
+  console.log(`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Migración completa: ${count} envío(s) de Servientrega marcados como pagados.`);
   await renderEnvios();
 }
 
@@ -82,7 +82,7 @@ async function openPagoEnvio(ventaId) {
       ${esServientrega ? `<div><span style="font-size:10px;color:var(--text3);">TRM usado</span><br><b>${fmt(trm)}</b></div>` : ''}
     </div>
     ${esServientrega ? `<div style="margin-top:8px;font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:6px 10px;border-radius:6px;border:1px solid #ffe08a;">
-      ⚠️ Servientrega: ingresa el valor en <strong>USD</strong> tal como aparece en Centris (Gestor de Ventas). Se convertirá automáticamente a COP.
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Servientrega: ingresa el valor en <strong>USD</strong> tal como aparece en Centris (Gestor de Ventas). Se convertirá automáticamente a COP.
     </div>` : ''}`;
 
   // Ajustar el label e input del valor según transportadora
@@ -136,7 +136,7 @@ function _calcDiffPagoEnvio() {
   if(Math.abs(diff) < 1) {
     diffEl.style.background = '#e0f2f1';
     diffTxt.style.color = '#00695c';
-    diffTxt.textContent = esServientrega ? `= ${fmt(realCOP)} COP ✔ Igual al estimado` : '✔ Igual al estimado';
+    diffTxt.textContent = esServientrega ? `= ${fmt(realCOP)} COP  Igual al estimado` : ' Igual al estimado';
   } else if(diff > 0) {
     diffEl.style.background = '#fde8ea';
     diffTxt.style.color = '#b0202e';
@@ -346,7 +346,7 @@ async function openPagoMultiple() {
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const val = _envioValorCOP(v);
     total += val;
-    const empresa = v.envio_tipo === 'servientrega' ? '📦 Servientrega' : '🏍 Aguachica';
+    const empresa = v.envio_tipo === 'servientrega' ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Servientrega' : ' Aguachica';
     return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;">
       <div>
         <span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span>

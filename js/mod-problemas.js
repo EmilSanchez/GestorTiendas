@@ -83,13 +83,13 @@ function _renderCatList() {
         background:var(--teal-bg);color:var(--teal);font-size:14px;
         display:flex;align-items:center;justify-content:center;transition:all .15s;"
         onmouseover="this.style.background='var(--teal)';this.style.color='#fff'"
-        onmouseout="this.style.background='var(--teal-bg)';this.style.color='var(--teal)'">✓</button>
+        onmouseout="this.style.background='var(--teal-bg)';this.style.color='var(--teal)'"></button>
       ${cats.length > 1 ? `<button onclick="_eliminarCat(${i})" title="Eliminar" style="
         width:28px;height:28px;border:none;border-radius:6px;cursor:pointer;
         background:transparent;color:var(--text3);font-size:14px;
         display:flex;align-items:center;justify-content:center;transition:all .15s;"
         onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)'"
-        onmouseout="this.style.background='transparent';this.style.color='var(--text3)'">✕</button>` : ''}
+        onmouseout="this.style.background='transparent';this.style.color='var(--text3)'"></button>` : ''}
     </div>
   `).join('');
 }
@@ -130,7 +130,7 @@ async function guardarCat(i) {
     row.style.borderColor = '#6cc490';
     setTimeout(() => { row.style.background = ''; row.style.borderColor = 'var(--border)'; }, 800);
   }
-  showToast('✅ Categoría actualizada', 'success', 1800);
+  showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Categoría actualizada', 'success', 1800);
 }
 
 async function _eliminarCat(i) {
@@ -161,7 +161,7 @@ async function agregarCat() {
   _fillTipoSelects();
   input.value = '';
   _renderCatList();
-  showToast('✅ Categoría agregada', 'success', 1800);
+  showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Categoría agregada', 'success', 1800);
 }
 
 function _esc2(s) {
@@ -237,7 +237,7 @@ async function seleccionarVentaProblema(v) {
   document.getElementById('p-buscar-resultado').innerHTML = `
     <div style="padding:8px 10px;background:var(--teal-bg);border:1px solid #b8d8d8;
          border-radius:var(--radius);font-size:12px;margin-top:4px;">
-      ✅ <strong>${_ventaSelProblema.id_ml||_ventaSelProblema.id}</strong> — ${_ventaSelProblema.producto}
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <strong>${_ventaSelProblema.id_ml||_ventaSelProblema.id}</strong> — ${_ventaSelProblema.producto}
       <span class="c-dim" style="margin-left:6px;">${t?.nombre||'?'} · ${_ventaSelProblema.fecha_venta||''}</span>
     </div>`;
 }
@@ -248,7 +248,7 @@ async function saveProblema() {
   const solucion = gv('p-solucion').trim();
   if (!desc) { alert('La descripción es requerida.'); return; }
   if ((estado==='resuelto'||estado==='perdida') && !solucion) {
-    alert('⚠️ Para marcar como resuelto o con pérdida, debes registrar la solución.');
+    alert('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Para marcar como resuelto o con pérdida, debes registrar la solución.');
     document.getElementById('p-solucion').focus();
     return;
   }
@@ -297,7 +297,7 @@ async function renderProblemas() {
 
   if (!problemas.length) {
     document.getElementById('problemas-container').innerHTML = `
-      <div class="empty-state"><div class="empty-icon">✅</div>
+      <div class="empty-state"><div class="empty-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="empty-title">Sin problemas registrados</div>
       <div class="c-dim" style="font-size:12px;">Puedes registrar novedades desde aquí o desde el detalle de cada venta</div></div>`;
     return;
@@ -334,7 +334,7 @@ async function renderProblemas() {
         </div>
         ${p.solucion
           ? `<div style="background:var(--teal-bg);border-left:3px solid var(--teal);border-radius:0 var(--radius) var(--radius) 0;padding:8px 12px;font-size:12px;">
-               <strong style="color:var(--teal-dark);">✅ Solución:</strong>
+               <strong style="color:var(--teal-dark);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Solución:</strong>
                <span style="color:var(--text2);margin-left:4px;">${p.solucion}</span>
                ${p.fecha_resolucion?`<div style="font-size:10px;color:var(--text3);margin-top:3px;">Resuelta el ${p.fecha_resolucion}</div>`:''}
              </div>`
@@ -349,7 +349,7 @@ async function renderProblemas() {
           <button class="btn btn-success btn-sm" onclick="openResolverProblema('${p.id}','resuelto')">Resolver</button>
           <button class="btn btn-danger btn-sm" onclick="openResolverProblema('${p.id}','perdida')">Pérdida</button>` : ''}
         <div class="spacer"></div>
-        <button class="btn btn-danger btn-icon btn-sm" onclick="deleteProb('${p.id}')">🗑</button>
+        <button class="btn btn-danger btn-icon btn-sm" onclick="deleteProb('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
       </div>
     </div>`;
   }).join('');
@@ -440,11 +440,52 @@ async function confirmarResolver() {
   await updateAlertaBadge();
 }
 
-async function deleteProb(id) {
-  if (!confirm('¿Eliminar este problema?')) return;
-  await DB.deleteProblema(id);
-  await renderProblemas();
-  await updateAlertaBadge();
+let _deleteProbId = null;
+
+function deleteProb(id) {
+  _deleteProbId = id;
+  const inp = document.getElementById('del-prob-code-input');
+  const err = document.getElementById('del-prob-code-error');
+  if (inp) inp.value = '';
+  if (err) err.textContent = '';
+  openModal('modal-delete-problema');
+  setTimeout(() => inp && inp.focus(), 150);
+}
+
+async function _confirmDeleteProb() {
+  const inp    = document.getElementById('del-prob-code-input');
+  const err    = document.getElementById('del-prob-code-error');
+  const btn    = document.getElementById('del-prob-confirm-btn');
+  const codigo = inp ? inp.value.trim() : '';
+
+  if (!codigo) {
+    if (err) err.textContent = 'Ingresa el código de acceso.';
+    if (inp) { inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 400); }
+    return;
+  }
+
+  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
+  if (err) err.textContent = '';
+
+  try {
+    const ok = await _verificarCodigoAcceso(codigo);
+    if (!ok) {
+      if (err) err.textContent = 'Código incorrecto. Intenta de nuevo.';
+      if (inp) { inp.value = ''; inp.classList.add('shake'); setTimeout(() => inp.classList.remove('shake'), 400); inp.focus(); }
+      return;
+    }
+    closeModal('modal-delete-problema');
+    await DB.deleteProblema(_deleteProbId);
+    _deleteProbId = null;
+    await renderProblemas();
+    await updateAlertaBadge();
+    if (typeof showToast === 'function') showToast('Problema eliminado', 'success');
+  } catch(e) {
+    if (err) err.textContent = 'Error al verificar. Intenta de nuevo.';
+    console.error(e);
+  } finally {
+    if (btn) { btn.textContent = 'Eliminar'; btn.disabled = false; }
+  }
 }
 
 // ── HELPERS DOM ──

@@ -87,7 +87,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 
 /* ── BOTONES ── */
 .btn{display:inline-flex;align-items:center;gap:0.3rem;padding:0.45rem 0.95rem;border-radius:8px;
-     font-size:0.85rem;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .15s;letter-spacing:-.1px;}
+     font-size:0.85rem;font-weight:600;cursor:pointer;border:1px solid transparent;font-family:var(--font);transition:all .15s;letter-spacing:-.1px;user-select:none;}
+.btn:active:not(:disabled){transform:scale(0.92);transition:transform .08s cubic-bezier(.4,0,.2,1);}
+button:not(.btn):not([class*="mclose"]):active:not(:disabled){transform:scale(0.92);transition:transform .08s cubic-bezier(.4,0,.2,1);}
 .btn-primary{background:linear-gradient(135deg,var(--teal),var(--teal-dark));color:#fff;border-color:var(--teal-dark);box-shadow:0 2px 6px rgba(0,137,123,.3);}
 .btn-primary:hover{background:linear-gradient(135deg,var(--teal-light),var(--teal));box-shadow:0 3px 10px rgba(0,137,123,.4);}
 .btn-success{background:#198754;color:#fff;border-color:#157347;}

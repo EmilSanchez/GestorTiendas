@@ -37,6 +37,7 @@ const _cache = {
   saldos:      null,
   billeteras:  null,
   envios:      null,
+  envios_sky:  null,
   ajustes:     null,
 };
 
@@ -60,6 +61,7 @@ async function _cargarTodo() {
   _cache.membresias  = mem;
   _cache.billeteras  = b;
   _cache.envios      = env;
+  // envios_sky loaded lazily on first access
   _cache.saldos      = sDoc.exists ? sDoc.data() : {};
   _cache.ajustes     = ajDoc.exists ? ajDoc.data() : {};
 }
@@ -141,4 +143,23 @@ const DB = {
     _syncDoc('envios', e.id, e); return Promise.resolve();
   },
   deleteEnvio:  (id) => { _cache.envios = (_cache.envios||[]).filter(x=>x.id!==id); _delDoc('envios', id); return Promise.resolve(); },
+
+  // Envíos Skydropx
+  envios_sky:     () => {
+    if(_cache.envios_sky) return Promise.resolve(_cache.envios_sky);
+    return _db.collection('envios_sky').get().then(snap=>{
+      _cache.envios_sky = snap.docs.map(d=>({id:d.id,...d.data()}));
+      return _cache.envios_sky;
+    });
+  },
+  upsertEnvioSky: (e) => {
+    if(!_cache.envios_sky) _cache.envios_sky = [];
+    const a = _cache.envios_sky; const i = a.findIndex(x=>x.id===e.id);
+    i>=0 ? a[i]=e : a.push(e);
+    _syncDoc('envios_sky', e.id, e); return Promise.resolve();
+  },
+  deleteEnvioSky: (id) => {
+    if(_cache.envios_sky) _cache.envios_sky = _cache.envios_sky.filter(x=>x.id!==id);
+    _delDoc('envios_sky', id); return Promise.resolve();
+  },
 };

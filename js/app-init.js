@@ -71,7 +71,7 @@ function showSpinner(msg = 'Cargando...') {
       + 'z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;';
     document.body.appendChild(el);
   }
-  el.innerHTML = `<div style="font-size:38px;animation:pulse 1.5s infinite;">🔥</div>
+  el.innerHTML = `<div style="font-size:38px;animation:pulse 1.5s infinite;"></div>
     <div style="font-size:14px;font-weight:700;color:#00897b;">${msg}</div>
     <div style="font-size:11px;color:#8aabaa;">Meli Manager</div>`;
 }
@@ -202,7 +202,7 @@ function showConfirmAnim(tipo, esEdicion) {
   const toastMsg = document.getElementById('_ca-toast-msg');
   const toastIcon= document.getElementById('_ca-toast-icon');
   if (!overlay || !toast) return;
-  toastIcon.textContent = esEdicion ? '✎' : '✓';
+  toastIcon.textContent = esEdicion ? '' : '';
   toastMsg.textContent  = msg;
   overlay.classList.add('show');
   setTimeout(() => {
@@ -220,10 +220,10 @@ async function init() {
   const statusEl = document.getElementById('db-status');
   try {
     await _cargarTodo();
-    if (statusEl) statusEl.textContent = 'v6.0 · Firebase ✓';
+    if (statusEl) statusEl.textContent = 'v6.0 · Firebase ';
   } catch(e) {
     console.warn('Firebase no disponible:', e.message);
-    if (statusEl) statusEl.textContent = 'v6.0 · Sin conexión ⚠️';
+    if (statusEl) statusEl.textContent = 'v6.0 · Sin conexión <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
   }
   hideSpinner();
 
@@ -232,7 +232,7 @@ async function init() {
   Object.keys(FUENTES_ICON).forEach(k  => delete FUENTES_ICON[k]);
   bws.forEach(b => {
     FUENTES_LABEL[b.id] = b.nombre;
-    FUENTES_ICON[b.id]  = b.icono || '💳';
+    FUENTES_ICON[b.id]  = b.icono || '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
   });
 
   await cargarTRM();
@@ -275,7 +275,11 @@ async function init() {
     if (e.key === 'Enter') buscarVentaProblema();
   });
 
-  await navigate('ventas');
+  // Restaurar la última página visitada desde el hash de la URL
+  const VALID_PAGES = ['ventas','envios','problemas','finanzas','configuracion','ayudas'];
+  const hashPage = location.hash.replace('#','');
+  const startPage = VALID_PAGES.includes(hashPage) ? hashPage : 'ventas';
+  await navigate(startPage);
   await updateAlertaBadge();
 }
 

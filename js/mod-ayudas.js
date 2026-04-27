@@ -60,7 +60,7 @@ function _precargarAyudas() {
     { titulo:'Rastreo Servientrega Kiwi para información exacta', categoria:'rastreo', color:'#6a1b9a',
       contenido:'https://mytrack.servientrega.us/es' },
     { titulo:'Cuando hay que pedir dinero al cliente', categoria:'cliente', color:'#f9a825',
-      contenido:'Buenas tardes! Espero te encuentres bien, nos indican que para que el producto pueda ingresar a Colombia están cobrando un valor adicional de 67990, quisiera saber si estas dispuesto a colaborarnos ya que nosotros estamos cubriendo los demás gastos de importación y envío. Quedo atento 😊' },
+      contenido:'Buenas tardes! Espero te encuentres bien, nos indican que para que el producto pueda ingresar a Colombia están cobrando un valor adicional de 67990, quisiera saber si estas dispuesto a colaborarnos ya que nosotros estamos cubriendo los demás gastos de importación y envío. Quedo atento ' },
     { titulo:'Para que el cliente cancele', categoria:'reembolso', color:'#c62828',
       contenido:'Buenas tardes, lo que pasa es que hemos intentado despachar el producto pero hemos tenido con la etiqueta que MercadoLibre nos brinda para despachar el producto, hemos hablado con pero no nos han colaborado dándonos la etiqueta para despachar el producto, sin obtener ayuda. Ya que nos aparece como envío pendiente y no nos genera la etiqueta, entonces para un reclamo indicando que tuviste un inconveniente y hacerte el reembolso para que puedas hacer nuevamente la compra' },
     { titulo:'Enviar para que retiren las denuncias', categoria:'infracciones', color:'#37474f',
@@ -281,7 +281,7 @@ async function guardarAyuda() {
 
   // Confirmación elegante
   showConfirmAnim(id ? 'edit' : 'venta', !!id);
-  showToast(id ? '✏️ Ayuda actualizada' : 'Ayuda guardada', 'success', 2200);
+  showToast(id ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> Ayuda actualizada' : 'Ayuda guardada', 'success', 2200);
 
   renderAyudasFiltradas();
 }
@@ -373,7 +373,7 @@ function _confirmarEliminarAyuda() {
   _saveAyudas();
   _ayudaIdPendienteEliminar = null;
   closeModal('modal-delete-ayuda');
-  showToast('🗑 Ayuda eliminada', 'info', 2000);
+  showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Ayuda eliminada', 'info', 2000);
   renderAyudasFiltradas();
 }
 

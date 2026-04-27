@@ -124,7 +124,7 @@ const PAGES = {
   problemas:      { title:'Problemas', icon:'' },
   finanzas:       { title:'Finanzas', icon:'' },
   configuracion:  { title:'Configuración', icon:'' },
-  ayudas:         { title:'Ayudas', icon:'📋' },
+  ayudas:         { title:'Ayudas', icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>' },
 };
 
 // ── HELPERS DE FUENTE DE PAGO ──
@@ -144,7 +144,7 @@ async function recalcFuente() {
   if(!el) return;
   if(!fuente) { el.innerHTML=''; return; }
   const saldo  = await getSaldoFuente(fuente);
-  const icon   = FUENTES_ICON[fuente]||'💳';
+  const icon   = FUENTES_ICON[fuente]||'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
   const label  = FUENTES_LABEL[fuente]||fuente;
   const resto  = saldo - monto;
   el.innerHTML = `${icon} Saldo ${label}: <b>${fmt(saldo)}</b>`
@@ -157,15 +157,15 @@ function recalcValidacionEnvio() {
   const estEl    = document.getElementById('envio-validacion-estado');
   const diffEl   = document.getElementById('envio-validacion-diff');
   if(!real) {
-    if(estEl) estEl.innerHTML = '<span style="font-size:11px;color:var(--yellow);font-weight:600;">⏳ Pendiente de confirmar</span>';
+    if(estEl) estEl.innerHTML = '<span style="font-size:11px;color:var(--yellow);font-weight:600;"> Pendiente de confirmar</span>';
     if(diffEl) diffEl.innerHTML = '';
     return;
   }
   const diff = real - estimado;
   const ok   = Math.abs(diff) < 500;
   if(estEl) estEl.innerHTML = ok
-    ? '<span style="font-size:11px;color:var(--green);font-weight:600;">✅ Validado</span>'
-    : `<span style="font-size:11px;color:${diff>0?'var(--red)':'var(--teal)'};font-weight:600;">${diff>0?'⬆️ Mayor al estimado':'⬇️ Menor al estimado'}</span>`;
+    ? '<span style="font-size:11px;color:var(--green);font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Validado</span>'
+    : `<span style="font-size:11px;color:${diff>0?'var(--red)':'var(--teal)'};font-weight:600;">${diff>0?'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> Mayor al estimado':'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg> Menor al estimado'}</span>`;
   if(diffEl) diffEl.innerHTML = ok
     ? 'El valor real coincide con el estimado.'
     : `Diferencia: <b style="color:${diff>0?'var(--red)':'var(--teal)'};">${diff>0?'+':''}${fmt(diff)}</b> — el costo real se usará para el cálculo de ganancia.`;
@@ -205,8 +205,8 @@ async function renderEnviosMes() {
     const val = _envVal(v);
     const est = v.envio_estimado_cop || v.envio_int_usd || 0;
     const badge = v.envio_validado
-      ? `<span style="color:var(--green);font-weight:700;">✅ ${fmt(val)}</span>`
-      : `<span style="color:var(--yellow);font-weight:700;">⏳ ~${fmt(est)}</span>`;
+      ? `<span style="color:var(--green);font-weight:700;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ${fmt(val)}</span>`
+      : `<span style="color:var(--yellow);font-weight:700;"> ~${fmt(est)}</span>`;
     return `<div style="display:flex;justify-content:space-between;align-items:center;
               padding:5px 0;border-bottom:1px dashed #e0eaea;">
       <div style="min-width:0;flex:1;padding-right:8px;">
@@ -228,8 +228,8 @@ async function renderEnviosMes() {
   const validados  = ventasMes.filter(v=>v.envio_validado && v.envio_int_usd>0).length;
   const pendientes = ventasMes.filter(v=>!v.envio_validado && v.envio_int_usd>0).length;
   if(el('fin-envios-detalle')) el('fin-envios-detalle').innerHTML = enviosCount
-    ? `<span style="color:var(--green);">✅ ${validados} validado(s)</span>
-       <span style="margin-left:14px;color:var(--yellow);">⏳ ${pendientes} pendiente(s)</span>`
+    ? `<span style="color:var(--green);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> ${validados} validado(s)</span>
+       <span style="margin-left:14px;color:var(--yellow);"> ${pendientes} pendiente(s)</span>`
     : `<span style="color:var(--text3);">Sin envíos en ${mesLabel}</span>`;
 }
 
@@ -249,6 +249,8 @@ async function navigate(page) {
   const p = PAGES[page]||{};
   if(document.getElementById('tb-title')) document.getElementById('tb-title').textContent = p.title||page;
   if(document.getElementById('tb-icon'))  document.getElementById('tb-icon').textContent  = p.icon||'';
+  // Guardar página actual en el hash para sobrevivir recargas
+  if(location.hash !== '#' + page) history.replaceState(null, '', '#' + page);
   await render(page);
 }
 
@@ -262,4 +264,3 @@ async function render(page) {
     case 'ayudas':        await renderAyudas();          break;
   }
 }
-
