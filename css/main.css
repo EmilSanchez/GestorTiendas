@@ -537,3 +537,28 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 }
 .drp-footer-label { font-size:0.78rem;color:var(--text2);font-weight:500; }
 .drp-footer-label strong { color:var(--teal); }
+
+/* ── Custom Estado Dropdown ── */
+.estado-drop { position:relative; display:inline-block; }
+.estado-drop-btn {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:3px 10px 3px 10px; border-radius:20px; font-size:11px;
+  font-weight:500; cursor:pointer; border:1.5px solid transparent;
+  font-family:inherit; white-space:nowrap; user-select:none;
+  transition:opacity .12s;
+}
+.estado-drop-btn svg { flex-shrink:0; }
+.estado-drop-btn:hover { opacity:.85; }
+.estado-drop-menu {
+  position:fixed; z-index:9999;
+  background:#fff; border:1px solid #d4d4d4; border-radius:10px;
+  box-shadow:0 6px 24px rgba(0,0,0,.18); min-width:130px;
+  overflow:hidden; display:none; flex-direction:column;
+}
+.estado-drop-menu.open { display:flex; }
+.estado-drop-opt {
+  padding:7px 14px; font-size:11px; font-weight:500; cursor:pointer;
+  font-family:inherit; white-space:nowrap; transition:opacity .1s;
+  border:none; text-align:left; background:transparent;
+}
+.estado-drop-opt:hover { opacity:.8; }

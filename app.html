@@ -148,7 +148,9 @@
     <div class="nav-item" data-page="finanzas"><span class="ni"><img src="img/finanzas.png" alt="Finanzas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Finanzas</span></div>
   </div>
 
-  <div class="sb-section" style="margin-top:auto;">
+  <div style="flex:1;"></div>
+
+  <div class="sb-section" style="padding-bottom:0.4rem;">
     <div class="sb-section-label">Sistema</div>
     <div class="nav-item" data-page="configuracion"><span class="ni"><img src="img/configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
   </div>
@@ -168,36 +170,39 @@
     <!-- ══════════════ VENTAS & GANANCIAS (FUSIONADO) ══════════════ -->
     <section class="page-section active" id="page-ventas">
 
-      <!-- Banner total ganancia todas las tiendas -->
-      <div id="vg-banner" style="
-        background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%);
-        border-radius:var(--radius-lg);padding:18px 24px;margin-bottom:18px;
-        display:flex;align-items:center;gap:20px;flex-wrap:wrap;
-        box-shadow:0 4px 20px rgba(0,137,123,.25);color:#fff;
-      ">
-        <div style="flex:1;min-width:180px;">
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:.7;margin-bottom:4px;">Ganancia Todas las tiendas</div>
-          <div id="vg-total-gan" style="font-size:30px;font-weight:700;letter-spacing:-1px;line-height:1;">$ 0</div>
-          <div id="vg-total-sub" style="font-size:11px;opacity:.65;margin-top:4px;">mes actual</div>
-        </div>
-        <div style="display:flex;gap:16px;flex-wrap:wrap;">
-          <div style="text-align:center;">
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Ingresos</div>
-            <div id="vg-total-ing" style="font-size:19px;font-weight:700;">$ 0</div>
+      <!-- Fila superior: stats + tiendas todo en una línea -->
+      <div class="card" style="margin-bottom:14px;padding:12px 16px;">
+        <div style="display:flex;align-items:center;gap:0;overflow:hidden;">
+
+          <!-- 4 stats globales -->
+          <div style="display:flex;gap:0;flex-shrink:0;">
+            <div style="padding:0 20px 0 0;border-right:1px solid var(--border);">
+              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Ganancia total</div>
+              <div id="vg-total-gan" style="font-size:19px;font-weight:700;color:var(--teal);line-height:1;">$ 0</div>
+              <div id="vg-total-sub" style="font-size:10px;color:var(--text3);margin-top:2px;">mes actual</div>
+            </div>
+            <div style="padding:0 20px;border-right:1px solid var(--border);">
+              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Ingresos</div>
+              <div id="vg-total-ing" style="font-size:19px;font-weight:700;color:#065f46;line-height:1;">$ 0</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">cobrados</div>
+            </div>
+            <div style="padding:0 20px;border-right:1px solid var(--border);">
+              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Gastos</div>
+              <div id="vg-total-cos" style="font-size:19px;font-weight:700;color:#7f1d1d;line-height:1;">$ 0</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">costos</div>
+            </div>
+            <div style="padding:0 20px;border-right:1px solid var(--border);">
+              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Ventas</div>
+              <div id="vg-total-cnt" style="font-size:19px;font-weight:700;color:#1e40af;line-height:1;">0</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:2px;">órdenes</div>
+            </div>
           </div>
-          <div style="text-align:center;">
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Total Gastos</div>
-            <div id="vg-total-cos" style="font-size:19px;font-weight:700;opacity:.8;">$ 0</div>
-          </div>
-          <div style="text-align:center;">
-            <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;opacity:.65;margin-bottom:2px;">Ventas del mes</div>
-            <div id="vg-total-cnt" style="font-size:19px;font-weight:700;">0</div>
-          </div>
+
+          <!-- Tarjetas por tienda -->
+          <div id="vg-por-tienda" style="display:flex;gap:10px;padding-left:16px;flex:1;min-width:0;overflow:hidden;"></div>
+
         </div>
       </div>
-
-      <!-- Ganancia por tienda (compacto) -->
-      <div id="vg-por-tienda" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px;"></div>
 
       <!-- Filtros -->
       <div class="filters-bar">
@@ -240,7 +245,7 @@
         <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar datos">↻ Actualizar</button>
         <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
       </div>
-      <div class="table-wrap" style="max-height:calc(100vh - 370px);overflow-y:auto;">
+      <div class="table-wrap" style="max-height:calc(100vh - 230px);overflow-y:auto;">
         <table>
           <thead><tr>
             <th style="position:sticky;top:0;z-index:2;background:#f3f8f8;">#</th>
@@ -265,81 +270,87 @@
 
     <!-- ══════════════ ENVÍOS ══════════════ -->
     <section class="page-section" id="page-envios">
-      <div class="c-dim" style="font-size:12px;margin-bottom:14px;">Ventas registradas agrupadas por transportadora · gestiona el estado de pago de cada envío</div>
 
-      <!-- Tarjetas resumen por transportadora -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;" id="envios-resumen-grid">
-        <!-- Aguachica -->
-        <div style="background:#111827;border:1px solid #1f2937;border-radius:var(--radius-lg);overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1f2937;">
-            <span style="font-size:12px;font-weight:700;color:#e5e7eb;letter-spacing:1.5px;text-transform:uppercase;">Aguachica</span>
-            <span id="env-ag-total-count" style="font-size:11px;background:#1f2937;color:#9ca3af;padding:2px 10px;border-radius:20px;font-weight:600;">0 envíos</span>
+      <!-- Resumen compacto en una sola fila -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+
+        <!-- Aguachica pendiente -->
+        <div class="env-stat-card" onclick="filtrarEnvios('aguachica','pendiente')" style="border-left:3px solid #f59e0b;">
+          <div class="env-stat-label">Aguachica · Pendiente</div>
+          <div class="env-stat-row">
+            <span class="env-stat-num" id="env-ag-pend-count">0</span>
+            <span class="env-stat-badge" style="background:#fef3c7;color:#92400e;">envíos</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;">
-            <div style="padding:14px 16px;cursor:pointer;border-right:1px solid #1f2937;transition:background .15s;"
-                 onclick="filtrarEnvios('aguachica','pendiente')"
-                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
-              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pendiente pago</div>
-              <div id="env-ag-pend-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;">0</div>
-              <div id="env-ag-pend-total" style="font-size:13px;font-weight:600;color:#d97706;margin-top:5px;">$ 0</div>
-            </div>
-            <div style="padding:14px 16px;cursor:pointer;transition:background .15s;"
-                 onclick="filtrarEnvios('aguachica','pagado')"
-                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
-              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pagado</div>
-              <div id="env-ag-pag-count" style="font-size:28px;font-weight:800;color:#22c55e;line-height:1;">0</div>
-              <div id="env-ag-pag-total" style="font-size:13px;font-weight:600;color:#16a34a;margin-top:5px;">$ 0</div>
-            </div>
-          </div>
+          <div class="env-stat-total" id="env-ag-pend-total">$ 0</div>
         </div>
-        <!-- Servientrega -->
-        <div style="background:#111827;border:1px solid #1f2937;border-radius:var(--radius-lg);overflow:hidden;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #1f2937;">
-            <span style="font-size:12px;font-weight:700;color:#e5e7eb;letter-spacing:1.5px;text-transform:uppercase;">Servientrega</span>
-            <span id="env-sv-total-count" style="font-size:11px;background:#1f2937;color:#9ca3af;padding:2px 10px;border-radius:20px;font-weight:600;">0 envíos</span>
+
+        <!-- Aguachica pagado -->
+        <div class="env-stat-card" onclick="filtrarEnvios('aguachica','pagado')" style="border-left:3px solid #6ee7b7;">
+          <div class="env-stat-label">Aguachica · Pagado</div>
+          <div class="env-stat-row">
+            <span class="env-stat-num" id="env-ag-pag-count">0</span>
+            <span class="env-stat-badge" style="background:#d1fae5;color:#065f46;">envíos</span>
           </div>
-          <div style="display:grid;grid-template-columns:1fr 1fr;">
-            <div style="padding:14px 16px;cursor:pointer;border-right:1px solid #1f2937;transition:background .15s;"
-                 onclick="filtrarEnvios('servientrega','pendiente')"
-                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
-              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pendiente pago</div>
-              <div id="env-sv-pend-count" style="font-size:28px;font-weight:800;color:#f59e0b;line-height:1;">0</div>
-              <div id="env-sv-pend-total" style="font-size:13px;font-weight:600;color:#d97706;margin-top:5px;">$ 0</div>
-            </div>
-            <div style="padding:14px 16px;cursor:pointer;transition:background .15s;"
-                 onclick="filtrarEnvios('servientrega','pagado')"
-                 onmouseover="this.style.background='#1f2937'" onmouseout="this.style.background='transparent'">
-              <div style="font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6b7280;font-weight:600;margin-bottom:8px;">Pagado</div>
-              <div id="env-sv-pag-count" style="font-size:28px;font-weight:800;color:#22c55e;line-height:1;">0</div>
-              <div id="env-sv-pag-total" style="font-size:13px;font-weight:600;color:#16a34a;margin-top:5px;">$ 0</div>
-            </div>
-          </div>
+          <div class="env-stat-total" id="env-ag-pag-total">$ 0</div>
         </div>
+
+        <!-- Servientrega pendiente -->
+        <div class="env-stat-card" onclick="filtrarEnvios('servientrega','pendiente')" style="border-left:3px solid #f59e0b;">
+          <div class="env-stat-label">Servientrega · Pendiente</div>
+          <div class="env-stat-row">
+            <span class="env-stat-num" id="env-sv-pend-count">0</span>
+            <span class="env-stat-badge" style="background:#fef3c7;color:#92400e;">envíos</span>
+          </div>
+          <div class="env-stat-total" id="env-sv-pend-total">$ 0</div>
+        </div>
+
+        <!-- Servientrega pagado -->
+        <div class="env-stat-card" onclick="filtrarEnvios('servientrega','pagado')" style="border-left:3px solid #6ee7b7;">
+          <div class="env-stat-label">Servientrega · Pagado</div>
+          <div class="env-stat-row">
+            <span class="env-stat-num" id="env-sv-pag-count">0</span>
+            <span class="env-stat-badge" style="background:#d1fae5;color:#065f46;">envíos</span>
+          </div>
+          <div class="env-stat-total" id="env-sv-pag-total">$ 0</div>
+        </div>
+
       </div>
 
-      <!-- Filtros -->
-      <div class="filters-bar">
-        <input type="text" placeholder="Buscar ID venta, teléfono..." id="ef-search" style="min-width:200px;">
-        <span class="fl">Transportadora</span>
-        <select id="ef-empresa">
-          <option value="">Todas</option>
-          <option value="aguachica">Aguachica</option>
-          <option value="servientrega">Servientrega</option>
-        </select>
-        <span class="fl">Pago envío</span>
-        <select id="ef-pago">
-          <option value="">Todos</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="pagado">Pagado</option>
-        </select>
-        <span class="fl">Tienda</span>
-        <select id="ef-tienda"><option value="">Todas</option></select>
-        <span class="fl">Mes</span>
-        <input type="month" id="ef-mes">
-        <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" id="btn-limpiar-envios" style="display:none;" onclick="clearEnvioFilters()"> Limpiar</button>
-        <button class="btn btn-ghost btn-sm" id="btn-actualizar-envios" onclick="refreshModulo('envios')" title="Actualizar datos">↻ Actualizar</button>
-        <button class="btn btn-success btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">Pagar seleccionados (<span id="selected-count">0</span>)</button>
+      <!-- Totales Aguachica y Servientrega (oculto, solo para compatibilidad) -->
+      <span id="env-ag-total-count" style="display:none;"></span>
+      <span id="env-sv-total-count" style="display:none;"></span>
+
+      <!-- Filtros compactos -->
+      <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+          <input type="text" placeholder="Buscar ID, teléfono..." id="ef-search"
+            style="flex:1;min-width:160px;max-width:220px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;"
+            onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'" oninput="renderEnvios()">
+          <select id="ef-empresa" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
+            <option value="">Transportadora</option>
+            <option value="aguachica">Aguachica</option>
+            <option value="servientrega">Servientrega</option>
+          </select>
+          <select id="ef-pago" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
+            <option value="">Pago envío</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="pagado">Pagado</option>
+          </select>
+          <select id="ef-tienda" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
+            <option value="">Tienda</option>
+          </select>
+          <input type="month" id="ef-mes" onchange="renderEnvios()"
+            style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
+          <div style="flex:1;"></div>
+          <button class="btn btn-ghost btn-sm" id="btn-limpiar-envios" style="display:none;" onclick="clearEnvioFilters()">Limpiar filtros</button>
+          <button class="btn btn-ghost btn-sm" onclick="refreshModulo('envios')" title="Actualizar">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            Actualizar
+          </button>
+          <button class="btn btn-primary btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">
+            Pagar seleccionados (<span id="selected-count">0</span>)
+          </button>
+        </div>
       </div>
 
       <!-- Tabla -->
@@ -350,17 +361,31 @@
             <th>#</th>
             <th>Tienda</th>
             <th>ID Venta ML</th>
-            <th>Fecha Venta</th>
+            <th>Fecha</th>
             <th>Transportadora</th>
-            <th>Valor Envío (COP)</th>
-            <th>Estado Venta</th>
-            <th>Pago Envío</th>
-            <th>Acc.</th>
+            <th>Valor Envío</th>
+            <th>Estado</th>
+            <th>Pago</th>
+            <th></th>
           </tr></thead>
           <tbody id="envios-tbody"></tbody>
         </table>
       </div>
-      <div style="margin-top:8px;font-size:13px;color:var(--text3);" id="envios-count"></div>
+      <div style="margin-top:8px;font-size:12px;color:var(--text3);" id="envios-count"></div>
+
+      <style>
+        .env-stat-card {
+          background:var(--white);border:1px solid var(--border);border-radius:10px;
+          padding:11px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;
+        }
+        .env-stat-card:hover { box-shadow:var(--shadow-md);border-color:#b2dfdb; }
+        .env-stat-label { font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:7px; }
+        .env-stat-row { display:flex;align-items:baseline;gap:6px;margin-bottom:4px; }
+        .env-stat-num { font-size:22px;font-weight:700;color:var(--text);line-height:1; }
+        .env-stat-badge { font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px; }
+        .env-stat-total { font-size:12px;color:var(--text2);font-weight:500; }
+      </style>
+
     </section>
 
     <!-- ══════════════ CONFIGURACIÓN ══════════════ -->
@@ -451,10 +476,9 @@
     <section class="page-section" id="page-finanzas">
 
       <!-- Header -->
-      <div class="frow mb16" style="flex-wrap:wrap;gap:8px;">
+      <div class="frow mb16" style="flex-wrap:wrap;gap:8px;align-items:center;">
         <div style="flex:1;min-width:160px;">
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1px;color:var(--text3);margin-bottom:2px;">Control financiero</div>
-          <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Finanzas</div>
+          <div style="font-size:15px;font-weight:700;letter-spacing:.2px;color:var(--text);">Control Financiero</div>
         </div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           <select id="fin-filtro-mes" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;" onchange="renderFinanzas()"></select>
@@ -464,11 +488,21 @@
         </div>
       </div>
 
-      <!-- Billeteras / Saldos -->
+      <!-- Ganancia del mes + Saldos -->
       <div class="card" style="margin-bottom:14px;">
         <div class="card-header" style="margin-bottom:12px;">
-          <div class="card-title">Saldos</div>
-          <div class="card-sub">Clic en cualquier tarjeta para editar el saldo</div>
+          <div style="display:flex;align-items:center;gap:16px;">
+            <div>
+              <div class="card-title">Saldos</div>
+              <div class="card-sub">Clic en cualquier tarjeta para editar el saldo</div>
+            </div>
+            <div style="width:1px;height:32px;background:var(--border);flex-shrink:0;"></div>
+            <div>
+              <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:3px;">Ganancia del mes</div>
+              <div id="fin-ganancia-mes" style="font-size:18px;font-weight:700;color:#065f46;line-height:1;">$ 0</div>
+              <div id="fin-ventas-mes-cnt" style="font-size:10px;color:var(--text3);margin-top:2px;">Cargando...</div>
+            </div>
+          </div>
         </div>
         <div id="fin-billeteras" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px;"></div>
       </div>
@@ -683,6 +717,33 @@
 
 <!-- ═══════════════════ MODAL BILLETERA ═══════════════════ -->
 
+
+<!-- ═══════ MODAL ELIMINAR ENVÍO SKYDROPX (código) ═══════ -->
+<div class="overlay" id="modal-del-envio-sky">
+  <div class="modal" style="max-width:370px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar envío Skydropx</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-del-envio-sky')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>El saldo <strong>no</strong> se reintegrará automáticamente.</div>
+      <input type="password" id="del-envio-sky-code" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmDeleteEnvioSky()">
+      <div id="del-envio-sky-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-del-envio-sky')" style="flex:1;">Cancelar</button>
+      <button id="del-envio-sky-btn" onclick="_confirmDeleteEnvioSky()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
+    </div>
+  </div>
+</div>
 
 
 </body>
@@ -1315,49 +1376,65 @@ async function _verificarCodigoAcceso(codigo) {
 
 <!-- ═══════════════════ MODAL ENVÍO SKYDROPX ═══════════════════ -->
 <div class="overlay" id="modal-envio-sky">
-  <div class="modal" style="max-width:460px;">
-    <div class="mh">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1e3a5f,#243049);color:#fff;">
       <div>
-        <div class="mh-title" id="modal-envio-sky-title">Registrar Envío Skydropx</div>
-        <div class="mh-sub">Se descontará automáticamente del saldo origen</div>
+        <div class="mh-title" id="modal-envio-sky-title" style="color:#fff;font-size:15px;">Registrar Envío Skydropx</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Se descontará automáticamente del saldo origen</div>
       </div>
-      <button class="mclose" onclick="closeModal('modal-envio-sky')">✕</button>
+      <button class="mclose" onclick="closeModal('modal-envio-sky')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
-    <div class="mc">
+    <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
       <div class="g2">
-        <div class="fg">
+        <div class="fg" style="margin:0;">
           <label class="fl2">Fecha</label>
           <input type="date" id="sky-fecha">
         </div>
-        <div class="fg">
+        <div class="fg" style="margin:0;">
           <label class="fl2">N° Venta</label>
-          <input type="text" id="sky-num-venta" placeholder="Ej: 12345">
+          <input type="text" id="sky-num-venta" placeholder="Ej: 2000012345678">
         </div>
       </div>
       <div class="g2">
-        <div class="fg">
+        <div class="fg" style="margin:0;">
           <label class="fl2">N° Guía</label>
           <input type="text" id="sky-num-guia" placeholder="Código de guía">
         </div>
-        <div class="fg">
+        <div class="fg" style="margin:0;">
           <label class="fl2">Transportadora</label>
-          <input type="text" id="sky-transportadora" placeholder="Ej: Coordinadora">
+          <select id="sky-transportadora" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
+            <option value="Servientrega">Servientrega</option>
+            <option value="Coordinadora">Coordinadora</option>
+            <option value="Envia">Envia</option>
+            <option value="Interrapidisimo">Interrapidisimo</option>
+          </select>
         </div>
       </div>
       <div class="g2">
-        <div class="fg">
+        <div class="fg" style="margin:0;">
+          <label class="fl2">Estado del envío</label>
+          <select id="sky-estado" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
+            <option value="Pendiente">Pendiente</option>
+            <option value="En camino">En camino</option>
+            <option value="Entregado">Entregado</option>
+            <option value="Novedad">Novedad</option>
+          </select>
+        </div>
+        <div class="fg" style="margin:0;">
           <label class="fl2">Valor (COP$)</label>
           <input type="number" id="sky-valor" placeholder="0" min="0">
         </div>
-        <div class="fg">
-          <label class="fl2">Descontar de</label>
-          <select id="sky-fuente"></select>
-        </div>
+      </div>
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Descontar de</label>
+        <select id="sky-fuente" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select>
       </div>
     </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-envio-sky')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEnvioSky()">Guardar envío</button>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-envio-sky')" style="flex:1;">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEnvioSky()" style="flex:1;">Guardar envío</button>
     </div>
   </div>
 </div>
@@ -1516,6 +1593,33 @@ async function _verificarCodigoAcceso(codigo) {
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-del-movimiento')" style="flex:1;">Cancelar</button>
       <button id="del-mov-confirm-btn" onclick="_confirmDeleteMovimiento()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL ELIMINAR ENVÍO SKYDROPX (código) ═══════ -->
+<div class="overlay" id="modal-del-envio-sky">
+  <div class="modal" style="max-width:370px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar envío Skydropx</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-del-envio-sky')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>El saldo <strong>no</strong> se reintegrará automáticamente.</div>
+      <input type="password" id="del-envio-sky-code" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmDeleteEnvioSky()">
+      <div id="del-envio-sky-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-del-envio-sky')" style="flex:1;">Cancelar</button>
+      <button id="del-envio-sky-btn" onclick="_confirmDeleteEnvioSky()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
     </div>
   </div>
 </div>

@@ -264,3 +264,100 @@ async function render(page) {
     case 'ayudas':        await renderAyudas();          break;
   }
 }
+
+// ── Custom Estado Dropdown (shared) ──
+const _ESTADO_COLORS = {
+  pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800', label:'PENDIENTE' },
+  en_camino: { bg:'#70ad47', color:'#fff', border:'#5a9438', label:'EN CAMINO' },
+  entregado: { bg:'#002060', color:'#fff', border:'#001540', label:'ENTREGADO' },
+  cancelado: { bg:'#ff0000', color:'#fff', border:'#cc0000', label:'CANCELADO' },
+  problema:  { bg:'#f9a825', color:'#000', border:'#e08c00', label:'PROBLEMA'  },
+  devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc', label:'DEVUELTO'  },
+  error:     { bg:'#a61c00', color:'#fff', border:'#7a1400', label:'ERROR'      },
+  // Skydropx keys (capitalized)
+  Pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800', label:'PENDIENTE' },
+  'En camino':{ bg:'#70ad47', color:'#fff', border:'#5a9438', label:'EN CAMINO' },
+  Entregado: { bg:'#002060', color:'#fff', border:'#001540', label:'ENTREGADO' },
+  Novedad:   { bg:'#ff0000', color:'#fff', border:'#cc0000', label:'NOVEDAD'   },
+};
+
+const _CHEVRON = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;
+
+// Registry to avoid inline onclick issues with special chars in IDs
+const _dropRegistry = {};
+
+function _buildEstadoDrop(estadoActual, opciones, onChangeFn, id) {
+  const safeKey = 'k' + Math.random().toString(36).slice(2,8);
+  _dropRegistry[safeKey] = { id, fn: onChangeFn };
+
+  const p = _ESTADO_COLORS[estadoActual] || { bg:'#e5e7eb', color:'#374151', border:'#d1d5db', label:(estadoActual||'—').toUpperCase() };
+
+  const opts = opciones.map(op => {
+    const op_p = _ESTADO_COLORS[op] || { bg:'#e5e7eb', color:'#374151', label:op.toUpperCase() };
+    return `<button class="estado-drop-opt"
+      data-key="${safeKey}" data-val="${op}"
+      style="background:${op_p.bg};color:${op_p.color};">
+      ${op_p.label}
+    </button>`;
+  }).join('');
+
+  return `<div class="estado-drop">
+    <div class="estado-drop-btn" data-key="${safeKey}"
+      style="background:${p.bg};color:${p.color};border-color:${p.border};">
+      ${p.label} ${_CHEVRON}
+    </div>
+    <div class="estado-drop-menu">${opts}</div>
+  </div>`;
+}
+
+// Single delegated listener on document for all dropdown interactions
+document.addEventListener('click', function(e) {
+  const btn  = e.target.closest('.estado-drop-btn');
+  const opt  = e.target.closest('.estado-drop-opt');
+  const drop = e.target.closest('.estado-drop');
+
+  if (opt) {
+    e.stopPropagation();
+    const key = opt.dataset.key;
+    const val = opt.dataset.val;
+    const reg = _dropRegistry[key];
+    if (!reg) return;
+
+    const p = _ESTADO_COLORS[val] || { bg:'#e5e7eb', color:'#374151', border:'#d1d5db', label:val.toUpperCase() };
+    const parentDrop = opt.closest('.estado-drop');
+    const dropBtn = parentDrop.querySelector('.estado-drop-btn');
+    dropBtn.style.background  = p.bg;
+    dropBtn.style.color       = p.color;
+    dropBtn.style.borderColor = p.border;
+    dropBtn.innerHTML = p.label + ' ' + _CHEVRON;
+    parentDrop.querySelector('.estado-drop-menu').classList.remove('open');
+
+    window[reg.fn](reg.id, val);
+    return;
+  }
+
+  if (btn) {
+    e.stopPropagation();
+    const menu = btn.nextElementSibling;
+    const isOpen = menu.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.estado-drop-menu.open').forEach(m => m.classList.remove('open'));
+    if (!isOpen) {
+      // Position with fixed coords before showing
+      const btnRect = btn.getBoundingClientRect();
+      menu.style.left = btnRect.left + 'px';
+      menu.style.top  = (btnRect.bottom + 4) + 'px';
+      menu.classList.add('open');
+      // Flip up if not enough space below
+      const menuH = menu.offsetHeight || 160;
+      if (btnRect.bottom + menuH + 4 > window.innerHeight) {
+        menu.style.top = (btnRect.top - menuH - 4) + 'px';
+      }
+    }
+    return;
+  }
+
+  if (!drop) {
+    document.querySelectorAll('.estado-drop-menu.open').forEach(m => m.classList.remove('open'));
+  }
+});

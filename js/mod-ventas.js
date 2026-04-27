@@ -68,30 +68,45 @@ async function renderVentasGanancias() {
   if (elCnt) elCnt.textContent = ventasPer.length;
   if (elSub) elSub.textContent = labelPer;
 
-  // ── Chips por tienda con el período activo ──
+  // ── Tarjetas por tienda ──
   const chipEl = document.getElementById('vg-por-tienda');
   if (chipEl) chipEl.innerHTML = tiendas.map(t => {
     const tvPer  = ventasPer.filter(v => v.tienda_id === t.id);
-    const tvTodo = ventas.filter(v => v.tienda_id === t.id);
-    const g   = tvPer.reduce((s,v) => s + calcVenta(v).ganancia,   0);
-    const ing = tvPer.reduce((s,v) => s + calcVenta(v).totalVenta, 0);
+    const g      = tvPer.reduce((s,v) => s + calcVenta(v).ganancia,   0);
+    const ing    = tvPer.reduce((s,v) => s + calcVenta(v).totalVenta, 0);
+    const cos    = tvPer.reduce((s,v) => s + calcVenta(v).totalCostos,0);
     const isActive = t.estado !== 'inactiva';
     const fotoEl = t.foto
-      ? `<img src="${t.foto}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2px solid ${t.color};">`
-      : `<span class="tienda-dot" style="background:${t.color};width:10px;height:10px;"></span>`;
+      ? `<img src="${t.foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2.5px solid ${t.color};">`
+      : `<span style="width:36px;height:36px;border-radius:50%;background:${t.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:15px;font-weight:700;">${t.nombre.charAt(0)}</span>`;
+    const gColor = g >= 0 ? '#065f46' : '#7f1d1d';
+    const gBg    = g >= 0 ? '#f0fdf4' : '#fef2f2';
     return `<div style="
-      background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);
-      padding:12px 16px;flex:1;min-width:160px;box-shadow:var(--shadow);
-      border-left:4px solid ${t.color};opacity:${isActive ? 1 : .6};
+      display:flex;align-items:center;gap:12px;
+      padding:6px 16px;
+      margin-left:10px;
+      border-left:3px solid ${t.color};
+      border-radius:8px;
+      background:var(--bg);
+      border:1px solid var(--border);
+      border-left:3px solid ${t.color};
+      opacity:${isActive ? 1 : .5};flex-shrink:0;
     ">
-      <div style="display:flex;align-items:center;gap:7px;margin-bottom:6px;">
-        ${fotoEl}
-        <span style="font-size:15px;font-weight:700;flex:1;">${t.nombre}</span>
-        ${!isActive ? '<span style="font-size:9px;background:#fde8ea;color:#b0202e;padding:1px 6px;border-radius:10px;font-weight:700;">INACTIVA</span>' : ''}
+      ${fotoEl}
+      <div style="min-width:85px;">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:2px;">Tienda</div>
+        <div style="font-size:12px;font-weight:700;white-space:nowrap;color:var(--text);">${t.nombre}</div>
+        ${!isActive ? '<span style="font-size:8px;background:#fde8ea;color:#b0202e;padding:1px 5px;border-radius:8px;font-weight:700;">INACTIVA</span>' : ''}
       </div>
-      <div style="font-size:20px;font-weight:700;color:${g >= 0 ? 'var(--green)' : 'var(--red)'};">${fmt(g)}</div>
-      <div style="font-size:12px;color:var(--text3);margin-top:2px;">
-        <b>${tvPer.length}</b> ventas · <span style="opacity:.7;">total: ${tvTodo.length}</span>
+      <div style="width:1px;height:28px;background:var(--border);flex-shrink:0;"></div>
+      <div style="min-width:78px;">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:2px;">Ganancia</div>
+        <div style="font-size:14px;font-weight:700;color:${gColor};line-height:1;">${fmt(g)}</div>
+      </div>
+      <div style="width:1px;height:28px;background:var(--border);flex-shrink:0;"></div>
+      <div style="min-width:44px;">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:2px;">Ventas</div>
+        <div style="font-size:14px;font-weight:700;color:var(--text);line-height:1;">${tvPer.length}</div>
       </div>
     </div>`;
   }).join('');

@@ -331,10 +331,8 @@ async function renderVentas() {
     const c = calcVenta(v);
     const isLoss = c.ganancia < 0;
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
-    const pill = ESTADO_PILL[v.estado] || { bg:'#f3f8f8', color:'var(--text2)', border:'var(--border)' };
-    const selectStyle = `font-size:12px;padding:4px 8px;border-radius:20px;font-weight:800;cursor:pointer;`
-      + `background:${pill.bg};color:${pill.color};border:1.5px solid ${pill.border};outline:none;`
-      + `appearance:none;-webkit-appearance:none;text-align:center;min-width:96px;`;
+
+
     return `<tr class="${isLoss?'loss-row':''}">
       <td class="td-mono c-dim" style="text-align:center;">${v._num}</td>
       <td>
@@ -371,13 +369,7 @@ async function renderVentas() {
       <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
         ${fmt(c.ganancia)}
       </td>
-      <td>
-        <select style="${selectStyle}"
-          onchange="_onEstadoChange(this,'${v.id}')">
-          ${['pendiente','en_camino','entregado','cancelado','problema','devuelto','error']
-            .map(e=>{const lbl={'pendiente':'PENDIENTE','en_camino':'EN CAMINO','entregado':'ENTREGADA','cancelado':'CANCELADA','problema':'PROBLEMA','devuelto':'DEVUELTO','error':'ERROR'}[e]||e.toUpperCase();return `<option value="${e}" ${v.estado===e?'selected':''}>${lbl}</option>`;}).join('')}
-        </select>
-      </td>
+      <td>${_buildEstadoDrop(v.estado||'pendiente',['pendiente','en_camino','entregado','cancelado','problema','devuelto','error'],'_cambiarEstadoVenta',v.id)}</td>
       <td>
         <div class="actions-cell">
             <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
@@ -388,24 +380,29 @@ async function renderVentas() {
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
+
+  // Entrada suave de abajo hacia arriba
+  const _rows = document.querySelectorAll('#ventas-tbody tr');
+  _rows.forEach((row, i) => {
+    row.style.opacity = '0';
+    row.style.transform = 'translateY(16px)';
+    const delay = i * 15;
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      row.style.transition = `opacity .18s ease ${delay}ms, transform .18s ease ${delay}ms`;
+      row.style.opacity = '1';
+      row.style.transform = 'translateY(0)';
+      // Limpiar transition después para no interferir con otros eventos
+      setTimeout(() => {
+        row.style.transition = '';
+        row.style.transform = '';
+      }, 200 + delay);
+    }));
+  });
+
 }
 
-const _ESTADO_PILL_MAP = {
-  pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800' },
-  en_camino: { bg:'#70ad47', color:'#fff', border:'#5a9438' },
-  entregado: { bg:'#002060', color:'#fff', border:'#001540' },
-  cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000' },
-  problema:  { bg:'#f9a825', color:'#000', border:'#e08c00' },
-  devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc' },
-  error:     { bg:'#a61c00', color:'#fff', border:'#7a1400' },
-};
-
-function _onEstadoChange(selectEl, id) {
-  const estado = selectEl.value;
-  const pill = _ESTADO_PILL_MAP[estado] || { bg:'#f3f8f8', color:'var(--text2)', border:'var(--border)' };
-  selectEl.style.background = pill.bg;
-  selectEl.style.color      = pill.color;
-  selectEl.style.borderColor= pill.border;
+// Estado change handler for ventas dropdown
+function _cambiarEstadoVenta(id, estado) {
   cambiarEstado(id, estado);
 }
 

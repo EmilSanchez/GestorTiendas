@@ -9,27 +9,26 @@ let _ayudaCatActiva = '__todas__';
 
 // Paleta de colores para las tarjetas
 const _AYUDA_COLORES = [
-  { hex:'#00897b', label:'Teal'      },
-  { hex:'#1565c0', label:'Azul'      },
-  { hex:'#2e7d32', label:'Verde'     },
-  { hex:'#c62828', label:'Rojo'      },
-  { hex:'#6a1b9a', label:'Morado'    },
-  { hex:'#e65100', label:'Naranja'   },
-  { hex:'#f9a825', label:'Amarillo'  },
-  { hex:'#37474f', label:'Gris'      },
+  { hex:'#1a4fa8', label:'Azul' },
 ];
 
 // Categoría → color por defecto
 const _CAT_COLORES = {
-  reembolso:'#c62828', demoras:'#e65100', cliente:'#1565c0',
-  amazon:'#f9a825', mercadolibre:'#00897b', envios:'#2e7d32',
-  rastreo:'#6a1b9a', infracciones:'#37474f', general:'#37474f', otro:'#37474f'
+  reembolso:'#1a4fa8', demoras:'#1a4fa8', cliente:'#1a4fa8',
+  amazon:'#1a4fa8', mercadolibre:'#1a4fa8', envios:'#1a4fa8',
+  rastreo:'#1a4fa8', infracciones:'#1a4fa8', general:'#1a4fa8', otro:'#1a4fa8'
 };
 
 function _loadAyudas() {
   try {
     const raw = localStorage.getItem(_AYUDAS_KEY);
     _ayudas = raw ? JSON.parse(raw) : [];
+    // Normalizar todos los colores a azul rey
+    let changed = false;
+    _ayudas.forEach(a => {
+      if (a.color !== '#1a4fa8') { a.color = '#1a4fa8'; changed = true; }
+    });
+    if (changed) localStorage.setItem(_AYUDAS_KEY, JSON.stringify(_ayudas));
   } catch { _ayudas = []; }
 }
 
@@ -45,39 +44,39 @@ function _ayudaId() {
 function _precargarAyudas() {
   if(_ayudas.length > 0) return;
   const datos = [
-    { titulo:'Mensajes para quitar demoras', categoria:'demoras', color:'#00897b',
+    { titulo:'Mensajes para quitar demoras', categoria:'demoras', color:'#1a4fa8',
       contenido:'Buenos días, espero se encuentre bien, lo que pasa es que tengo unas ventas las cuales no logré despachar a tiempo el pedido indicado por cuestión de las fuertes lluvias en mi ciudad, literalmente las calles estaban totalmente inundadas, por favor me pueden ayudar para que esto no me afecte en mi reputación. Ya siempre trato de despachar todo a tiempo, pero esta vez se me salió de las manos con varios productos' },
-    { titulo:'Para pedir reembolso en Amazon – pedido marca entregado y "No Llego"', categoria:'amazon', color:'#c62828',
+    { titulo:'Para pedir reembolso en Amazon – pedido marca entregado y "No Llego"', categoria:'amazon', color:'#1a4fa8',
       contenido:'Lo que pasa es que compré el siguiente pedido — y me aparece entregado, ya yo consulté con el transportista y no me recibieron ninguna ayuda, me comunicaron que en la sucursal procesaron el movimiento al día siguiente. Sin embargo, cuento con el comprobante de despacho que respalda el cumplimiento con los tiempos de entrega. Agradezco mucho tu apoyo para revisar este inconveniente.' },
-    { titulo:'Enviar solo si el cliente desea reversar la compra', categoria:'reembolso', color:'#e65100',
+    { titulo:'Enviar solo si el cliente desea reversar la compra', categoria:'reembolso', color:'#1a4fa8',
       contenido:'Para realizar la cancelación de forma correcta y evitar retrasos en el reembolso del dinero por favor seguir los siguientes pasos:\n> Ingresar a detalles de la compra\n> Seleccionar la opción cancelar compra\n> Luego seleccionar la opción la fecha de entrega cambio' },
-    { titulo:'Para tumbar demoras', categoria:'demoras', color:'#37474f',
+    { titulo:'Para tumbar demoras', categoria:'demoras', color:'#1a4fa8',
       contenido:'Estamos trabajando para solucionar este problema cuanto antes. La demora está afectando tu reputación.' },
-    { titulo:'Cuando hay problemas al importar un producto', categoria:'cliente', color:'#1565c0',
+    { titulo:'Cuando hay problemas al importar un producto', categoria:'cliente', color:'#1a4fa8',
       contenido:'Buen día, espero te encuentres bien, me comunico con el fin de informarte que tenemos un inconveniente ya que al ser este artículo muy solicitado estaría llegando mínimo en 3 meses y ya para estas fechas mercado libre no da garantía de tu dinero y me darían el dinero sin usted haber recibido el producto, por ello me contacto con el fin de saber como procedemos. Entender si deseas reversar la compra.' },
-    { titulo:'Para solicitar datos al cliente', categoria:'cliente', color:'#2e7d32',
+    { titulo:'Para solicitar datos al cliente', categoria:'cliente', color:'#1a4fa8',
       contenido:'Voy a necesitar los siguientes datos\n\nnombre completo:\ncédula:\ndirección:\nbarrio:\nciudad:\ndepartamento:\nteléfono:\ncorreo:' },
-    { titulo:'Rastreo Servientrega Kiwi para información exacta', categoria:'rastreo', color:'#6a1b9a',
+    { titulo:'Rastreo Servientrega Kiwi para información exacta', categoria:'rastreo', color:'#1a4fa8',
       contenido:'https://mytrack.servientrega.us/es' },
-    { titulo:'Cuando hay que pedir dinero al cliente', categoria:'cliente', color:'#f9a825',
+    { titulo:'Cuando hay que pedir dinero al cliente', categoria:'cliente', color:'#1a4fa8',
       contenido:'Buenas tardes! Espero te encuentres bien, nos indican que para que el producto pueda ingresar a Colombia están cobrando un valor adicional de 67990, quisiera saber si estas dispuesto a colaborarnos ya que nosotros estamos cubriendo los demás gastos de importación y envío. Quedo atento ' },
-    { titulo:'Para que el cliente cancele', categoria:'reembolso', color:'#c62828',
+    { titulo:'Para que el cliente cancele', categoria:'reembolso', color:'#1a4fa8',
       contenido:'Buenas tardes, lo que pasa es que hemos intentado despachar el producto pero hemos tenido con la etiqueta que MercadoLibre nos brinda para despachar el producto, hemos hablado con pero no nos han colaborado dándonos la etiqueta para despachar el producto, sin obtener ayuda. Ya que nos aparece como envío pendiente y no nos genera la etiqueta, entonces para un reclamo indicando que tuviste un inconveniente y hacerte el reembolso para que puedas hacer nuevamente la compra' },
-    { titulo:'Enviar para que retiren las denuncias', categoria:'infracciones', color:'#37474f',
+    { titulo:'Enviar para que retiren las denuncias', categoria:'infracciones', color:'#1a4fa8',
       contenido:'Buenos días, espero te encuentres bien, mira lo que pasa es que yo recibí una denuncia en mercado libre acerca de unas publicaciones que realizé de la marca (), las cuales fueron confirmadas por ustedes y dicen que no tengo autorización para vender, cosa que yo no sabía, me estoy comunicando con ustedes por este medio para solicitar por favor si es posible me sea retirada la denuncia ya que esto afecta directamente mi cuenta, mi compromiso es retirar todas las publicaciones que tenga de esta marca, en cuanto ustedes me retiren la denuncia, muchas gracias. quedo atenta a su respuesta.' },
-    { titulo:'Tumbar y revisar infracciones de las tiendas', categoria:'infracciones', color:'#c62828',
+    { titulo:'Tumbar y revisar infracciones de las tiendas', categoria:'infracciones', color:'#1a4fa8',
       contenido:'https://www.mercadolibre.com.co/noindex/pppi/infractions\n\n¿Por qué quieres contactarte?\nNo estoy de acuerdo con la infracción\n\nExplícanos más:\n\nBuenas tardes, me comunico ya que me están llegando correos por link y datos de contacto diciendo que estoy cometiendo infracciones y no es así, serías tan amable de ayudarme con eso.' },
-    { titulo:'Responder denuncias (eliminar imágenes denunciadas)', categoria:'infracciones', color:'#6a1b9a',
+    { titulo:'Responder denuncias (eliminar imágenes denunciadas)', categoria:'infracciones', color:'#1a4fa8',
       contenido:'Hola, buenos días, las imágenes que nosotros publicamos son brindadas por nuestro proveedor oficial en este caso es Amazon de igual forma estoy dispuesto a borrar la publicación si es necesario, ya que no quiero que mi cuenta se vea en un futuro suspendida' },
-    { titulo:'Error de venta o no disponible en Amazon', categoria:'amazon', color:'#f9a825',
+    { titulo:'Error de venta o no disponible en Amazon', categoria:'amazon', color:'#1a4fa8',
       contenido:'Buenos días, lastimosamente te comento que mi proveedor se encuentra en otra ubicación y tiempo el envío, estaría llegando mínimo en 3 meses y ya para estas fechas mercado libre no de tu dinero y me darían el dinero sin usted haber recibido el producto, por ello me contacto a saber como procedemos.' },
-    { titulo:'Para iniciar un chat de una con Mercado Libre', categoria:'mercadolibre', color:'#00897b',
+    { titulo:'Para iniciar un chat de una con Mercado Libre', categoria:'mercadolibre', color:'#1a4fa8',
       contenido:'https://www.mercadolibre.com.co/ayuda/content/39353/contact/1482' },
-    { titulo:'Para revisar categorías incorrectas — Mercado Libre', categoria:'mercadolibre', color:'#00897b',
+    { titulo:'Para revisar categorías incorrectas — Mercado Libre', categoria:'mercadolibre', color:'#1a4fa8',
       contenido:'https://www.mercadolibre.com.co/publicaciones/?listado?filters=CHANNEL_NO_PROXIMITY_AND_NO_MP_MERCHANTS|OMNI_INFRINGED_POLICIES&page=1&sort=DEFAULT' },
-    { titulo:'Cuando el pedido no aparece y toca dar un reembolso', categoria:'reembolso', color:'#c62828',
+    { titulo:'Cuando el pedido no aparece y toca dar un reembolso', categoria:'reembolso', color:'#1a4fa8',
       contenido:'Lamento profundamente no haberle dado la experiencia de compra que merece. Me disculpo sinceramente por los inconvenientes y la espera que ha tenido que soportar debido a los retrasos en aduanas, sobre los cuales no he logrado obtener una fecha de liberación. Procederé con el reembolso como me lo solicitó. Aprecio mucho su paciencia y lamento cualquier molestia que esto le haya causado.' },
-    { titulo:'Pedir número a clientes', categoria:'cliente', color:'#2e7d32',
+    { titulo:'Pedir número a clientes', categoria:'cliente', color:'#1a4fa8',
       contenido:'Buen día, espero te encuentres bien, con el fin de mantenerte informado por todos los canales posibles a cerca del proceso de tu compra, estamos solicitando tu número de contacto.\n\nQue tengas un excelente día' },
   ];
   datos.forEach(d => {
@@ -137,7 +136,7 @@ function renderAyudasFiltradas() {
   grid.innerHTML = lista.map((a, i) => {
     const preview = a.contenido.replace(/</g,'&lt;').replace(/>/g,'&gt;');
     const cat     = _catLabel(a.categoria);
-    const color   = a.color || '#00897b';
+    const color   = a.color || '#1a4fa8';
     const delay   = Math.min(i * 40, 400);
     return `
     <div class="ayuda-card" style="animation-delay:${delay}ms;" onclick="verAyuda('${a.id}')">
@@ -199,7 +198,7 @@ function openModalAyuda(id) {
   selCat.value = ayuda?.categoria || 'general';
 
   // Color actual
-  const colorActual = ayuda?.color || '#00897b';
+  const colorActual = ayuda?.color || '#1a4fa8';
   document.getElementById('ma-color').value = colorActual;
   _renderColorPicker(colorActual);
 
@@ -232,7 +231,7 @@ async function guardarAyuda() {
   const catNueva  = document.getElementById('ma-cat-nueva').value.trim();
   const catSelect = document.getElementById('ma-categoria').value;
   const categoria = catNueva ? catNueva.toLowerCase().replace(/\s+/g,'-') : catSelect;
-  const color     = document.getElementById('ma-color').value || '#00897b';
+  const color     = document.getElementById('ma-color').value || '#1a4fa8';
   const id        = document.getElementById('ma-id').value;
 
   // Validar
@@ -290,7 +289,7 @@ async function guardarAyuda() {
 function verAyuda(id) {
   const a = _ayudas.find(x=>x.id===id);
   if(!a) return;
-  const color = a.color || '#00897b';
+  const color = a.color || '#1a4fa8';
 
   document.getElementById('mva-titulo').textContent = a.titulo;
   document.getElementById('mva-contenido').textContent = a.contenido;
@@ -358,7 +357,7 @@ function eliminarAyuda(id) {
 
   // Poblar modal de confirmación
   document.getElementById('mdel-ayuda-nombre').textContent = a.titulo;
-  const color = a.color || '#00897b';
+  const color = a.color || '#1a4fa8';
   document.getElementById('mdel-ayuda-cat').innerHTML =
     `<span class="ayuda-cat-chip" style="background:${color}22;color:${color};border-color:${color}44;font-size:0.7rem;">
       ${_catLabel(a.categoria)}

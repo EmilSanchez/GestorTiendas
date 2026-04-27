@@ -21,10 +21,22 @@ function _mesLabel(ym) {
 
 // ── RENDER PRINCIPAL ──
 async function renderFinanzas() {
-  const [movs, saldos, billeteras, tiendas, enviosSky] = await Promise.all([
-    DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.envios_sky()
+  const [movs, saldos, billeteras, tiendas, enviosSky, ventas] = await Promise.all([
+    DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.envios_sky(), DB.ventas()
   ]);
   _finTiendas = tiendas;
+
+  // Ganancia del mes actual
+  const mesAct2 = (document.getElementById('fin-filtro-mes')?.value) || mes();
+  const ventasMes = ventas.filter(v => (v.fecha_venta||'').startsWith(mesAct2));
+  const ganMes = ventasMes.reduce((s,v) => s + calcVenta(v).ganancia, 0);
+  const ganEl  = document.getElementById('fin-ganancia-mes');
+  if (ganEl) {
+    ganEl.textContent = fmt(ganMes);
+    ganEl.style.color = ganMes >= 0 ? '#065f46' : '#7f1d1d';
+  }
+  const ganCntEl = document.getElementById('fin-ventas-mes-cnt');
+  if (ganCntEl) ganCntEl.textContent = `${ventasMes.length} ventas · ${_mesLabel(mesAct2)}`;
 
   const mesEl = document.getElementById('fin-filtro-mes');
   if (mesEl && !mesEl.dataset.init) {
@@ -36,7 +48,8 @@ async function renderFinanzas() {
 
   _renderBilleteras(saldos, billeteras, tiendas);
   _renderEnviosSky(enviosSky.filter(e=>(e.fecha||'').startsWith(mesAct)), mesAct);
-  _renderMovimientos(movs.filter(m=>m.fecha?.startsWith(mesAct)).sort((a,b)=>b.fecha.localeCompare(a.fecha)), mesAct);
+  const movMes = movs.filter(m=>m.fecha?.startsWith(mesAct)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  _renderMovimientos(movMes, mesAct);
 }
 
 // ── BILLETERAS ──
@@ -171,28 +184,57 @@ function _renderMovimientos(movMes, mesAct) {
   const el = document.getElementById('fin-movimientos');
   if (!el) return;
 
+  // Filter tabs: todos / venta (ML auto) / skydropx / externo (manual)
+  const activeTab = document.querySelector('.fin-mov-tab.active')?.dataset.tab || 'todos';
+  let filtrados = movMes;
+  // fuente='mercadopago' → pago de venta ML (auto)
+  // _sky_id presente       → egreso de envío Skydropx (auto)
+  // todo lo demás          → movimiento externo manual
+  const _isVentaML  = m => m.fuente === 'mercadopago' || m.fuente?.startsWith('mercadopago_') && !m._sky_id;
+  const _isSkyMov   = m => !!m._sky_id;
+  const _isExterno  = m => !_isVentaML(m) && !_isSkyMov(m);
+  if (activeTab === 'venta')    filtrados = movMes.filter(_isVentaML);
+  if (activeTab === 'skydropx') filtrados = movMes.filter(_isSkyMov);
+  if (activeTab === 'externo')  filtrados = movMes.filter(_isExterno);
+
+  const tabs = `
+    <div style="display:flex;gap:4px;margin-bottom:12px;">
+      ${['todos','venta','skydropx','externo'].map(t=>{
+        const labels={todos:'Todos',venta:'Ventas ML',skydropx:'Skydropx',externo:'Externos'};
+        const isActive = activeTab===t;
+        return `<button class="fin-mov-tab ${isActive?'active':''}" data-tab="${t}"
+          onclick="document.querySelectorAll('.fin-mov-tab').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='var(--text2)';b.style.borderColor='var(--border)';});this.classList.add('active');this.style.background='var(--teal)';this.style.color='#fff';this.style.borderColor='var(--teal)';renderFinanzas();"
+          style="padding:5px 13px;border:1.5px solid ${isActive?'var(--teal)':'var(--border)'};border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;background:${isActive?'var(--teal)':'var(--white)'};color:${isActive?'#fff':'var(--text2)'};transition:all .15s;">
+          ${labels[t]}
+        </button>`;
+      }).join('')}
+    </div>`;
+  el.innerHTML = tabs;  // will be rebuilt below
+
+  movMes = filtrados;
+
   const totalIng = movMes.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.valor,0);
   const totalEgr = movMes.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.valor,0);
   const net = totalIng - totalEgr;
 
   const resumen = `
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:14px;">
-      <div style="padding:10px 13px;background:#6ee7b7;border-radius:8px;">
-        <div style="font-size:9px;color:#064e3b;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Ingresos</div>
-        <div style="font-size:15px;font-weight:800;color:#064e3b;">${fmt(totalIng)}</div>
+    <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
+      <div style="flex:1;padding:10px 16px;border-right:1px solid var(--border);">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Ingresos</div>
+        <div style="font-size:15px;font-weight:700;color:#065f46;">${fmt(totalIng)}</div>
       </div>
-      <div style="padding:10px 13px;background:#fca5a5;border-radius:8px;">
-        <div style="font-size:9px;color:#7f1d1d;font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Egresos</div>
-        <div style="font-size:15px;font-weight:800;color:#7f1d1d;">${fmt(totalEgr)}</div>
+      <div style="flex:1;padding:10px 16px;border-right:1px solid var(--border);">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Egresos</div>
+        <div style="font-size:15px;font-weight:700;color:#7f1d1d;">${fmt(totalEgr)}</div>
       </div>
-      <div style="padding:10px 13px;background:${net>=0?'#6ee7b7':'#fca5a5'};border-radius:8px;">
-        <div style="font-size:9px;color:${net>=0?'#064e3b':'#7f1d1d'};font-weight:700;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;">Neto</div>
-        <div style="font-size:15px;font-weight:800;color:${net>=0?'#064e3b':'#7f1d1d'};">${net>=0?'+':''}${fmt(net)}</div>
+      <div style="flex:1;padding:10px 16px;">
+        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Neto</div>
+        <div style="font-size:15px;font-weight:700;color:${net>=0?'#065f46':'#7f1d1d'};">${net>=0?'+':''}${fmt(net)}</div>
       </div>
     </div>`;
 
   if (!movMes.length) {
-    el.innerHTML = resumen + `<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px;">Sin movimientos en ${_mesLabel(mesAct)}</div>`;
+    el.innerHTML += resumen + `<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px;">Sin movimientos en ${_mesLabel(mesAct)}</div>`;
     return;
   }
 
@@ -226,7 +268,7 @@ function _renderMovimientos(movMes, mesAct) {
     </div>`;
   }).join('');
 
-  el.innerHTML = resumen + `<div style="max-height:340px;overflow-y:auto;padding-right:2px;">${rows}</div>`;
+  el.innerHTML += resumen + `<div style="max-height:340px;overflow-y:auto;padding-right:2px;">${rows}</div>`;
 }
 
 // ── ELIMINAR MOVIMIENTO CON CÓDIGO ──
@@ -267,18 +309,31 @@ function _renderEnviosSky(skyMes, mesAct) {
     el.innerHTML=`<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Sin envíos en ${_mesLabel(mesAct)}</div>`;
     return;
   }
-  const rows = skyMes.map(e=>`
+
+  const rows = skyMes.map(e=>{
+    const fuenteLabel = e.fuente_pago==='skydropx'?'Skydropx':(FUENTES_LABEL[e.fuente_pago]||e.fuente_pago||'Skydropx');
+    const estado = e.estado||'Pendiente';
+    return `
     <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:7px 8px;font-size:11px;color:var(--text3);">${e.fecha||'—'}</td>
-      <td style="padding:7px 8px;font-size:12px;font-weight:600;">${e.num_venta||'—'}</td>
-      <td style="padding:7px 8px;font-family:monospace;font-size:11px;">${e.num_guia||'—'}</td>
-      <td style="padding:7px 8px;font-size:11px;">${e.transportadora||'—'}</td>
-      <td style="padding:7px 8px;font-size:12px;font-weight:700;color:#dc2626;">${fmt(e.valor)}</td>
-      <td style="padding:7px 8px;font-size:11px;color:var(--text3);">${FUENTES_LABEL[e.fuente_pago]||e.fuente_pago||'Skydropx'}</td>
-      <td style="padding:7px 4px;text-align:center;"><button class="btn btn-danger btn-icon btn-sm" onclick="deleteEnvioSky('${e.id}')">${_FIN_ICON.trash}</button></td>
-    </tr>`).join('');
+      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${e.fecha||'—'}</td>
+      <td style="padding:8px 10px;">
+        ${e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)" title="Clic para copiar">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>'}
+      </td>
+      <td style="padding:8px 10px;">
+        ${e.num_guia ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)" title="Clic para copiar">${e.num_guia}</span>` : '<span style="color:var(--text3);">—</span>'}
+      </td>
+      <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;font-weight:600;">${e.transportadora||'—'}</td>
+      <td style="padding:8px 10px;">${_buildEstadoDrop(estado,['Pendiente','En camino','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
+      <td style="padding:8px 10px;font-size:13px;color:var(--text);font-family:Arial,sans-serif;">${fmt(e.valor)}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fuenteLabel}</td>
+      <td style="padding:8px 6px;text-align:center;white-space:nowrap;">
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="openModalEnvioSky('${e.id}')" title="Editar">${_FIN_ICON.edit}</button>
+        <button class="btn btn-danger btn-icon btn-sm" onclick="deleteEnvioSky('${e.id}')" title="Eliminar">${_FIN_ICON.trash}</button>
+      </td>
+    </tr>`;
+  }).join('');
   el.innerHTML=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
-    <thead><tr style="border-bottom:2px solid var(--border);">${['Fecha','N° Venta','Guía','Transportadora','Valor','Pagado desde',''].map(h=>`<th style="padding:5px 8px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);font-weight:700;">${h}</th>`).join('')}</tr></thead>
+    <thead><tr style="border-bottom:2px solid var(--border);">${['Fecha','N° Venta','Guía','Transportadora','Estado','Valor','Pagado desde',''].map(h=>`<th style="padding:6px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;font-family:Arial,sans-serif;">${h}</th>`).join('')}</tr></thead>
     <tbody>${rows}</tbody></table></div>
     <div style="padding:8px 0 0;font-size:11px;color:var(--text3);text-align:right;">Total: <strong style="color:#dc2626;">${fmt(total)}</strong> en ${_mesLabel(mesAct)}</div>`;
 }
@@ -296,9 +351,9 @@ async function openModalEnvioSky(id) {
   document.getElementById('sky-fuente').innerHTML=opts;
   if(id){
     const e=(await DB.envios_sky()).find(x=>x.id===id);
-    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'');sv('sky-valor',e.valor||'');sv('sky-fuente',e.fuente_pago||'skydropx');}
+    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'Servientrega');sv('sky-valor',e.valor||'');sv('sky-fuente',e.fuente_pago||'skydropx');sv('sky-estado',e.estado||'Pendiente');}
   } else {
-    sv('sky-fecha',hoy());sv('sky-num-venta','');sv('sky-num-guia','');sv('sky-transportadora','');sv('sky-valor','');sv('sky-fuente','skydropx');
+    sv('sky-fecha',hoy());sv('sky-num-venta','');sv('sky-num-guia','');sv('sky-transportadora','Servientrega');sv('sky-valor','');sv('sky-fuente','skydropx');sv('sky-estado','Pendiente');
   }
   document.getElementById('modal-envio-sky-title').textContent=id?'Editar Envío':'Registrar Envío Skydropx';
   openModal('modal-envio-sky');
@@ -306,9 +361,9 @@ async function openModalEnvioSky(id) {
 async function saveEnvioSky() {
   const valor=parseFloat(gv('sky-valor'))||0;
   if(!valor){showToast('Ingresa el valor.','error');return;}
-  const fecha=gv('sky-fecha')||hoy(),num_venta=gv('sky-num-venta').trim(),num_guia=gv('sky-num-guia').trim(),transport=gv('sky-transportadora').trim(),fuente_pago=gv('sky-fuente')||'skydropx';
+  const fecha=gv('sky-fecha')||hoy(),num_venta=gv('sky-num-venta').trim(),num_guia=gv('sky-num-guia').trim(),transport=gv('sky-transportadora')||'Servientrega',fuente_pago=gv('sky-fuente')||'skydropx',estado=gv('sky-estado')||'Pendiente';
   const id=_editEnvioSkyId||uid();
-  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,valor,fuente_pago,fecha_registro:new Date().toISOString()});
+  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,estado,valor,fuente_pago,fecha_registro:new Date().toISOString()});
   const saldos=await DB.saldos();
   saldos[fuente_pago]=(parseFloat(saldos[fuente_pago])||0)-valor;
   await DB.saveSaldos(saldos);
@@ -319,14 +374,51 @@ async function saveEnvioSky() {
   await renderFinanzas();
   showToast(`Envío registrado · ${fmt(valor)} descontado`,'success');
 }
-async function deleteEnvioSky(id) {
-  if(!confirm('¿Eliminar este envío? El saldo NO se reintegrará automáticamente.'))return;
-  const movs=await DB.movimientos();
-  const linked=movs.find(m=>m._sky_id===id);
-  if(linked)await DB.deleteMovimiento(linked.id);
-  await DB.deleteEnvioSky(id);
-  await renderFinanzas();
+let _deleteEnvioSkyId = null;
+function deleteEnvioSky(id) {
+  _deleteEnvioSkyId = id;
+  const inp = document.getElementById('del-envio-sky-code');
+  const err = document.getElementById('del-envio-sky-error');
+  if(inp) inp.value=''; if(err) err.textContent='';
+  openModal('modal-del-envio-sky');
+  setTimeout(()=>inp&&inp.focus(),150);
 }
+async function _confirmDeleteEnvioSky() {
+  const inp  = document.getElementById('del-envio-sky-code');
+  const err  = document.getElementById('del-envio-sky-error');
+  const btn  = document.getElementById('del-envio-sky-btn');
+  const code = inp?.value.trim()||'';
+  if(!code){if(err)err.textContent='Ingresa el código.';return;}
+  if(btn){btn.textContent='Verificando...';btn.disabled=true;}
+  try {
+    const ok = await _verificarCodigoAcceso(code);
+    if(!ok){if(err)err.textContent='Código incorrecto.';if(inp){inp.value='';inp.focus();}return;}
+    closeModal('modal-del-envio-sky');
+    const movs=await DB.movimientos();
+    const linked=movs.find(m=>m._sky_id===_deleteEnvioSkyId);
+    if(linked)await DB.deleteMovimiento(linked.id);
+    await DB.deleteEnvioSky(_deleteEnvioSkyId);
+    _deleteEnvioSkyId=null;
+    await renderFinanzas();
+    showToast('Envío eliminado','success');
+  } catch(e){if(err)err.textContent='Error al verificar.';console.error(e);}
+  finally{if(btn){btn.textContent='Eliminar';btn.disabled=false;}}
+}
+
+function _cambiarEstadoSky(id, estado) {
+  DB.envios_sky().then(arr=>{ const e=arr.find(x=>x.id===id); if(e){ e.estado=estado; DB.upsertEnvioSky(e); } });
+}
+
+function _copiarTextoSky(el, texto) {
+  if(!texto || texto==='—') return;
+  navigator.clipboard.writeText(texto).then(()=>{
+    const orig = el.textContent.trim();
+    el.textContent = 'Copiado';
+    el.style.color = 'var(--teal)';
+    setTimeout(()=>{ el.textContent=orig; el.style.color=''; },1200);
+  }).catch(()=>{ showToast('No se pudo copiar','error'); });
+}
+
 
 // ── BILLETERAS PERSONALIZADAS ──
 function _bwPickColor(el) {
