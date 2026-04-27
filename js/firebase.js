@@ -101,6 +101,7 @@ const DB = {
   saveMovimientos:(arr)=>{ _cache.movimientos = arr; _syncCol('movimientos', arr); return Promise.resolve(); },
   saveMembresias:(arr)=>{ _cache.membresias   = arr; _syncCol('membresias', arr); return Promise.resolve(); },
   saveBilleteras:(arr)=>{ _cache.billeteras   = arr; _syncCol('billeteras', arr); return Promise.resolve(); },
+  deleteBilletera:(id)=>{ _cache.billeteras = (_cache.billeteras||[]).filter(x=>x.id!==id); _delDoc('billeteras', id); return Promise.resolve(); },
   saveSaldos:   (obj) => { _cache.saldos      = obj; _syncDoc('config','saldos', obj); return Promise.resolve(); },
   saveAjustes:  (obj) => { _cache.ajustes     = obj; _syncDoc('config','ajustes', obj); return Promise.resolve(); },
   ajustes:      () => Promise.resolve(_cache.ajustes || {}),

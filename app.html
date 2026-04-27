@@ -474,25 +474,24 @@
       </div>
 
       <!-- Fila: Movimientos + Envíos Sky -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
-
-        <!-- Movimientos del mes -->
-        <div class="card">
-          <div class="card-header" style="margin-bottom:12px;">
-            <div class="card-title">Movimientos del mes</div>
-          </div>
-          <div id="fin-movimientos"></div>
-        </div>
-
-        <!-- Envíos Skydropx del mes -->
-        <div class="card">
-          <div class="card-header" style="margin-bottom:12px;">
+      <!-- Envíos Skydropx del mes -->
+      <div class="card" style="margin-bottom:14px;">
+        <div class="card-header" style="margin-bottom:12px;">
+          <div>
             <div class="card-title">Envíos Skydropx del mes</div>
-            <div class="card-sub">Se descuentan automáticamente del saldo</div>
+            <div class="card-sub">Se descuentan automáticamente del saldo origen</div>
           </div>
-          <div id="fin-envios-sky"></div>
+          <button class="btn btn-ghost btn-sm" onclick="openModalEnvioSky()">+ Registrar envío</button>
         </div>
+        <div id="fin-envios-sky"></div>
+      </div>
 
+      <!-- Movimientos del mes -->
+      <div class="card">
+        <div class="card-header" style="margin-bottom:12px;">
+          <div class="card-title">Movimientos del mes</div>
+        </div>
+        <div id="fin-movimientos"></div>
       </div>
 
       <style>
@@ -682,85 +681,8 @@
   </div>
 </div>
 
-<!-- ═══════════════════ MODAL ENVÍO SKYDROPX ═══════════════════ -->
-<div class="overlay" id="modal-envio-sky">
-  <div class="modal" style="max-width:460px;">
-    <div class="mh">
-      <div>
-        <div class="mh-title" id="modal-envio-sky-title">Registrar Envío Skydropx</div>
-        <div class="mh-sub">Se descontará automáticamente del saldo origen</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-envio-sky')">✕</button>
-    </div>
-    <div class="mc">
-      <div class="g2">
-        <div class="fg">
-          <label class="fl2">Fecha</label>
-          <input type="date" id="sky-fecha">
-        </div>
-        <div class="fg">
-          <label class="fl2">N° Venta</label>
-          <input type="text" id="sky-num-venta" placeholder="Ej: 12345">
-        </div>
-      </div>
-      <div class="g2">
-        <div class="fg">
-          <label class="fl2">N° Guía</label>
-          <input type="text" id="sky-num-guia" placeholder="Código de guía">
-        </div>
-        <div class="fg">
-          <label class="fl2">Transportadora</label>
-          <input type="text" id="sky-transportadora" placeholder="Ej: Coordinadora">
-        </div>
-      </div>
-      <div class="g2">
-        <div class="fg">
-          <label class="fl2">Valor (COP$)</label>
-          <input type="number" id="sky-valor" placeholder="0" min="0">
-        </div>
-        <div class="fg">
-          <label class="fl2">Descontar de</label>
-          <select id="sky-fuente"></select>
-        </div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-envio-sky')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEnvioSky()">Guardar envío</button>
-    </div>
-  </div>
-</div>
-
 <!-- ═══════════════════ MODAL BILLETERA ═══════════════════ -->
-<div class="overlay" id="modal-billetera">
-  <div class="modal" style="max-width:380px;">
-    <div class="mh">
-      <div>
-        <div class="mh-title">Nueva Billetera</div>
-        <div class="mh-sub">Agrega una cuenta o billetera personalizada</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-billetera')">✕</button>
-    </div>
-    <div class="mc">
-      <div class="fg">
-        <label class="fl2">Nombre</label>
-        <input type="text" id="bw-nombre" placeholder="Ej: Nu Diego, Davivienda Santi">
-      </div>
-      <div class="fg">
-        <label class="fl2">Tipo</label>
-        <input type="text" id="bw-tipo" placeholder="Ej: Cuenta de ahorros, Neobank">
-      </div>
-      <div class="fg">
-        <label class="fl2">Saldo inicial (COP$)</label>
-        <input type="number" id="bw-saldo" placeholder="0">
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-billetera')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveNuevaBilletera()">Crear billetera</button>
-    </div>
-  </div>
-</div>
+
 
 
 </body>
@@ -1244,34 +1166,7 @@
 </div>
 
 <!-- ═══════════════════ MODAL: NUEVA BILLETERA ═══════════════════ -->
-<div class="overlay" id="modal-billetera">
-  <div class="modal">
-    <div class="mh">
-      <div class="mh-title">Nueva Billetera / Cuenta</div>
-      <button class="mclose" onclick="closeModal('modal-billetera')">✕</button>
-    </div>
-    <div class="mc">
-      <div class="grid2">
-        <div class="fg span2">
-          <label class="fl2">Nombre de la billetera *</label>
-          <input type="text" id="bw-nombre" placeholder="Ej: Wompi, PayU, Bancolombia Ahorro...">
-        </div>
-        <div class="fg">
-          <label class="fl2">Ícono (emoji)</label>
-          <input type="text" id="bw-icono" placeholder="<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>" maxlength="4" style="font-size:20px;text-align:center;">
-        </div>
-        <div class="fg">
-          <label class="fl2">Saldo inicial (COP$)</label>
-          <input type="number" id="bw-saldo" placeholder="0" step="1">
-        </div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-billetera')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveNuevaBilletera()">Agregar Billetera</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- ═══════════════════ MODAL: CAMBIAR CÓDIGO ═══════════════════ -->
 <div class="overlay" id="modal-cambiar-codigo">
@@ -1307,26 +1202,27 @@
 
 
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
-// ── UTILIDAD: hash SHA-256 (compartida por módulos de autenticación) ──
-async function _hashCode(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
-}
-
-// ── VERIFICAR CÓDIGO DE ACCESO contra Firebase ──
-async function _verificarCodigoAcceso(codigo) {
-  if (!codigo) return false;
-  const hash = await _hashCode(codigo);
-  const snap = await _db.collection('config').doc('auth').get();
-  if (!snap.exists) throw new Error('Sin código configurado');
-  return snap.data().hash === hash;
-}
-</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- 1. Firebase: config, caché, DB -->
 <script src="js/firebase.js"></script>
+<script>
+// ── Utilidades de autenticación compartidas ──
+async function _hashCode(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+async function _verificarCodigoAcceso(codigo) {
+  if (!codigo) return false;
+  const hash = await _hashCode(codigo);
+  try {
+    const snap = await _db.collection('config').doc('auth').get();
+    if (!snap.exists) return false;
+    return snap.data().hash === hash;
+  } catch(e) { console.error('Error verificando código:', e); return false; }
+}
+</script>
 
 <!-- 2. Core: utils, TRM, calcVenta, navegación -->
 <script src="js/core.js"></script>
@@ -1467,32 +1363,159 @@ async function _verificarCodigoAcceso(codigo) {
 </div>
 
 <!-- ═══════════════════ MODAL BILLETERA ═══════════════════ -->
+
+
+<!-- ═══════════════════ MODAL BILLETERA ═══════════════════ -->
 <div class="overlay" id="modal-billetera">
-  <div class="modal" style="max-width:380px;">
-    <div class="mh">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh" style="background:linear-gradient(135deg,#0d4f4a 0%,#00897b 100%);color:#fff;">
       <div>
-        <div class="mh-title">Nueva Billetera</div>
-        <div class="mh-sub">Agrega una cuenta o billetera personalizada</div>
+        <div class="mh-title" id="modal-billetera-title" style="color:#fff;font-size:15px;">Nueva Billetera</div>
+        <div class="mh-sub" style="color:rgba(255,255,255,.55);">Cuenta o billetera personalizada</div>
       </div>
-      <button class="mclose" onclick="closeModal('modal-billetera')">✕</button>
+      <button class="mclose" onclick="closeModal('modal-billetera')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
+               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'"
+        onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
-    <div class="mc">
-      <div class="fg">
-        <label class="fl2">Nombre</label>
-        <input type="text" id="bw-nombre" placeholder="Ej: Nu Diego, Davivienda Santi">
+    <div class="mc" style="display:flex;flex-direction:column;gap:14px;padding:20px 22px;">
+
+      <!-- Nombre -->
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Nombre de la billetera <span style="color:var(--red);">*</span></label>
+        <input type="text" id="bw-nombre" placeholder="Ej: Nu Diego, Davivienda Santi, Nequi..."
+          style="transition:border-color .15s;"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''">
       </div>
-      <div class="fg">
+
+      <!-- Tipo -->
+      <div class="fg" style="margin:0;">
         <label class="fl2">Tipo</label>
-        <input type="text" id="bw-tipo" placeholder="Ej: Cuenta de ahorros, Neobank">
+        <select id="bw-tipo-select" onchange="document.getElementById('bw-tipo').value=this.value;document.getElementById('bw-tipo-custom').style.display=this.value==='otro'?'block':'none';"
+          style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
+          <option value="Neobank">Neobank</option>
+          <option value="Cuenta de ahorros">Cuenta de ahorros</option>
+          <option value="Cuenta corriente">Cuenta corriente</option>
+          <option value="Billetera digital">Billetera digital</option>
+          <option value="otro">Otro...</option>
+        </select>
+        <input type="hidden" id="bw-tipo" value="Neobank">
+        <input type="text" id="bw-tipo-custom" placeholder="Describe el tipo" style="display:none;margin-top:6px;transition:border-color .15s;"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''">
       </div>
-      <div class="fg">
-        <label class="fl2">Saldo inicial (COP$)</label>
-        <input type="number" id="bw-saldo" placeholder="0">
+
+      <!-- Color / icono visual -->
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Color identificador</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="bw-color-picker">
+          <span data-color="#0ea5e9" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#0ea5e9;cursor:pointer;border:3px solid transparent;" title="Azul"></span>
+          <span data-color="#8b5cf6" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:3px solid transparent;" title="Morado"></span>
+          <span data-color="#ec4899" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ec4899;cursor:pointer;border:3px solid transparent;" title="Rosa"></span>
+          <span data-color="#f59e0b" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:pointer;border:3px solid transparent;" title="Naranja"></span>
+          <span data-color="#10b981" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#10b981;cursor:pointer;border:3px solid transparent;" title="Verde"></span>
+          <span data-color="#ef4444" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ef4444;cursor:pointer;border:3px solid transparent;" title="Rojo"></span>
+          <span data-color="#6b7280" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#6b7280;cursor:pointer;border:3px solid transparent;" title="Gris"></span>
+        </div>
+        <input type="hidden" id="bw-color" value="#0ea5e9">
+      </div>
+
+      <!-- Saldo inicial -->
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Saldo actual (COP$)</label>
+        <input type="number" id="bw-saldo" placeholder="0" step="1"
+          style="transition:border-color .15s;"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''">
+        <div style="font-size:10px;color:var(--text3);margin-top:4px;">Ingresa el saldo que tienes actualmente en esta cuenta.</div>
+      </div>
+
+    </div>
+    <div class="mf" style="gap:10px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-billetera')" style="flex:1;">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveNuevaBilletera()" style="flex:1;" id="bw-save-btn">Crear billetera</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL EDITAR SALDO ═══════ -->
+<div class="overlay" id="modal-editar-saldo">
+  <div class="modal" style="max-width:360px;">
+    <div class="mh" style="background:linear-gradient(135deg,#0d4f4a,#00897b);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;" id="editar-saldo-nombre">Editar Saldo</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Saldo actual: <span id="editar-saldo-actual">—</span></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-editar-saldo')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="padding:22px;">
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Nuevo saldo (COP$)</label>
+        <input type="number" id="editar-saldo-input" placeholder="0" step="1"
+          style="font-size:18px;font-weight:700;text-align:center;"
+          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''"
+          onkeydown="if(event.key==='Enter')saveEditarSaldo()">
+        <div id="editar-saldo-error" style="color:#dc2626;font-size:11px;margin-top:5px;min-height:14px;"></div>
       </div>
     </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-billetera')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveNuevaBilletera()">Crear billetera</button>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-editar-saldo')" style="flex:1;">Cancelar</button>
+      <button class="btn btn-primary" onclick="saveEditarSaldo()" style="flex:1;">Guardar saldo</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL ELIMINAR BILLETERA (código) ═══════ -->
+<div class="overlay" id="modal-del-billetera">
+  <div class="modal" style="max-width:370px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar billetera</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="del-bw-nombre"></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-del-billetera')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div>
+      <input type="password" id="del-bw-code-input" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmDeleteBilletera()">
+      <div id="del-bw-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-del-billetera')" style="flex:1;">Cancelar</button>
+      <button id="del-bw-confirm-btn" onclick="_confirmDeleteBilletera()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL ELIMINAR MOVIMIENTO (código) ═══════ -->
+<div class="overlay" id="modal-del-movimiento">
+  <div class="modal" style="max-width:370px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar movimiento</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-del-movimiento')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div>
+      <input type="password" id="del-mov-code-input" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmDeleteMovimiento()">
+      <div id="del-mov-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-del-movimiento')" style="flex:1;">Cancelar</button>
+      <button id="del-mov-confirm-btn" onclick="_confirmDeleteMovimiento()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
     </div>
   </div>
 </div>
