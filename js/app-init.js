@@ -285,6 +285,12 @@ async function init() {
 // ARRANQUE
 // ══════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
+  // Limpiar sesión vieja (mm_auth_ok) si existe
+  if (localStorage.getItem('mm_auth_ok')) {
+    localStorage.removeItem('mm_auth_ok');
+    localStorage.removeItem(_SK);
+  }
+
   const sesion = _getSession();
   if (!sesion) { window.location.href = 'index.html'; return; }
 
