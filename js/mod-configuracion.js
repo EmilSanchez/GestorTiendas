@@ -34,59 +34,50 @@ async function renderConfiguracion() {
              </svg>
            </div>`;
       return `
-      <div style="background:#fff;border:1px solid var(--border);border-radius:12px;overflow:hidden;
-                  box-shadow:var(--shadow);opacity:${isActive?1:.6};transition:box-shadow .15s;"
-           onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow)'">
+      <div style="background:#fff;border:1px solid var(--border);border-radius:14px;overflow:hidden;
+                  box-shadow:var(--shadow);opacity:${isActive?1:.55};transition:box-shadow .15s;border-top:3px solid ${t.color};"
+           onmouseover="this.style.boxShadow='0 4px 18px rgba(0,0,0,.1)'" onmouseout="this.style.boxShadow='var(--shadow)'">
 
-        <!-- Header con acento de color -->
-        <div style="height:4px;background:${t.color};"></div>
+        <div style="padding:18px 20px 16px;">
 
-        <!-- Cuerpo principal -->
-        <div style="padding:16px 18px;">
-
-          <!-- Fila: avatar + nombre + estado -->
-          <div style="display:flex;align-items:center;gap:13px;margin-bottom:14px;">
+          <!-- Avatar + nombre + estado -->
+          <div style="display:flex;align-items:center;gap:14px;margin-bottom:18px;">
             ${fotoEl}
             <div style="flex:1;min-width:0;">
-              <div style="font-size:15px;font-weight:700;color:var(--text);letter-spacing:-.2px;
+              <div style="font-size:16px;font-weight:700;color:var(--text);letter-spacing:-.2px;
                           white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.nombre}</div>
-              <div style="font-size:11px;color:var(--text3);margin-top:2px;">${t.responsable||'Sin responsable asignado'}</div>
+              <div style="font-size:11px;color:var(--text3);margin-top:3px;">${t.responsable||'Sin responsable'}</div>
             </div>
-            <span style="font-size:9px;font-weight:700;padding:3px 10px;border-radius:4px;flex-shrink:0;letter-spacing:.5px;
+            <span style="font-size:9px;font-weight:700;padding:4px 10px;border-radius:20px;flex-shrink:0;letter-spacing:.5px;
               background:${isActive?'#dcfce7':'#fee2e2'};color:${isActive?'#15803d':'#b91c1c'};">
               ${isActive?'ACTIVA':'INACTIVA'}
             </span>
           </div>
 
-          <!-- Métricas en grid -->
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:14px;">
-            <div style="padding:10px 12px;border-right:1px solid var(--border);">
-              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:600;margin-bottom:4px;">Ventas</div>
-              <div style="font-size:20px;font-weight:800;color:var(--text);line-height:1;">${tv.length}</div>
+          <!-- Métricas: solo ventas y ganancia, sin saldo MP -->
+          <div style="display:flex;gap:10px;margin-bottom:${(reclamos>0||canceladas>0)?14:18}px;">
+            <div style="flex:1;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);font-weight:600;margin-bottom:5px;">Ventas</div>
+              <div style="font-size:22px;font-weight:700;color:var(--text);line-height:1;">${tv.length}</div>
             </div>
-            <div style="padding:10px 12px;border-right:1px solid var(--border);">
-              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:600;margin-bottom:4px;">Ganancia</div>
-              <div style="font-size:13px;font-weight:700;color:${gan>=0?'var(--green)':'var(--red)'};line-height:1.3;">${fmt(gan)}</div>
-            </div>
-            <div style="padding:10px 12px;cursor:pointer;" onclick="editarMPSaldo('${t.id}')" title="Clic para editar saldo"
-                 onmouseover="this.style.background='#f7fafa'" onmouseout="this.style.background='transparent'">
-              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);font-weight:600;margin-bottom:4px;">Saldo MP</div>
-              <div style="font-size:13px;font-weight:700;color:var(--teal);line-height:1.3;">${fmt(mpSaldo)}</div>
+            <div style="flex:2;padding:10px 14px;background:#f8fafc;border-radius:8px;border:1px solid var(--border);">
+              <div style="font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--text3);font-weight:600;margin-bottom:5px;">Ganancia del período</div>
+              <div style="font-size:16px;font-weight:700;color:${gan>=0?'var(--green)':'var(--red)'};line-height:1;">${fmt(gan)}</div>
             </div>
           </div>
 
-          <!-- Alertas de reputación (solo si hay) -->
+          <!-- Alertas -->
           ${(reclamos>0||canceladas>0)?`
-          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
-            ${reclamos>0?`<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:#fee2e2;color:#b91c1c;">${reclamos} reclamo${reclamos>1?'s':''}</span>`:''}
-            ${canceladas>0?`<span style="font-size:10px;font-weight:600;padding:2px 8px;border-radius:4px;background:#fef9c3;color:#92400e;">${canceladas} cancelación${canceladas>1?'es':''}</span>`:''}
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;">
+            ${reclamos>0?`<span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:#fee2e2;color:#b91c1c;">${reclamos} reclamo${reclamos>1?'s':''}</span>`:''}
+            ${canceladas>0?`<span style="font-size:10px;font-weight:600;padding:3px 9px;border-radius:20px;background:#fef9c3;color:#92400e;">${canceladas} cancelación${canceladas>1?'es':''}</span>`:''}
           </div>`:''}
 
           <!-- Acciones -->
-          <div style="display:flex;gap:6px;padding-top:2px;">
-            <button class="btn btn-ghost btn-sm" style="flex:1;font-size:12px;" onclick="openModalTienda('${t.id}')">Editar</button>
-            <button class="btn btn-ghost btn-sm" style="font-size:12px;color:${isActive?'var(--red)':'var(--green)'};"
-              onclick="_pedirCodigoToggleTienda('${t.id}')" title="${isActive?'Desactivar tienda':'Activar tienda'}">
+          <div style="display:flex;gap:8px;">
+            <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="openModalTienda('${t.id}')">Editar</button>
+            <button class="btn btn-ghost btn-sm" style="color:${isActive?'var(--red)':'var(--green)'};"
+              onclick="_pedirCodigoToggleTienda('${t.id}')">
               ${isActive?'Desactivar':'Activar'}
             </button>
           </div>
@@ -112,7 +103,8 @@ function _updateSessionInfo() {
   if(!tsStart) { timeEl.textContent = '—'; if(expEl) expEl.textContent = 'Sin sesión activa'; return; }
 
   const elapsed = Date.now() - tsStart;
-  const remaining = _SESSION_TTL - elapsed;
+  const _TTL = 8 * 60 * 60 * 1000;
+  const remaining = _TTL - elapsed;
   const toHMS = ms => {
     const s = Math.floor(ms/1000);
     const h = Math.floor(s/3600);
@@ -250,8 +242,53 @@ async function crearUsuario() {
   }
 }
 
-async function _toggleUsuario(uid, activo) {
-  await DB.toggleUsuario(uid, activo);
-  await renderUsuarios();
-  showToast(activo ? 'Usuario activado' : 'Usuario desactivado', 'success');
+let _pendingToggleUid = null;
+let _pendingToggleActivo = null;
+
+function _toggleUsuario(uid, activo) {
+  // Activar no requiere código, solo desactivar
+  if (!activo) {
+    // Desactivando — pedir código
+    _pendingToggleUid    = uid;
+    _pendingToggleActivo = activo;
+    const inp = document.getElementById('toggle-user-code-input');
+    const err = document.getElementById('toggle-user-code-error');
+    if (inp) inp.value = '';
+    if (err) err.textContent = '';
+    openModal('modal-toggle-usuario');
+    setTimeout(() => inp && inp.focus(), 150);
+  } else {
+    // Activando — directo
+    DB.toggleUsuario(uid, activo).then(() => {
+      renderUsuarios();
+      showToast('Usuario activado', 'success');
+    });
+  }
+}
+
+async function _confirmToggleUsuario() {
+  const inp  = document.getElementById('toggle-user-code-input');
+  const err  = document.getElementById('toggle-user-code-error');
+  const btn  = document.getElementById('toggle-user-confirm-btn');
+  const code = inp?.value.trim() || '';
+  if (!code) { if (err) err.textContent = 'Ingresa el código.'; return; }
+  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
+  try {
+    const ok = await _verificarCodigoAcceso(code);
+    if (!ok) {
+      if (err) err.textContent = 'Código incorrecto.';
+      if (inp) { inp.value = ''; inp.focus(); }
+      return;
+    }
+    closeModal('modal-toggle-usuario');
+    await DB.toggleUsuario(_pendingToggleUid, _pendingToggleActivo);
+    _pendingToggleUid = null; _pendingToggleActivo = null;
+    await renderUsuarios();
+    showToast('Usuario desactivado', 'success');
+  } catch(e) {
+    if (err) err.textContent = 'Error al verificar.';
+    console.error(e);
+  } finally {
+    if (btn) { btn.textContent = 'Desactivar'; btn.disabled = false; }
+  }
 }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MeliManager</title>
+<title>ShopManager</title>
 <link rel="icon" href="img/favi.png" type="image/x-icon">
 <link rel="stylesheet" href="css/main.css">
 </head>
@@ -134,7 +134,7 @@
       <img src="img/faviwhite.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
     </div>
     <div>
-      <div class="sb-logo-name">MeliManager</div>
+      <div class="sb-logo-name">ShopManager</div>
       <div class="sb-logo-sub">Control ML</div>
     </div>
   </div>
@@ -798,6 +798,38 @@
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-crear-usuario')" style="flex:1;">Cancelar</button>
       <button class="btn btn-primary" onclick="crearUsuario()" style="flex:1;" id="nu-btn">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL DESACTIVAR USUARIO (código) ═══════ -->
+<div class="overlay" id="modal-toggle-usuario">
+  <div class="modal" style="max-width:370px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Desactivar usuario</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-toggle-usuario')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
+        El usuario no podrá ingresar al sistema.<br>Ingresa tu código para confirmar.
+      </div>
+      <input type="password" id="toggle-user-code-input" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmToggleUsuario()">
+      <div id="toggle-user-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-toggle-usuario')" style="flex:1;">Cancelar</button>
+      <button id="toggle-user-confirm-btn" onclick="_confirmToggleUsuario()"
+        style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">
+        Desactivar
+      </button>
     </div>
   </div>
 </div>
@@ -1712,6 +1744,38 @@ async function _verificarCodigoAcceso(codigo) {
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-crear-usuario')" style="flex:1;">Cancelar</button>
       <button class="btn btn-primary" onclick="crearUsuario()" style="flex:1;" id="nu-btn">Crear usuario</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL DESACTIVAR USUARIO (código) ═══════ -->
+<div class="overlay" id="modal-toggle-usuario">
+  <div class="modal" style="max-width:370px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Desactivar usuario</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-toggle-usuario')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
+        El usuario no podrá ingresar al sistema.<br>Ingresa tu código para confirmar.
+      </div>
+      <input type="password" id="toggle-user-code-input" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmToggleUsuario()">
+      <div id="toggle-user-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-toggle-usuario')" style="flex:1;">Cancelar</button>
+      <button id="toggle-user-confirm-btn" onclick="_confirmToggleUsuario()"
+        style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">
+        Desactivar
+      </button>
     </div>
   </div>
 </div>

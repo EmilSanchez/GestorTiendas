@@ -15,8 +15,10 @@ function _getSession() {
 }
 
 function _getSessionStart() {
-  const s = _getSession();
-  return s ? s.ts : null;
+  try {
+    const s = JSON.parse(localStorage.getItem(_SK)||'null');
+    return s?.ts || null;
+  } catch { return null; }
 }
 
 function _guardSession() {
@@ -34,7 +36,7 @@ function _lockApp() {
   overlay.innerHTML = `
     <div style="font-size:64px;animation:lockBounce 1.5s ease forwards;"></div>
     <div style="font-size:16px;font-weight:700;color:#fff;letter-spacing:.5px;">Bloqueando...</div>
-    <div style="font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1px;">Meli Manager</div>
+    <div style="font-size:12px;color:rgba(255,255,255,.45);text-transform:uppercase;letter-spacing:1px;">ShopManager</div>
   `;
   if (!document.getElementById('_lock_styles')) {
     const s = document.createElement('style');
@@ -69,7 +71,7 @@ function showSpinner(msg = 'Cargando...') {
   }
   el.innerHTML = `<div style="font-size:38px;animation:pulse 1.5s infinite;"></div>
     <div style="font-size:14px;font-weight:700;color:#00897b;">${msg}</div>
-    <div style="font-size:11px;color:#8aabaa;">Meli Manager</div>`;
+    <div style="font-size:11px;color:#8aabaa;">ShopManager</div>`;
 }
 function hideSpinner() {
   const el = document.getElementById('_fb_spinner');
