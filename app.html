@@ -155,7 +155,16 @@
     <div class="nav-item" data-page="configuracion"><span class="ni"><img src="img/configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
   </div>
 
-  <div class="sb-bottom">
+  <div class="sb-bottom" style="padding:0.6rem 1rem;">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);">
+      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#00897b,#005169);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div id="sb-user-name" style="font-size:11px;font-weight:700;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+        <div id="sb-user-email" style="font-size:9px;color:rgba(255,255,255,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+      </div>
+    </div>
     <div class="sb-ver" id="db-status">v6.0 · Conectando...</div>
   </div>
 </nav>
@@ -437,6 +446,19 @@
         </div>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;" id="cfg-tiendas-grid"></div>
       </div>
+
+      <!-- Gestión de usuarios (solo admin) -->
+      <div class="card" id="cfg-usuarios-card" style="display:none;">
+        <div class="card-header">
+          <div>
+            <div class="card-title">Usuarios</div>
+            <div class="card-sub">Crea y gestiona los accesos al sistema</div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModalCrearUsuario()">+ Nuevo usuario</button>
+        </div>
+        <div id="cfg-usuarios-grid" style="display:flex;flex-direction:column;gap:8px;margin-top:4px;"></div>
+      </div>
+
     </section>
 
     <!-- ══════════════ PROBLEMAS ══════════════ -->
@@ -741,6 +763,41 @@
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-del-envio-sky')" style="flex:1;">Cancelar</button>
       <button id="del-envio-sky-btn" onclick="_confirmDeleteEnvioSky()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL CREAR USUARIO ═══════════════════ -->
+<div class="overlay" id="modal-crear-usuario">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1a4fa8,#1e40af);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:15px;">Nuevo usuario</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">El usuario podrá ingresar con estas credenciales</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-crear-usuario')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Nombre completo</label>
+        <input type="text" id="nu-nombre" placeholder="Ej: María García">
+      </div>
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Usuario <span style="font-size:10px;color:var(--text3);font-weight:400;">(sin espacios, en minúsculas)</span></label>
+        <input type="text" id="nu-usuario" placeholder="Ej: maria_garcia"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+      </div>
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Contraseña</label>
+        <input type="password" id="nu-pass" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div id="nu-error" style="color:#dc2626;font-size:11px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-crear-usuario')" style="flex:1;">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearUsuario()" style="flex:1;" id="nu-btn">Crear usuario</button>
     </div>
   </div>
 </div>
@@ -1278,7 +1335,7 @@ async function _verificarCodigoAcceso(codigo) {
   if (!codigo) return false;
   const hash = await _hashCode(codigo);
   try {
-    const snap = await _db.collection('config').doc('auth').get();
+    const snap = await _getAuthDoc();
     if (!snap.exists) return false;
     return snap.data().hash === hash;
   } catch(e) { console.error('Error verificando código:', e); return false; }
@@ -1620,6 +1677,41 @@ async function _verificarCodigoAcceso(codigo) {
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-del-envio-sky')" style="flex:1;">Cancelar</button>
       <button id="del-envio-sky-btn" onclick="_confirmDeleteEnvioSky()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL CREAR USUARIO ═══════════════════ -->
+<div class="overlay" id="modal-crear-usuario">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1a4fa8,#1e40af);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:15px;">Nuevo usuario</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">El usuario podrá ingresar con estas credenciales</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-crear-usuario')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Nombre completo</label>
+        <input type="text" id="nu-nombre" placeholder="Ej: María García">
+      </div>
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Usuario <span style="font-size:10px;color:var(--text3);font-weight:400;">(sin espacios, en minúsculas)</span></label>
+        <input type="text" id="nu-usuario" placeholder="Ej: maria_garcia"
+          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
+      </div>
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Contraseña</label>
+        <input type="password" id="nu-pass" placeholder="Mínimo 6 caracteres">
+      </div>
+      <div id="nu-error" style="color:#dc2626;font-size:11px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-crear-usuario')" style="flex:1;">Cancelar</button>
+      <button class="btn btn-primary" onclick="crearUsuario()" style="flex:1;" id="nu-btn">Crear usuario</button>
     </div>
   </div>
 </div>

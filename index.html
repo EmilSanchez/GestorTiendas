@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MeliManager</title>
+<title>MeliManager · Acceso</title>
 <link rel="icon" href="img/favi.png" type="image/x-icon">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -12,195 +12,146 @@ body{
   background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);
   display:flex;align-items:center;justify-content:center;min-height:100vh;
 }
-
-.login-card{
-  background:#fff;border-radius:18px;padding:40px 44px;width:340px;
-  box-shadow:0 20px 60px rgba(0,0,0,.4);text-align:center;
-  animation:cardIn .4s cubic-bezier(.4,0,.2,1);
+.card{
+  background:#fff;border-radius:18px;padding:38px 42px 34px;width:350px;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+  animation:cardIn .35s cubic-bezier(.4,0,.2,1);
 }
-@keyframes cardIn{
-  from{opacity:0;transform:translateY(24px) scale(.97);}
-  to{opacity:1;transform:translateY(0) scale(1);}
+@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:translateY(0)scale(1);}}
+.logo{width:44px;height:44px;object-fit:contain;display:block;margin:0 auto 10px;}
+.title{font-size:21px;font-weight:800;color:#0d2020;text-align:center;margin-bottom:3px;letter-spacing:-.3px;}
+.sub{font-size:11px;color:#8aabaa;text-align:center;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;}
+.fl{font-size:11px;font-weight:600;color:#4a6565;display:block;margin-bottom:5px;}
+.fi{
+  width:100%;padding:11px 14px;border:1.5px solid #d8e4e3;border-radius:9px;
+  font-size:14px;outline:none;color:#0d2020;transition:border-color .2s,box-shadow .2s;
+  font-family:inherit;margin-bottom:14px;background:#fff;
 }
-
-.login-logo{width:44px;height:44px;object-fit:contain;margin-bottom:10px;}
-.login-title{font-size:20px;font-weight:800;color:#0d2020;margin-bottom:3px;letter-spacing:-.3px;}
-.login-sub{font-size:11px;color:#8aabaa;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;}
-
-.login-input{
-  width:100%;padding:12px 16px;
-  border:2px solid #d8e4e3;border-radius:10px;
-  font-size:15px;outline:none;text-align:center;letter-spacing:1px;
-  color:#0d2020;transition:border-color .2s,box-shadow .2s;
-  font-family:inherit;
-}
-.login-input:focus{border-color:#00897b;box-shadow:0 0 0 3px rgba(0,137,123,.12);}
-
-.login-error{
-  color:#b0202e;font-size:12px;margin-top:8px;min-height:18px;
-  transition:opacity .2s;
-}
-
-.login-btn{
-  width:100%;margin-top:14px;padding:13px;border:none;border-radius:10px;
+.fi:focus{border-color:#00897b;box-shadow:0 0 0 3px rgba(0,137,123,.1);}
+.btn{
+  width:100%;margin-top:6px;padding:13px;border:none;border-radius:10px;
   background:linear-gradient(135deg,#264643,#005169);color:#fff;
-  font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.3px;
-  box-shadow:0 4px 14px rgba(0,137,123,.35);transition:all .2s;
-  display:flex;align-items:center;justify-content:center;gap:10px;
-  font-family:inherit;
+  font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.2px;
+  box-shadow:0 4px 14px rgba(0,137,123,.3);transition:all .15s;
+  display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;
 }
-.login-btn:hover{opacity:.88;transform:translateY(-1px);}
-.login-btn:active{transform:translateY(0);}
-.login-btn:disabled{opacity:.6;cursor:not-allowed;transform:none;}
-
-/* Spinner de carga */
-.login-loading{
-  display:none;flex-direction:column;align-items:center;gap:14px;margin-top:24px;
-}
-@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
-.spin-svg{animation:spin 1s linear infinite;}
-
-.login-footer{font-size:10px;color:#b8d0cf;margin-top:20px;}
-
-/* Shake en error */
+.btn:hover{opacity:.88;transform:translateY(-1px);}
+.btn:active{transform:scale(.97);}
+.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
+.err{color:#b0202e;font-size:12px;margin-top:10px;min-height:16px;text-align:center;font-weight:600;}
+.spinner{display:none;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);
+  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
 @keyframes shake{
-  0%,100%{transform:translateX(0);}
-  20%{transform:translateX(-6px);}
-  40%{transform:translateX(6px);}
-  60%{transform:translateX(-6px);}
-  80%{transform:translateX(6px);}
+  0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}
+  40%{transform:translateX(5px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}
 }
-.shake{animation:shake .38s ease;}
-
-/* Animación press */
-button:active:not(:disabled) { transform: scale(0.92) !important; transition: transform .08s cubic-bezier(.4,0,.2,1) !important; }
-button:not(:active) { transition: transform .15s cubic-bezier(.4,0,.2,1), all .2s !important; }
+.shake{animation:shake .35s ease;}
 </style>
 </head>
 <body>
+<div class="card">
+  <img src="img/favi.png" alt="Logo" class="logo">
+  <div class="title">Meli Manager</div>
+  <div class="sub">Control de tiendas</div>
 
-<div class="login-card">
-  <img src="img/favi.png" alt="Logo" class="login-logo">
-  <div class="login-title">Meli Manager</div>
-  <div class="login-sub">Gestiona tus tiendas</div>
+  <label class="fl">Usuario</label>
+  <input type="text" id="l-user" class="fi" placeholder="tu_usuario" autocomplete="username"
+    onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
 
-  <input
-    type="password"
-    id="login-input"
-    class="login-input"
-    placeholder="Ingresa tu código"
-    autocomplete="current-password"
-    onkeydown="if(event.key==='Enter') verificarAcceso()"
-  >
-  <div class="login-error" id="login-error"></div>
+  <label class="fl">Contraseña</label>
+  <input type="password" id="l-pass" class="fi" placeholder="••••••••" autocomplete="current-password"
+    onkeydown="if(event.key==='Enter')doLogin()" style="margin-bottom:0;">
 
-  <button class="login-btn" id="login-btn" onclick="verificarAcceso()">
-    <span id="login-btn-text">Entrar</span>
+  <button class="btn" id="btn-login" onclick="doLogin()">
+    <div class="spinner" id="sp-login"></div>
+    <span id="txt-login">Entrar</span>
   </button>
-
-  <div class="login-loading" id="login-loading">
-    <div style="position:relative;width:52px;height:52px;">
-      <svg class="spin-svg" viewBox="0 0 52 52" width="52" height="52">
-        <circle cx="26" cy="26" r="22" fill="none" stroke="#e0f2f1" stroke-width="4"/>
-        <circle cx="26" cy="26" r="22" fill="none" stroke="#00897b" stroke-width="4"
-          stroke-dasharray="34 100" stroke-linecap="round"/>
-      </svg>
-    </div>
-    <div style="font-size:13px;font-weight:600;color:#00695c;" id="login-loading-msg">
-      Verificando acceso...
-    </div>
-  </div>
-
-  <div class="login-footer">El código es administrado por el propietario</div>
+  <div class="err" id="err-login"></div>
 </div>
 
-<!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="js/firebase.js"></script>
 <script>
-// ── Constantes de sesión ──
-const _SESSION_KEY = 'mm_auth_ok';
-const _SESSION_TTL = 8 * 60 * 60 * 1000; // 8 horas
+const _SK = 'mm_session';
 
-function _checkSession() {
+// Si ya hay sesión válida, ir directo
+(function(){
   try {
-    const raw = localStorage.getItem(_SESSION_KEY);
-    if (!raw) return false;
-    const { ts } = JSON.parse(raw);
-    return (Date.now() - ts) < _SESSION_TTL;
-  } catch { return false; }
-}
+    const s = JSON.parse(localStorage.getItem(_SK)||'null');
+    if (s && s.uid && (Date.now()-s.ts) < 8*60*60*1000) window.location.href='app.html';
+  } catch{}
+})();
 
-async function _hashCode(str) {
+async function _sha256(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
 }
 
-async function verificarAcceso() {
-  const input  = document.getElementById('login-input').value;
-  const errEl  = document.getElementById('login-error');
-  const btnEl  = document.getElementById('login-btn');
-  const loadEl = document.getElementById('login-loading');
-  const msgEl  = document.getElementById('login-loading-msg');
-  const inputEl= document.getElementById('login-input');
+function _setLoading(on) {
+  document.getElementById('btn-login').disabled = on;
+  document.getElementById('sp-login').style.display = on ? 'block' : 'none';
+  document.getElementById('txt-login').textContent  = on ? 'Verificando...' : 'Entrar';
+}
 
+function _shake(id) {
+  const el = document.getElementById(id);
+  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
+  setTimeout(()=>el.classList.remove('shake'),400);
+}
+
+async function doLogin() {
+  const usuario = document.getElementById('l-user').value.trim().toLowerCase();
+  const pass    = document.getElementById('l-pass').value;
+  const errEl   = document.getElementById('err-login');
   errEl.textContent = '';
-  if (!input) {
-    errEl.textContent = 'Ingresa el código de acceso.';
-    inputEl.classList.add('shake');
-    setTimeout(() => inputEl.classList.remove('shake'), 400);
-    return;
-  }
 
-  btnEl.style.display  = 'none';
-  loadEl.style.display = 'flex';
-  inputEl.disabled = true;
+  if (!usuario) { errEl.textContent='Ingresa tu usuario.'; _shake('l-user'); return; }
+  if (!pass)    { errEl.textContent='Ingresa tu contraseña.'; _shake('l-pass'); return; }
 
-  const reset = (err) => {
-    btnEl.style.display  = 'flex';
-    loadEl.style.display = 'none';
-    inputEl.disabled = false;
-    inputEl.value = '';
-    inputEl.focus();
-    if (err) {
-      errEl.textContent = err;
-      inputEl.classList.add('shake');
-      setTimeout(() => inputEl.classList.remove('shake'), 400);
-    }
-  };
-
+  _setLoading(true);
   try {
-    msgEl.textContent = 'Conectando con Firebase...';
-    const snap = await _db.collection('config').doc('auth').get();
-    if (!snap.exists) { reset('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> No hay código configurado en la BD.'); return; }
+    const hash = await _sha256(pass);
 
-    msgEl.textContent = 'Comprobando código...';
-    const hashGuardado  = snap.data().hash;
-    const hashIngresado = await _hashCode(input);
+    // 1. Buscar usuario en Firestore
+    const snap = await _db.collection('usuarios').where('usuario','==',usuario).limit(1).get();
 
-    if (hashIngresado === hashGuardado) {
-      msgEl.textContent = 'Acceso concedido · Cargando...';
-      localStorage.setItem(_SESSION_KEY, JSON.stringify({ ts: Date.now() }));
-      await new Promise(r => setTimeout(r, 500));
+    // Si es admin (campo usuario='admin' en doc raíz config/auth)
+    if (usuario === 'admin') {
+      const authSnap = await _db.collection('config').doc('auth').get();
+      if (!authSnap.exists) { errEl.textContent='No hay cuenta admin configurada.'; _setLoading(false); return; }
+      if (authSnap.data().hash !== hash) { errEl.textContent='Contraseña incorrecta.'; _shake('l-pass'); _setLoading(false); return; }
+      localStorage.setItem(_SK, JSON.stringify({ uid:'admin', rol:'admin', usuario:'admin', ts:Date.now() }));
       window.location.href = 'app.html';
-    } else {
-      reset('Código incorrecto. Intenta de nuevo.');
+      return;
     }
+
+    // Usuario normal
+    if (snap.empty) { errEl.textContent='Usuario no encontrado.'; _shake('l-user'); _setLoading(false); return; }
+    const userDoc = snap.docs[0];
+    const userData = userDoc.data();
+
+    if (!userData.activo) { errEl.textContent='Usuario desactivado. Contacta al administrador.'; _setLoading(false); return; }
+
+    // Verificar contraseña en su config
+    const authSnap = await _db.collection(`usuarios/${userDoc.id}/config`).doc('auth').get();
+    if (!authSnap.exists || authSnap.data().hash !== hash) {
+      errEl.textContent='Contraseña incorrecta.'; _shake('l-pass'); _setLoading(false); return;
+    }
+
+    localStorage.setItem(_SK, JSON.stringify({
+      uid: userDoc.id, rol: userData.rol||'usuario',
+      usuario: userData.usuario, nombre: userData.nombre, ts: Date.now()
+    }));
+    window.location.href = 'app.html';
+
   } catch(e) {
-    reset('Error al conectar con Firebase.');
     console.error(e);
+    errEl.textContent = 'Error de conexión. Intenta de nuevo.';
+    _setLoading(false);
   }
 }
-
-// Si ya hay sesión, ir directo a la app
-document.addEventListener('DOMContentLoaded', () => {
-  if (_checkSession()) {
-    window.location.href = 'app.html';
-  } else {
-    document.getElementById('login-input').focus();
-  }
-});
 </script>
 </body>
 </html>

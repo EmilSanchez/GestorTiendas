@@ -3,32 +3,28 @@
 // ══════════════════════════════════════════════════════════
 // SESIÓN
 // ══════════════════════════════════════════════════════════
-const _SESSION_KEY = 'mm_auth_ok';
-const _SESSION_TTL = 8 * 60 * 60 * 1000;
+// ── Sesión basada en localStorage ──
+const _SK = 'mm_session';
 
-function _checkSession() {
+function _getSession() {
   try {
-    const raw = localStorage.getItem(_SESSION_KEY);
-    if (!raw) return false;
-    const { ts } = JSON.parse(raw);
-    return (Date.now() - ts) < _SESSION_TTL;
-  } catch { return false; }
-}
-
-function _getSessionStart() {
-  try {
-    const raw = localStorage.getItem(_SESSION_KEY);
-    if (!raw) return null;
-    return JSON.parse(raw).ts || null;
+    const s = JSON.parse(localStorage.getItem(_SK)||'null');
+    if (!s || (Date.now()-s.ts) >= 8*60*60*1000) return null;
+    return s;
   } catch { return null; }
 }
 
+function _getSessionStart() {
+  const s = _getSession();
+  return s ? s.ts : null;
+}
+
 function _guardSession() {
-  if (!_checkSession()) window.location.href = 'index.html';
+  if (!_getSession()) window.location.href = 'index.html';
 }
 
 function _lockApp() {
-  localStorage.removeItem(_SESSION_KEY);
+  localStorage.removeItem(_SK);
   const overlay = document.createElement('div');
   overlay.id = '_lock_anim';
   overlay.style.cssText = 'position:fixed;inset:0;z-index:999999;display:flex;flex-direction:column;'
@@ -287,6 +283,17 @@ async function init() {
 // ARRANQUE
 // ══════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', async () => {
-  _guardSession();
+  const sesion = _getSession();
+  if (!sesion) { window.location.href = 'index.html'; return; }
+
+  // Setear usuario actual en firebase.js
+  _currentUser = sesion;
+
+  // Mostrar info en sidebar
+  const nameEl  = document.getElementById('sb-user-name');
+  const emailEl = document.getElementById('sb-user-email');
+  if (nameEl)  nameEl.textContent = sesion.nombre || sesion.usuario || 'Admin';
+  if (emailEl) emailEl.textContent = sesion.rol === 'admin' ? 'Administrador' : `@${sesion.usuario}`;
+
   await init();
 });

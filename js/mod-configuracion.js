@@ -5,6 +5,7 @@ let _sessionTimerInterval = null;
 
 async function renderConfiguracion() {
   // Renderizar tiendas en el nuevo grid de configuración
+  await renderUsuarios();
   const tiendas   = await DB.tiendas();
   const ventas    = await DB.ventas();
   const saldos    = await DB.saldos();
@@ -148,17 +149,109 @@ async function guardarNuevoCodigo() {
   if(nuevo !== confirmar) { errEl.textContent = 'El nuevo código y la confirmación no coinciden.'; return; }
 
   try {
-    const snap = await _db.collection('config').doc('auth').get();
+    const snap = await _getAuthDoc();
     if(!snap.exists) { errEl.textContent = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> No hay código configurado en la BD.'; return; }
     const hashGuardado = snap.data().hash;
     const hashActual   = await _hashCode(actual);
     if(hashActual !== hashGuardado) { errEl.textContent = 'El código actual es incorrecto.'; return; }
     const hashNuevo = await _hashCode(nuevo);
-    await _db.collection('config').doc('auth').set({ hash: hashNuevo });
+    await _setAuthHash(hashNuevo);
     closeModal('modal-cambiar-codigo');
     alert('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Código actualizado correctamente.');
   } catch(e) {
     errEl.textContent = 'Error al conectar con Firebase.';
     console.error(e);
   }
+}
+
+
+// ══════════════════════════════════════════════════════════
+// GESTIÓN DE USUARIOS (solo admin)
+// ══════════════════════════════════════════════════════════
+async function renderUsuarios() {
+  const card = document.getElementById('cfg-usuarios-card');
+  if (!card) return;
+
+  // Solo mostrar si es admin
+  const sesion = _getSession();
+  if (!sesion || sesion.rol !== 'admin') { card.style.display = 'none'; return; }
+  card.style.display = 'block';
+
+  const usuarios = await DB.getUsuarios();
+  const el = document.getElementById('cfg-usuarios-grid');
+  if (!el) return;
+
+  if (!usuarios.length) {
+    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Aún no hay usuarios creados.</div>';
+    return;
+  }
+
+  el.innerHTML = usuarios.map(u => {
+    const activo = u.activo !== false;
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--white);">
+      <div style="width:34px;height:34px;border-radius:50%;background:${activo?'#1a4fa8':'#6b7280'};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:13px;font-weight:700;">
+        ${(u.nombre||u.usuario||'?').charAt(0).toUpperCase()}
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:700;color:var(--text);">${u.nombre||'—'}</div>
+        <div style="font-size:11px;color:var(--text3);">@${u.usuario||u.uid} · ${activo?'<span style="color:#065f46;font-weight:600;">Activo</span>':'<span style="color:#7f1d1d;font-weight:600;">Inactivo</span>'}</div>
+      </div>
+      <button class="btn btn-ghost btn-sm" onclick="_toggleUsuario('${u.uid}',${!activo})"
+        style="color:${activo?'var(--red)':'var(--green)'};">
+        ${activo?'Desactivar':'Activar'}
+      </button>
+    </div>`;
+  }).join('');
+}
+
+function openModalCrearUsuario() {
+  document.getElementById('nu-nombre').value = '';
+  document.getElementById('nu-usuario').value = '';
+  document.getElementById('nu-pass').value = '';
+  document.getElementById('nu-error').textContent = '';
+  document.getElementById('nu-btn').textContent = 'Crear usuario';
+  document.getElementById('nu-btn').disabled = false;
+  openModal('modal-crear-usuario');
+}
+
+async function crearUsuario() {
+  const nombre  = document.getElementById('nu-nombre').value.trim();
+  const usuario = document.getElementById('nu-usuario').value.trim().toLowerCase();
+  const pass    = document.getElementById('nu-pass').value;
+  const errEl   = document.getElementById('nu-error');
+  const btn     = document.getElementById('nu-btn');
+  errEl.textContent = '';
+
+  if (!nombre)         { errEl.textContent = 'El nombre es requerido.'; return; }
+  if (!usuario)        { errEl.textContent = 'El usuario es requerido.'; return; }
+  if (usuario === 'admin') { errEl.textContent = 'El nombre "admin" está reservado.'; return; }
+  if (pass.length < 6) { errEl.textContent = 'La contraseña debe tener al menos 6 caracteres.'; return; }
+
+  btn.textContent = 'Creando...'; btn.disabled = true;
+
+  try {
+    // Verificar que no exista ese usuario
+    const existing = await _db.collection('usuarios').where('usuario','==',usuario).limit(1).get();
+    if (!existing.empty) { errEl.textContent = 'Ese nombre de usuario ya existe.'; btn.textContent='Crear usuario'; btn.disabled=false; return; }
+
+    const uid  = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    const hash = await _hashCode(pass);
+
+    await DB.crearUsuario({ uid, usuario, nombre, rol:'usuario', activo:true, hash });
+
+    closeModal('modal-crear-usuario');
+    await renderUsuarios();
+    showToast(`Usuario "@${usuario}" creado correctamente`, 'success');
+  } catch(e) {
+    errEl.textContent = 'Error al crear el usuario.';
+    console.error(e);
+    btn.textContent = 'Crear usuario'; btn.disabled = false;
+  }
+}
+
+async function _toggleUsuario(uid, activo) {
+  await DB.toggleUsuario(uid, activo);
+  await renderUsuarios();
+  showToast(activo ? 'Usuario activado' : 'Usuario desactivado', 'success');
 }
