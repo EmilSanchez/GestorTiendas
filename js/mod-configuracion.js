@@ -1,7 +1,7 @@
 /* Módulo Configuración */
 
 // ── CONFIGURACIÓN ──
-let _sessionTimerInterval = null;
+window._sessionTimerInterval = window._sessionTimerInterval || null;
 
 async function renderConfiguracion() {
   // Renderizar tiendas en el nuevo grid de configuración
@@ -88,8 +88,8 @@ async function renderConfiguracion() {
 
   // Actualizar info de sesión y arrancar timer
   _updateSessionInfo();
-  if(_sessionTimerInterval) clearInterval(_sessionTimerInterval);
-  _sessionTimerInterval = setInterval(_updateSessionInfo, 1000);
+  if(window._sessionTimerInterval) clearInterval(_sessionTimerInterval);
+  window._sessionTimerInterval = setInterval(_updateSessionInfo, 1000);
 
   // Cargar el dólar fijo desde BD y mostrarlo en el campo
   await cargarDolarComprasEnConfig();
@@ -117,8 +117,14 @@ function _updateSessionInfo() {
     if(remaining > 0) {
       expEl.textContent = `Sesión válida por ${toHMS(remaining)} más`;
     } else {
-      expEl.textContent = 'Sesión expirada — por favor vuelve a ingresar';
+      expEl.textContent = 'Sesión expirada — cerrando sesión...';
       expEl.style.color = 'var(--red)';
+      clearInterval(window._sessionTimerInterval);
+      window._sessionTimerInterval = null;
+      setTimeout(() => {
+        localStorage.removeItem('mm_session');
+        window.location.href = 'index.html';
+      }, 2000);
     }
   }
 }
@@ -242,8 +248,8 @@ async function crearUsuario() {
   }
 }
 
-let _pendingToggleUid = null;
-let _pendingToggleActivo = null;
+var _pendingToggleUid = null;
+var _pendingToggleActivo = null;
 
 function _toggleUsuario(uid, activo) {
   // Activar no requiere código, solo desactivar

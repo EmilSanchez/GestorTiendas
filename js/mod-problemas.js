@@ -1,8 +1,8 @@
 /* Módulo Problemas */
 
 // ── PROBLEMAS ──
-let _editProbId = null;
-let _ventaSelProblema = null;
+var _editProbId = null;
+var _ventaSelProblema = null;
 
 // ══════════════════════════════════════════════════════════
 // CATEGORÍAS DE PROBLEMA — editables, guardadas en localStorage
@@ -440,7 +440,7 @@ async function confirmarResolver() {
   await updateAlertaBadge();
 }
 
-let _deleteProbId = null;
+var _deleteProbId = null;
 
 function deleteProb(id) {
   _deleteProbId = id;

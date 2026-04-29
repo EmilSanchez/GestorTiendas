@@ -4,8 +4,8 @@
 // ══════════════════════════════════════════════════════════
 
 const _AYUDAS_KEY = 'mm_ayudas_v1';
-let _ayudas = [];
-let _ayudaCatActiva = '__todas__';
+var _ayudas = [];
+var _ayudaCatActiva = '__todas__';
 
 // Paleta de colores para las tarjetas
 const _AYUDA_COLORES = [
@@ -348,7 +348,7 @@ function copiarAyuda(id, btn) {
 }
 
 // ── ELIMINAR — modal elegante ──
-let _ayudaIdPendienteEliminar = null;
+var _ayudaIdPendienteEliminar = null;
 
 function eliminarAyuda(id) {
   const a = _ayudas.find(x => x.id === id);

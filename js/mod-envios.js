@@ -50,7 +50,7 @@ function _envioValorCOP(v) {
 }
 
 // Modal para registrar pago de envío
-let _pagoEnvioVentaId = null;
+var _pagoEnvioVentaId = null;
 async function openPagoEnvio(ventaId) {
   _pagoEnvioVentaId = ventaId;
   const v = (await DB.ventas()).find(x=>x.id===ventaId);
@@ -216,17 +216,17 @@ async function renderEnvios() {
 
   const _sum = arr => arr.reduce((s,v)=>s+_envioValorCOP(v),0);
 
-  document.getElementById('env-ag-total-count').textContent = `${ag.length} envío${ag.length!==1?'s':''}`;
-  document.getElementById('env-ag-pend-count').textContent  = agPend.length;
-  document.getElementById('env-ag-pend-total').textContent  = fmt(_sum(agPend));
-  document.getElementById('env-ag-pag-count').textContent   = agPag.length;
-  document.getElementById('env-ag-pag-total').textContent   = fmt(_sum(agPag));
+  const _agTot=document.getElementById('env-ag-total-count'); if(_agTot) _agTot.textContent = `${ag.length} envío${ag.length!==1?'s':''}`;
+  const _agPC=document.getElementById('env-ag-pend-count'); if(_agPC) _agPC.textContent  = agPend.length;
+  const _agPT=document.getElementById('env-ag-pend-total'); if(_agPT) _agPT.textContent  = fmt(_sum(agPend));
+  const _agGC=document.getElementById('env-ag-pag-count'); if(_agGC) _agGC.textContent   = agPag.length;
+  const _agGT=document.getElementById('env-ag-pag-total'); if(_agGT) _agGT.textContent   = fmt(_sum(agPag));
 
-  document.getElementById('env-sv-total-count').textContent = `${sv_.length} envío${sv_.length!==1?'s':''}`;
-  document.getElementById('env-sv-pend-count').textContent  = svPend.length;
-  document.getElementById('env-sv-pend-total').textContent  = fmt(_sum(svPend));
-  document.getElementById('env-sv-pag-count').textContent   = svPag.length;
-  document.getElementById('env-sv-pag-total').textContent   = fmt(_sum(svPag));
+  const _svTot=document.getElementById('env-sv-total-count'); if(_svTot) _svTot.textContent = `${sv_.length} envío${sv_.length!==1?'s':''}`;
+  const _svPC=document.getElementById('env-sv-pend-count'); if(_svPC) _svPC.textContent  = svPend.length;
+  const _svPT=document.getElementById('env-sv-pend-total'); if(_svPT) _svPT.textContent  = fmt(_sum(svPend));
+  const _svGC=document.getElementById('env-sv-pag-count'); if(_svGC) _svGC.textContent   = svPag.length;
+  const _svGT=document.getElementById('env-sv-pag-total'); if(_svGT) _svGT.textContent   = fmt(_sum(svPag));
 
   // ── Aplicar filtros ──
   const s   = gv('ef-search').toLowerCase();
@@ -248,9 +248,9 @@ async function renderEnvios() {
 
   ventas.sort((a,b)=>(b.fecha_venta||'').localeCompare(a.fecha_venta||''));
 
-  document.getElementById('envios-count').textContent = `${ventas.length} envío(s) mostrado(s)`;
+  const _envCnt=document.getElementById('envios-count'); if(_envCnt) _envCnt.textContent = `${ventas.length} envío(s) mostrado(s)`;
 
-  document.getElementById('envios-tbody').innerHTML = ventas.map((v,i)=>{
+  const _tbody=document.getElementById('envios-tbody'); if(_tbody) _tbody.innerHTML = ventas.map((v,i)=>{
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const fotoEl = t?.foto
       ? `<img src="${t.foto}" style="width:20px;height:20px;border-radius:50%;object-fit:cover;flex-shrink:0;">`
@@ -394,3 +394,90 @@ async function confirmarPagoMultiple() {
 }
 
 // ══════════════════════════════════════════════════════════
+
+// ══════════════════════════════════════════════════════════
+// ENVÍOS EXTERNOS — Skydropx (panel colapsable en módulo Envíos)
+// ══════════════════════════════════════════════════════════
+function _toggleEnviosExternos(header) {
+  const body    = document.getElementById('envios-externos-body');
+  const chevron = document.getElementById('envios-externos-chevron');
+  const isOpen  = body.style.display !== 'none';
+  body.style.display    = isOpen ? 'none' : 'block';
+  chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  if (!isOpen) _initEnviosSkyPanel();
+}
+
+async function _initEnviosSkyPanel() {
+  const sel = document.getElementById('sky-filtro-mes');
+  if (!sel.dataset.init) {
+    const meses = Array.from({length:8}, (_,i) => {
+      const d = new Date(); d.setMonth(d.getMonth() - i);
+      return d.toISOString().slice(0,7);
+    });
+    const M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    sel.innerHTML = meses.map(m => {
+      const [y,mo] = m.split('-');
+      return `<option value="${m}">${M[parseInt(mo,10)-1]} ${y}</option>`;
+    }).join('');
+    sel.dataset.init = '1';
+  }
+  await _renderEnviosSkyPanel();
+}
+
+async function _renderEnviosSkyPanel() {
+  const el  = document.getElementById('envios-sky-panel');
+  const mes = document.getElementById('sky-filtro-mes')?.value || new Date().toISOString().slice(0,7);
+  if (!el) return;
+
+  const enviosSky = await DB.envios_sky();
+  const skyMes    = enviosSky.filter(e => (e.fecha||'').startsWith(mes));
+  const total     = skyMes.reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
+
+  const resEl = document.getElementById('sky-resumen-total');
+  if (resEl) resEl.innerHTML = skyMes.length
+    ? `Total: <strong style="color:#dc2626;">${fmt(total)}</strong> · ${skyMes.length} envío${skyMes.length!==1?'s':''}`
+    : '';
+
+  const _PILL = {
+    'Pendiente': {bg:'#ffc000',color:'#000',border:'#e0a800'},
+    'En camino': {bg:'#70ad47',color:'#fff',border:'#5a9438'},
+    'Entregado': {bg:'#002060',color:'#fff',border:'#001540'},
+    'Novedad':   {bg:'#ff0000',color:'#fff',border:'#cc0000'},
+  };
+
+  if (!skyMes.length) {
+    el.innerHTML = `<div style="text-align:center;padding:28px;color:var(--text3);font-size:12px;">Sin envíos registrados en este período.</div>`;
+    return;
+  }
+
+  const rows = skyMes.map(e => `
+    <tr style="border-bottom:1px solid var(--border);">
+      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${e.fecha||'—'}</td>
+      <td style="padding:8px 10px;">${e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>'}</td>
+      <td style="padding:8px 10px;">${e.num_guia  ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
+      <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>
+      <td style="padding:8px 10px;">${_buildEstadoDrop(e.estado||'Pendiente',['Pendiente','En camino','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
+      <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;">${fmt(e.valor)}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${FUENTES_LABEL[e.fuente_pago]||e.fuente_pago||'Skydropx'}</td>
+      <td style="padding:8px 6px;text-align:center;white-space:nowrap;">
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="openModalEnvioSky('${e.id}')" title="Editar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        </button>
+        <button class="btn btn-danger btn-icon btn-sm" onclick="deleteEnvioSky('${e.id}')" title="Eliminar">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
+      </td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead><tr style="border-bottom:2px solid var(--border);">
+          ${['Fecha','N° Venta','Guía','Transportadora','Estado','Valor','Pagado desde',''].map(h =>
+            `<th style="padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;">${h}</th>`
+          ).join('')}
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}

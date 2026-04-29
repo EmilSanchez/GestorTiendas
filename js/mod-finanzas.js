@@ -11,7 +11,7 @@ const _FIN_ICON = {
   mp:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
 };
 
-let _finTiendas = [];
+var _finTiendas = [];
 
 function _mesLabel(ym) {
   const M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
@@ -21,8 +21,8 @@ function _mesLabel(ym) {
 
 // ── RENDER PRINCIPAL ──
 async function renderFinanzas() {
-  const [movs, saldos, billeteras, tiendas, enviosSky, ventas] = await Promise.all([
-    DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.envios_sky(), DB.ventas()
+  const [movs, saldos, billeteras, tiendas, ventas] = await Promise.all([
+    DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.ventas()
   ]);
   _finTiendas = tiendas;
 
@@ -47,7 +47,7 @@ async function renderFinanzas() {
   const mesAct = mesEl?.value || mes();
 
   _renderBilleteras(saldos, billeteras, tiendas);
-  _renderEnviosSky(enviosSky.filter(e=>(e.fecha||'').startsWith(mesAct)), mesAct);
+
   const movMes = movs.filter(m=>m.fecha?.startsWith(mesAct)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   _renderMovimientos(movMes, mesAct);
 }
@@ -115,7 +115,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
 }
 
 // ── MODAL EDITAR SALDO (reemplaza el prompt) ──
-let _editSaldoKey = '';
+var _editSaldoKey = '';
 function openModalEditarSaldo(key, nombre, actual) {
   _editSaldoKey = key;
   document.getElementById('editar-saldo-nombre').textContent = nombre;
@@ -148,7 +148,7 @@ async function openModalSaldo(fuente) {
 }
 
 // ── ELIMINAR BILLETERA CON CÓDIGO ──
-let _deleteBwId = '', _deleteBwNombre = '';
+var _deleteBwId = '', _deleteBwNombre = '';
 function _pedirCodigoEliminarBilletera(id, nombre) {
   _deleteBwId = id; _deleteBwNombre = nombre;
   const inp = document.getElementById('del-bw-code-input');
@@ -272,7 +272,7 @@ function _renderMovimientos(movMes, mesAct) {
 }
 
 // ── ELIMINAR MOVIMIENTO CON CÓDIGO ──
-let _deleteMovId = '';
+var _deleteMovId = '';
 function _pedirCodigoEliminarMovimiento(id) {
   _deleteMovId = id;
   const inp = document.getElementById('del-mov-code-input');
@@ -339,7 +339,7 @@ function _renderEnviosSky(skyMes, mesAct) {
 }
 
 // ── MODAL ENVÍO SKYDROPX ──
-let _editEnvioSkyId = null;
+var _editEnvioSkyId = null;
 async function openModalEnvioSky(id) {
   _editEnvioSkyId = id||null;
   const [billeteras,tiendas]=await Promise.all([DB.billeteras(),DB.tiendas()]);
@@ -374,7 +374,7 @@ async function saveEnvioSky() {
   await renderFinanzas();
   showToast(`Envío registrado · ${fmt(valor)} descontado`,'success');
 }
-let _deleteEnvioSkyId = null;
+var _deleteEnvioSkyId = null;
 function deleteEnvioSky(id) {
   _deleteEnvioSkyId = id;
   const inp = document.getElementById('del-envio-sky-code');

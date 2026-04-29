@@ -1,7 +1,7 @@
 /* Módulo Ventas CRUD — modal registro */
 
 // ── VENTAS ──
-let _editVentaId = null;
+var _editVentaId = null;
 
 async function openModalVenta(id) {
   _editVentaId = id||null;
@@ -413,7 +413,7 @@ async function cambiarEstado(id, estado) {
 }
 
 // ── ELIMINAR VENTA CON CÓDIGO DE ACCESO ──
-let _pendingDeleteId = null;
+var _pendingDeleteId = null;
 
 function deleteVenta(id) {
   _pendingDeleteId = id;
@@ -470,10 +470,10 @@ async function _confirmDeleteVenta() {
   btn.disabled = false;
 }
 
-let _validarEnvioId = null;
-let _validarEnvioEstimado = 0;
-let _validarEnvioEsServientrega = false;
-let _validarEnvioTRM = 0;
+var _validarEnvioId = null;
+var _validarEnvioEstimado = 0;
+var _validarEnvioEsServientrega = false;
+var _validarEnvioTRM = 0;
 
 async function openValidarEnvio(id) {
   const v = (await DB.ventas()).find(x=>x.id===id);

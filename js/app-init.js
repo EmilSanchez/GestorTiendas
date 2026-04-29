@@ -132,52 +132,46 @@ async function refreshModulo(page) {
   _injectRefreshStyle();
 
   const btn = document.getElementById(`btn-actualizar-${page}`);
-  const originalHTML = btn ? btn.innerHTML : null;
+  const svg = btn ? btn.querySelector('svg') : null;
 
-  // ── Girar el ícono ↻ mientras carga ──
   if (btn) {
     btn.disabled = true;
-    btn.innerHTML = `<span style="display:inline-block;animation:_spin .6s linear infinite;">↻</span> Actualizar`;
+    if (svg) svg.style.animation = '_envSpinAnim .6s linear infinite';
+    btn.style.opacity = '.7';
   }
 
-  // ── Limpiar TODO el caché y recargar desde Firebase ──
-  Object.keys(_cache).forEach(k => { _cache[k] = null; });
-  await _cargarTodo();
-  await render(page);
+  // ── Restaurar botón (helper) ──
+  const _restoreBtn = () => {
+    if (btn) { btn.disabled = false; btn.style.opacity = ''; if (svg) svg.style.animation = ''; }
+  };
 
-  // ── Animar los ítems del módulo recién renderizado ──
-  switch (page) {
-    case 'ventas':
-      _animateContainer('ventas-tbody', 'tr');
-      break;
-    case 'envios':
-      _animateContainer('envios-tbody', 'tr');
-      break;
-    case 'problemas':
-      _animateContainer('problemas-container', '.prob-card');
-      break;
-    case 'ayudas':
-      _animateContainer('ayudas-grid', '.ayuda-card');
-      break;
-    case 'configuracion':
-      _animateContainer('cfg-tiendas-grid', ':scope > div');
-      break;
-    case 'finanzas':
-      _animateContainer('fin-saldos', '.stat-card');
-      _animateContainer('fin-movimientos', ':scope > *');
-      break;
-    default:
-      // Animar cualquier hijo directo del page-section
-      _animateContainer(`page-${page}`, ':scope > *');
+  try {
+    // Limpiar caché y recargar
+    Object.keys(_cache).forEach(k => { _cache[k] = null; });
+    await _cargarTodo();
+    await render(page);
+
+    // Animar ítems
+    switch (page) {
+      case 'ventas':      _animateContainer('ventas-tbody', 'tr'); break;
+      case 'envios':      _animateContainer('envios-tbody', 'tr'); break;
+      case 'problemas':   _animateContainer('problemas-container', '.prob-card'); break;
+      case 'ayudas':      _animateContainer('ayudas-grid', '.ayuda-card'); break;
+      case 'configuracion': _animateContainer('cfg-tiendas-grid', ':scope > div'); break;
+      case 'finanzas':
+        _animateContainer('fin-saldos', '.stat-card');
+        _animateContainer('fin-movimientos', ':scope > *');
+        break;
+      default: _animateContainer(`page-${page}`, ':scope > *');
+    }
+
+    _restoreBtn();
+    showToast('Datos actualizados', 'success', 2000);
+  } catch(e) {
+    console.error('Error al actualizar:', e);
+    _restoreBtn();
+    showToast('Error al actualizar', 'error', 3000);
   }
-
-  // ── Restaurar botón ──
-  if (btn) {
-    btn.innerHTML = originalHTML;
-    btn.disabled = false;
-  }
-
-  showToast('Datos actualizados', 'success', 2000);
 }
 
 // ══════════════════════════════════════════════════════════
@@ -278,7 +272,16 @@ async function init() {
   const hashPage = location.hash.replace('#','');
   const startPage = VALID_PAGES.includes(hashPage) ? hashPage : 'ventas';
   await navigate(startPage);
-  await updateAlertaBadge();
+  try { await updateAlertaBadge(); } catch(e) { console.warn('Badge error:', e); }
+
+  // ── Vigilante global de sesión: cierra automáticamente al expirar ──
+  setInterval(() => {
+    const s = _getSession();
+    if (!s) {
+      localStorage.removeItem('mm_session');
+      window.location.href = 'index.html';
+    }
+  }, 30000); // revisa cada 30 segundos
 }
 
 // ══════════════════════════════════════════════════════════

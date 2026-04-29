@@ -208,7 +208,7 @@
           </div>
 
           <!-- Tarjetas por tienda -->
-          <div id="vg-por-tienda" style="display:flex;gap:10px;padding-left:16px;flex:1;min-width:0;overflow:hidden;"></div>
+          <div id="vg-por-tienda" style="display:flex;gap:10px;padding-left:16px;justify-content:flex-end;align-items:center;flex:1;min-width:0;overflow:hidden;"></div>
 
         </div>
       </div>
@@ -251,7 +251,7 @@
         </div>
         <div class="spacer"></div>
         <button class="btn btn-ghost btn-sm" id="btn-limpiar-ventas" style="display:none;" onclick="clearVentaFilters()"> Limpiar</button>
-        <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar datos">↻ Actualizar</button>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
         <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
       </div>
       <div class="table-wrap" style="max-height:calc(100vh - 230px);overflow-y:auto;">
@@ -280,124 +280,131 @@
     <!-- ══════════════ ENVÍOS ══════════════ -->
     <section class="page-section" id="page-envios">
 
-      <!-- Resumen compacto en una sola fila -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+      <!-- Pestañas -->
+      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);">
+        <button id="tab-env-internacionales" onclick="_switchEnvTab('internacionales')"
+          style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:#1a4fa8;border-bottom:2px solid #1a4fa8;margin-bottom:-2px;transition:all .15s;">
+          Envíos Internacionales
+        </button>
+        <button id="tab-env-externos" onclick="_switchEnvTab('externos')"
+          style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;">
+          Envíos Externos · Skydropx
+        </button>
+      </div>
 
-        <!-- Aguachica pendiente -->
-        <div class="env-stat-card" onclick="filtrarEnvios('aguachica','pendiente')" style="border-left:3px solid #f59e0b;">
-          <div class="env-stat-label">Aguachica · Pendiente</div>
-          <div class="env-stat-row">
-            <span class="env-stat-num" id="env-ag-pend-count">0</span>
-            <span class="env-stat-badge" style="background:#fef3c7;color:#92400e;">envíos</span>
+      <!-- Spinner de transición entre pestañas -->
+      <div id="env-tab-spinner" style="display:none;align-items:center;justify-content:center;padding:48px 0;">
+        <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#1a4fa8;border-radius:50%;animation:_envSpinAnim .5s linear infinite;"></div>
+      </div>
+      <style>@keyframes _envSpinAnim{to{transform:rotate(360deg);}}</style>
+
+      <!-- ═══ PANEL: INTERNACIONALES ═══ -->
+      <div id="panel-env-internacionales">
+
+        <!-- Resumen compacto -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px;">
+          <div class="env-stat-card" onclick="filtrarEnvios('aguachica','pendiente')" style="border-left:3px solid #f59e0b;">
+            <div class="env-stat-label">Aguachica · Pendiente</div>
+            <div class="env-stat-row"><span class="env-stat-num" id="env-ag-pend-count">0</span><span class="env-stat-badge" style="background:#fef3c7;color:#92400e;">envíos</span></div>
+            <div class="env-stat-total" id="env-ag-pend-total">$ 0</div>
           </div>
-          <div class="env-stat-total" id="env-ag-pend-total">$ 0</div>
+          <div class="env-stat-card" onclick="filtrarEnvios('aguachica','pagado')" style="border-left:3px solid #6ee7b7;">
+            <div class="env-stat-label">Aguachica · Pagado</div>
+            <div class="env-stat-row"><span class="env-stat-num" id="env-ag-pag-count">0</span><span class="env-stat-badge" style="background:#d1fae5;color:#065f46;">envíos</span></div>
+            <div class="env-stat-total" id="env-ag-pag-total">$ 0</div>
+          </div>
+          <div class="env-stat-card" onclick="filtrarEnvios('servientrega','pendiente')" style="border-left:3px solid #f59e0b;">
+            <div class="env-stat-label">Servientrega · Pendiente</div>
+            <div class="env-stat-row"><span class="env-stat-num" id="env-sv-pend-count">0</span><span class="env-stat-badge" style="background:#fef3c7;color:#92400e;">envíos</span></div>
+            <div class="env-stat-total" id="env-sv-pend-total">$ 0</div>
+          </div>
+          <div class="env-stat-card" onclick="filtrarEnvios('servientrega','pagado')" style="border-left:3px solid #6ee7b7;">
+            <div class="env-stat-label">Servientrega · Pagado</div>
+            <div class="env-stat-row"><span class="env-stat-num" id="env-sv-pag-count">0</span><span class="env-stat-badge" style="background:#d1fae5;color:#065f46;">envíos</span></div>
+            <div class="env-stat-total" id="env-sv-pag-total">$ 0</div>
+          </div>
         </div>
 
-        <!-- Aguachica pagado -->
-        <div class="env-stat-card" onclick="filtrarEnvios('aguachica','pagado')" style="border-left:3px solid #6ee7b7;">
-          <div class="env-stat-label">Aguachica · Pagado</div>
-          <div class="env-stat-row">
-            <span class="env-stat-num" id="env-ag-pag-count">0</span>
-            <span class="env-stat-badge" style="background:#d1fae5;color:#065f46;">envíos</span>
+        <span id="env-ag-total-count" style="display:none;"></span>
+        <span id="env-sv-total-count" style="display:none;"></span>
+
+        <!-- Filtros -->
+        <div class="card" style="margin-bottom:12px;padding:10px 14px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input type="text" placeholder="Buscar ID, teléfono..." id="ef-search" oninput="renderEnvios()"
+              style="flex:1;min-width:160px;max-width:220px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;"
+              onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'">
+            <select id="ef-empresa" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
+              <option value="">Transportadora</option>
+              <option value="aguachica">Aguachica</option>
+              <option value="servientrega">Servientrega</option>
+            </select>
+            <select id="ef-pago" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
+              <option value="">Pago envío</option>
+              <option value="pendiente">Pendiente</option>
+              <option value="pagado">Pagado</option>
+            </select>
+            <select id="ef-tienda" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
+              <option value="">Tienda</option>
+            </select>
+            <input type="month" id="ef-mes" onchange="renderEnvios()"
+              style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
+            <div style="flex:1;"></div>
+            <button class="btn btn-ghost btn-sm" id="btn-limpiar-envios" style="display:none;" onclick="clearEnvioFilters()">Limpiar filtros</button>
+<button class="btn btn-ghost btn-sm" id="btn-actualizar-envios" onclick="refreshModulo('envios')" title="Actualizar" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+            <button class="btn btn-primary btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">
+              Pagar seleccionados (<span id="selected-count">0</span>)
+            </button>
           </div>
-          <div class="env-stat-total" id="env-ag-pag-total">$ 0</div>
         </div>
 
-        <!-- Servientrega pendiente -->
-        <div class="env-stat-card" onclick="filtrarEnvios('servientrega','pendiente')" style="border-left:3px solid #f59e0b;">
-          <div class="env-stat-label">Servientrega · Pendiente</div>
-          <div class="env-stat-row">
-            <span class="env-stat-num" id="env-sv-pend-count">0</span>
-            <span class="env-stat-badge" style="background:#fef3c7;color:#92400e;">envíos</span>
-          </div>
-          <div class="env-stat-total" id="env-sv-pend-total">$ 0</div>
+        <!-- Tabla -->
+        <div class="table-wrap">
+          <table>
+            <thead><tr>
+              <th style="width:36px;text-align:center;"><input type="checkbox" id="chk-all-envios" onchange="toggleAllEnvios(this.checked)" style="cursor:pointer;"></th>
+              <th>#</th><th>Tienda</th><th>ID Venta ML</th><th>Fecha</th>
+              <th>Transportadora</th><th>Valor Envío</th><th>Estado</th><th>Pago</th><th></th>
+            </tr></thead>
+            <tbody id="envios-tbody"></tbody>
+          </table>
         </div>
-
-        <!-- Servientrega pagado -->
-        <div class="env-stat-card" onclick="filtrarEnvios('servientrega','pagado')" style="border-left:3px solid #6ee7b7;">
-          <div class="env-stat-label">Servientrega · Pagado</div>
-          <div class="env-stat-row">
-            <span class="env-stat-num" id="env-sv-pag-count">0</span>
-            <span class="env-stat-badge" style="background:#d1fae5;color:#065f46;">envíos</span>
-          </div>
-          <div class="env-stat-total" id="env-sv-pag-total">$ 0</div>
-        </div>
+        <div style="margin-top:8px;font-size:12px;color:var(--text3);" id="envios-count"></div>
 
       </div>
 
-      <!-- Totales Aguachica y Servientrega (oculto, solo para compatibilidad) -->
-      <span id="env-ag-total-count" style="display:none;"></span>
-      <span id="env-sv-total-count" style="display:none;"></span>
+      <!-- ═══ PANEL: EXTERNOS (Skydropx) ═══ -->
+      <div id="panel-env-externos" style="display:none;">
 
-      <!-- Filtros compactos -->
-      <div class="card" style="margin-bottom:12px;padding:10px 14px;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <input type="text" placeholder="Buscar ID, teléfono..." id="ef-search"
-            style="flex:1;min-width:160px;max-width:220px;padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;"
-            onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor='var(--border)'" oninput="renderEnvios()">
-          <select id="ef-empresa" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
-            <option value="">Transportadora</option>
-            <option value="aguachica">Aguachica</option>
-            <option value="servientrega">Servientrega</option>
-          </select>
-          <select id="ef-pago" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
-            <option value="">Pago envío</option>
-            <option value="pendiente">Pendiente</option>
-            <option value="pagado">Pagado</option>
-          </select>
-          <select id="ef-tienda" onchange="renderEnvios()" style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
-            <option value="">Tienda</option>
-          </select>
-          <input type="month" id="ef-mes" onchange="renderEnvios()"
-            style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
-          <div style="flex:1;"></div>
-          <button class="btn btn-ghost btn-sm" id="btn-limpiar-envios" style="display:none;" onclick="clearEnvioFilters()">Limpiar filtros</button>
-          <button class="btn btn-ghost btn-sm" onclick="refreshModulo('envios')" title="Actualizar">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-            Actualizar
-          </button>
-          <button class="btn btn-primary btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">
-            Pagar seleccionados (<span id="selected-count">0</span>)
-          </button>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;gap:8px;">
+            <select id="sky-filtro-mes" onchange="_renderEnviosSkyPanel()"
+              style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
+            </select>
+            <div id="sky-resumen-total" style="font-size:12px;color:var(--text3);"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="openModalEnvioSky()">+ Registrar envío</button>
         </div>
-      </div>
 
-      <!-- Tabla -->
-      <div class="table-wrap">
-        <table>
-          <thead><tr>
-            <th style="width:36px;text-align:center;"><input type="checkbox" id="chk-all-envios" title="Seleccionar todos" onchange="toggleAllEnvios(this.checked)" style="cursor:pointer;"></th>
-            <th>#</th>
-            <th>Tienda</th>
-            <th>ID Venta ML</th>
-            <th>Fecha</th>
-            <th>Transportadora</th>
-            <th>Valor Envío</th>
-            <th>Estado</th>
-            <th>Pago</th>
-            <th></th>
-          </tr></thead>
-          <tbody id="envios-tbody"></tbody>
-        </table>
+        <div id="envios-sky-panel">
+          <div style="text-align:center;padding:40px;color:var(--text3);font-size:12px;">Cargando envíos...</div>
+        </div>
+
       </div>
-      <div style="margin-top:8px;font-size:12px;color:var(--text3);" id="envios-count"></div>
 
       <style>
-        .env-stat-card {
-          background:var(--white);border:1px solid var(--border);border-radius:10px;
-          padding:11px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;
-        }
-        .env-stat-card:hover { box-shadow:var(--shadow-md);border-color:#b2dfdb; }
-        .env-stat-label { font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:7px; }
-        .env-stat-row { display:flex;align-items:baseline;gap:6px;margin-bottom:4px; }
-        .env-stat-num { font-size:22px;font-weight:700;color:var(--text);line-height:1; }
-        .env-stat-badge { font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px; }
-        .env-stat-total { font-size:12px;color:var(--text2);font-weight:500; }
+        .env-stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:11px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+        .env-stat-card:hover{box-shadow:var(--shadow-md);border-color:#b2dfdb;}
+        .env-stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:7px;}
+        .env-stat-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
+        .env-stat-num{font-size:22px;font-weight:700;color:var(--text);line-height:1;}
+        .env-stat-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;}
+        .env-stat-total{font-size:12px;color:var(--text2);font-weight:500;}
       </style>
 
     </section>
 
-    <!-- ══════════════ CONFIGURACIÓN ══════════════ -->
+        <!-- ══════════════ CONFIGURACIÓN ══════════════ -->
     <section class="page-section" id="page-configuracion">
 
       <!-- Fila superior: Sesión + Dólar compras en una sola tarjeta compacta -->
@@ -466,7 +473,7 @@
       <div class="frow mb16">
         <div class="c-dim" style="font-size:12px;">Registro de problemas, novedades y su resolución por venta</div>
         <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" id="btn-actualizar-problemas" onclick="refreshModulo('problemas')" title="Actualizar datos">↻ Actualizar</button>
+        <button class="btn btn-ghost btn-sm" id="btn-actualizar-problemas" onclick="refreshModulo('problemas')" title="Actualizar" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
         <button class="btn btn-ghost btn-sm" onclick="openModalCategorias()" title="Gestionar categorías de problema" style="gap:5px;">
            Categorías
         </button>
@@ -506,7 +513,6 @@
           <select id="fin-filtro-mes" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;" onchange="renderFinanzas()"></select>
           <button class="btn btn-ghost btn-sm" onclick="openModalNuevaBilletera()">+ Billetera</button>
           <button class="btn btn-ghost btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
-          <button class="btn btn-primary btn-sm" onclick="openModalEnvioSky()">+ Envío Skydropx</button>
         </div>
       </div>
 
@@ -530,18 +536,6 @@
       </div>
 
       <!-- Fila: Movimientos + Envíos Sky -->
-      <!-- Envíos Skydropx del mes -->
-      <div class="card" style="margin-bottom:14px;">
-        <div class="card-header" style="margin-bottom:12px;">
-          <div>
-            <div class="card-title">Envíos Skydropx del mes</div>
-            <div class="card-sub">Se descuentan automáticamente del saldo origen</div>
-          </div>
-          <button class="btn btn-ghost btn-sm" onclick="openModalEnvioSky()">+ Registrar envío</button>
-        </div>
-        <div id="fin-envios-sky"></div>
-      </div>
-
       <!-- Movimientos del mes -->
       <div class="card">
         <div class="card-header" style="margin-bottom:12px;">
@@ -1375,6 +1369,120 @@ async function _verificarCodigoAcceso(codigo) {
 </script>
 
 <!-- 2. Core: utils, TRM, calcVenta, navegación -->
+
+<script>
+// ── Tab switcher Envíos ──
+function _switchEnvTab(tab) {
+  var isNac  = tab === 'internacionales';
+  var panelA = document.getElementById(isNac  ? 'panel-env-internacionales' : 'panel-env-externos');
+  var panelB = document.getElementById(!isNac ? 'panel-env-internacionales' : 'panel-env-externos');
+  var tabNac = document.getElementById('tab-env-internacionales');
+  var tabExt = document.getElementById('tab-env-externos');
+
+  // Update tabs immediately
+  tabNac.style.color        = isNac  ? '#1a4fa8' : 'var(--text3)';
+  tabNac.style.borderBottom = isNac  ? '2px solid #1a4fa8' : '2px solid transparent';
+  tabNac.style.fontWeight   = isNac  ? '700' : '600';
+  tabExt.style.color        = !isNac ? '#1a4fa8' : 'var(--text3)';
+  tabExt.style.borderBottom = !isNac ? '2px solid #1a4fa8' : '2px solid transparent';
+  tabExt.style.fontWeight   = !isNac ? '700' : '600';
+
+  // Fade out current panel
+  panelB.style.transition = 'opacity .15s';
+  panelB.style.opacity    = '0';
+
+  setTimeout(function() {
+    panelB.style.display = 'none';
+    panelB.style.opacity = '';
+    panelB.style.transition = '';
+
+    // Show spinner in target panel briefly
+    panelA.style.display   = 'block';
+    panelA.style.opacity   = '0';
+    panelA.style.transition= 'opacity .2s';
+
+    // Show spinner overlay
+    var spinner = document.getElementById('env-tab-spinner');
+    if (spinner) { spinner.style.display = 'flex'; }
+
+    setTimeout(function() {
+      if (spinner) spinner.style.display = 'none';
+      panelA.style.opacity = '1';
+      if (!isNac) _initEnviosSkyPanel();
+    }, 500);
+
+  }, 150);
+}
+// ── Alias por compatibilidad ──
+function _toggleEnviosExternos() { _switchEnvTab('externos'); }
+
+async function _initEnviosSkyPanel() {
+  var sel = document.getElementById('sky-filtro-mes');
+  if (sel && !sel.dataset.init) {
+    var M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+    var meses = Array.from({length:8}, function(_,i){
+      var d = new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7);
+    });
+    sel.innerHTML = meses.map(function(m){
+      var parts = m.split('-');
+      return '<option value="'+m+'">'+M[parseInt(parts[1],10)-1]+' '+parts[0]+'</option>';
+    }).join('');
+    sel.dataset.init = '1';
+  }
+  await _renderEnviosSkyPanel();
+}
+
+async function _renderEnviosSkyPanel() {
+  var el  = document.getElementById('envios-sky-panel');
+  var mes = (document.getElementById('sky-filtro-mes')||{}).value || new Date().toISOString().slice(0,7);
+  if (!el) return;
+
+  var enviosSky = await DB.envios_sky();
+  var skyMes    = enviosSky.filter(function(e){ return (e.fecha||'').startsWith(mes); });
+  var total     = skyMes.reduce(function(s,e){ return s+(parseFloat(e.valor)||0); }, 0);
+
+  var resEl = document.getElementById('sky-resumen-total');
+  if (resEl) resEl.innerHTML = skyMes.length
+    ? 'Total: <strong style="color:#dc2626;">'+fmt(total)+'</strong> &nbsp;·&nbsp; '+skyMes.length+' envío'+(skyMes.length!==1?'s':'')
+    : '';
+
+  if (!skyMes.length) {
+    el.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text3);font-size:12px;">Sin envíos Skydropx en este período.<br><span style="font-size:11px;">Usa el botón &quot;+ Registrar envío&quot; para agregar.</span></div>';
+    return;
+  }
+
+  var PILL = {
+    'Pendiente': {bg:'#ffc000',color:'#000'}, 'En camino': {bg:'#70ad47',color:'#fff'},
+    'Entregado': {bg:'#002060',color:'#fff'}, 'Novedad':   {bg:'#ff0000',color:'#fff'},
+  };
+
+  var rows = skyMes.map(function(e){
+    var p = PILL[e.estado||'Pendiente'] || PILL['Pendiente'];
+    var fl = FUENTES_LABEL[e.fuente_pago] || e.fuente_pago || 'Skydropx';
+    var id = e.id; var nv = e.num_venta||''; var ng = e.num_guia||'';
+    return '<tr style="border-bottom:1px solid var(--border);">'
+      + '<td style="padding:8px 10px;font-size:12px;color:var(--text3);">'+(e.fecha||'—')+'</td>'
+      + '<td style="padding:8px 10px;">'+(nv?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+nv+'">'+nv+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
+      + '<td style="padding:8px 10px;">'+(ng?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+ng+'">'+ng+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
+      + '<td style="padding:8px 10px;font-size:13px;font-weight:600;">'+(e.transportadora||'—')+'</td>'
+      + '<td style="padding:8px 10px;"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+p.bg+';color:'+p.color+';">'+(e.estado||'Pendiente')+'</span></td>'
+      + '<td style="padding:8px 10px;font-size:13px;">'+fmt(e.valor)+'</td>'
+      + '<td style="padding:8px 10px;font-size:11px;color:var(--text3);">'+fl+'</td>'
+      + '<td style="padding:8px 6px;text-align:center;white-space:nowrap;">'
+      + '<button class="btn btn-ghost btn-icon btn-sm" data-id="'+id+'" onclick="openModalEnvioSky(this.dataset.id)" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+      + '<button class="btn btn-danger btn-icon btn-sm" data-id="'+id+'" onclick="deleteEnvioSky(this.dataset.id)" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>'
+      + '</td></tr>';
+  }).join('');
+
+  el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">'
+    + '<thead><tr style="border-bottom:2px solid var(--border);">'
+    + ['Fecha','N° Venta','Guía','Transportadora','Estado','Valor','Pagado desde',''].map(function(h){
+        return '<th style="padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;">'+h+'</th>';
+      }).join('')
+    + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+}
+</script>
+
 <script src="js/core.js"></script>
 
 <!-- 3. Módulos de negocio -->

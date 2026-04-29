@@ -1,7 +1,7 @@
 /* Módulo Tiendas */
 
 // ── TIENDAS ──
-let _editTiendaId = null;
+var _editTiendaId = null;
 async function openModalTienda(id) {
   _editTiendaId = id||null;
   const prevEl = document.getElementById('t-foto-preview');
@@ -206,7 +206,7 @@ async function renderTiendas() {
 }
 
 // ── TOGGLE CON CÓDIGO DE ACCESO ──
-let _toggleTiendaId = null;
+var _toggleTiendaId = null;
 
 function _pedirCodigoToggleTienda(id) {
   _toggleTiendaId = id;

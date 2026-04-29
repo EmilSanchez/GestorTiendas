@@ -238,9 +238,9 @@ async function renderEnviosMes() {
 // ── NAVEGACIÓN ──
 async function navigate(page) {
   // Limpiar timer de sesión si se navega fuera de configuración
-  if(page !== 'configuracion' && typeof _sessionTimerInterval !== 'undefined' && _sessionTimerInterval) {
-    clearInterval(_sessionTimerInterval);
-    _sessionTimerInterval = null;
+  if(page !== 'configuracion' && window._sessionTimerInterval) {
+    clearInterval(window._sessionTimerInterval);
+    window._sessionTimerInterval = null;
   }
   document.querySelectorAll('.page-section').forEach(s=>s.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -270,7 +270,7 @@ const _ESTADO_COLORS = {
   pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800', label:'PENDIENTE' },
   en_camino: { bg:'#70ad47', color:'#fff', border:'#5a9438', label:'EN CAMINO' },
   entregado: { bg:'#002060', color:'#fff', border:'#001540', label:'ENTREGADO' },
-  cancelado: { bg:'#ff0000', color:'#fff', border:'#cc0000', label:'CANCELADO' },
+  cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000', label:'CANCELADO' },
   problema:  { bg:'#f9a825', color:'#000', border:'#e08c00', label:'PROBLEMA'  },
   devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc', label:'DEVUELTO'  },
   error:     { bg:'#a61c00', color:'#fff', border:'#7a1400', label:'ERROR'      },
