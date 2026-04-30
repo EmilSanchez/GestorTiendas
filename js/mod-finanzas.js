@@ -21,15 +21,19 @@ function _mesLabel(ym) {
 
 // ── RENDER PRINCIPAL ──
 async function renderFinanzas() {
-  const [movs, saldos, billeteras, tiendas, ventas] = await Promise.all([
-    DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.ventas()
+  const [movs, saldos, billeteras, tiendas, ventas, enviosSky] = await Promise.all([
+    DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.ventas(), DB.envios_sky()
   ]);
   _finTiendas = tiendas;
 
-  // Ganancia del mes actual
+  // Ganancia del mes actual (ventas - envíos sky - egresos externos)
   const mesAct2 = (document.getElementById('fin-filtro-mes')?.value) || mes();
   const ventasMes = ventas.filter(v => (v.fecha_venta||'').startsWith(mesAct2));
-  const ganMes = ventasMes.reduce((s,v) => s + calcVenta(v).ganancia, 0);
+  const ganVentasMes = ventasMes.reduce((s,v) => s + calcVenta(v).ganancia, 0);
+  const egSkyMes = enviosSky
+    .filter(e => (e.fecha||'').startsWith(mesAct2))
+    .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
+  const ganMes = ganVentasMes - egSkyMes;
   const ganEl  = document.getElementById('fin-ganancia-mes');
   if (ganEl) {
     ganEl.textContent = fmt(ganMes);
@@ -372,6 +376,11 @@ async function saveEnvioSky() {
     notas:`Transportadora: ${transport||'—'}`,fecha_registro:new Date().toISOString(),_sky_id:id});
   closeModal('modal-envio-sky');
   await renderFinanzas();
+  // Refrescar panel de envíos externos si está visible
+  if (typeof _renderEnviosSkyPanel === 'function') {
+    const panel = document.getElementById('panel-env-externos');
+    if (panel && panel.style.display !== 'none') await _renderEnviosSkyPanel();
+  }
   showToast(`Envío registrado · ${fmt(valor)} descontado`,'success');
 }
 var _deleteEnvioSkyId = null;
@@ -400,13 +409,24 @@ async function _confirmDeleteEnvioSky() {
     await DB.deleteEnvioSky(_deleteEnvioSkyId);
     _deleteEnvioSkyId=null;
     await renderFinanzas();
+    if (typeof _renderEnviosSkyPanel === 'function') {
+      const panel = document.getElementById('panel-env-externos');
+      if (panel && panel.style.display !== 'none') await _renderEnviosSkyPanel();
+    }
     showToast('Envío eliminado','success');
   } catch(e){if(err)err.textContent='Error al verificar.';console.error(e);}
   finally{if(btn){btn.textContent='Eliminar';btn.disabled=false;}}
 }
 
 function _cambiarEstadoSky(id, estado) {
-  DB.envios_sky().then(arr=>{ const e=arr.find(x=>x.id===id); if(e){ e.estado=estado; DB.upsertEnvioSky(e); } });
+  DB.envios_sky().then(async arr=>{
+    const e=arr.find(x=>x.id===id);
+    if(e){ e.estado=estado; await DB.upsertEnvioSky(e); }
+    if (typeof _renderEnviosSkyPanel === 'function') {
+      const panel = document.getElementById('panel-env-externos');
+      if (panel && panel.style.display !== 'none') await _renderEnviosSkyPanel();
+    }
+  });
 }
 
 function _copiarTextoSky(el, texto) {

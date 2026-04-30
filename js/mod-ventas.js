@@ -43,17 +43,27 @@ function _labelPeriodo(periodo) {
 
 // ── VENTAS & GANANCIAS (FUSIONADO) ──
 async function renderVentasGanancias() {
-  const ventas  = await DB.ventas();
-  const tiendas = await DB.tiendas();
+  const [ventas, tiendas, enviosSky] = await Promise.all([
+    DB.ventas(), DB.tiendas(), DB.envios_sky()
+  ]);
 
   const periodo     = _getPeriodoActivo();
   const ventasPer   = _filtrarPorPeriodo(ventas, periodo);
   const labelPer    = _labelPeriodo(periodo);
 
-  const totalGan    = ventasPer.reduce((s,v) => s + calcVenta(v).ganancia,    0);
+  // Ganancia base de ventas
+  const ganVentas   = ventasPer.reduce((s,v) => s + calcVenta(v).ganancia,    0);
   const totalVenta  = ventasPer.reduce((s,v) => s + calcVenta(v).totalVenta,  0);
   const totalCostos = ventasPer.reduce((s,v) => s + calcVenta(v).totalCostos, 0);
-  const marGen      = totalVenta > 0 ? (totalGan / totalVenta) * 100 : 0;
+
+  // Descontar envíos Skydropx del período
+  const mesPer = periodo.mes || new Date().toISOString().slice(0,7);
+  const egresosSky = enviosSky
+    .filter(e => (e.fecha||'').startsWith(mesPer))
+    .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
+
+  const totalGan = ganVentas - egresosSky;
+  const marGen   = totalVenta > 0 ? (totalGan / totalVenta) * 100 : 0;
 
   const elGan = document.getElementById('vg-total-gan');
   const elIng = document.getElementById('vg-total-ing');

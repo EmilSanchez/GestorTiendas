@@ -269,9 +269,15 @@ async function init() {
 
   // Restaurar la última página visitada desde el hash de la URL
   const VALID_PAGES = ['ventas','envios','problemas','finanzas','configuracion','ayudas'];
-  const hashPage = location.hash.replace('#','');
+  const hashRaw  = location.hash.replace('#','');
+  // Support sub-tab hashes like 'envios-externos'
+  const hashPage = hashRaw === 'envios-externos' ? 'envios' : hashRaw;
   const startPage = VALID_PAGES.includes(hashPage) ? hashPage : 'ventas';
   await navigate(startPage);
+  // Restore sub-tab if needed
+  if (hashRaw === 'envios-externos' && typeof _switchEnvTab === 'function') {
+    setTimeout(() => _switchEnvTab('externos'), 100);
+  }
   try { await updateAlertaBadge(); } catch(e) { console.warn('Badge error:', e); }
 
   // ── Vigilante global de sesión: cierra automáticamente al expirar ──

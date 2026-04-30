@@ -280,16 +280,21 @@
     <!-- ══════════════ ENVÍOS ══════════════ -->
     <section class="page-section" id="page-envios">
 
-      <!-- Pestañas -->
-      <div style="display:flex;gap:0;margin-bottom:16px;border-bottom:2px solid var(--border);">
-        <button id="tab-env-internacionales" onclick="_switchEnvTab('internacionales')"
-          style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:#1a4fa8;border-bottom:2px solid #1a4fa8;margin-bottom:-2px;transition:all .15s;">
-          Envíos Internacionales
-        </button>
-        <button id="tab-env-externos" onclick="_switchEnvTab('externos')"
-          style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;">
-          Envíos Externos · Skydropx
-        </button>
+      <!-- Header: tabs + actualizar -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);flex:1;">
+          <button id="tab-env-internacionales" onclick="_switchEnvTab('internacionales')"
+            style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:#1a4fa8;border-bottom:2px solid #1a4fa8;margin-bottom:-2px;transition:all .15s;">
+            Envíos Internacionales
+          </button>
+          <button id="tab-env-externos" onclick="_switchEnvTab('externos')"
+            style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;">
+            Envíos Externos · Skydropx
+          </button>
+        </div>
+        <button id="btn-actualizar-envios" onclick="_refreshTodoEnvios()" title="Actualizar módulo"
+          style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;margin-left:12px;flex-shrink:0;"
+          class="btn btn-ghost btn-sm"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
       </div>
 
       <!-- Spinner de transición entre pestañas -->
@@ -351,7 +356,7 @@
               style="padding:6px 10px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
             <div style="flex:1;"></div>
             <button class="btn btn-ghost btn-sm" id="btn-limpiar-envios" style="display:none;" onclick="clearEnvioFilters()">Limpiar filtros</button>
-<button class="btn btn-ghost btn-sm" id="btn-actualizar-envios" onclick="refreshModulo('envios')" title="Actualizar" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+
             <button class="btn btn-primary btn-sm" id="btn-pago-multiple" style="display:none;" onclick="openPagoMultiple()">
               Pagar seleccionados (<span id="selected-count">0</span>)
             </button>
@@ -383,7 +388,7 @@
             </select>
             <div id="sky-resumen-total" style="font-size:12px;color:var(--text3);"></div>
           </div>
-          <button class="btn btn-primary btn-sm" onclick="openModalEnvioSky()">+ Registrar envío</button>
+<button class="btn btn-primary btn-sm" onclick="openModalEnvioSky()">+ Registrar envío</button>
         </div>
 
         <div id="envios-sky-panel">
@@ -1379,6 +1384,10 @@ function _switchEnvTab(tab) {
   var tabNac = document.getElementById('tab-env-internacionales');
   var tabExt = document.getElementById('tab-env-externos');
 
+  // Save tab in URL hash
+  var hashTab = isNac ? '#envios' : '#envios-externos';
+  if (location.hash !== hashTab) history.replaceState(null, '', hashTab);
+
   // Update tabs immediately
   tabNac.style.color        = isNac  ? '#1a4fa8' : 'var(--text3)';
   tabNac.style.borderBottom = isNac  ? '2px solid #1a4fa8' : '2px solid transparent';
@@ -1415,6 +1424,52 @@ function _switchEnvTab(tab) {
 }
 // ── Alias por compatibilidad ──
 function _toggleEnviosExternos() { _switchEnvTab('externos'); }
+
+// ── Actualizar TODO el módulo de envíos sin cambiar pestaña ──
+async function _refreshTodoEnvios() {
+  var btn = document.getElementById('btn-actualizar-envios');
+  var svg = btn ? btn.querySelector('svg') : null;
+  if (btn) { btn.disabled = true; btn.style.opacity = '.7'; }
+  if (svg) svg.style.animation = '_envSpinAnim .6s linear infinite';
+
+  var enExternos = document.getElementById('panel-env-externos') &&
+                   document.getElementById('panel-env-externos').style.display !== 'none';
+  try {
+    Object.keys(_cache).forEach(function(k){ _cache[k] = null; });
+    await _cargarTodo();
+    await render('envios');
+    if (enExternos) {
+      var sel = document.getElementById('sky-filtro-mes');
+      if (sel) sel.dataset.init = '';
+      await _initEnviosSkyPanel();
+      // Restaurar pestaña externa
+      _switchEnvTab('externos');
+    }
+  } catch(e) { console.error('Error al actualizar:', e); }
+
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  if (svg) svg.style.animation = '';
+}
+
+// ── Actualizar panel Skydropx manualmente ──
+async function _refreshEnviosSky() {
+  const btn = document.getElementById('btn-actualizar-sky');
+  const svg = btn ? btn.querySelector('svg') : null;
+  if (btn) { btn.disabled = true; btn.style.opacity = '.7'; }
+  if (svg) svg.style.animation = '_envSpinAnim .6s linear infinite';
+  try {
+    // Recargar desde Firestore usando _col de firebase.js
+    try {
+      var freshSnap = await _col('envios_sky').get();
+      _cache.envios_sky = freshSnap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+    } catch(fetchErr) {
+      console.error('Error recargando envios_sky:', fetchErr);
+    }
+    await _renderEnviosSkyPanel();
+  } catch(e) { console.error('Error al actualizar sky:', e); }
+  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
+  if (svg) svg.style.animation = '';
+}
 
 async function _initEnviosSkyPanel() {
   var sel = document.getElementById('sky-filtro-mes');
@@ -1480,6 +1535,22 @@ async function _renderEnviosSkyPanel() {
         return '<th style="padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;">'+h+'</th>';
       }).join('')
     + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
+
+  // Animación de entrada suave para las filas
+  requestAnimationFrame(function() {
+    var trs = el.querySelectorAll('tbody tr');
+    trs.forEach(function(row, i) {
+      row.style.opacity = '0';
+      row.style.transform = 'translateY(12px)';
+      var delay = i * 18;
+      requestAnimationFrame(function() {
+        row.style.transition = 'opacity .2s ease '+delay+'ms, transform .2s ease '+delay+'ms';
+        row.style.opacity = '1';
+        row.style.transform = 'translateY(0)';
+        setTimeout(function(){ row.style.transition=''; row.style.transform=''; }, 250+delay);
+      });
+    });
+  });
 }
 </script>
 
