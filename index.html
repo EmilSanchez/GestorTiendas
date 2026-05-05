@@ -5,152 +5,273 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>ShopManager · Acceso</title>
 <link rel="icon" href="img/favi.png" type="image/x-icon">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Plus+Jakarta+Sans:wght@700;800;900&display=swap" rel="stylesheet">
 <style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-html,body{height:100%;font-family:'Calibri',system-ui,sans-serif;}
-body{
-  background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);
-  display:flex;align-items:center;justify-content:center;min-height:100vh;
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#06080f;
+  --teal:#00c9a7;
+  --teal2:#0097b2;
+  --text:#f0f4f8;
+  --text2:rgba(240,244,248,.45);
+  --border:rgba(255,255,255,.07);
+  --error:#ff5f6d;
 }
-.card{
-  background:#fff;border-radius:18px;padding:38px 42px 34px;width:350px;
-  box-shadow:0 20px 60px rgba(0,0,0,.4);
-  animation:cardIn .35s cubic-bezier(.4,0,.2,1);
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+
+/* BG */
+.bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;}
+.orb{position:absolute;border-radius:50%;filter:blur(100px);animation:drift 14s ease-in-out infinite;}
+.orb1{width:700px;height:700px;background:radial-gradient(circle,rgba(0,201,167,.28),transparent 70%);top:-200px;left:-200px;}
+.orb2{width:600px;height:600px;background:radial-gradient(circle,rgba(0,151,178,.22),transparent 70%);bottom:-150px;right:-150px;animation-delay:-7s;}
+@keyframes drift{0%,100%{transform:translate(0,0);}50%{transform:translate(40px,-30px);}}
+.grid{position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);
+  background-size:72px 72px;}
+
+/* LAYOUT */
+.layout{position:relative;z-index:1;display:grid;grid-template-columns:1fr 460px;min-height:100vh;max-width:1100px;margin:0 auto;padding:0 24px;}
+
+/* LEFT PANEL */
+.left{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:48px 48px 48px 24px;
+  border-right:1px solid var(--border);
+  position:relative;overflow:hidden;
 }
-@keyframes cardIn{from{opacity:0;transform:translateY(20px) scale(.97);}to{opacity:1;transform:translateY(0)scale(1);}}
-.logo{width:44px;height:44px;object-fit:contain;display:block;margin:0 auto 10px;}
-.title{font-size:21px;font-weight:800;color:#0d2020;text-align:center;margin-bottom:3px;letter-spacing:-.3px;}
-.sub{font-size:11px;color:#8aabaa;text-align:center;margin-bottom:28px;text-transform:uppercase;letter-spacing:1px;}
-.fl{font-size:11px;font-weight:600;color:#4a6565;display:block;margin-bottom:5px;}
-.fi{
-  width:100%;padding:11px 14px;border:1.5px solid #d8e4e3;border-radius:9px;
-  font-size:14px;outline:none;color:#0d2020;transition:border-color .2s,box-shadow .2s;
-  font-family:inherit;margin-bottom:14px;background:#fff;
+.left::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(0,201,167,.06) 0%,transparent 60%);
+  pointer-events:none;
 }
-.fi:focus{border-color:#00897b;box-shadow:0 0 0 3px rgba(0,137,123,.1);}
-.btn{
-  width:100%;margin-top:6px;padding:13px;border:none;border-radius:10px;
-  background:linear-gradient(135deg,#264643,#005169);color:#fff;
-  font-size:14px;font-weight:700;cursor:pointer;letter-spacing:.2px;
-  box-shadow:0 4px 14px rgba(0,137,123,.3);transition:all .15s;
-  display:flex;align-items:center;justify-content:center;gap:8px;font-family:inherit;
+.brand{display:flex;align-items:center;gap:14px;margin-bottom:64px;}
+.brand-icon{
+  width:48px;height:48px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 6px 24px rgba(0,201,167,.4);
 }
-.btn:hover{opacity:.88;transform:translateY(-1px);}
-.btn:active{transform:scale(.97);}
-.btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
-.err{color:#b0202e;font-size:12px;margin-top:10px;min-height:16px;text-align:center;font-weight:600;}
-.spinner{display:none;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.3);
-  border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0;}
+.brand-icon img{width:24px;height:24px;object-fit:contain;filter:brightness(10);}
+.brand-name{font-family:'Plus Jakarta Sans',sans-serif;font-size:16px;font-weight:800;letter-spacing:2px;text-transform:uppercase;}
+.brand-sub{font-size:11px;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-top:2px;}
+
+.hero-tag{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:6px 14px;border-radius:20px;
+  border:1px solid rgba(0,201,167,.2);background:rgba(0,201,167,.07);
+  font-size:11px;font-weight:600;letter-spacing:1.2px;text-transform:uppercase;color:var(--teal);
+  margin-bottom:28px;width:fit-content;
+}
+.hero-tag::before{content:'';width:6px;height:6px;border-radius:50%;background:var(--teal);animation:pulse 2s ease infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
+
+.hero-title{
+  font-family:'Plus Jakarta Sans',sans-serif;
+  font-size:clamp(48px,5vw,72px);
+  font-weight:800;line-height:1.05;
+  letter-spacing:-2px;
+  margin-bottom:24px;
+}
+.hero-title .accent{
+  background:linear-gradient(90deg,var(--teal),var(--teal2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.hero-desc{
+  font-size:17px;color:var(--text2);font-weight:300;
+  line-height:1.7;max-width:480px;margin-bottom:56px;
+}
+.stats{display:flex;gap:40px;justify-content:center;}
+.stat-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:28px;font-weight:800;color:var(--teal);}
+.stat-label{font-size:11px;color:var(--text2);letter-spacing:.8px;text-transform:uppercase;margin-top:4px;}
+
+/* RIGHT PANEL — form */
+.right{
+  display:flex;flex-direction:column;justify-content:center;
+  padding:52px 44px;
+  background:rgba(13,17,23,.7);
+  backdrop-filter:blur(20px);
+  border-radius:20px;
+  border:1px solid var(--border);
+  margin:40px 0;
+}
+
+.form-header{margin-bottom:40px;}
+.form-header h2{
+  font-family:'Plus Jakarta Sans',sans-serif;font-size:32px;font-weight:800;
+  letter-spacing:-1px;margin-bottom:10px;
+}
+.form-header p{font-size:14px;color:var(--text2);font-weight:300;line-height:1.6;}
+
+.field{margin-bottom:20px;}
+.field label{
+  display:block;font-size:11px;font-weight:600;
+  color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;
+}
+.field-wrap{position:relative;}
+.field-icon{
+  position:absolute;left:16px;top:50%;transform:translateY(-50%);
+  color:var(--text2);pointer-events:none;
+}
+.field input{
+  width:100%;padding:14px 16px 14px 46px;
+  background:rgba(255,255,255,.04);
+  border:1px solid var(--border);border-radius:12px;
+  color:var(--text);font-size:15px;font-family:'DM Sans',sans-serif;
+  outline:none;transition:all .2s;
+}
+.field input::placeholder{color:rgba(255,255,255,.18);}
+.field input:focus{
+  border-color:var(--teal);background:rgba(0,201,167,.05);
+  box-shadow:0 0 0 3px rgba(0,201,167,.1);
+}
+
+.btn-login{
+  width:100%;margin-top:4px;padding:16px;
+  background:linear-gradient(135deg,var(--teal),var(--teal2));
+  border:none;border-radius:12px;
+  color:#06080f;font-size:15px;font-weight:700;
+  font-family:'DM Sans',sans-serif;letter-spacing:.4px;
+  cursor:pointer;transition:all .2s;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 6px 28px rgba(0,201,167,.35);
+}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 12px 36px rgba(0,201,167,.45);}
+.btn-login:active{transform:scale(.98);}
+.btn-login:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+
+.err-msg{
+  color:var(--error);font-size:13px;font-weight:500;
+  margin-top:14px;min-height:18px;text-align:center;
+}
+
+.form-footer{
+  margin-top:36px;padding-top:24px;
+  border-top:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.footer-note{font-size:11px;color:rgba(255,255,255,.2);display:flex;align-items:center;gap:6px;}
+.footer-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;animation:pulse 2s ease infinite;}
+
+.spinner{display:none;width:16px;height:16px;border:2px solid rgba(6,8,15,.3);border-top-color:#06080f;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
-@keyframes shake{
-  0%,100%{transform:translateX(0);}20%{transform:translateX(-5px);}
-  40%{transform:translateX(5px);}60%{transform:translateX(-5px);}80%{transform:translateX(5px);}
-}
-.shake{animation:shake .35s ease;}
+@keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
+
+/* Animations */
+.left > *{animation:fadeUp .6s cubic-bezier(.4,0,.2,1) both;}
+.brand{animation-delay:.05s;}
+.hero-tag{animation-delay:.1s;}
+.hero-title{animation-delay:.15s;}
+.hero-desc{animation-delay:.2s;}
+.stats{animation-delay:.25s;}
+.right > *{animation:fadeUp .6s cubic-bezier(.4,0,.2,1) both;animation-delay:.3s;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
 </style>
 </head>
 <body>
-<div class="card">
-  <img src="img/favi.png" alt="Logo" class="logo">
-  <div class="title">ShopManager</div>
-  <div class="sub">Control de tiendas</div>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div></div>
+<div class="grid"></div>
 
-  <label class="fl">Usuario</label>
-  <input type="text" id="l-user" class="fi" placeholder="tu_usuario" autocomplete="username"
-    onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
+<div class="layout">
 
-  <label class="fl">Contraseña</label>
-  <input type="password" id="l-pass" class="fi" placeholder="••••••••" autocomplete="current-password"
-    onkeydown="if(event.key==='Enter')doLogin()" style="margin-bottom:0;">
+  <!-- LEFT -->
+  <div class="left">
 
-  <button class="btn" id="btn-login" onclick="doLogin()">
-    <div class="spinner" id="sp-login"></div>
-    <span id="txt-login">Entrar</span>
-  </button>
-  <div class="err" id="err-login"></div>
+
+    <h1 class="hero-title">
+      Gestiona tus<br>
+      tiendas<br>
+      <span class="accent">con precisión.</span>
+    </h1>
+
+    <p class="hero-desc">
+      Control total sobre tus ventas, envíos y finanzas de Mercado Libre en una sola plataforma. Rápido, seguro y siempre disponible.
+    </p>
+
+    <div class="stats">
+      <div><div class="stat-num">24/7</div><div class="stat-label">Disponible</div></div>
+      <div><div class="stat-num">100%</div><div class="stat-label">En tiempo real</div></div>
+      <div><div class="stat-num">0</div><div class="stat-label">Fricción</div></div>
+    </div>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right">
+    <div class="form-header">
+      <h2>Iniciar sesión</h2>
+      <p>Ingresa tus credenciales para acceder al panel.</p>
+    </div>
+
+    <div class="field">
+      <label>Usuario</label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+        </span>
+        <input type="text" id="l-user" placeholder="usuario" autocomplete="username"
+          onkeydown="if(event.key==='Enter')document.getElementById('l-pass').focus()">
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Contraseña</label>
+      <div class="field-wrap">
+        <span class="field-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+        </span>
+        <input type="password" id="l-pass" placeholder="••••••••" autocomplete="current-password"
+          onkeydown="if(event.key==='Enter')doLogin()">
+      </div>
+    </div>
+
+    <button class="btn-login" id="btn-login" onclick="doLogin()">
+      <div class="spinner" id="sp-login"></div>
+      <span id="txt-login">Entrar al panel</span>
+    </button>
+
+    <div class="err-msg" id="err-login"></div>
+
+    <div class="form-footer">
+      <span class="footer-note"><span class="footer-dot"></span>Sesión segura · 8 horas</span>
+      <span class="footer-note">v6.0 · Firebase</span>
+    </div>
+  </div>
+
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 <script src="js/firebase.js"></script>
 <script>
-const _SK = 'mm_session';
-
-// Si ya hay sesión válida, ir directo
-(function(){
-  try {
-    const s = JSON.parse(localStorage.getItem(_SK)||'null');
-    if (s && s.uid && (Date.now()-s.ts) < 8*60*60*1000) window.location.href='app.html';
-  } catch{}
-})();
-
-async function _sha256(str) {
-  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
-  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
-}
-
-function _setLoading(on) {
-  document.getElementById('btn-login').disabled = on;
-  document.getElementById('sp-login').style.display = on ? 'block' : 'none';
-  document.getElementById('txt-login').textContent  = on ? 'Verificando...' : 'Entrar';
-}
-
-function _shake(id) {
-  const el = document.getElementById(id);
-  el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake');
-  setTimeout(()=>el.classList.remove('shake'),400);
-}
-
-async function doLogin() {
-  const usuario = document.getElementById('l-user').value.trim().toLowerCase();
-  const pass    = document.getElementById('l-pass').value;
-  const errEl   = document.getElementById('err-login');
-  errEl.textContent = '';
-
-  if (!usuario) { errEl.textContent='Ingresa tu usuario.'; _shake('l-user'); return; }
-  if (!pass)    { errEl.textContent='Ingresa tu contraseña.'; _shake('l-pass'); return; }
-
+const _SK='mm_session';
+(function(){try{const s=JSON.parse(localStorage.getItem(_SK)||'null');if(s&&s.uid&&(Date.now()-s.ts)<8*60*60*1000)window.location.href='app.html';}catch{}})();
+async function _sha256(str){const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');}
+function _setLoading(on){document.getElementById('btn-login').disabled=on;document.getElementById('sp-login').style.display=on?'block':'none';document.getElementById('txt-login').textContent=on?'Verificando...':'Entrar al panel';}
+function _showError(msg){const el=document.getElementById('err-login');el.textContent=msg;el.style.animation='none';void el.offsetWidth;el.style.animation='shake .35s ease';}
+async function doLogin(){
+  const usuario=document.getElementById('l-user').value.trim().toLowerCase();
+  const pass=document.getElementById('l-pass').value;
+  document.getElementById('err-login').textContent='';
+  if(!usuario){_showError('Ingresa tu usuario.');return;}
+  if(!pass){_showError('Ingresa tu contraseña.');return;}
   _setLoading(true);
-  try {
-    const hash = await _sha256(pass);
-
-    // 1. Buscar usuario en Firestore
-    const snap = await _db.collection('usuarios').where('usuario','==',usuario).limit(1).get();
-
-    // Si es admin (campo usuario='admin' en doc raíz config/auth)
-    if (usuario === 'admin') {
-      const authSnap = await _db.collection('config').doc('auth').get();
-      if (!authSnap.exists) { errEl.textContent='No hay cuenta admin configurada.'; _setLoading(false); return; }
-      if (authSnap.data().hash !== hash) { errEl.textContent='Contraseña incorrecta.'; _shake('l-pass'); _setLoading(false); return; }
-      localStorage.setItem(_SK, JSON.stringify({ uid:'admin', rol:'admin', usuario:'admin', ts:Date.now() }));
-      window.location.href = 'app.html';
-      return;
+  try{
+    const hash=await _sha256(pass);
+    if(usuario==='admin'){
+      const authSnap=await _db.collection('config').doc('auth').get();
+      if(!authSnap.exists){_showError('No hay cuenta admin configurada.');_setLoading(false);return;}
+      if(authSnap.data().hash!==hash){_showError('Contraseña incorrecta.');_setLoading(false);return;}
+      localStorage.setItem(_SK,JSON.stringify({uid:'admin',rol:'admin',usuario:'admin',ts:Date.now()}));
+      window.location.href='app.html';return;
     }
-
-    // Usuario normal
-    if (snap.empty) { errEl.textContent='Usuario no encontrado.'; _shake('l-user'); _setLoading(false); return; }
-    const userDoc = snap.docs[0];
-    const userData = userDoc.data();
-
-    if (!userData.activo) { errEl.textContent='Usuario desactivado. Contacta al administrador.'; _setLoading(false); return; }
-
-    // Verificar contraseña en su config
-    const authSnap = await _db.collection(`usuarios/${userDoc.id}/config`).doc('auth').get();
-    if (!authSnap.exists || authSnap.data().hash !== hash) {
-      errEl.textContent='Contraseña incorrecta.'; _shake('l-pass'); _setLoading(false); return;
-    }
-
-    localStorage.setItem(_SK, JSON.stringify({
-      uid: userDoc.id, rol: userData.rol||'usuario',
-      usuario: userData.usuario, nombre: userData.nombre, ts: Date.now()
-    }));
-    window.location.href = 'app.html';
-
-  } catch(e) {
-    console.error(e);
-    errEl.textContent = 'Error de conexión. Intenta de nuevo.';
-    _setLoading(false);
-  }
+    const snap=await _db.collection('usuarios').where('usuario','==',usuario).limit(1).get();
+    if(snap.empty){_showError('Usuario no encontrado.');_setLoading(false);return;}
+    const userDoc=snap.docs[0];const userData=userDoc.data();
+    if(!userData.activo){_showError('Usuario desactivado. Contacta al administrador.');_setLoading(false);return;}
+    const authSnap=await _db.collection(`usuarios/${userDoc.id}/config`).doc('auth').get();
+    if(!authSnap.exists||authSnap.data().hash!==hash){_showError('Contraseña incorrecta.');_setLoading(false);return;}
+    localStorage.setItem(_SK,JSON.stringify({uid:userDoc.id,rol:userData.rol||'usuario',usuario:userData.usuario,nombre:userData.nombre,ts:Date.now()}));
+    window.location.href='app.html';
+  }catch(e){console.error(e);_showError('Error de conexión. Intenta de nuevo.');_setLoading(false);}
 }
 </script>
 </body>
