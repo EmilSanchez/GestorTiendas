@@ -7,7 +7,7 @@ async function openModalVenta(id) {
   _editVentaId = id||null;
   document.getElementById('mv-title').textContent = id ? 'Editar Venta' : 'Nueva Venta';
   const tiendas = await DB.tiendas();
-  document.getElementById('v-tienda').innerHTML = tiendas.map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
+  document.getElementById('v-tienda').innerHTML = tiendas.filter(t=>t.estado!=='inactiva').map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
 
   if(id) {
     const v = (await DB.ventas()).find(x=>x.id===id);
