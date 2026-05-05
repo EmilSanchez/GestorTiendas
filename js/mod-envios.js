@@ -200,9 +200,14 @@ async function renderEnvios() {
   const chkAll = document.getElementById('chk-all-envios');
   if(chkAll) chkAll.checked = false;
 
-  // Solo ventas con transportadora Aguachica o Servientrega y que tengan valor de envío
+  // Solo ventas del mes activo con transportadora Aguachica o Servientrega
+  const efMesEl2 = document.getElementById('ef-mes');
+  if (efMesEl2 && !efMesEl2.value) efMesEl2.value = mes();
+  const _mesFiltro = gv('ef-mes') || mes();
+
   ventas = ventas.filter(v =>
-    (v.envio_tipo === 'aguachica' || v.envio_tipo === 'servientrega')
+    (v.envio_tipo === 'aguachica' || v.envio_tipo === 'servientrega') &&
+    (v.fecha_venta || '').startsWith(_mesFiltro)
   );
 
   // ── Calcular resúmenes por transportadora ──
@@ -229,11 +234,15 @@ async function renderEnvios() {
   const _svGT=document.getElementById('env-sv-pag-total'); if(_svGT) _svGT.textContent   = fmt(_sum(svPag));
 
   // ── Aplicar filtros ──
+  // Default: mes actual si no hay filtro de mes
+  const efMesEl = document.getElementById('ef-mes');
+  if (efMesEl && !efMesEl.value) efMesEl.value = mes();
+
   const s   = gv('ef-search').toLowerCase();
   const fe  = gv('ef-empresa');
   const fp  = gv('ef-pago');
   const ft  = gv('ef-tienda');
-  const fm  = gv('ef-mes');
+  const fm  = gv('ef-mes') || mes();
 
   // Mostrar/ocultar botón Limpiar envíos
   const btnLimpiarEnv = document.getElementById('btn-limpiar-envios');
