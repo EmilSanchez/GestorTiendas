@@ -152,6 +152,18 @@ html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);colo
 .footer-note{font-size:11px;color:rgba(255,255,255,.2);display:flex;align-items:center;gap:6px;}
 .footer-dot{width:6px;height:6px;border-radius:50%;background:var(--teal);flex-shrink:0;animation:pulse 2s ease infinite;}
 
+/* Override browser autofill styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-box-shadow: 0 0 0 1000px rgba(13,17,23,.95) inset !important;
+  -webkit-text-fill-color: #f0f4f8 !important;
+  border-color: var(--teal) !important;
+  caret-color: #f0f4f8;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
 .spinner{display:none;width:16px;height:16px;border:2px solid rgba(6,8,15,.3);border-top-color:#06080f;border-radius:50%;animation:spin .7s linear infinite;}
 @keyframes spin{to{transform:rotate(360deg);}}
 @keyframes shake{0%,100%{transform:translateX(0);}20%{transform:translateX(-6px);}40%{transform:translateX(6px);}60%{transform:translateX(-4px);}80%{transform:translateX(4px);}}
