@@ -310,8 +310,8 @@ async function renderVentas() {
 
   // Ordenar cronológico → invertir para mostrar más reciente arriba
   ventas.sort((a,b) => (b.fecha_venta||'').localeCompare(a.fecha_venta||''));
-  const ventasConNum  = ventas.map((v,i) => ({ ...v, _num: i+1 }));
-  const ventasMostrar = [...ventasConNum].reverse();
+  const ventasConNum  = ventas.map((v,i) => ({ ...v, _num: ventas.length - i }));
+  const ventasMostrar = ventasConNum;
 
   document.getElementById('ventas-count').textContent = `${ventas.length} venta(s) mostrada(s)`;
 
@@ -342,7 +342,7 @@ async function renderVentas() {
           <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td style="text-align:center;"><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${v.fecha_venta||'—'}</div></td>
+      <td style="text-align:center;"><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${fmtFecha(v.fecha_venta)}</div></td>
       <td class="td-mono c-dim">${v.telefono||'—'}</td>
       <td class="td-mono">${fmt(c.precioCOP)}</td>
       <td class="td-mono">${fmtU(v.costo_usd||0)}</td>
@@ -631,7 +631,7 @@ async function verDetalleVenta(id) {
         <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
           <span class="badge badge-${p.estado}">${p.estado}</span>
           <span style="font-size:11px;color:var(--text2);">${p.tipo_label||p.tipo}</span>
-          <span class="c-dim" style="font-size:10px;">${p.fecha||'—'}</span>
+          <span class="c-dim" style="font-size:10px;">${fmtFecha(p.fecha)}</span>
           ${p.valor_perdida>0?`<span class="badge badge-perdida">Pérdida: ${fmt(p.valor_perdida)}</span>`:''}
         </div>
         <div style="font-size:12px;margin-bottom:4px;"><strong>Problema:</strong> ${p.descripcion}</div>

@@ -323,7 +323,7 @@ async function renderProblemas() {
           </div>
         </div>
         <div style="text-align:right;font-size:11px;color:var(--text3);">
-          ${p.fecha||'—'}
+          ${fmtFecha(p.fecha)}
           ${c ? `<div class="mono" style="font-size:11px;margin-top:2px;">Venta: ${fmt(c.totalVenta)}</div>` : ''}
         </div>
       </div>

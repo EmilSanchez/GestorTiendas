@@ -251,12 +251,10 @@ async function init() {
     if (refEl && !refEl.value) refEl.value = this.value ? '#' + this.value : '';
   });
 
-  // Inicializar filtros de mes al mes actual
+  // Inicializar filtro de mes de ventas al mes actual (envios muestra todo por defecto)
   const _mesActual = mes();
   const vfMes = document.getElementById('vf-mes');
   if (vfMes && !vfMes.value) vfMes.value = _mesActual;
-  const efMes = document.getElementById('ef-mes');
-  if (efMes && !efMes.value) efMes.value = _mesActual;
 
   ['vf-search','vf-tienda','vf-estado','vf-mes','vf-desde','vf-hasta'].forEach(id => {
     document.getElementById(id)?.addEventListener('input',  () => renderVentasGanancias());

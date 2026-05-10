@@ -16,6 +16,16 @@ const hoy  = () => {
 };
 const mes  = () => new Date().toISOString().slice(0,7);
 
+// Formatea YYYY-MM-DD → "10 - Mayo - 2026"
+const _MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const fmtFecha = (fecha) => {
+  if (!fecha) return '—';
+  const parts = String(fecha).slice(0,10).split('-');
+  if (parts.length < 3) return fecha;
+  const y = parts[0], m = parseInt(parts[1],10)-1, d = parseInt(parts[2],10);
+  return `${d} - ${_MESES[m]} - ${y}`;
+};
+
 // ── BASE DE DATOS — Firebase Firestore (definido en el módulo de arriba) ──
 // DB se inyecta como window.DB desde el módulo Firebase.
 // Todas las llamadas a DB son ahora async/await.

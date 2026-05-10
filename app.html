@@ -1476,10 +1476,10 @@ async function _initEnviosSkyPanel() {
   var sel = document.getElementById('sky-filtro-mes');
   if (sel && !sel.dataset.init) {
     var M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    var meses = Array.from({length:8}, function(_,i){
+    var meses = Array.from({length:12}, function(_,i){
       var d = new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7);
     });
-    sel.innerHTML = meses.map(function(m){
+    sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(function(m){
       var parts = m.split('-');
       return '<option value="'+m+'">'+M[parseInt(parts[1],10)-1]+' '+parts[0]+'</option>';
     }).join('');
@@ -1490,11 +1490,14 @@ async function _initEnviosSkyPanel() {
 
 async function _renderEnviosSkyPanel() {
   var el  = document.getElementById('envios-sky-panel');
-  var mes = (document.getElementById('sky-filtro-mes')||{}).value || new Date().toISOString().slice(0,7);
+  var mesFiltro = (document.getElementById('sky-filtro-mes')||{}).value || '';
   if (!el) return;
 
   var enviosSky = await DB.envios_sky();
-  var skyMes    = enviosSky.filter(function(e){ return (e.fecha||'').startsWith(mes); });
+  var skyMes    = mesFiltro
+    ? enviosSky.filter(function(e){ return (e.fecha||'').startsWith(mesFiltro); })
+    : enviosSky.slice();
+  skyMes.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
   var total     = skyMes.reduce(function(s,e){ return s+(parseFloat(e.valor)||0); }, 0);
 
   var resEl = document.getElementById('sky-resumen-total');
@@ -1517,7 +1520,7 @@ async function _renderEnviosSkyPanel() {
     var fl = FUENTES_LABEL[e.fuente_pago] || e.fuente_pago || 'Skydropx';
     var id = e.id; var nv = e.num_venta||''; var ng = e.num_guia||'';
     return '<tr style="border-bottom:1px solid var(--border);">'
-      + '<td style="padding:8px 10px;font-size:12px;color:var(--text3);">'+(e.fecha||'—')+'</td>'
+      + '<td style="padding:8px 10px;font-size:12px;color:var(--text3);">'+fmtFecha(e.fecha)+'</td>'
       + '<td style="padding:8px 10px;">'+(nv?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+nv+'">'+nv+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
       + '<td style="padding:8px 10px;">'+(ng?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+ng+'">'+ng+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
       + '<td style="padding:8px 10px;font-size:13px;font-weight:600;">'+(e.transportadora||'—')+'</td>'

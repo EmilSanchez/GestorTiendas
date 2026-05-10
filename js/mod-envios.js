@@ -200,14 +200,12 @@ async function renderEnvios() {
   const chkAll = document.getElementById('chk-all-envios');
   if(chkAll) chkAll.checked = false;
 
-  // Solo ventas del mes activo con transportadora Aguachica o Servientrega
-  const efMesEl2 = document.getElementById('ef-mes');
-  if (efMesEl2 && !efMesEl2.value) efMesEl2.value = mes();
-  const _mesFiltro = gv('ef-mes') || mes();
+  // Solo ventas con transportadora Aguachica o Servientrega
+  const _mesFiltro = gv('ef-mes') || '';
 
   ventas = ventas.filter(v =>
     (v.envio_tipo === 'aguachica' || v.envio_tipo === 'servientrega') &&
-    (v.fecha_venta || '').startsWith(_mesFiltro)
+    (_mesFiltro ? (v.fecha_venta || '').startsWith(_mesFiltro) : true)
   );
 
   // ── Calcular resúmenes por transportadora ──
@@ -234,15 +232,11 @@ async function renderEnvios() {
   const _svGT=document.getElementById('env-sv-pag-total'); if(_svGT) _svGT.textContent   = fmt(_sum(svPag));
 
   // ── Aplicar filtros ──
-  // Default: mes actual si no hay filtro de mes
-  const efMesEl = document.getElementById('ef-mes');
-  if (efMesEl && !efMesEl.value) efMesEl.value = mes();
-
   const s   = gv('ef-search').toLowerCase();
   const fe  = gv('ef-empresa');
   const fp  = gv('ef-pago');
   const ft  = gv('ef-tienda');
-  const fm  = gv('ef-mes') || mes();
+  const fm  = gv('ef-mes') || '';
 
   // Mostrar/ocultar botón Limpiar envíos
   const btnLimpiarEnv = document.getElementById('btn-limpiar-envios');
@@ -284,7 +278,7 @@ async function renderEnvios() {
         </span>
       </td>
       <td><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span></td>
-      <td class="td-dim">${v.fecha_venta||'—'}</td>
+      <td class="td-dim">${fmtFecha(v.fecha_venta)}</td>
       <td>
         <span style="display:inline-flex;align-items:center;gap:4px;background:${bgCol};color:${txtCol};
           border:1px solid ${borCol};border-radius:20px;padding:3px 9px;font-size:12px;font-weight:700;">
@@ -419,12 +413,12 @@ function _toggleEnviosExternos(header) {
 async function _initEnviosSkyPanel() {
   const sel = document.getElementById('sky-filtro-mes');
   if (!sel.dataset.init) {
-    const meses = Array.from({length:8}, (_,i) => {
+    const meses = Array.from({length:12}, (_,i) => {
       const d = new Date(); d.setMonth(d.getMonth() - i);
       return d.toISOString().slice(0,7);
     });
     const M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    sel.innerHTML = meses.map(m => {
+    sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m => {
       const [y,mo] = m.split('-');
       return `<option value="${m}">${M[parseInt(mo,10)-1]} ${y}</option>`;
     }).join('');
@@ -435,11 +429,14 @@ async function _initEnviosSkyPanel() {
 
 async function _renderEnviosSkyPanel() {
   const el  = document.getElementById('envios-sky-panel');
-  const mes = document.getElementById('sky-filtro-mes')?.value || new Date().toISOString().slice(0,7);
+  const mesFiltro = document.getElementById('sky-filtro-mes')?.value || '';
   if (!el) return;
 
   const enviosSky = await DB.envios_sky();
-  const skyMes    = enviosSky.filter(e => (e.fecha||'').startsWith(mes));
+  const skyMes    = (mesFiltro
+    ? enviosSky.filter(e => (e.fecha||'').startsWith(mesFiltro))
+    : [...enviosSky]
+  ).sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
   const total     = skyMes.reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
 
   const resEl = document.getElementById('sky-resumen-total');
@@ -461,7 +458,7 @@ async function _renderEnviosSkyPanel() {
 
   const rows = skyMes.map(e => `
     <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${e.fecha||'—'}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fmtFecha(e.fecha)}</td>
       <td style="padding:8px 10px;">${e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;">${e.num_guia  ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>

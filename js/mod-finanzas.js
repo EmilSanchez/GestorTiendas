@@ -319,7 +319,7 @@ function _renderEnviosSky(skyMes, mesAct) {
     const estado = e.estado||'Pendiente';
     return `
     <tr style="border-bottom:1px solid var(--border);">
-      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${e.fecha||'—'}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fmtFecha(e.fecha)}</td>
       <td style="padding:8px 10px;">
         ${e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)" title="Clic para copiar">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>'}
       </td>
