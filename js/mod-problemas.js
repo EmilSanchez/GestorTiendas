@@ -276,6 +276,10 @@ async function saveProblema() {
   showConfirmAnim('problema', !!_editProbId);
   await renderProblemas();
   await updateAlertaBadge();
+  // Si estamos en gestor de ventas, actualizar esa tabla también
+  if (document.getElementById('page-ventas')?.classList.contains('active')) {
+    if (typeof renderVentas === 'function') await renderVentas();
+  }
 }
 
 async function renderProblemas() {
