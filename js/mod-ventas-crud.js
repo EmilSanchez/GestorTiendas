@@ -374,29 +374,39 @@ async function renderVentas() {
         <div class="actions-cell">
             <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
           <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="img/editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
-          ${(()=>{ const prob = problemas.find(p=>p.venta_id===v.id); const hasProb = !!prob; const onclick = hasProb ? `openModalProblema(null,'${prob.id}')` : `openModalProblema('${v.id}')`; return `<button class="btn btn-ghost btn-icon btn-sm" title="${hasProb?'Ver problema registrado':'Registrar problema'}" onclick="${onclick}" style="${hasProb?'background:#fee2e2;border-color:#fca5a5;':''}"><img src="img/advertencia.png" alt="Problema" style="width:1rem;height:1rem;object-fit:contain;${hasProb?'filter:sepia(1) saturate(5) hue-rotate(-30deg);':''}"></button>`; })()}
+          ${(()=>{ const prob = problemas.find(p=>p.venta_id===v.id); const hasProb = !!prob;
+            const solved = hasProb && ['resuelto','solucionado','cerrado'].includes((prob.estado||'').toLowerCase());
+            const onclick = hasProb ? `openModalProblema(null,'${prob.id}')` : `openModalProblema('${v.id}')`;
+            const btnStyle = !hasProb ? '' : solved ? 'background:#d1f0e0;border-color:#6cc490;' : 'background:#fee2e2;border-color:#fca5a5;';
+            const imgFilter = !hasProb ? '' : solved ? 'filter:sepia(1) saturate(4) hue-rotate(80deg);' : 'filter:sepia(1) saturate(5) hue-rotate(-30deg);';
+            const btnTitle = !hasProb ? 'Registrar problema' : solved ? 'Problema resuelto ✓' : 'Ver problema activo';
+            return `<button class="btn btn-ghost btn-icon btn-sm" title="${btnTitle}" onclick="${onclick}" style="${btnStyle}"><img src="img/advertencia.png" alt="Problema" style="width:1rem;height:1rem;object-fit:contain;${imgFilter}"></button>`; })()}
           <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
     </tr>`;
   }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 
-  // Entrada suave de abajo hacia arriba
-  const _rows = document.querySelectorAll('#ventas-tbody tr');
-  _rows.forEach((row, i) => {
-    row.style.opacity = '0';
-    row.style.transform = 'translateY(16px)';
-    const delay = i * 15;
+  // Deslizamiento suave hacia la izquierda
+  const _tbody = document.getElementById('ventas-tbody');
+  if (_tbody) {
+    _tbody.style.transition = 'none';
+    _tbody.style.opacity = '0';
+    _tbody.style.transform = 'translateX(18px)';
     requestAnimationFrame(() => requestAnimationFrame(() => {
-      row.style.transition = `opacity .18s ease ${delay}ms, transform .18s ease ${delay}ms`;
-      row.style.opacity = '1';
-      row.style.transform = 'translateY(0)';
+      _tbody.style.transition = 'opacity .22s ease, transform .22s ease';
+      _tbody.style.opacity = '1';
+      _tbody.style.transform = 'translateX(0)';
       setTimeout(() => {
-        row.style.transition = '';
-        row.style.transform = '';
-      }, 200 + delay);
+        _tbody.style.transition = '';
+        _tbody.style.transform = '';
+        // Restaurar fila seleccionada
+        if (typeof _restoreSelectedRow === 'function') _restoreSelectedRow();
+        // Toast "Actualizado"
+        showToast('Actualizado', 'success', 1800);
+      }, 240);
     }));
-  });
+  }
 
 }
 

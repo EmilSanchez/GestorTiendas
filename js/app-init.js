@@ -153,7 +153,7 @@ async function refreshModulo(page) {
 
     // Animar ítems
     switch (page) {
-      case 'ventas':      _animateContainer('ventas-tbody', 'tr'); break;
+      case 'ventas':      /* animación y toast manejados en renderVentas */ break;
       case 'envios':      _animateContainer('envios-tbody', 'tr'); break;
       case 'problemas':   _animateContainer('problemas-container', '.prob-card'); break;
       case 'ayudas':      _animateContainer('ayudas-grid', '.ayuda-card'); break;
