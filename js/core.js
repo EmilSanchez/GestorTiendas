@@ -7,7 +7,13 @@ const fmt  = v  => isNaN(v)||v===null||v===undefined ? '$ 0' :
                    '$ ' + Number(v).toLocaleString('es-CO',{minimumFractionDigits:0,maximumFractionDigits:0});
 const fmtP = v  => isNaN(v) ? '0%' : v.toFixed(1) + '%';
 const fmtU = v  => isNaN(v) ? '$ 0.00' : '$ ' + Number(v).toFixed(2);
-const hoy  = () => new Date().toISOString().slice(0,10);
+const hoy  = () => {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth()+1).padStart(2,'0');
+  const day = String(d.getDate()).padStart(2,'0');
+  return `${y}-${m}-${day}`;
+};
 const mes  = () => new Date().toISOString().slice(0,7);
 
 // ── BASE DE DATOS — Firebase Firestore (definido en el módulo de arriba) ──

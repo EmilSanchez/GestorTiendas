@@ -497,16 +497,35 @@ function closeModal(id) { const el = document.getElementById(id); if(el){el.clas
 
 // ── COPIAR ID DE VENTA AL PORTAPAPELES ──
 function copiarIdVenta(id, el) {
-  const _flash = () => {
-    el.style.transition = 'background .12s, color .12s, border-color .12s';
-    el.style.background = '#a7d9b7'; el.style.color = '#1b7e4a'; el.style.borderColor = '#6cc490';
-    setTimeout(() => { el.style.background = ''; el.style.color = ''; el.style.borderColor = ''; }, 500);
+  // Seleccionar la fila al copiar
+  const tr = el.closest('tr');
+  if (tr && typeof _selectRow === 'function') _selectRow(tr);
+
+  const _apply = () => {
+    // Quitar copied de cualquier otro badge
+    document.querySelectorAll('.venta-id.copied').forEach(b => { if(b!==el) b.classList.remove('copied'); });
+    el.classList.add('copied');
+
+    // Tooltip "Copiado"
+    let tip = el._tip;
+    if (!tip) {
+      tip = document.createElement('span');
+      tip.textContent = 'Copiado';
+      tip.style.cssText = 'position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:#00897b;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;pointer-events:none;z-index:999;animation:toastIn .2s ease;';
+      el.style.position = 'relative';
+      el.appendChild(tip);
+      el._tip = tip;
+    }
+    tip.style.display = 'block';
+    clearTimeout(el._tipTimer);
+    el._tipTimer = setTimeout(() => { tip.style.display = 'none'; }, 1500);
   };
-  navigator.clipboard.writeText(id).then(_flash).catch(() => {
+
+  navigator.clipboard.writeText(id).then(_apply).catch(() => {
     const ta = document.createElement('textarea');
     ta.value = id; ta.style.cssText = 'position:fixed;opacity:0;';
     document.body.appendChild(ta); ta.select(); document.execCommand('copy');
-    document.body.removeChild(ta); _flash();
+    document.body.removeChild(ta); _apply();
   });
 }
 

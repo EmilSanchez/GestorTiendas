@@ -309,7 +309,7 @@ async function renderVentas() {
   }
 
   // Ordenar cronológico → invertir para mostrar más reciente arriba
-  ventas.sort((a,b) => (a.fecha_venta||'').localeCompare(b.fecha_venta||''));
+  ventas.sort((a,b) => (b.fecha_venta||'').localeCompare(a.fecha_venta||''));
   const ventasConNum  = ventas.map((v,i) => ({ ...v, _num: i+1 }));
   const ventasMostrar = [...ventasConNum].reverse();
 
@@ -333,7 +333,7 @@ async function renderVentas() {
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
 
 
-    return `<tr class="${isLoss?'loss-row':''}">
+    return `<tr class="${isLoss?'loss-row':''}" data-vid="${v.id}" onclick="_selectRow(this)">
       <td class="td-mono c-dim" style="text-align:center;">${v._num}</td>
       <td>
         <span style="display:flex;align-items:center;gap:5px;">
@@ -391,7 +391,6 @@ async function renderVentas() {
       row.style.transition = `opacity .18s ease ${delay}ms, transform .18s ease ${delay}ms`;
       row.style.opacity = '1';
       row.style.transform = 'translateY(0)';
-      // Limpiar transition después para no interferir con otros eventos
       setTimeout(() => {
         row.style.transition = '';
         row.style.transform = '';

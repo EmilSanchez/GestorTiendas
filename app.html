@@ -1371,6 +1371,7 @@ async function _verificarCodigoAcceso(codigo) {
     return snap.data().hash === hash;
   } catch(e) { console.error('Error verificando código:', e); return false; }
 }
+
 </script>
 
 <!-- 2. Core: utils, TRM, calcVenta, navegación -->
@@ -1672,12 +1673,16 @@ async function _renderEnviosSkyPanel() {
         </div>
         <div class="fg" style="margin:0;">
           <label class="fl2">Transportadora</label>
-          <select id="sky-transportadora" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
-            <option value="Servientrega">Servientrega</option>
-            <option value="Coordinadora">Coordinadora</option>
-            <option value="Envia">Envia</option>
-            <option value="Interrapidisimo">Interrapidisimo</option>
-          </select>
+          <input type="text" id="sky-transportadora" list="sky-trans-list" placeholder="Ej: Servientrega"
+            style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
+          <datalist id="sky-trans-list">
+            <option value="Servientrega">
+            <option value="Coordinadora">
+            <option value="Envia">
+            <option value="Interrapidisimo">
+            <option value="TCC">
+            <option value="Domina">
+          </datalist>
         </div>
       </div>
       <div class="g2">
@@ -1692,7 +1697,7 @@ async function _renderEnviosSkyPanel() {
         </div>
         <div class="fg" style="margin:0;">
           <label class="fl2">Valor (COP$)</label>
-          <input type="number" id="sky-valor" placeholder="0" min="0">
+          <input type="number" id="sky-valor" placeholder="0" min="0" step="1">
         </div>
       </div>
       <div class="fg" style="margin:0;">

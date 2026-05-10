@@ -5,6 +5,7 @@
 /* ==============================================
    SHOPMANAGER v6 — Tipografía y paleta renovada
    ============================================== */
+/* ── MODO CLARO (default) ── */
 :root {
   --teal:        #00897b;
   --teal-dark:   #00695c;
@@ -29,12 +30,21 @@
   --orange-bg:   #fff3e0;
   --radius:      6px;
   --radius-lg:   10px;
-  --shadow:      0 2px 8px rgba(0,137,123,0.07), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md:   0 4px 16px rgba(0,137,123,0.10), 0 2px 4px rgba(0,0,0,0.06);
+  --shadow:      0 2px 8px rgba(0, 137, 123, 0.036), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:   0 4px 16px rgb(0, 137, 123), 0 2px 4px rgba(0,0,0,0.06);
   --sidebar-w:   218px;
   --font:        'Calibri', 'Calibri Regular', system-ui, sans-serif;
   --font-mono:   'Calibri', 'Courier New', monospace;
 }
+
+/* ── Selected row highlight ── */
+table tbody tr.tr-selected,
+table tbody tr.tr-selected:hover,
+table tbody tr.loss-row.tr-selected {
+  background: rgb(0, 72, 65) !important;
+  box-shadow: inset 3px 0 0 var(--teal);
+}
+ 
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{font-size:17px}
@@ -271,6 +281,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           cursor:pointer;user-select:none;transition:background .15s,box-shadow .15s;}
 .venta-id:hover{background:#b2dfdb;box-shadow:0 1px 4px rgba(0,137,123,.25);}
 .venta-id:active{transform:scale(0.97);}
+.venta-id.copied{background:#ffffff00;}
 .tienda-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .actions-cell{display:flex;gap:4px;}
 .empty-state{text-align:center;padding:3rem 1.25rem;color:var(--text3);}
@@ -296,8 +307,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 .prob-body{font-size:0.85rem;color:var(--text2);}
 .prob-footer{margin-top:0.5rem;padding-top:0.5rem;border-top:1px dashed var(--border);
              display:flex;gap:0.5rem;align-items:center;}
-
-/* Tabla sticky header */
 
 /* ── VALIDACIÓN ENVÍO ── */
 #envio-validacion-box{transition:border-color .2s;}
@@ -326,15 +335,9 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   from{opacity:0;transform:translateY(14px);}
   to{opacity:1;transform:translateY(0);}
 }
-.ayuda-card-bar {
-  height:4px;width:100%;
-}
-.ayuda-card-body {
-  padding:14px 16px 12px;
-}
-.ayuda-card-titulo {
-  font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.3;
-}
+.ayuda-card-bar { height:4px;width:100%; }
+.ayuda-card-body { padding:14px 16px 12px; }
+.ayuda-card-titulo { font-size:0.88rem;font-weight:700;color:var(--text);margin-bottom:6px;line-height:1.3; }
 .ayuda-card-preview {
   font-size:0.78rem;color:var(--text2);line-height:1.55;
   display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
@@ -376,7 +379,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 .ayuda-edit-btn img { width:14px;height:14px;object-fit:contain;display:block;opacity:.7; }
 .ayuda-edit-btn:hover { background:var(--yellow-bg);border-color:#f0c040; }
 .ayuda-edit-btn:hover img { opacity:1; }
-
 .ayuda-del-btn {
   display:inline-flex;align-items:center;justify-content:center;
   width:28px;height:28px;padding:0;
@@ -421,6 +423,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
 /* ── BOTÓN ACTUALIZAR girando ── */
 @keyframes _spin{from{transform:rotate(0deg);}to{transform:rotate(360deg);}}
+@keyframes _envSpinAnim{to{transform:rotate(360deg);}}
 .btn-refreshing{animation:_spin .5s linear;}
 
 /* ── ANIMACIÓN DE CONFIRMACIÓN — ELEGANTE ── */
@@ -447,7 +450,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 }
 @keyframes _ca-spin { to { transform:rotate(360deg); } }
 
-/* Toast abajo derecha */
 #_ca-toast {
   position:fixed;bottom:28px;right:28px;z-index:99999;
   display:flex;align-items:center;gap:9px;
@@ -467,8 +469,6 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   font-size:9px;flex-shrink:0;line-height:1;
   color:rgba(255,255,255,.9);
 }
-
-/* ── SELECTOR DE MÓDULOS DESPLEGABLE (MOBILE / DROPDOWN) ── */
 
 /* ══ DATE RANGE PICKER ══ */
 #drp-panel {
@@ -562,4 +562,22 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
   border:none; text-align:left; background:transparent;
 }
 .estado-drop-opt:hover { opacity:.8; }
-@keyframes _envSpinAnim{to{transform:rotate(360deg);}}
+
+/* ── ENV STAT CARDS ── */
+.env-stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:11px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+.env-stat-card:hover{box-shadow:var(--shadow-md);border-color:#b2dfdb;}
+.env-stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:7px;}
+.env-stat-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
+.env-stat-num{font-size:22px;font-weight:700;color:var(--text);line-height:1;}
+.env-stat-badge{font-size:10px;font-weight:600;padding:2px 7px;border-radius:20px;}
+.env-stat-total{font-size:12px;color:var(--text2);font-weight:500;}
+
+/* ── VENTAS STAT CARDS ── */
+.vg-stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:11px 14px;flex-shrink:0;}
+.vg-stat-label{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;}
+.vg-stat-num{font-size:20px;font-weight:700;line-height:1;margin-bottom:3px;}
+.vg-stat-sub{font-size:10px;color:var(--text3);}
+
+/* ── REFRESH ANIMATION ── */
+._refresh-item{animation:_slideUp .22s cubic-bezier(.25,.46,.45,.94) both;}
+@keyframes _slideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
