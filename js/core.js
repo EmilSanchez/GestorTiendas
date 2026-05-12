@@ -278,6 +278,7 @@ async function render(page) {
     case 'finanzas':      await renderFinanzas();        break;
     case 'configuracion': await renderConfiguracion();   break;
     case 'ayudas':        await renderAyudas();          break;
+    case 'tareas':        await renderTareas();          break;
   }
 }
 

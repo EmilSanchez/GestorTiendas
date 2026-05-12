@@ -30,8 +30,8 @@
   --orange-bg:   #fff3e0;
   --radius:      6px;
   --radius-lg:   10px;
-  --shadow:      0 2px 8px rgba(0, 137, 123, 0.036), 0 1px 2px rgba(0,0,0,0.06);
-  --shadow-md:   0 4px 16px rgb(0, 137, 123), 0 2px 4px rgba(0,0,0,0.06);
+  --shadow:      0 2px 8px rgba(0,137,123,0.07), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-md:   0 4px 16px rgba(0,137,123,0.10), 0 2px 4px rgba(0,0,0,0.06);
   --sidebar-w:   218px;
   --font:        'Calibri', 'Calibri Regular', system-ui, sans-serif;
   --font-mono:   'Calibri', 'Courier New', monospace;
@@ -41,7 +41,7 @@
 table tbody tr.tr-selected,
 table tbody tr.tr-selected:hover,
 table tbody tr.loss-row.tr-selected {
-  background: rgb(0, 72, 65) !important;
+  background: rgba(0,137,123,.18) !important;
   box-shadow: inset 3px 0 0 var(--teal);
 }
  
@@ -281,7 +281,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
           cursor:pointer;user-select:none;transition:background .15s,box-shadow .15s;}
 .venta-id:hover{background:#b2dfdb;box-shadow:0 1px 4px rgba(0,137,123,.25);}
 .venta-id:active{transform:scale(0.97);}
-.venta-id.copied{background:#ffffff00;}
+.venta-id.copied{background:#b2dfdb;box-shadow:0 1px 4px rgba(0,137,123,.25);}
 .tienda-dot{width:9px;height:9px;border-radius:50%;display:inline-block;flex-shrink:0;}
 .actions-cell{display:flex;gap:4px;}
 .empty-state{text-align:center;padding:3rem 1.25rem;color:var(--text3);}
@@ -581,3 +581,126 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 /* ── REFRESH ANIMATION ── */
 ._refresh-item{animation:_slideUp .22s cubic-bezier(.25,.46,.45,.94) both;}
 @keyframes _slideUp{from{opacity:0;transform:translateY(18px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── TAREAS DIARIAS ── */
+.tarea-item-card {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: var(--shadow);
+  transition: border-color .25s ease, opacity .25s ease, box-shadow .2s ease;
+}
+.tarea-item-card:hover { box-shadow: var(--shadow-md); }
+.tarea-item-card.tarea-done {
+  border-left-color: var(--teal);
+  opacity: .65;
+}
+
+/* Checkbox */
+.tarea-checkbox {
+  width: 22px; height: 22px;
+  border-radius: 6px;
+  border: 2px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s ease, border-color .2s ease, transform .15s cubic-bezier(.4,0,.2,1), box-shadow .2s ease;
+  position: relative; overflow: hidden;
+}
+.tarea-checkbox:hover {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0,137,123,.12);
+  transform: scale(1.08);
+}
+.tarea-checkbox.checked {
+  background: var(--teal);
+  border-color: var(--teal-dark);
+  box-shadow: 0 0 0 3px rgba(0,137,123,.18), 0 2px 8px rgba(0,137,123,.3);
+  transform: scale(1);
+  animation: checkPop .25s cubic-bezier(.4,0,.2,1);
+}
+@keyframes checkPop {
+  0%   { transform: scale(1); }
+  40%  { transform: scale(1.22); }
+  70%  { transform: scale(.92); }
+  100% { transform: scale(1); }
+}
+.tarea-check-icon {
+  opacity: 0;
+  transform: scale(0) rotate(-10deg);
+  transition: opacity .18s ease, transform .18s cubic-bezier(.4,0,.2,1);
+}
+.tarea-checkbox.checked .tarea-check-icon {
+  opacity: 1;
+  transform: scale(1) rotate(0deg);
+}
+
+/* Nombre con tachado animado */
+.tarea-nombre {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  position: relative;
+  transition: color .25s ease;
+}
+.tarea-nombre::after {
+  content: '';
+  position: absolute;
+  left: 0; top: 50%;
+  width: 0; height: 1.5px;
+  background: var(--text3);
+  transition: width .3s cubic-bezier(.4,0,.2,1);
+}
+.tarea-nombre-done {
+  color: var(--text3);
+}
+.tarea-nombre-done::after {
+  width: 100%;
+}
+
+/* Counter span */
+.tarea-counter { color: var(--text3); font-size: 13px; font-weight: 500; margin-left: 8px; }
+
+/* ── Tareas — overlay spinner ── */
+#tareas-overlay-spinner {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,.15);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  opacity: 0; pointer-events: none;
+  transition: opacity .2s ease;
+}
+#tareas-overlay-spinner.active {
+  opacity: 1; pointer-events: all;
+}
+.tareas-overlay-dots {
+  display: flex; align-items: center; gap: 12px;
+}
+.tareas-overlay-dots span {
+  width: 16px; height: 16px; border-radius: 50%;
+  background: var(--teal);
+  animation: tareasDot .65s ease-in-out infinite;
+  box-shadow: 0 2px 12px rgba(0,137,123,.4);
+}
+.tareas-overlay-dots span:nth-child(2) { animation-delay: .15s; }
+.tareas-overlay-dots span:nth-child(3) { animation-delay: .30s; }
+@keyframes tareasDot {
+  0%, 80%, 100% { transform: translateY(0) scale(.75); opacity: .35; }
+  40%            { transform: translateY(-12px) scale(1.1); opacity: 1; }
+}
+
+/* ── Nav label color: dim when inactive, white when active ── */
+.nav-item .nb-label {
+  color: rgba(255,255,255,.45);
+  transition: color .15s;
+  margin-top: -2px;
+}
+.nav-item:hover .nb-label { color: rgba(255,255,255,.9); }
+.nav-item.active .nb-label { color: #fff; font-weight: 600; }

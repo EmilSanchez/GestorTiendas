@@ -129,44 +129,40 @@
 </div>
 <!-- ═══════════════════ SIDEBAR ═══════════════════ -->
 <nav id="sidebar">
-  <div class="sb-logo">
-    <div class="sb-logo-icon" style="background:none;box-shadow:none;">
-      <img src="img/faviwhite.png" alt="Logo" style="width:100%;height:100%;object-fit:cover;border-radius:10px;">
+
+  <!-- Perfil del usuario (arriba) -->
+  <div style="padding:1.1rem 1rem 0.8rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;">
+    <div id="sb-avatar" onclick="navigate('configuracion')" title="Ir a Configuración"
+      style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a4fa8,#0d3a8a);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;overflow:hidden;border:2px solid rgba(255,255,255,.12);transition:border-color .15s;"
+      onmouseover="this.style.borderColor='rgba(255,255,255,.35)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)'">
+      <svg id="sb-avatar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <img id="sb-avatar-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
     </div>
-    <div>
-      <div class="sb-logo-name">ShopManager</div>
-      <div class="sb-logo-sub">Control ML</div>
+    <div style="flex:1;min-width:0;">
+      <div id="sb-user-name" style="font-size:12px;font-weight:700;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
+      <div id="sb-user-email" style="font-size:10px;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
     </div>
   </div>
 
-  <div class="sb-section">
-    <div class="sb-section-label">Principal</div>
-    <div class="nav-item active" data-page="ventas"><span class="ni"><img src="img/ventas.png" alt="Ventas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Gestor Ventas</span></div>
-    <div class="nav-item" data-page="envios"><span class="ni"><img src="img/envios.png" alt="Envíos" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="margin-top:-2px;color:#fff;">Envíos</span></div>
-    <div class="nav-item" data-page="problemas"><span class="ni"><img src="img/problemas.png" alt="Problemas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Problemas</span></div>
-    <div class="nav-item" data-page="ayudas"><span class="ni"><img src="img/ayuda.png" alt="Ayudas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Ayudas</span></div>
-    <div class="nav-item" data-page="finanzas"><span class="ni"><img src="img/finanzas.png" alt="Finanzas" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#fff;">Finanzas</span></div>
+  <div class="sb-section" style="padding-top:0.8rem;">
+    <div class="nav-item active" data-page="ventas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="nb-label">Gestor Ventas</span></div>
+    <div class="nav-item" data-page="envios"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span><span class="nb-label">Envíos</span></div>
+    <div class="nav-item" data-page="problemas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span class="nb-label">Pendientes</span></div>
+    <div class="nav-item" data-page="ayudas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="nb-label">Mensajes</span></div>
+    <div class="nav-item" data-page="finanzas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="nb-label">Finanzas</span></div>
+    <div class="nav-item" data-page="tareas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="nb-label">Tareas Diarias</span></div>
   </div>
 
   <div style="flex:1;"></div>
 
   <div class="sb-section" style="padding-bottom:0.4rem;">
-    <div class="sb-section-label">Sistema</div>
-    <div class="nav-item" data-page="configuracion"><span class="ni"><img src="img/configuraciones.png" alt="Configuración" style="width:1.1rem;height:1.1rem;object-fit:contain;"></span><span style="color:#ffffff;margin-top:-4px;">Configuración</span></div>
+    <div class="nav-item" data-page="configuracion"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nb-label">Configuración</span></div>
   </div>
 
-  <div class="sb-bottom" style="padding:0.6rem 1rem;">
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;padding-bottom:8px;border-bottom:1px solid rgba(255,255,255,.06);">
-      <div style="width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,#00897b,#005169);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </div>
-      <div style="flex:1;min-width:0;">
-        <div id="sb-user-name" style="font-size:11px;font-weight:700;color:#e5e7eb;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
-        <div id="sb-user-email" style="font-size:9px;color:rgba(255,255,255,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">—</div>
-      </div>
-    </div>
+  <div style="padding:0.5rem 1rem 0.7rem;">
     <div class="sb-ver" id="db-status">v6.0 · Conectando...</div>
   </div>
+
 </nav>
 
 <!-- ═══════════════════ MAIN ═══════════════════ -->
@@ -410,7 +406,11 @@
     </section>
 
         <!-- ══════════════ CONFIGURACIÓN ══════════════ -->
-    <section class="page-section" id="page-configuracion">
+    <section class="page-section" id="page-tareas">
+      <div id="tareas-container"></div>
+    </section>
+
+        <section class="page-section" id="page-configuracion">
 
       <!-- Fila superior: Sesión + Dólar compras en una sola tarjeta compacta -->
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
@@ -444,6 +444,29 @@
             <button class="btn btn-primary btn-sm" onclick="guardarDolarCompras()" style="white-space:nowrap;">Guardar</button>
           </div>
           <div id="cfg-dolar-origen" style="font-size:11px;margin-top:6px;color:var(--text3);">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- Foto de perfil -->
+      <div class="card" style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);">Foto de perfil</div>
+            <div style="font-size:11px;color:var(--text3);margin-top:2px;">Se muestra en el panel lateral</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <div id="cfg-avatar-preview" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#1a4fa8,#0d3a8a);display:flex;align-items:center;justify-content:center;overflow:hidden;border:2px solid var(--border);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:6px;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                Subir foto
+                <input type="file" accept="image/*" style="display:none;" onchange="_uploadAvatar(this)">
+              </label>
+              <button class="btn btn-ghost btn-sm" onclick="_removeAvatar()" id="cfg-avatar-remove" style="display:none;color:var(--red);">Eliminar foto</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -579,7 +602,7 @@
       <div class="frow mb16" style="align-items:flex-start;gap:12px;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
           <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:3px;">Base de Conocimiento</div>
-          <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Mensajes & Ayudas</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Mensajes</div>
         </div>
         <div class="spacer"></div>
         <!-- Buscador Ayudas -->
@@ -832,6 +855,104 @@
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════ MODAL NUEVA/EDITAR TAREA ═══════════════════ -->
+<div class="overlay" id="modal-tarea">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh">
+      <div class="mh-title" id="modal-tarea-title">Nueva tarea</div>
+      <button class="mclose" onclick="closeModal('modal-tarea')">✕</button>
+    </div>
+    <div class="mc" style="display:flex;flex-direction:column;gap:14px;">
+
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Nombre de la tarea</label>
+        <input type="text" id="tarea-nombre" placeholder="Ej: Revisar pedidos pendientes">
+      </div>
+
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Descripción <span style="font-size:10px;color:var(--text3);font-weight:400;">(opcional)</span></label>
+        <input type="text" id="tarea-descripcion" placeholder="Detalles adicionales...">
+      </div>
+
+      <!-- Tipo -->
+      <div>
+        <label class="fl2" style="margin-bottom:8px;">Tipo de tarea</label>
+        <div style="display:flex;gap:10px;">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
+            <input type="radio" name="tarea-tipo" id="tarea-tipo-recurrente" value="recurrente" onchange="_toggleTipoTarea()" checked>
+            Recurrente (días de la semana)
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
+            <input type="radio" name="tarea-tipo" id="tarea-tipo-puntual" value="puntual" onchange="_toggleTipoTarea()">
+            Solo un día
+          </label>
+        </div>
+      </div>
+
+      <!-- Días de semana -->
+      <div id="tarea-dias-wrap">
+        <label class="fl2" style="margin-bottom:8px;">Días de la semana</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="tarea-dia-btn" data-dia="1" onclick="_toggleDiaBtn(this)">Lun</button>
+          <button type="button" class="tarea-dia-btn" data-dia="2" onclick="_toggleDiaBtn(this)">Mar</button>
+          <button type="button" class="tarea-dia-btn" data-dia="3" onclick="_toggleDiaBtn(this)">Mié</button>
+          <button type="button" class="tarea-dia-btn" data-dia="4" onclick="_toggleDiaBtn(this)">Jue</button>
+          <button type="button" class="tarea-dia-btn" data-dia="5" onclick="_toggleDiaBtn(this)">Vie</button>
+          <button type="button" class="tarea-dia-btn" data-dia="6" onclick="_toggleDiaBtn(this)">Sáb</button>
+          <button type="button" class="tarea-dia-btn" data-dia="0" onclick="_toggleDiaBtn(this)">Dom</button>
+        </div>
+      </div>
+
+      <!-- Fecha puntual -->
+      <div id="tarea-fecha-wrap" style="display:none;">
+        <label class="fl2">Fecha</label>
+        <input type="date" id="tarea-fecha">
+      </div>
+
+      <div id="tarea-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tarea')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarTarea()">Guardar tarea</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL ELIMINAR TAREA ═══════════════════ -->
+<div class="overlay" id="modal-del-tarea">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh" style="background:linear-gradient(135deg,#b0202e,#922032);color:#fff;">
+      <div class="mh-title" style="color:#fff;">Eliminar tarea</div>
+      <button class="mclose" onclick="closeModal('modal-del-tarea')" style="background:rgba(255,255,255,.15);border:none;color:#fff;">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px;">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">
+        ¿Eliminar la tarea <strong id="del-tarea-nombre"></strong>?<br>
+        <span style="font-size:11px;color:var(--text3);">Esta acción no se puede deshacer.</span>
+      </div>
+      <input type="hidden" id="del-tarea-id-val">
+      <input type="password" id="del-tarea-code" placeholder="Código de acceso"
+        style="text-align:center;letter-spacing:2px;"
+        onkeydown="if(event.key==='Enter')confirmarDeleteTarea()">
+      <div id="del-tarea-err" style="color:var(--red);font-size:11px;margin-top:8px;min-height:14px;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-del-tarea')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarDeleteTarea()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.tarea-dia-btn {
+  padding: 6px 12px;border-radius: 20px;border: 1.5px solid var(--border);
+  background: var(--white);color: var(--text2);font-size: 12px;font-weight: 600;
+  cursor: pointer;font-family: inherit;transition: all .15s;
+}
+.tarea-dia-btn:hover { border-color: var(--teal); color: var(--teal); }
+.tarea-dia-btn.active { background: var(--teal); color: #fff; border-color: var(--teal-dark); }
+</style>
 
 
 </body>
@@ -1362,6 +1483,49 @@ async function _hashCode(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
+// ── Avatar upload ──
+function _uploadAvatar(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const data = e.target.result;
+    localStorage.setItem('sm_avatar', data);
+    // Update preview
+    const prev = document.getElementById('cfg-avatar-preview');
+    if (prev) prev.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
+    const remBtn = document.getElementById('cfg-avatar-remove');
+    if (remBtn) remBtn.style.display = '';
+    // Update sidebar
+    const img  = document.getElementById('sb-avatar-img');
+    const icon = document.getElementById('sb-avatar-icon');
+    if (img && icon) { img.src = data; img.style.display = 'block'; icon.style.display = 'none'; }
+    showToast('Foto de perfil actualizada', 'success', 2000);
+  };
+  reader.readAsDataURL(file);
+}
+function _removeAvatar() {
+  localStorage.removeItem('sm_avatar');
+  const prev = document.getElementById('cfg-avatar-preview');
+  if (prev) prev.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+  const remBtn = document.getElementById('cfg-avatar-remove');
+  if (remBtn) remBtn.style.display = 'none';
+  const img  = document.getElementById('sb-avatar-img');
+  const icon = document.getElementById('sb-avatar-icon');
+  if (img && icon) { img.style.display = 'none'; icon.style.display = ''; }
+  showToast('Foto eliminada', 'success', 2000);
+}
+// Load avatar on configuracion render
+function _loadCfgAvatar() {
+  const foto = localStorage.getItem('sm_avatar');
+  const prev = document.getElementById('cfg-avatar-preview');
+  const remBtn = document.getElementById('cfg-avatar-remove');
+  if (foto && prev) {
+    prev.innerHTML = `<img src="${foto}" style="width:100%;height:100%;object-fit:cover;">`;
+    if (remBtn) remBtn.style.display = '';
+  }
+}
+
 async function _verificarCodigoAcceso(codigo) {
   if (!codigo) return false;
   const hash = await _hashCode(codigo);
@@ -1569,6 +1733,7 @@ async function _renderEnviosSkyPanel() {
 <script src="js/mod-problemas.js"></script>
 <script src="js/mod-envios.js"></script>
 <script src="js/mod-ayudas.js"></script>
+<script src="js/mod-tareas.js"></script>
 
 <!-- 4. Init: autenticación, toast, spinner, arranque -->
 <script src="js/app-init.js"></script>
@@ -1966,6 +2131,104 @@ async function _renderEnviosSkyPanel() {
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════ MODAL NUEVA/EDITAR TAREA ═══════════════════ -->
+<div class="overlay" id="modal-tarea">
+  <div class="modal" style="max-width:460px;">
+    <div class="mh">
+      <div class="mh-title" id="modal-tarea-title">Nueva tarea</div>
+      <button class="mclose" onclick="closeModal('modal-tarea')">✕</button>
+    </div>
+    <div class="mc" style="display:flex;flex-direction:column;gap:14px;">
+
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Nombre de la tarea</label>
+        <input type="text" id="tarea-nombre" placeholder="Ej: Revisar pedidos pendientes">
+      </div>
+
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Descripción <span style="font-size:10px;color:var(--text3);font-weight:400;">(opcional)</span></label>
+        <input type="text" id="tarea-descripcion" placeholder="Detalles adicionales...">
+      </div>
+
+      <!-- Tipo -->
+      <div>
+        <label class="fl2" style="margin-bottom:8px;">Tipo de tarea</label>
+        <div style="display:flex;gap:10px;">
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
+            <input type="radio" name="tarea-tipo" id="tarea-tipo-recurrente" value="recurrente" onchange="_toggleTipoTarea()" checked>
+            Recurrente (días de la semana)
+          </label>
+          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
+            <input type="radio" name="tarea-tipo" id="tarea-tipo-puntual" value="puntual" onchange="_toggleTipoTarea()">
+            Solo un día
+          </label>
+        </div>
+      </div>
+
+      <!-- Días de semana -->
+      <div id="tarea-dias-wrap">
+        <label class="fl2" style="margin-bottom:8px;">Días de la semana</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button type="button" class="tarea-dia-btn" data-dia="1" onclick="_toggleDiaBtn(this)">Lun</button>
+          <button type="button" class="tarea-dia-btn" data-dia="2" onclick="_toggleDiaBtn(this)">Mar</button>
+          <button type="button" class="tarea-dia-btn" data-dia="3" onclick="_toggleDiaBtn(this)">Mié</button>
+          <button type="button" class="tarea-dia-btn" data-dia="4" onclick="_toggleDiaBtn(this)">Jue</button>
+          <button type="button" class="tarea-dia-btn" data-dia="5" onclick="_toggleDiaBtn(this)">Vie</button>
+          <button type="button" class="tarea-dia-btn" data-dia="6" onclick="_toggleDiaBtn(this)">Sáb</button>
+          <button type="button" class="tarea-dia-btn" data-dia="0" onclick="_toggleDiaBtn(this)">Dom</button>
+        </div>
+      </div>
+
+      <!-- Fecha puntual -->
+      <div id="tarea-fecha-wrap" style="display:none;">
+        <label class="fl2">Fecha</label>
+        <input type="date" id="tarea-fecha">
+      </div>
+
+      <div id="tarea-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tarea')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarTarea()">Guardar tarea</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL ELIMINAR TAREA ═══════════════════ -->
+<div class="overlay" id="modal-del-tarea">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh" style="background:linear-gradient(135deg,#b0202e,#922032);color:#fff;">
+      <div class="mh-title" style="color:#fff;">Eliminar tarea</div>
+      <button class="mclose" onclick="closeModal('modal-del-tarea')" style="background:rgba(255,255,255,.15);border:none;color:#fff;">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px;">
+      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">
+        ¿Eliminar la tarea <strong id="del-tarea-nombre"></strong>?<br>
+        <span style="font-size:11px;color:var(--text3);">Esta acción no se puede deshacer.</span>
+      </div>
+      <input type="hidden" id="del-tarea-id-val">
+      <input type="password" id="del-tarea-code" placeholder="Código de acceso"
+        style="text-align:center;letter-spacing:2px;"
+        onkeydown="if(event.key==='Enter')confirmarDeleteTarea()">
+      <div id="del-tarea-err" style="color:var(--red);font-size:11px;margin-top:8px;min-height:14px;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-del-tarea')">Cancelar</button>
+      <button class="btn btn-danger" onclick="confirmarDeleteTarea()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.tarea-dia-btn {
+  padding: 6px 12px;border-radius: 20px;border: 1.5px solid var(--border);
+  background: var(--white);color: var(--text2);font-size: 12px;font-weight: 600;
+  cursor: pointer;font-family: inherit;transition: all .15s;
+}
+.tarea-dia-btn:hover { border-color: var(--teal); color: var(--teal); }
+.tarea-dia-btn.active { background: var(--teal); color: #fff; border-color: var(--teal-dark); }
+</style>
 
 
 </body>

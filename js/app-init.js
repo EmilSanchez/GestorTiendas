@@ -273,7 +273,7 @@ async function init() {
   });
 
   // Restaurar la última página visitada desde el hash de la URL
-  const VALID_PAGES = ['ventas','envios','problemas','finanzas','configuracion','ayudas'];
+  const VALID_PAGES = ['ventas','envios','problemas','finanzas','configuracion','ayudas','tareas'];
   const hashRaw  = location.hash.replace('#','');
   // Support sub-tab hashes like 'envios-externos'
   const hashPage = hashRaw === 'envios-externos' ? 'envios' : hashRaw;
@@ -293,6 +293,20 @@ async function init() {
       window.location.href = 'index.html';
     }
   }, 30000); // revisa cada 30 segundos
+}
+
+// ── Sidebar avatar ──
+function _loadSbAvatar() {
+  try {
+    const foto = localStorage.getItem('sm_avatar');
+    const img  = document.getElementById('sb-avatar-img');
+    const icon = document.getElementById('sb-avatar-icon');
+    if (foto && img && icon) {
+      img.src = foto;
+      img.style.display = 'block';
+      icon.style.display = 'none';
+    }
+  } catch(e) {}
 }
 
 // ── Row selection ──

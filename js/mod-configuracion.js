@@ -6,6 +6,7 @@ window._sessionTimerInterval = window._sessionTimerInterval || null;
 async function renderConfiguracion() {
   // Renderizar tiendas en el nuevo grid de configuración
   await renderUsuarios();
+  if (typeof _loadCfgAvatar === 'function') _loadCfgAvatar();
   const tiendas   = await DB.tiendas();
   const ventas    = await DB.ventas();
   const saldos    = await DB.saldos();
