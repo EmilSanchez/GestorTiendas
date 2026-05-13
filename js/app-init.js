@@ -296,17 +296,32 @@ async function init() {
 }
 
 // ── Sidebar avatar ──
-function _loadSbAvatar() {
+async function _loadSbAvatar() {
+  // Mostrar inmediatamente desde caché local
+  const cached = localStorage.getItem('sm_avatar');
+  if (cached) _setSbAvatarImg(cached);
+  // Luego sincronizar desde Firestore
   try {
-    const foto = localStorage.getItem('sm_avatar');
-    const img  = document.getElementById('sb-avatar-img');
-    const icon = document.getElementById('sb-avatar-icon');
-    if (foto && img && icon) {
-      img.src = foto;
-      img.style.display = 'block';
-      icon.style.display = 'none';
+    const snap = await _cfg('perfil').get();
+    if (snap.exists) {
+      const foto = snap.data().foto || '';
+      if (foto) {
+        localStorage.setItem('sm_avatar', foto);
+        _setSbAvatarImg(foto);
+      } else {
+        localStorage.removeItem('sm_avatar');
+      }
     }
   } catch(e) {}
+}
+function _setSbAvatarImg(src) {
+  const img  = document.getElementById('sb-avatar-img');
+  const icon = document.getElementById('sb-avatar-icon');
+  if (img && icon && src) {
+    img.src = src;
+    img.style.display = 'block';
+    icon.style.display = 'none';
+  }
 }
 
 // ── Row selection ──

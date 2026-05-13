@@ -273,13 +273,13 @@ async function saveProblema() {
     fecha_registro: new Date().toISOString(),
   });
   closeModal('modal-problema');
-  showConfirmAnim('problema', !!_editProbId);
-  await renderProblemas();
-  await updateAlertaBadge();
-  // Si estamos en gestor de ventas, actualizar esa tabla también
-  if (document.getElementById('page-ventas')?.classList.contains('active')) {
-    if (typeof renderVentas === 'function') await renderVentas();
-  }
+  // Renderizar módulo de problemas si está activo
+  try { await renderProblemas(); } catch(e) {}
+  try { await updateAlertaBadge(); } catch(e) {}
+  try { await _actualizarBotonesProblema(); } catch(e) {}
+  // Actualizar gestor de ventas siempre
+  if (typeof renderVentasGanancias === 'function') await renderVentasGanancias();
+  else if (typeof renderVentas === 'function') await renderVentas();
 }
 
 async function renderProblemas() {
@@ -533,8 +533,33 @@ function copiarIdVenta(id, el) {
   });
 }
 
+// Actualiza el color del ícono de problema en la tabla de ventas sin re-render
+async function _actualizarBotonesProblema() {
+  const problemas = await DB.problemas();
+  // Build a map: venta_id → problema
+  const mapaProb = {};
+  problemas.forEach(p => {
+    if (p.venta_id) mapaProb[p.venta_id] = p;
+  });
+
+  document.querySelectorAll('button.btn-prob[data-venta-id]').forEach(btn => {
+    const vid  = btn.dataset.ventaId;
+    const prob = mapaProb[vid];
+    if (!prob) return;
+    const solved = ['resuelto','solucionado','cerrado'].includes((prob.estado||'').toLowerCase());
+    btn.style.background  = solved ? '#d1f0e0' : '#fee2e2';
+    btn.style.borderColor = solved ? '#6cc490' : '#fca5a5';
+    const img = btn.querySelector('img');
+    if (img) img.style.filter = solved
+      ? 'sepia(1) saturate(4) hue-rotate(80deg)'
+      : 'sepia(1) saturate(5) hue-rotate(-30deg)';
+    btn.title = solved ? 'Problema resuelto ✓' : 'Ver problema activo';
+  });
+}
+
 async function updateAlertaBadge() {
-  document.getElementById('alertas-count').textContent = (await getAlertas()).length;
+  const el = document.getElementById('alertas-count');
+  if (el) el.textContent = (await getAlertas()).length;
 }
 
 async function populateSelects() {

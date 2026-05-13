@@ -290,23 +290,26 @@ async function renderVentas() {
   const btnLimpiar = document.getElementById('btn-limpiar-ventas');
   if (btnLimpiar) btnLimpiar.style.display = hayFiltro ? 'inline-flex' : 'none';
 
-  // Aplicar filtros sobre el total de ventas
-  if (s)  ventas = ventas.filter(v => (v.id_ml+v.telefono+v.nota).toLowerCase().includes(s));
+  // Búsqueda por texto: ignora TODOS los filtros de fecha si hay texto
+  if (s) {
+    ventas = ventas.filter(v => (v.id_ml + (v.telefono||'') + (v.nota||'')).toLowerCase().includes(s));
+  } else {
+    // Sin búsqueda: aplicar filtros de período normalmente
+    if (fDesde || fHasta) {
+      ventas = ventas.filter(v => {
+        const f = v.fecha_venta || '';
+        if (fDesde && f < fDesde) return false;
+        if (fHasta && f > fHasta) return false;
+        return true;
+      });
+    } else if (fm) {
+      ventas = ventas.filter(v => v.fecha_venta?.startsWith(fm));
+    }
+  }
+  // Filtros adicionales (tienda, estado, transportadora) aplican siempre
   if (ft) ventas = ventas.filter(v => v.tienda_id === ft);
   if (fe) ventas = ventas.filter(v => v.estado    === fe);
-  if (fTrans) ventas = ventas.filter(v => v.envio_tipo === fTrans); 
-
-  // Período: rango tiene prioridad sobre mes
-  if (fDesde || fHasta) {
-    ventas = ventas.filter(v => {
-      const f = v.fecha_venta || '';
-      if (fDesde && f < fDesde) return false;
-      if (fHasta && f > fHasta) return false;
-      return true;
-    });
-  } else if (fm) {
-    ventas = ventas.filter(v => v.fecha_venta?.startsWith(fm));
-  }
+  if (fTrans) ventas = ventas.filter(v => v.envio_tipo === fTrans);
 
   // Ordenar cronológico → invertir para mostrar más reciente arriba
   ventas.sort((a,b) => (b.fecha_venta||'').localeCompare(a.fecha_venta||''));
@@ -380,7 +383,7 @@ async function renderVentas() {
             const btnStyle = !hasProb ? '' : solved ? 'background:#d1f0e0;border-color:#6cc490;' : 'background:#fee2e2;border-color:#fca5a5;';
             const imgFilter = !hasProb ? '' : solved ? 'filter:sepia(1) saturate(4) hue-rotate(80deg);' : 'filter:sepia(1) saturate(5) hue-rotate(-30deg);';
             const btnTitle = !hasProb ? 'Registrar problema' : solved ? 'Problema resuelto ✓' : 'Ver problema activo';
-            return `<button class="btn btn-ghost btn-icon btn-sm" title="${btnTitle}" onclick="${onclick}" style="${btnStyle}"><img src="img/advertencia.png" alt="Problema" style="width:1rem;height:1rem;object-fit:contain;${imgFilter}"></button>`; })()}
+            return `<button class="btn btn-ghost btn-icon btn-sm btn-prob" data-venta-id="${v.id}" title="${btnTitle}" onclick="${onclick}" style="${btnStyle}"><img src="img/advertencia.png" alt="Problema" style="width:1rem;height:1rem;object-fit:contain;${imgFilter}"></button>`; })()}
           <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
