@@ -374,6 +374,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const emailEl = document.getElementById('sb-user-email');
   if (nameEl)  nameEl.textContent = sesion.nombre || sesion.usuario || 'Admin';
   if (emailEl) emailEl.textContent = sesion.rol === 'admin' ? 'Administrador' : `@${sesion.usuario}`;
+  // Cargar foto de perfil al iniciar
+  _loadSbAvatar();
 
   await init();
 });
