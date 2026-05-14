@@ -22,7 +22,7 @@ async function openModalVenta(id) {
       const trm = v.trm || getDolarComprasConfigurado();
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
       sv('v-cop-venta', copVenta || '');
-      sv('v-trm', getDolarComprasConfigurado());
+      sv('v-trm', trm);  // Usar el TRM guardado en la venta, no el actual
       sv('v-costo-usd', v.costo_usd||''); sv('v-envio-int-usd', v.envio_int_usd||'');
       // Financiación
       sv('v-fuente-pago', v.fuente_pago||''); sv('v-monto-pago', v.monto_pago||'');
