@@ -3,6 +3,17 @@
 // ── VENTAS ──
 var _editVentaId = null;
 
+function _toggleEnvioLock() {
+  const validado = document.getElementById('v-envio-validado')?.value === '1';
+  const input    = document.getElementById('v-envio-int-usd');
+  if (!input) return;
+  input.readOnly = validado;
+  input.style.background  = validado ? '#f3f7f7' : '';
+  input.style.color       = validado ? 'var(--text2)' : '';
+  input.style.cursor      = validado ? 'not-allowed' : '';
+  input.title             = validado ? 'Cambia a "Sin validar" para editar el valor' : '';
+}
+
 async function openModalVenta(id) {
   _editVentaId = id||null;
   document.getElementById('mv-title').textContent = id ? 'Editar Venta' : 'Nueva Venta';
@@ -23,7 +34,9 @@ async function openModalVenta(id) {
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
       sv('v-cop-venta', copVenta || '');
       sv('v-trm', trm);  // Usar el TRM guardado en la venta, no el actual
-      sv('v-costo-usd', v.costo_usd||''); sv('v-envio-int-usd', v.envio_int_usd||'');
+      sv('v-costo-usd', v.costo_usd||'');
+      // Si el envío está validado, mostrar el valor real; si no, el estimado original
+      sv('v-envio-int-usd', v.envio_validado && v.envio_real_cop ? v.envio_real_cop : (v.envio_int_usd||''));
       // Financiación
       sv('v-fuente-pago', v.fuente_pago||''); sv('v-monto-pago', v.monto_pago||'');
       sv('v-ref-pago', v.ref_pago||'');
@@ -31,12 +44,14 @@ async function openModalVenta(id) {
       sv('v-envio-estimado', v.envio_estimado_cop||'');
       sv('v-envio-real',     v.envio_real_cop||'');
       sv('v-envio-validado', v.envio_validado ? '1' : '0');
+      setTimeout(_toggleEnvioLock, 0);
     }
   } else {
     ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-udes',1);
     sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
     sv('v-envio-validado','0');
+    setTimeout(_toggleEnvioLock, 0);
     // Prellenar TRM con el dólar fijo configurado en BD
     sv('v-trm', getDolarComprasConfigurado());
     // Actualizar badge del TRM

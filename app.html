@@ -1112,7 +1112,7 @@
         </div>
         <div class="fg">
           <label class="fl2">Validación de envío</label>
-          <select id="v-envio-validado">
+          <select id="v-envio-validado" onchange="_toggleEnvioLock()">
             <option value="0">Sin validar</option>
             <option value="1">Validado</option>
           </select>
@@ -1121,9 +1121,9 @@
           <label class="fl2">Teléfono del cliente</label>
           <input type="tel" id="v-tel" placeholder="3001234567">
         </div>
-        <div class="fg">
+        <div class="fg" style="grid-column:1/-1;">
           <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
-          <input type="text" id="v-nota" placeholder="Ej: empaque especial">
+          <textarea id="v-nota" placeholder="Ej: empaque especial" rows="2" style="width:100%;resize:vertical;"></textarea>
         </div>
       </div>
 
