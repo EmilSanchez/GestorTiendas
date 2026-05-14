@@ -29,6 +29,7 @@ async function openModalVenta(id) {
       sv('v-ref-pago', v.ref_pago||'');
       // Validación envío
       sv('v-envio-estimado', v.envio_estimado_cop||'');
+      sv('v-envio-real',     v.envio_real_cop||'');
       sv('v-envio-validado', v.envio_validado ? '1' : '0');
     }
   } else {
