@@ -1084,15 +1084,15 @@
         </div>
         <div class="fg">
           <label class="fl2">Precio de venta (COP$) *</label>
-          <input type="number" id="v-cop-venta" placeholder="0" step="1" oninput="recalcVenta()">
+          <input type="text" inputmode="numeric" id="v-cop-venta" placeholder="0" oninput="recalcVenta()">
         </div>
         <div class="fg">
           <label class="fl2">TRM del día <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span></label>
-          <input type="number" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()">
+          <input type="text" inputmode="numeric" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()">
         </div>
         <div class="fg">
           <label class="fl2">Costo producto Amazon (USD$) *</label>
-          <input type="number" id="v-costo-usd" placeholder="0.00" step="0.01" oninput="recalcVenta()">
+          <input type="text" inputmode="decimal" id="v-costo-usd" placeholder="0.00" oninput="recalcVenta()">
         </div>
         <div class="fg">
           <label class="fl2">Empresa de envío *</label>
@@ -1104,11 +1104,11 @@
         </div>
         <div class="fg">
           <label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label>
-          <input type="number" id="v-envio-int-usd" placeholder="0" step="1" oninput="recalcVenta()">
+          <input type="text" inputmode="numeric" id="v-envio-int-usd" placeholder="0" oninput="recalcVenta()">
         </div>
         <div class="fg">
           <label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label>
-          <input type="number" id="v-envio-extra" placeholder="0" oninput="recalcVenta()">
+          <input type="text" inputmode="numeric" id="v-envio-extra" placeholder="0" oninput="recalcVenta()">
         </div>
         <div class="fg">
           <label class="fl2">Validación de envío</label>
@@ -1200,7 +1200,7 @@
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
       <div class="fg">
         <label class="fl2" id="mpe-valor-label">Valor real del envío pagado (COP$) *</label>
-        <input type="number" id="mpe-valor" placeholder="Ej: 19000" step="1">
+        <input type="text" inputmode="numeric" id="mpe-valor" placeholder="Ej: 19000">
         <span id="mpe-valor-hint" style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span>
         <div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;">
           <span id="mpe-diff-text"></span>
@@ -1895,7 +1895,7 @@ async function _renderEnviosSkyPanel() {
         </div>
         <div class="fg" style="margin:0;">
           <label class="fl2">Valor (COP$)</label>
-          <input type="number" id="sky-valor" placeholder="0" min="0" step="1">
+          <input type="text" inputmode="numeric" id="sky-valor" placeholder="0">
         </div>
       </div>
       <div class="fg" style="margin:0;">

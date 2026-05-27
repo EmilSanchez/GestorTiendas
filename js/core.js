@@ -18,31 +18,29 @@ const mes  = () => new Date().toISOString().slice(0,7);
 
 // Formatea YYYY-MM-DD → "10 - Mayo - 2026"
 // Parsea un valor numérico ignorando puntos como separador de miles
-// Ej: "32.500" → 32500, "1.279.082" → 1279082, "159,43" → 159.43
+// Ej: "32.500" → 32500, "1.279.082" → 1279082, "1.260.022" → 1260022
+// "159,43" → 159.43, "159.43" → 159.43 (2 decimales = decimal real)
 const _parseNum = (v) => {
   if (v === null || v === undefined || v === '') return 0;
-  const s = String(v).trim();
-  // Si tiene coma decimal (ej: 159,43) → reemplazar coma por punto
-  // Si tiene punto como miles (ej: 32.500 o 1.279.082) → quitar puntos
-  // Distinguir: si hay coma, el punto es miles; si no hay coma y solo un punto con 3 decimales → miles
+  const s = String(v).trim().replace(/\s/g, '');
+  if (!s) return 0;
+  // Si tiene coma: siempre es decimal europeo (punto=miles, coma=decimal)
   if (s.includes(',')) {
-    // Formato europeo: 1.279.082,50 → quitar puntos, coma → punto
     return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
   }
-  const dots = (s.match(/\./g) || []).length;
-  if (dots === 1) {
-    const decimals = s.split('.')[1].length;
-    if (decimals === 3) {
-      // Un punto con exactamente 3 decimales → separador de miles
-      return parseFloat(s.replace(/\./g, '')) || 0;
-    }
-    // De lo contrario es decimal normal
-    return parseFloat(s) || 0;
+  const parts = s.split('.');
+  if (parts.length === 1) return parseFloat(s) || 0;
+  if (parts.length > 2) {
+    // Múltiples puntos → todos separadores de miles
+    return parseFloat(parts.join('')) || 0;
   }
-  if (dots > 1) {
-    // Múltiples puntos → todos son separadores de miles
-    return parseFloat(s.replace(/\./g, '')) || 0;
+  // Un solo punto: ¿miles o decimal?
+  const decimals = parts[1].length;
+  if (decimals === 3) {
+    // Exactamente 3 dígitos tras el punto → separador de miles (ej: 32.500, 1.260.022 ya manejado arriba)
+    return parseFloat(parts.join('')) || 0;
   }
+  // 1, 2, 4+ dígitos tras el punto → decimal real (ej: 159.43, 3.5)
   return parseFloat(s) || 0;
 };
 
