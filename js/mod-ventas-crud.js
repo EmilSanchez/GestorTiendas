@@ -543,7 +543,7 @@ async function openValidarEnvio(id) {
 }
 
 function _calcDiffEnvio() {
-  const raw  = parseFloat(document.getElementById('ve-input').value);
+  const raw  = _parseNum(document.getElementById('ve-input').value);
   const box  = document.getElementById('ve-diff-box');
   const txt  = document.getElementById('ve-diff-text');
   if(isNaN(raw)) { box.style.display='none'; return; }
@@ -572,7 +572,7 @@ function _cancelValidarEnvio() {
 }
 
 async function _confirmarValidarEnvio() {
-  const raw = parseFloat(document.getElementById('ve-input').value);
+  const raw = _parseNum(document.getElementById('ve-input').value);
   if(isNaN(raw) || raw < 0) {
     document.getElementById('ve-input').style.borderColor = '#dc3545';
     setTimeout(()=>document.getElementById('ve-input').style.borderColor='#d8e4e3', 1200);
