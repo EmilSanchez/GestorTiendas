@@ -154,7 +154,7 @@ async function guardarPagoEnvio() {
   const v = ventas.find(x=>x.id===_pagoEnvioVentaId);
   if(!v) return;
   const inputEl = document.getElementById('mpe-valor');
-  const rawVal  = parseFloat(gv('mpe-valor'));
+  const rawVal  = _parseNum(gv('mpe-valor'));
   const esServientrega = v.envio_tipo === 'servientrega';
   const trm = parseFloat(v.trm) || getDolarComprasConfigurado() || TRM_ACTUAL;
   let valorReal;

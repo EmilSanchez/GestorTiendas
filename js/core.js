@@ -17,6 +17,35 @@ const hoy  = () => {
 const mes  = () => new Date().toISOString().slice(0,7);
 
 // Formatea YYYY-MM-DD → "10 - Mayo - 2026"
+// Parsea un valor numérico ignorando puntos como separador de miles
+// Ej: "32.500" → 32500, "1.279.082" → 1279082, "159,43" → 159.43
+const _parseNum = (v) => {
+  if (v === null || v === undefined || v === '') return 0;
+  const s = String(v).trim();
+  // Si tiene coma decimal (ej: 159,43) → reemplazar coma por punto
+  // Si tiene punto como miles (ej: 32.500 o 1.279.082) → quitar puntos
+  // Distinguir: si hay coma, el punto es miles; si no hay coma y solo un punto con 3 decimales → miles
+  if (s.includes(',')) {
+    // Formato europeo: 1.279.082,50 → quitar puntos, coma → punto
+    return parseFloat(s.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+  const dots = (s.match(/\./g) || []).length;
+  if (dots === 1) {
+    const decimals = s.split('.')[1].length;
+    if (decimals === 3) {
+      // Un punto con exactamente 3 decimales → separador de miles
+      return parseFloat(s.replace(/\./g, '')) || 0;
+    }
+    // De lo contrario es decimal normal
+    return parseFloat(s) || 0;
+  }
+  if (dots > 1) {
+    // Múltiples puntos → todos son separadores de miles
+    return parseFloat(s.replace(/\./g, '')) || 0;
+  }
+  return parseFloat(s) || 0;
+};
+
 const _MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
 const fmtFecha = (fecha) => {
   if (!fecha) return '—';

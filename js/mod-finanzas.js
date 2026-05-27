@@ -363,7 +363,7 @@ async function openModalEnvioSky(id) {
   openModal('modal-envio-sky');
 }
 async function saveEnvioSky() {
-  const valor=parseFloat(gv('sky-valor'))||0;
+  const valor=_parseNum(gv('sky-valor'))||0;
   // valor 0 es permitido
   const fecha=gv('sky-fecha')||hoy(),num_venta=gv('sky-num-venta').trim(),num_guia=gv('sky-num-guia').trim(),transport=gv('sky-transportadora')||'Servientrega',fuente_pago=gv('sky-fuente')||'skydropx',estado=gv('sky-estado')||'Pendiente';
   const id=_editEnvioSkyId||uid();

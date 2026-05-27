@@ -68,12 +68,12 @@ async function openModalVenta(id) {
 }
 
 function recalcVenta() {
-  const copVenta = parseFloat(gv('v-cop-venta'))    || 0;
-  const trm      = parseFloat(gv('v-trm')) || getDolarComprasConfigurado();
-  const costoUsd = parseFloat(gv('v-costo-usd'))     || 0;
-  const envioVal = parseFloat(gv('v-envio-int-usd')) || 0;
-  const envExtra = parseFloat(gv('v-envio-extra'))   || 0;
-  const udes     = parseFloat(gv('v-udes'))           || 1;
+  const copVenta = _parseNum(gv('v-cop-venta'))    || 0;
+  const trm      = _parseNum(gv('v-trm')) || getDolarComprasConfigurado();
+  const costoUsd = _parseNum(gv('v-costo-usd'))     || 0;
+  const envioVal = _parseNum(gv('v-envio-int-usd')) || 0;
+  const envExtra = _parseNum(gv('v-envio-extra'))   || 0;
+  const udes     = _parseNum(gv('v-udes'))           || 1;
   const envTipo  = gv('v-envio-tipo');
 
   // Costo producto: USD × TRM
@@ -173,24 +173,24 @@ async function cargarDolarComprasEnConfig() {
 
 async function saveVenta() {
   const tienda   = gv('v-tienda');
-  const copVenta = parseFloat(gv('v-cop-venta')) || 0;
+  const copVenta = _parseNum(gv('v-cop-venta')) || 0;
   if(!tienda)    { alert('Selecciona una tienda.'); return; }
   //if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
   const producto = ''; // campo eliminado del formulario
 
   const ventaExistente = _editVentaId ? (await DB.ventas()).find(x => x.id === _editVentaId) : null;
-  const trm       = parseFloat(gv('v-trm')) || TRM_ACTUAL;
+  const trm       = _parseNum(gv('v-trm')) || TRM_ACTUAL;
   const envioTipo = gv('v-envio-tipo');
-  const envioVal  = parseFloat(gv('v-envio-int-usd'))||0;
-  const envioReal = parseFloat(gv('v-envio-real'))||0;
+  const envioVal  = _parseNum(gv('v-envio-int-usd'))||0;
+  const envioReal = _parseNum(gv('v-envio-real'))||0;
 
   // Calcular envio en COP: ahora todos los tipos ingresan en COP en el registro
   const envioEstimadoCOP = envioVal; // ya es COP para todos (Servientrega también)
   const envioFinalCOP    = envioReal > 0 ? envioReal : envioEstimadoCOP;
 
   const fuentePago = gv('v-fuente-pago');
-  const montoPago  = parseFloat(gv('v-monto-pago'))||0;
-  const costoUsd   = parseFloat(gv('v-costo-usd'))||0;
+  const montoPago  = _parseNum(gv('v-monto-pago'))||0;
+  const costoUsd   = _parseNum(gv('v-costo-usd'))||0;
   const costoCOP   = costoUsd * trm;
 
   await DB.upsertVenta({
@@ -202,9 +202,9 @@ async function saveVenta() {
     cliente:       gv('v-cliente').trim(),
     telefono:      gv('v-tel').trim(),
     producto,
-    udes:          parseFloat(gv('v-udes'))||1,
+    udes:          _parseNum(gv('v-udes'))||1,
     envio_tipo:    envioTipo,
-    envio_extra:   parseFloat(gv('v-envio-extra'))||0,
+    envio_extra:   _parseNum(gv('v-envio-extra'))||0,
     precio_cop:    copVenta,
     precio_usd:    trm > 0 ? copVenta / trm : 0,
     trm,
