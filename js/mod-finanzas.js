@@ -367,7 +367,9 @@ async function saveEnvioSky() {
   // valor 0 es permitido
   const fecha=gv('sky-fecha')||hoy(),num_venta=gv('sky-num-venta').trim(),num_guia=gv('sky-num-guia').trim(),transport=gv('sky-transportadora')||'Servientrega',fuente_pago=gv('sky-fuente')||'skydropx',estado=gv('sky-estado')||'Pendiente';
   const id=_editEnvioSkyId||uid();
-  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,estado,valor,fuente_pago,fecha_registro:new Date().toISOString()});
+  const _tsNow = new Date().toISOString();
+  const _esNuevo = !_editEnvioSkyId;
+  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,estado,valor,fuente_pago,fecha_registro:_tsNow,...(_esNuevo?{creado:_tsNow}:{})});
   const saldos=await DB.saldos();
   saldos[fuente_pago]=(parseFloat(saldos[fuente_pago])||0)-valor;
   await DB.saveSaldos(saldos);

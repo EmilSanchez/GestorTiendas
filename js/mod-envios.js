@@ -436,7 +436,11 @@ async function _renderEnviosSkyPanel() {
   const skyMes    = (mesFiltro
     ? enviosSky.filter(e => (e.fecha||'').startsWith(mesFiltro))
     : [...enviosSky]
-  ).sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  ).sort((a,b) => {
+    const fd = (b.fecha||'').localeCompare(a.fecha||'');
+    if (fd !== 0) return fd;
+    return (b.creado||b.fecha_registro||'').localeCompare(a.creado||a.fecha_registro||'');
+  });
   const total     = skyMes.reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
 
   const resEl = document.getElementById('sky-resumen-total');

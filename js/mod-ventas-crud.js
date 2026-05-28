@@ -328,7 +328,12 @@ async function renderVentas() {
   if (fTrans) ventas = ventas.filter(v => v.envio_tipo === fTrans);
 
   // Ordenar cronológico → invertir para mostrar más reciente arriba
-  ventas.sort((a,b) => (b.fecha_venta||'').localeCompare(a.fecha_venta||''));
+  ventas.sort((a,b) => {
+    const fd = (b.fecha_venta||'').localeCompare(a.fecha_venta||'');
+    if (fd !== 0) return fd;
+    // Mismo día: más reciente primero por fecha_registro
+    return (b.fecha_registro||'').localeCompare(a.fecha_registro||'');
+  });
   const ventasConNum  = ventas.map((v,i) => ({ ...v, _num: ventas.length - i }));
   const ventasMostrar = ventasConNum;
 
