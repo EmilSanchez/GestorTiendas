@@ -65,6 +65,88 @@ async function openModalVenta(id) {
   }
   recalcVenta();
   openModal('modal-venta');
+
+  // Show/hide tabs depending on edit mode
+  const tabsEl = document.getElementById('mv-tabs');
+  if (tabsEl) tabsEl.style.display = id ? 'block' : 'none';
+  _mvTab('venta');
+  if (id) _loadLinkedEnvio(id);
+}
+
+function _mvTab(tab) {
+  const bodyVenta  = document.getElementById('mv-body-venta');
+  const bodyEnvio  = document.getElementById('mv-body-envio');
+  const btnVenta   = document.getElementById('mv-tab-venta');
+  const btnEnvio   = document.getElementById('mv-tab-envio');
+  const btnGuardar = document.getElementById('mv-btn-guardar');
+  if (!bodyVenta) return;
+  const isVenta = tab === 'venta';
+  bodyVenta.style.display = isVenta ? '' : 'none';
+  bodyEnvio.style.display = isVenta ? 'none' : '';
+  btnVenta.style.borderBottomColor = isVenta ? 'var(--teal)' : 'transparent';
+  btnVenta.style.color  = isVenta ? 'var(--teal)' : 'var(--text2)';
+  btnVenta.style.fontWeight = isVenta ? '600' : '500';
+  btnEnvio.style.borderBottomColor = !isVenta ? 'var(--teal)' : 'transparent';
+  btnEnvio.style.color  = !isVenta ? 'var(--teal)' : 'var(--text2)';
+  btnEnvio.style.fontWeight = !isVenta ? '600' : '500';
+  if (btnGuardar) {
+    btnGuardar.textContent = isVenta ? 'Guardar Venta' : 'Guardar Envío';
+    btnGuardar.onclick = isVenta ? saveVenta : _saveMvEnvio;
+  }
+}
+
+async function _loadLinkedEnvio(ventaId) {
+  const ventas = await DB.ventas();
+  const v = ventas.find(x => x.id === ventaId);
+  const idMl = v?.id_ml || ventaId;
+  const envios = await DB.envios_sky();
+  const envio = envios.find(e => e.num_venta === idMl || e.num_venta === ventaId);
+  const statusEl = document.getElementById('mv-envio-status');
+  if (envio) {
+    window._mvEnvioId = envio.id;
+    document.getElementById('mvs-fecha').value = envio.fecha || hoy();
+    document.getElementById('mvs-num-venta').value = envio.num_venta || idMl;
+    document.getElementById('mvs-num-guia').value = envio.num_guia || '';
+    document.getElementById('mvs-transportadora').value = envio.transportadora || '';
+    document.getElementById('mvs-valor').value = envio.valor || '';
+    document.getElementById('mvs-estado').value = envio.estado || 'Pendiente';
+    document.getElementById('mvs-fuente').value = envio.fuente_pago || 'skydropx';
+    if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--teal-bg);color:var(--teal);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid rgba(0,137,123,.2);">Envío registrado — editando</span>';
+  } else {
+    window._mvEnvioId = null;
+    document.getElementById('mvs-fecha').value = hoy();
+    document.getElementById('mvs-num-venta').value = idMl;
+    document.getElementById('mvs-num-guia').value = '';
+    document.getElementById('mvs-transportadora').value = 'Servientrega';
+    document.getElementById('mvs-valor').value = '';
+    document.getElementById('mvs-estado').value = 'Pendiente';
+    document.getElementById('mvs-fuente').value = 'skydropx';
+    if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid #f0c040;">Sin envío externo registrado</span>';
+  }
+}
+
+async function _saveMvEnvio() {
+  const valor = _parseNum(document.getElementById('mvs-valor').value) || 0;
+  const fecha = document.getElementById('mvs-fecha').value || hoy();
+  const num_venta = document.getElementById('mvs-num-venta').value.trim();
+  const num_guia = document.getElementById('mvs-num-guia').value.trim();
+  const transport = document.getElementById('mvs-transportadora').value || 'Servientrega';
+  const estado = document.getElementById('mvs-estado').value || 'Pendiente';
+  const fuente = document.getElementById('mvs-fuente').value || 'skydropx';
+  const id = window._mvEnvioId || uid();
+  const esNuevo = !window._mvEnvioId;
+  const ts = new Date().toISOString();
+  await DB.upsertEnvioSky({id, fecha, num_venta, num_guia, transportadora: transport, estado, valor, fuente_pago: fuente, fecha_registro: ts, ...(esNuevo?{creado:ts}:{})});
+  if (esNuevo) {
+    const saldos = await DB.saldos();
+    saldos[fuente] = (parseFloat(saldos[fuente])||0) - valor;
+    await DB.saveSaldos(saldos);
+    await DB.upsertMovimiento({id:'sky_'+id, fecha, tipo:'egreso', fuente, valor, concepto:`Envío Skydropx${num_venta?' · '+num_venta:''}`, notas:`Transportadora: ${transport}`, fecha_registro:ts, _sky_id:id});
+  }
+  window._mvEnvioId = id;
+  closeModal('modal-venta');
+  showToast('Envío guardado', 'success', 2000);
+  if (typeof _renderEnviosSkyPanel === 'function') _renderEnviosSkyPanel();
 }
 
 function recalcVenta() {
@@ -442,7 +524,31 @@ function _cambiarEstadoVenta(id, estado) {
 async function cambiarEstado(id, estado) {
   const ventas = await DB.ventas();
   const v = ventas.find(x=>x.id===id);
-  if(v) { v.estado = estado; await DB.saveVentas(ventas); await updateAlertaBadge(); }
+  if(v) {
+    v.estado = estado;
+    await DB.saveVentas(ventas);
+    await updateAlertaBadge();
+    // Sincronizar estado con envío externo (sky) si existe
+    try {
+      const enviosSky = await DB.envios_sky();
+      const envio = enviosSky.find(e => e.num_venta === v.id_ml || e.num_venta === v.id);
+      if (envio) {
+        // Mapear estado de venta → estado de envío
+        const mapaEstado = {
+          'pendiente':   'Pendiente',
+          'en_camino':   'En camino',
+          'entregado':   'Entregado',
+          'cancelado':   'Cancelado',
+          'devuelto':    'Devuelto',
+          'problema':    'Pendiente',
+          'error':       'Pendiente',
+        };
+        const nuevoEstadoEnvio = mapaEstado[estado] || 'Pendiente';
+        envio.estado = nuevoEstadoEnvio;
+        await DB.upsertEnvioSky(envio);
+      }
+    } catch(e) { console.warn('No se pudo sincronizar envío:', e); }
+  }
 }
 
 // ── ELIMINAR VENTA CON CÓDIGO DE ACCESO ──

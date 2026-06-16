@@ -85,7 +85,9 @@ async function renderVentasGanancias() {
     const g      = tvPer.reduce((s,v) => s + calcVenta(v).ganancia,   0);
     const ing    = tvPer.reduce((s,v) => s + calcVenta(v).totalVenta, 0);
     const cos    = tvPer.reduce((s,v) => s + calcVenta(v).totalCostos,0);
+    // Ocultar tiendas inactivas sin ventas en el período
     const isActive = t.estado !== 'inactiva';
+    if (!isActive && tvPer.length === 0) return null;
     const fotoEl = t.foto
       ? `<img src="${t.foto}" style="width:36px;height:36px;border-radius:50%;object-fit:cover;flex-shrink:0;border:2.5px solid ${t.color};">`
       : `<span style="width:36px;height:36px;border-radius:50%;background:${t.color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:15px;font-weight:700;">${t.nombre.charAt(0)}</span>`;

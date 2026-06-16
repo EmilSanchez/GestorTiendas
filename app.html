@@ -1060,8 +1060,22 @@
       <button class="mclose" onclick="closeModal('modal-venta')" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:10px;font-size:16px;">✕</button>
     </div>
 
+    <!-- Tabs (solo en edición) -->
+    <div id="mv-tabs" style="display:none;border-bottom:1px solid var(--border);background:#fff;padding:0 24px;">
+      <div style="display:flex;gap:0;">
+        <button id="mv-tab-venta" onclick="_mvTab('venta')"
+          style="padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;border-bottom:2px solid var(--teal);color:var(--teal);font-family:inherit;">
+          Venta
+        </button>
+        <button id="mv-tab-envio" onclick="_mvTab('envio')"
+          style="padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">
+          Envío Externo
+        </button>
+      </div>
+    </div>
+
     <!-- Body -->
-    <div class="mc" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
+    <div class="mc" id="mv-body-venta" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
 
       <!-- Sección 1: Información general -->
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Información general</div>
@@ -1154,10 +1168,67 @@
 
     </div>
 
+    <!-- Cuerpo Envío Externo -->
+    <div id="mv-body-envio" style="display:none;padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">
+        Envío Externo — Skydropx
+      </div>
+      <div id="mv-envio-status" style="margin-bottom:16px;"></div>
+      <div class="grid3" style="margin-bottom:14px;">
+        <div class="fg">
+          <label class="fl2">Fecha *</label>
+          <input type="date" id="mvs-fecha">
+        </div>
+        <div class="fg">
+          <label class="fl2">N° Venta ML</label>
+          <input type="text" id="mvs-num-venta" placeholder="ID automático" readonly style="background:#f3f7f7;color:var(--text2);">
+        </div>
+        <div class="fg">
+          <label class="fl2">N° Guía</label>
+          <input type="text" id="mvs-num-guia" placeholder="Ej: 2289039226">
+        </div>
+      </div>
+      <div class="grid3" style="margin-bottom:14px;">
+        <div class="fg">
+          <label class="fl2">Transportadora</label>
+          <input type="text" id="mvs-transportadora" list="mvs-trans-list" placeholder="Ej: Servientrega">
+          <datalist id="mvs-trans-list">
+            <option value="Servientrega"><option value="Coordinadora"><option value="Envia"><option value="Interrapidisimo"><option value="TCC"><option value="Domina">
+          </datalist>
+        </div>
+        <div class="fg">
+          <label class="fl2">Valor (COP$)</label>
+          <input type="text" inputmode="numeric" id="mvs-valor" placeholder="0">
+        </div>
+        <div class="fg">
+          <label class="fl2">Estado</label>
+          <select id="mvs-estado">
+            <option value="Pendiente">Pendiente</option>
+            <option value="En camino">En camino</option>
+            <option value="Entregado">Entregado</option>
+            <option value="Cancelado">Cancelado</option>
+            <option value="Devuelto">Devuelto</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid2" style="margin-bottom:14px;">
+        <div class="fg">
+          <label class="fl2">Fuente de pago</label>
+          <select id="mvs-fuente">
+            <option value="skydropx">Skydropx</option>
+            <option value="bancolombia">Bancolombia</option>
+            <option value="nequi">Nequi</option>
+            <option value="efectivo">Efectivo</option>
+          </select>
+        </div>
+      </div>
+      <div id="mv-envio-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
+    </div>
+
     <!-- Footer -->
     <div style="padding:14px 24px;border-top:1px solid var(--border);background:#f7fafa;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;">
       <button class="btn btn-ghost" onclick="closeModal('modal-venta')" style="padding:10px 20px;font-size:13px;">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveVenta()" style="padding:10px 24px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,137,123,.3);">Guardar Venta</button>
+      <button class="btn btn-primary" id="mv-btn-guardar" onclick="saveVenta()" style="padding:10px 24px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,137,123,.3);">Guardar Venta</button>
     </div>
 
   </div>
