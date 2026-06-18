@@ -21,6 +21,8 @@ function _mesLabel(ym) {
 
 // ── RENDER PRINCIPAL ──
 async function renderFinanzas() {
+  await _procesarTransferenciasPendientes();
+  await _renderPendientesTransfer();
   const [movs, saldos, billeteras, tiendas, ventas, enviosSky] = await Promise.all([
     DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.ventas(), DB.envios_sky()
   ]);
@@ -63,14 +65,19 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
 
   // Skydropx — siempre fija
   const skySaldo = parseFloat(saldos['skydropx'])||0;
+  const skyEsBanco = !!saldos['_es_banco_skydropx'];
   const skyCard = `
     <div class="fin-wallet-card" onclick="openModalEditarSaldo('skydropx','Skydropx',${skySaldo})">
       <div class="fin-wallet-top">
         <span style="width:28px;height:28px;border-radius:50%;background:#6366f1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">${_FIN_ICON.truck}</span>
         <div style="flex:1;min-width:0;">
-          <div class="fin-wallet-name">Skydropx</div>
+          <div class="fin-wallet-name">Skydropx ${skyEsBanco?'<span style="font-size:8px;background:#e0e7ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;">BANCO</span>':''}</div>
           <div class="fin-wallet-sub">Envíos nacionales</div>
         </div>
+        <button class="btn btn-ghost btn-icon btn-sm" title="${skyEsBanco?'Quitar marca de banco':'Marcar como banco'}"
+          onclick="event.stopPropagation();_toggleEsBancoFijo('skydropx')" style="opacity:.5;flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        </button>
       </div>
       <div class="fin-wallet-amount ${skySaldo<0?'neg':skySaldo===0?'zero':''}">${fmt(skySaldo)}</div>
     </div>`;
@@ -79,6 +86,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
   const mpCards = tiendas.map(t => {
     const key = 'mercadopago_'+t.id;
     const s   = parseFloat(saldos[key])||0;
+    const esBanco = !!saldos['_es_banco_'+key];
     const dot = t.foto
       ? `<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid ${t.color||'#00897b'};flex-shrink:0;">`
       : `<span style="width:28px;height:28px;border-radius:50%;background:${t.color||'#00897b'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">${_FIN_ICON.mp}</span>`;
@@ -87,9 +95,13 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
       <div class="fin-wallet-top">
         ${dot}
         <div style="flex:1;min-width:0;">
-          <div class="fin-wallet-name">MP · ${t.nombre}</div>
+          <div class="fin-wallet-name">MP · ${t.nombre} ${esBanco?'<span style="font-size:8px;background:#e0e7ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;">BANCO</span>':''}</div>
           <div class="fin-wallet-sub">Mercado Pago</div>
         </div>
+        <button class="btn btn-ghost btn-icon btn-sm" title="${esBanco?'Quitar marca de banco':'Marcar como banco'}"
+          onclick="event.stopPropagation();_toggleEsBancoFijo('${key}')" style="opacity:.5;flex-shrink:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
+        </button>
       </div>
       <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}">${fmt(s)}</div>
     </div>`;
@@ -104,9 +116,12 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
       <div class="fin-wallet-top">
         <span style="width:28px;height:28px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">${_FIN_ICON.wallet}</span>
         <div style="flex:1;min-width:0;">
-          <div class="fin-wallet-name">${b.nombre}</div>
+          <div class="fin-wallet-name">${b.nombre} ${b.es_banco?'<span style="font-size:8px;background:#e0e7ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;">BANCO</span>':''}</div>
           <div class="fin-wallet-sub">${b.tipo||'Billetera'}</div>
         </div>
+        <button class="btn btn-ghost btn-icon btn-sm" title="Editar billetera"
+          onclick="event.stopPropagation();openModalEditarBilletera('${b.id}')"
+          style="opacity:.5;flex-shrink:0;">${_FIN_ICON.edit}</button>
         <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar billetera"
           onclick="event.stopPropagation();_pedirCodigoEliminarBilletera('${b.id}','${b.nombre.replace(/'/g,"\\'")}')"
           style="opacity:.4;flex-shrink:0;">${_FIN_ICON.trash}</button>
@@ -116,6 +131,15 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
   });
 
   el.innerHTML = [skyCard, ...mpCards, ...bwCards].join('');
+}
+
+async function _toggleEsBancoFijo(key) {
+  const saldos = await DB.saldos();
+  const current = !!saldos['_es_banco_'+key];
+  saldos['_es_banco_'+key] = !current;
+  await DB.saveSaldos(saldos);
+  await renderFinanzas();
+  showToast(!current ? 'Marcado como banco' : 'Ya no se considera banco', 'success', 1800);
 }
 
 // ── MODAL EDITAR SALDO (reemplaza el prompt) ──
@@ -194,17 +218,19 @@ function _renderMovimientos(movMes, mesAct) {
   // fuente='mercadopago' → pago de venta ML (auto)
   // _sky_id presente       → egreso de envío Skydropx (auto)
   // todo lo demás          → movimiento externo manual
-  const _isVentaML  = m => m.fuente === 'mercadopago' || m.fuente?.startsWith('mercadopago_') && !m._sky_id;
+  const _isVentaML  = m => (m.fuente === 'mercadopago' || m.fuente?.startsWith('mercadopago_')) && !m._sky_id && m.tipo !== 'transferencia';
   const _isSkyMov   = m => !!m._sky_id;
-  const _isExterno  = m => !_isVentaML(m) && !_isSkyMov(m);
-  if (activeTab === 'venta')    filtrados = movMes.filter(_isVentaML);
-  if (activeTab === 'skydropx') filtrados = movMes.filter(_isSkyMov);
-  if (activeTab === 'externo')  filtrados = movMes.filter(_isExterno);
+  const _isTransfer = m => m.tipo === 'transferencia';
+  const _isExterno  = m => !_isVentaML(m) && !_isSkyMov(m) && !_isTransfer(m);
+  if (activeTab === 'venta')        filtrados = movMes.filter(_isVentaML);
+  if (activeTab === 'skydropx')     filtrados = movMes.filter(_isSkyMov);
+  if (activeTab === 'externo')      filtrados = movMes.filter(_isExterno);
+  if (activeTab === 'transferencia') filtrados = movMes.filter(_isTransfer);
 
   const tabs = `
     <div style="display:flex;gap:4px;margin-bottom:12px;">
-      ${['todos','venta','skydropx','externo'].map(t=>{
-        const labels={todos:'Todos',venta:'Ventas ML',skydropx:'Skydropx',externo:'Externos'};
+      ${['todos','venta','skydropx','externo','transferencia'].map(t=>{
+        const labels={todos:'Todos',venta:'Ventas ML',skydropx:'Skydropx',externo:'Externos',transferencia:'Transferencias'};
         const isActive = activeTab===t;
         return `<button class="fin-mov-tab ${isActive?'active':''}" data-tab="${t}"
           onclick="document.querySelectorAll('.fin-mov-tab').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='var(--text2)';b.style.borderColor='var(--border)';});this.classList.add('active');this.style.background='var(--teal)';this.style.color='#fff';this.style.borderColor='var(--teal)';renderFinanzas();"
@@ -243,8 +269,10 @@ function _renderMovimientos(movMes, mesAct) {
   }
 
   const rows = movMes.map(m => {
-    const isIng = m.tipo==='ingreso';
+    const isIng = m.tipo==='ingreso' || (m.tipo==='transferencia' && false);
     const isSkyAuto = !!m._sky_id;
+    const isTransfer = m.tipo === 'transferencia';
+    const isPendiente = isTransfer && m.pendiente;
 
     // Fuente label
     let fl = '—';
@@ -257,17 +285,22 @@ function _renderMovimientos(movMes, mesAct) {
       fl = FUENTES_LABEL[m.fuente]||m.fuente||'—';
     }
 
+    const iconBg = isTransfer ? '#e0e7ff' : (isIng?'#d1fae5':'#fee2e2');
+    const iconEl = isTransfer
+      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
+      : (isIng?_FIN_ICON.up:_FIN_ICON.down);
     return `
     <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${isIng?'#d1fae5':'#fee2e2'};flex-shrink:0;">
-        ${isIng?_FIN_ICON.up:_FIN_ICON.down}
+      <span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${iconBg};flex-shrink:0;">
+        ${iconEl}
       </span>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}${isSkyAuto?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AUTO</span>':''}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px;">${m.fecha} <span style="opacity:.35;">·</span> <span style="color:var(--teal);font-weight:600;">${fl}</span></div>
+        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}${isSkyAuto?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AUTO</span>':''}${isPendiente?' <span style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;border:1px solid #f0c040;">PENDIENTE INGRESO</span>':''}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px;">${m.fecha} <span style="opacity:.35;">·</span> <span style="color:var(--teal);font-weight:600;">${fl}</span>${isTransfer && m.notas ? ` <span style="opacity:.35;">·</span> ${m.notas}` : ''}${isPendiente?` <span style="opacity:.35;">·</span> <span style="color:var(--yellow);">Disponible ${fmtFecha(m.fecha_disponible)}</span>`:''}</div>
       </div>
-      <span style="font-size:13px;font-weight:800;color:${isIng?'#16a34a':'#dc2626'};white-space:nowrap;">${isIng?'+':'−'}${fmt(m.valor)}</span>
-      ${!isSkyAuto?`<button class="btn btn-ghost btn-icon btn-sm" onclick="openModalMovimiento('${m.id}')">${_FIN_ICON.edit}</button>`:''}
+      <span style="font-size:13px;font-weight:800;color:${isTransfer?'#4338ca':(isIng?'#16a34a':'#dc2626')};white-space:nowrap;">${isTransfer?'⇄':(isIng?'+':'−')}${fmt(m.valor)}</span>
+      ${isPendiente?`<button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>`:''}
+      ${!isSkyAuto && !isTransfer?`<button class="btn btn-ghost btn-icon btn-sm" onclick="openModalMovimiento('${m.id}')">${_FIN_ICON.edit}</button>`:''}
       <button class="btn btn-danger btn-icon btn-sm" onclick="_pedirCodigoEliminarMovimiento('${m.id}')">${_FIN_ICON.trash}</button>
     </div>`;
   }).join('');
@@ -296,6 +329,25 @@ async function _confirmDeleteMovimiento() {
     const ok = await _verificarCodigoAcceso(code);
     if (!ok) { if(err) err.textContent='Código incorrecto.'; if(inp){inp.value='';inp.focus();} return; }
     closeModal('modal-del-movimiento');
+
+    // Revertir el efecto en saldos antes de eliminar (solo ingreso/egreso manuales)
+    const movs = await DB.movimientos();
+    const m = movs.find(x => x.id === _deleteMovId);
+    if (m && (m.tipo === 'ingreso' || m.tipo === 'egreso')) {
+      const saldos = await DB.saldos();
+      const signo = m.tipo === 'ingreso' ? -1 : 1; // revertir
+      saldos[m.fuente] = (parseFloat(saldos[m.fuente]) || 0) + signo * (parseFloat(m.valor) || 0);
+      await DB.saveSaldos(saldos);
+    } else if (m && m.tipo === 'transferencia') {
+      // Revertir transferencia: devolver a origen, quitar de destino si ya se había acreditado
+      const saldos = await DB.saldos();
+      saldos[m.fuente] = (parseFloat(saldos[m.fuente]) || 0) + (parseFloat(m.valor) || 0);
+      if (!m.pendiente) {
+        saldos[m.fuente_destino] = (parseFloat(saldos[m.fuente_destino]) || 0) - (parseFloat(m.valor) || 0);
+      }
+      await DB.saveSaldos(saldos);
+    }
+
     await DB.deleteMovimiento(_deleteMovId);
     await renderFinanzas();
     showToast('Movimiento eliminado','success');
@@ -449,32 +501,80 @@ function _bwPickColor(el) {
   el.style.outlineOffset='2px';
   document.getElementById('bw-color').value=el.dataset.color;
 }
+var _editBilleteraId = null;
+
 function openModalNuevaBilletera() {
+  _editBilleteraId = null;
   sv('bw-nombre','');sv('bw-saldo','');sv('bw-color','#0ea5e9');
   const sel=document.getElementById('bw-tipo-select'); if(sel) sel.value='Neobank';
   sv('bw-tipo','Neobank');
   const custom=document.getElementById('bw-tipo-custom'); if(custom) custom.style.display='none';
+  document.getElementById('bw-es-banco').checked = false;
   document.querySelectorAll('#bw-color-picker span').forEach((s,i)=>{s.style.outline='none';if(i===0){s.style.outline='3px solid #0ea5e9';s.style.outlineOffset='2px';}});
   document.getElementById('modal-billetera-title').textContent='Nueva Billetera';
   document.getElementById('bw-save-btn').textContent='Crear billetera';
   openModal('modal-billetera');
 }
+
+async function openModalEditarBilletera(id) {
+  const bws = await DB.billeteras();
+  const b = bws.find(x => x.id === id);
+  if (!b) return;
+  _editBilleteraId = id;
+  const saldos = await DB.saldos();
+  sv('bw-nombre', b.nombre);
+  sv('bw-saldo', saldos[id] || 0);
+  sv('bw-color', b.color || '#0ea5e9');
+  document.getElementById('bw-es-banco').checked = !!b.es_banco;
+  const tiposFijos = ['Neobank','Cuenta de ahorros','Cuenta corriente','Billetera digital'];
+  const sel = document.getElementById('bw-tipo-select');
+  const custom = document.getElementById('bw-tipo-custom');
+  if (tiposFijos.includes(b.tipo)) {
+    sel.value = b.tipo; sv('bw-tipo', b.tipo); custom.style.display = 'none';
+  } else {
+    sel.value = 'otro'; sv('bw-tipo', b.tipo); custom.value = b.tipo; custom.style.display = 'block';
+  }
+  document.querySelectorAll('#bw-color-picker span').forEach(s => {
+    const match = s.dataset.color === (b.color || '#0ea5e9');
+    s.style.outline = match ? `3px solid ${s.dataset.color}` : 'none';
+    s.style.outlineOffset = match ? '2px' : '0';
+  });
+  document.getElementById('modal-billetera-title').textContent = 'Editar Billetera';
+  document.getElementById('bw-save-btn').textContent = 'Guardar cambios';
+  openModal('modal-billetera');
+}
+
 async function saveNuevaBilletera() {
   const nombre=gv('bw-nombre').trim();
   if(!nombre){showToast('El nombre es requerido.','error');return;}
   const tipoSel=document.getElementById('bw-tipo-select')?.value;
   const tipo=tipoSel==='otro'?(gv('bw-tipo-custom')||'Billetera'):(gv('bw-tipo')||'Neobank');
   const color=gv('bw-color')||'#6b7280';
-  const saldo=parseFloat(gv('bw-saldo'))||0;
-  const id='bw_'+uid();
+  const saldo=_parseNum(gv('bw-saldo'))||0;
+  const esBanco = document.getElementById('bw-es-banco').checked;
   const bws=await DB.billeteras();
-  bws.push({id,nombre,tipo,color,fecha:hoy()});
-  await DB.saveBilleteras(bws);
-  const saldos=await DB.saldos(); saldos[id]=saldo; await DB.saveSaldos(saldos);
-  FUENTES_LABEL[id]=nombre;
-  closeModal('modal-billetera');
-  await renderFinanzas(); await actualizarSelectsFuente();
-  showToast(`Billetera "${nombre}" creada`,'success');
+  const saldos=await DB.saldos();
+
+  if (_editBilleteraId) {
+    const b = bws.find(x => x.id === _editBilleteraId);
+    if (b) { b.nombre = nombre; b.tipo = tipo; b.color = color; b.es_banco = esBanco; }
+    saldos[_editBilleteraId] = saldo;
+    await DB.saveBilleteras(bws);
+    await DB.saveSaldos(saldos);
+    FUENTES_LABEL[_editBilleteraId] = nombre;
+    closeModal('modal-billetera');
+    await renderFinanzas(); await actualizarSelectsFuente();
+    showToast(`Billetera "${nombre}" actualizada`,'success');
+  } else {
+    const id='bw_'+uid();
+    bws.push({id,nombre,tipo,color,es_banco:esBanco,fecha:hoy()});
+    await DB.saveBilleteras(bws);
+    saldos[id]=saldo; await DB.saveSaldos(saldos);
+    FUENTES_LABEL[id]=nombre;
+    closeModal('modal-billetera');
+    await renderFinanzas(); await actualizarSelectsFuente();
+    showToast(`Billetera "${nombre}" creada`,'success');
+  }
 }
 async function actualizarSelectsFuente() {
   const [bws,tiendas]=await Promise.all([DB.billeteras(),DB.tiendas()]);
@@ -499,15 +599,84 @@ async function openModalMovimiento(id) {
   sv('mov-concepto',mov?.concepto||'');sv('mov-notas',mov?.notas||'');
   document.getElementById('modal-movimiento')._editId=id||null;
   openModal('modal-movimiento');
+  setTimeout(_actualizarPreviewMovimiento, 50);
+}
+
+async function _actualizarPreviewMovimiento() {
+  const previewEl = document.getElementById('mov-preview');
+  const fuenteSel = document.getElementById('mov-fuente');
+  const fuenteKey = fuenteSel?.value || '';
+  const tipo = document.getElementById('mov-tipo')?.value || 'egreso';
+  const valor = _parseNum(document.getElementById('mov-valor')?.value) || 0;
+
+  if (!fuenteKey || !valor) { if (previewEl) previewEl.style.display = 'none'; return; }
+
+  const saldos = await DB.saldos();
+  const saldoAntes = parseFloat(saldos[fuenteKey]) || 0;
+  const esIngreso = tipo === 'ingreso';
+  const saldoDespues = esIngreso ? saldoAntes + valor : saldoAntes - valor;
+
+  const nombreFuente = fuenteSel.selectedOptions[0]?.textContent.trim() || fuenteKey;
+  document.getElementById('mov-preview-fuente-label').textContent = nombreFuente;
+  document.getElementById('mov-preview-antes').textContent = fmt(saldoAntes);
+  const despuesEl = document.getElementById('mov-preview-despues');
+  despuesEl.textContent = fmt(saldoDespues);
+  despuesEl.style.color = saldoDespues < 0 ? 'var(--red)' : '';
+
+  if (previewEl) previewEl.style.display = '';
 }
 async function saveMovimiento() {
-  const valor=parseFloat(gv('mov-valor'))||0,concepto=gv('mov-concepto').trim();
-  if(!valor){showToast('Ingresa el valor.','error');return;}
-  if(!concepto){showToast('Ingresa un concepto.','error');return;}
+  const errEl = document.getElementById('mov-err');
+  if (errEl) errEl.textContent = '';
+
+  const valor=_parseNum(gv('mov-valor'))||0,concepto=gv('mov-concepto').trim();
+  const tipo = gv('mov-tipo'), fuente = gv('mov-fuente');
+  if(!valor){ if(errEl) errEl.textContent='Ingresa el valor.'; showToast('Ingresa el valor.','error');return;}
+  if(!concepto){ if(errEl) errEl.textContent='Ingresa un concepto.'; showToast('Ingresa un concepto.','error');return;}
+  if(!fuente){ if(errEl) errEl.textContent='Selecciona una fuente.'; showToast('Selecciona una fuente.','error');return;}
+
   const id=document.getElementById('modal-movimiento')._editId||uid();
-  await DB.upsertMovimiento({id,fecha:gv('mov-fecha'),tipo:gv('mov-tipo'),fuente:gv('mov-fuente'),valor,concepto,notas:gv('mov-notas'),fecha_registro:new Date().toISOString()});
+  const movs = await DB.movimientos();
+  const movAnterior = movs.find(m => m.id === id);
+  const saldos = await DB.saldos();
+
+  // Calcular el saldo disponible en la fuente, revirtiendo primero el efecto anterior si se está editando
+  let saldoDisponible = parseFloat(saldos[fuente]) || 0;
+  if (movAnterior && movAnterior.fuente === fuente) {
+    const signoAnt = movAnterior.tipo === 'ingreso' ? -1 : 1;
+    saldoDisponible += signoAnt * (parseFloat(movAnterior.valor) || 0);
+  }
+
+  // Validar saldo suficiente si es egreso
+  if (tipo === 'egreso' && valor > saldoDisponible) {
+    const fuenteSel = document.getElementById('mov-fuente');
+    const nombreFuente = fuenteSel?.selectedOptions[0]?.textContent.trim() || fuente;
+    const msg = `Saldo insuficiente en ${nombreFuente} (disponible: ${fmt(saldoDisponible)}).`;
+    if (errEl) errEl.textContent = msg;
+    showToast(msg, 'error', 3000);
+    return;
+  }
+
+  // Si estamos editando y la fuente cambió, revertir en la fuente anterior también
+  if (movAnterior && movAnterior.fuente !== fuente) {
+    const signoAnt = movAnterior.tipo === 'ingreso' ? -1 : 1;
+    saldos[movAnterior.fuente] = (parseFloat(saldos[movAnterior.fuente]) || 0) + signoAnt * (parseFloat(movAnterior.valor) || 0);
+  }
+
+  // Aplicar el efecto del movimiento nuevo/editado en la fuente actual
+  const signo = tipo === 'ingreso' ? 1 : -1;
+  if (movAnterior && movAnterior.fuente === fuente) {
+    // Misma fuente: usamos el saldo ya revertido (saldoDisponible) como base
+    saldos[fuente] = saldoDisponible + signo * valor;
+  } else {
+    saldos[fuente] = (parseFloat(saldos[fuente]) || 0) + signo * valor;
+  }
+  await DB.saveSaldos(saldos);
+
+  await DB.upsertMovimiento({id,fecha:gv('mov-fecha'),tipo,fuente,valor,concepto,notas:gv('mov-notas'),fecha_registro:new Date().toISOString()});
   closeModal('modal-movimiento');
   await renderFinanzas();
+  showToast(movAnterior ? 'Movimiento actualizado' : 'Movimiento registrado', 'success', 2000);
 }
 
 // ── MEMBRESÍA (compatibilidad) ──
@@ -521,3 +690,276 @@ async function saveMembresia(){
   await renderFinanzas();
 }
 async function deleteMembresia(id){if(!confirm('¿Eliminar?'))return;await DB.saveMembresias((await DB.membresias()).filter(m=>m.id!==id));await renderFinanzas();}
+
+
+// ══════════════════════════════════════════════════════════
+// TRANSFERENCIAS ENTRE BILLETERAS
+// ══════════════════════════════════════════════════════════
+
+// Construye la lista de todas las "fuentes" disponibles (sky, mp por tienda, billeteras)
+async function _listaFuentesTransfer() {
+  const [billeteras, tiendas, saldos] = await Promise.all([DB.billeteras(), DB.tiendas(), DB.saldos()]);
+  const fuentes = [
+    { key: 'skydropx', nombre: 'Skydropx', es_banco: !!saldos['_es_banco_skydropx'] },
+  ];
+  tiendas.forEach(t => {
+    const key = 'mercadopago_'+t.id;
+    fuentes.push({ key, nombre: 'MP · '+t.nombre, es_banco: !!saldos['_es_banco_'+key] });
+  });
+  billeteras.forEach(b => fuentes.push({ key: b.id, nombre: b.nombre, es_banco: !!b.es_banco }));
+  return fuentes;
+}
+
+async function openModalTransferencia() {
+  const fuentes = await _listaFuentesTransfer();
+  const opts = fuentes.map(f => `<option value="${f.key}" data-es-banco="${f.es_banco}">${f.nombre}${f.es_banco?' 🏦':''}</option>`).join('');
+  document.getElementById('tr-origen').innerHTML  = opts;
+  document.getElementById('tr-destino').innerHTML = opts;
+  if (fuentes.length > 1) document.getElementById('tr-destino').selectedIndex = 1;
+  sv('tr-valor', '');
+  sv('tr-fecha', hoy());
+  sv('tr-descripcion', '');
+  const habilChk = document.getElementById('tr-banco-habil');
+  if (habilChk) habilChk.checked = _esHoyDiaHabil();
+  document.getElementById('tr-err').textContent = '';
+  _actualizarBancoTransfer();
+  openModal('modal-transferencia');
+}
+
+function _esHoyDiaHabil() {
+  const dia = new Date().getDay();
+  return dia >= 1 && dia <= 5;
+}
+
+async function _actualizarBancoTransfer() {
+  const origenSel  = document.getElementById('tr-origen');
+  const destinoSel  = document.getElementById('tr-destino');
+  const avisoEl     = document.getElementById('tr-banco-aviso');
+  const avisoTxtEl  = document.getElementById('tr-banco-aviso-txt');
+  if (!origenSel || !destinoSel) return;
+  const esBancoOrigen  = origenSel.selectedOptions[0]?.dataset.esBanco === 'true';
+  const esBancoDestino = destinoSel.selectedOptions[0]?.dataset.esBanco === 'true';
+  const ambosBancos = esBancoOrigen && esBancoDestino;
+
+  if (ambosBancos) {
+    const info = _calcularLlegadaTransfer();
+    avisoTxtEl.textContent = info.esHoy
+      ? 'El dinero estará disponible el mismo día.'
+      : `El dinero quedará "Pendiente ingreso" hasta ${info.label}.`;
+    avisoEl.style.display = '';
+  } else {
+    avisoEl.style.display = 'none';
+  }
+
+  // ── Previsualización de saldos ──
+  const previewEl = document.getElementById('tr-preview');
+  const origenKey  = origenSel.value;
+  const destinoKey = destinoSel.value;
+  const valor = _parseNum(document.getElementById('tr-valor').value) || 0;
+
+  if (!origenKey || !destinoKey || origenKey === destinoKey) {
+    if (previewEl) previewEl.style.display = 'none';
+    return;
+  }
+
+  const saldos = await DB.saldos();
+  const saldoOrigenAntes  = parseFloat(saldos[origenKey])  || 0;
+  const saldoDestinoAntes = parseFloat(saldos[destinoKey]) || 0;
+  // Misma regla que guardarTransferencia: si ambos son banco, depende del día hábil/hora; si no, siempre inmediato
+  const seAcreditaYa = ambosBancos ? _calcularLlegadaTransfer().esHoy : true;
+
+  const saldoOrigenDespues  = saldoOrigenAntes - valor;
+  const saldoDestinoDespues = seAcreditaYa ? (saldoDestinoAntes + valor) : saldoDestinoAntes;
+
+  document.getElementById('tr-preview-origen-label').textContent  = origenSel.selectedOptions[0]?.textContent.trim() || 'Origen';
+  document.getElementById('tr-preview-destino-label').textContent = destinoSel.selectedOptions[0]?.textContent.trim() || 'Destino';
+  document.getElementById('tr-preview-origen-antes').textContent    = fmt(saldoOrigenAntes);
+  document.getElementById('tr-preview-origen-despues').textContent  = fmt(saldoOrigenDespues);
+  document.getElementById('tr-preview-destino-antes').textContent   = fmt(saldoDestinoAntes);
+  document.getElementById('tr-preview-destino-despues').textContent = seAcreditaYa
+    ? fmt(saldoDestinoDespues)
+    : fmt(saldoDestinoAntes) + ' (pendiente +' + fmt(valor).replace('$ ','') + ')';
+
+  // Advertencia visual si el saldo origen queda negativo
+  const origenDespuesEl = document.getElementById('tr-preview-origen-despues');
+  origenDespuesEl.style.color = saldoOrigenDespues < 0 ? 'var(--red)' : '';
+
+  previewEl.style.display = valor > 0 ? '' : 'none';
+}
+
+// Calcula si la transferencia entre bancos distintos llega el mismo día o al siguiente día hábil
+function _calcularLlegadaTransfer() {
+  const ahora = new Date();
+  const hora  = ahora.getHours();
+  const antesDelMediodia = hora < 12;
+  // El usuario indica manualmente si hoy es día hábil bancario (checkbox)
+  const habilChk = document.getElementById('tr-banco-habil');
+  const esHabil = habilChk ? habilChk.checked : _esHoyDiaHabil();
+
+  if (esHabil && antesDelMediodia) {
+    return { esHoy: true, fechaDisponible: hoy(), label: 'hoy' };
+  }
+  // Buscar siguiente día (asumimos el día siguiente es hábil salvo que el usuario diga lo contrario en su próxima transferencia)
+  let next = new Date(ahora);
+  next.setDate(next.getDate() + 1);
+  // Si hoy no es hábil, seguimos saltando fines de semana como aproximación
+  if (!esHabil) {
+    while (next.getDay() === 0 || next.getDay() === 6) {
+      next.setDate(next.getDate() + 1);
+    }
+  }
+  const y = next.getFullYear(), m = String(next.getMonth()+1).padStart(2,'0'), d = String(next.getDate()).padStart(2,'0');
+  const fechaDisponible = `${y}-${m}-${d}`;
+  return { esHoy: false, fechaDisponible, label: fmtFecha(fechaDisponible) };
+}
+
+async function guardarTransferencia() {
+  const errEl = document.getElementById('tr-err');
+  const origenKey  = document.getElementById('tr-origen').value;
+  const destinoKey = document.getElementById('tr-destino').value;
+  const valor = _parseNum(gv('tr-valor')) || 0;
+  const fecha = gv('tr-fecha') || hoy();
+
+  if (!origenKey || !destinoKey) { errEl.textContent = 'Selecciona origen y destino.'; return; }
+  if (origenKey === destinoKey) { errEl.textContent = 'El origen y destino deben ser diferentes.'; return; }
+  if (!valor || valor <= 0) { errEl.textContent = 'Ingresa un valor válido.'; return; }
+
+  const fuentes = await _listaFuentesTransfer();
+  const fOrigen  = fuentes.find(f => f.key === origenKey);
+  const fDestino = fuentes.find(f => f.key === destinoKey);
+
+  const saldos = await DB.saldos();
+  const saldoOrigen = parseFloat(saldos[origenKey]) || 0;
+  if (saldoOrigen < valor) { errEl.textContent = `Saldo insuficiente en ${fOrigen.nombre} (${fmt(saldoOrigen)}).`; return; }
+
+  const ambosBancos = fOrigen.es_banco && fDestino.es_banco;
+  const llegada = ambosBancos ? _calcularLlegadaTransfer() : { esHoy: true, fechaDisponible: fecha };
+
+  const id = 'tr_' + uid();
+  const ts = new Date().toISOString();
+
+  // 1. Descontar de origen inmediatamente
+  saldos[origenKey] = saldoOrigen - valor;
+
+  // 2. Si mismo banco o llega hoy: acreditar destino de inmediato
+  //    Si bancos distintos y no llega hoy: queda pendiente (no se acredita aún)
+  if (llegada.esHoy) {
+    saldos[destinoKey] = (parseFloat(saldos[destinoKey]) || 0) + valor;
+  }
+  await DB.saveSaldos(saldos);
+
+  // 3. Registrar el movimiento de transferencia (un solo registro, tipo "transferencia")
+  const descripcion = gv('tr-descripcion').trim();
+  await DB.upsertMovimiento({
+    id, fecha, tipo: 'transferencia',
+    fuente: origenKey, fuente_destino: destinoKey,
+    valor,
+    concepto: `Transferencia: ${fOrigen.nombre} → ${fDestino.nombre}`,
+    notas: descripcion || (ambosBancos ? 'Transferencia entre cuentas bancarias' : ''),
+    fecha_registro: ts,
+    pendiente: !llegada.esHoy,
+    fecha_disponible: llegada.fechaDisponible,
+  });
+
+  closeModal('modal-transferencia');
+  await renderFinanzas();
+  showToast(
+    llegada.esHoy ? 'Transferencia completada' : `Transferencia en camino — disponible ${fmtFecha(llegada.fechaDisponible)}`,
+    'success', 2500
+  );
+}
+
+// Muestra la lista de transferencias pendientes por ingresar (todas, sin filtro de mes)
+async function _renderPendientesTransfer() {
+  const movs = await DB.movimientos();
+  const pendientes = movs.filter(m => m.tipo === 'transferencia' && m.pendiente)
+    .sort((a,b) => (a.fecha_disponible||'').localeCompare(b.fecha_disponible||''));
+  const cardEl = document.getElementById('fin-pendientes-card');
+  const listEl = document.getElementById('fin-pendientes-list');
+  if (!cardEl || !listEl) return;
+
+  if (!pendientes.length) { cardEl.style.display = 'none'; return; }
+  cardEl.style.display = '';
+
+  const fuentes = await _listaFuentesTransfer();
+  const nombreFuente = (key) => fuentes.find(f => f.key === key)?.nombre || key;
+
+  listEl.innerHTML = pendientes.map(m => `
+    <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+      <span style="width:24px;height:24px;border-radius:50%;background:var(--yellow-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:var(--text);">${nombreFuente(m.fuente)} → ${nombreFuente(m.fuente_destino)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:1px;">${m.notas ? m.notas + ' · ' : ''}Disponible el <strong style="color:var(--yellow);">${fmtFecha(m.fecha_disponible)}</strong></div>
+      </div>
+      <span style="font-size:13px;font-weight:800;color:var(--yellow);white-space:nowrap;">${fmt(m.valor)}</span>
+      <button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>
+    </div>`).join('');
+}
+
+// Revisa transferencias pendientes y las acredita si ya llegó su fecha disponible
+async function _procesarTransferenciasPendientes() {
+  const movs = await DB.movimientos();
+  const pendientes = movs.filter(m => m.tipo === 'transferencia' && m.pendiente && m.fecha_disponible <= hoy());
+  if (!pendientes.length) return;
+  const saldos = await DB.saldos();
+  let cambios = false;
+  for (const m of pendientes) {
+    saldos[m.fuente_destino] = (parseFloat(saldos[m.fuente_destino]) || 0) + (parseFloat(m.valor) || 0);
+    m.pendiente = false;
+    cambios = true;
+  }
+  if (cambios) {
+    await DB.saveSaldos(saldos);
+    await DB.saveMovimientos(movs);
+  }
+}
+
+
+// ── CANCELAR TRANSFERENCIA PENDIENTE ──
+var _cancelTransferId = '';
+function _pedirCodigoCancelarTransfer(id) {
+  _cancelTransferId = id;
+  const inp = document.getElementById('cancel-tr-code-input');
+  const err = document.getElementById('cancel-tr-code-error');
+  if (inp) inp.value = '';
+  if (err) err.textContent = '';
+  openModal('modal-cancelar-transferencia');
+  setTimeout(() => inp && inp.focus(), 150);
+}
+
+async function _confirmCancelarTransfer() {
+  const inp  = document.getElementById('cancel-tr-code-input');
+  const err  = document.getElementById('cancel-tr-code-error');
+  const btn  = document.getElementById('cancel-tr-confirm-btn');
+  const code = inp?.value.trim() || '';
+  if (!code) { if (err) err.textContent = 'Ingresa el código.'; return; }
+  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
+  try {
+    const ok = await _verificarCodigoAcceso(code);
+    if (!ok) { if (err) err.textContent = 'Código incorrecto.'; if (inp) { inp.value=''; inp.focus(); } return; }
+
+    const movs = await DB.movimientos();
+    const m = movs.find(x => x.id === _cancelTransferId);
+    if (!m || m.tipo !== 'transferencia' || !m.pendiente) {
+      if (err) err.textContent = 'Esta transferencia ya no se puede cancelar.';
+      return;
+    }
+
+    // Revertir: devolver el dinero a la fuente de origen (nunca llegó a acreditarse en destino)
+    const saldos = await DB.saldos();
+    saldos[m.fuente] = (parseFloat(saldos[m.fuente]) || 0) + (parseFloat(m.valor) || 0);
+    await DB.saveSaldos(saldos);
+    await DB.deleteMovimiento(m.id);
+
+    closeModal('modal-cancelar-transferencia');
+    await renderFinanzas();
+    showToast('Transferencia cancelada y dinero devuelto', 'success', 2500);
+  } catch(e) {
+    if (err) err.textContent = 'Error al verificar.';
+    console.error(e);
+  } finally {
+    if (btn) { btn.textContent = 'Cancelar transferencia'; btn.disabled = false; }
+  }
+}
