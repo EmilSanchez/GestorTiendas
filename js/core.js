@@ -303,7 +303,7 @@ async function render(page) {
     case 'envios':        await renderEnvios();          break;
     case 'problemas':     await renderProblemas();       break;
     case 'finanzas':      await renderFinanzas();        break;
-    case 'configuracion': await renderConfiguracion();   break;
+    case 'configuracion': await renderConfiguracion(); setTimeout(async()=>{ if(typeof _repCargarMesesDisponibles==='function'){await _repCargarMesesDisponibles();await _repActualizarInfo();} },100); break;
     case 'ayudas':        await renderAyudas();          break;
     case 'tareas':        await renderTareas();          break;
   }

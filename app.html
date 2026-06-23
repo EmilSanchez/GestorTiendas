@@ -527,6 +527,8 @@
         </div>
       </div>
 
+
+
       <!-- Gestión de usuarios (solo admin) -->
       <div class="card" id="cfg-usuarios-card" style="display:none;">
         <div class="card-header">
@@ -590,6 +592,10 @@
             Transferir
           </button>
           <button class="btn btn-ghost btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalCierreMes()">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Cerrar mes
+          </button>
         </div>
       </div>
 
@@ -621,6 +627,14 @@
           </div>
         </div>
         <div id="fin-pendientes-list"></div>
+      </div>
+
+      <!-- Meses cerrados -->
+      <div class="card" id="fin-cierres-card" style="margin-bottom:14px;display:none;">
+        <div class="card-header" style="margin-bottom:10px;">
+          <div class="card-title">Meses cerrados</div>
+        </div>
+        <div id="fin-cierres-lista"></div>
       </div>
 
       <!-- Fila: Movimientos + Envíos Sky -->
@@ -1119,596 +1133,7 @@
   </div>
 </div>
 
-</body>
-</html>
 
-
-<!-- ═══════════════════ MODALES ═══════════════════ -->
-<!-- ═══════════════════ MODAL: NUEVA / EDITAR AYUDA ═══════════════════ -->
-<div class="overlay" id="modal-ayuda">
-  <div class="modal" style="max-width:560px;">
-    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
-      <div>
-        <div class="mh-title" id="ma-title" style="color:#fff;font-size:15px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Nueva Ayuda</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Agrega un mensaje o instrucción reutilizable</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
-        onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc">
-      <!-- Título -->
-      <div class="fg">
-        <label class="fl2">Título de la ayuda <span style="color:var(--red);">*</span></label>
-        <input type="text" id="ma-titulo" placeholder="Ej: Para pedir reembolso en Amazon">
-      </div>
-      <!-- Categoría -->
-      <div class="fg">
-        <label class="fl2">Categoría</label>
-        <div style="display:flex;gap:8px;">
-          <select id="ma-categoria" style="flex:1;">
-            <option value="general">General</option>
-            <option value="reembolso">Reembolso</option>
-            <option value="demoras">Demoras</option>
-            <option value="cliente">Cliente</option>
-            <option value="amazon">Amazon</option>
-            <option value="mercadolibre">Mercado Libre</option>
-            <option value="envios">Envíos</option>
-            <option value="rastreo">Rastreo</option>
-            <option value="infracciones">Infracciones</option>
-            <option value="otro">Otro</option>
-          </select>
-          <input type="text" id="ma-cat-nueva" placeholder="O escribe una nueva..." style="flex:1;">
-        </div>
-        <div style="font-size:11px;color:var(--text3);margin-top:2px;">Selecciona una existente <em>o</em> escribe una nueva en el campo de la derecha.</div>
-      </div>
-      <!-- Color de la tarjeta -->
-      <div class="fg">
-        <label class="fl2">Color de categoría</label>
-        <div id="ma-colores" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;"></div>
-      </div>
-      <!-- Contenido -->
-      <div class="fg">
-        <label class="fl2">Contenido / Mensaje <span style="color:var(--red);">*</span></label>
-        <textarea id="ma-contenido" rows="7" placeholder="Escribe aquí el mensaje o instrucción..." style="width:100%;resize:vertical;font-size:0.85rem;border-radius:8px;"></textarea>
-      </div>
-      <input type="hidden" id="ma-id">
-      <input type="hidden" id="ma-color" value="#00897b">
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-ayuda')">Cancelar</button>
-      <button class="btn btn-primary" id="ma-guardar-btn" onclick="guardarAyuda()">Guardar Ayuda</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: VER AYUDA ═══════════════════ -->
-<div class="overlay" id="modal-ver-ayuda">
-  <div class="modal" style="max-width:560px;">
-    <div class="mh" id="mva-header" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
-      <div style="flex:1;min-width:0;">
-        <div class="mh-title" id="mva-titulo" style="color:#fff;font-size:15px;"></div>
-        <div id="mva-cat-badge" style="margin-top:4px;"></div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-ver-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
-        onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc">
-      <pre id="mva-contenido" style="
-        white-space:pre-wrap;word-break:break-word;font-family:var(--font);font-size:0.9rem;
-        line-height:1.7;color:var(--text);background:var(--bg);
-        border:1px solid var(--border);border-radius:8px;padding:14px 16px;
-        max-height:55vh;overflow-y:auto;margin:0;
-      "></pre>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-ver-ayuda')">Cerrar</button>
-      <button class="btn btn-ghost" id="mva-edit-btn" onclick="" style="gap:5px;">Editar</button>
-      <button class="btn btn-primary" id="mva-copy-btn" onclick="" style="gap:5px;border-radius:20px;">
-        <span id="mva-copy-icon"></span> Copiar texto
-      </button>
-    </div>
-    <input type="hidden" id="mva-id">
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: NUEVA VENTA ═══════════════════ -->
-<div class="overlay" id="modal-venta">
-  <div class="modal modal-lg" style="border-radius:18px;overflow:hidden;border:none;max-height:95vh;">
-
-    <!-- Header oscuro -->
-    <div style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
-      <div>
-        <div class="mh-title" id="mv-title" style="color:#fff;font-size:16px;font-weight:800;letter-spacing:-.2px;">Nueva Venta</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;">Completa los campos para registrar</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-venta')" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:10px;font-size:16px;">✕</button>
-    </div>
-
-    <!-- Tabs (solo en edición) -->
-    <div id="mv-tabs" style="display:none;border-bottom:1px solid var(--border);background:#fff;padding:0 24px;">
-      <div style="display:flex;gap:0;">
-        <button id="mv-tab-venta" onclick="_mvTab('venta')"
-          style="padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;border-bottom:2px solid var(--teal);color:var(--teal);font-family:inherit;">
-          Venta
-        </button>
-        <button id="mv-tab-envio" onclick="_mvTab('envio')"
-          style="padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">
-          Envío Externo
-        </button>
-      </div>
-    </div>
-
-    <!-- Body -->
-    <div class="mc" id="mv-body-venta" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
-
-      <!-- Sección 1: Información general -->
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Información general</div>
-      <div class="grid3" style="margin-bottom:16px;">
-        <div class="fg">
-          <label class="fl2">Tienda *</label>
-          <select id="v-tienda"></select>
-        </div>
-        <div class="fg">
-          <label class="fl2">ID Venta ML *</label>
-          <input type="text" id="v-id" placeholder="Ej: 2000015788963928">
-        </div>
-        <div class="fg">
-          <label class="fl2">Fecha de venta *</label>
-          <input type="date" id="v-fecha">
-        </div>
-        <div class="fg">
-          <label class="fl2">Unidades *</label>
-          <input type="number" id="v-udes" value="1" min="1" oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">Precio de venta (COP$) *</label>
-          <input type="text" inputmode="numeric" id="v-cop-venta" placeholder="0" oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">TRM del día <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span></label>
-          <input type="text" inputmode="numeric" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">Costo producto Amazon (USD$) *</label>
-          <input type="text" inputmode="decimal" id="v-costo-usd" placeholder="0.00" oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">Empresa de envío *</label>
-          <select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()">
-            <option value="aguachica" selected>Aguachica</option>
-            <option value="servientrega">Servientrega</option>
-            <option value="otro">Otro</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label>
-          <input type="text" inputmode="numeric" id="v-envio-int-usd" placeholder="0" oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label>
-          <input type="text" inputmode="numeric" id="v-envio-extra" placeholder="0" oninput="recalcVenta()">
-        </div>
-        <div class="fg">
-          <label class="fl2">Validación de envío</label>
-          <select id="v-envio-validado" onchange="_toggleEnvioLock()">
-            <option value="0">Sin validar</option>
-            <option value="1">Validado</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2">Teléfono del cliente</label>
-          <input type="tel" id="v-tel" placeholder="3001234567">
-        </div>
-        <div class="fg" style="grid-column:1/-1;">
-          <label class="fl2">Nota <small class="c-dim">(opcional)</small></label>
-          <textarea id="v-nota" placeholder="Ej: empaque especial" rows="2" style="width:100%;resize:vertical;"></textarea>
-        </div>
-      </div>
-
-      <!-- Resultado en tiempo real -->
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:14px;overflow:hidden;border:1.5px solid var(--border);background:var(--white);box-shadow:0 2px 12px rgba(0,137,123,.08);">
-        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#f0fdf9,#fff);">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ingresos</div>
-          <div id="c-rv-total" style="font-size:20px;font-weight:800;color:var(--teal);">$ 0</div>
-        </div>
-        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#fff5f5,#fff);">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Costos</div>
-          <div id="c-total-costos" style="font-size:20px;font-weight:800;color:var(--red);">$ 0</div>
-        </div>
-        <div style="padding:14px 16px;text-align:center;background:linear-gradient(135deg,#f0fdf4,#fff);">
-          <div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ganancia</div>
-          <div id="c-rv-gan" style="font-size:20px;font-weight:800;color:var(--green);">$ 0</div>
-        </div>
-      </div>
-
-      <!-- campos ocultos -->
-      <input type="hidden" id="v-envio-estimado">
-      <input type="hidden" id="v-envio-real">
-      <input type="hidden" id="v-fuente-pago">
-      <input type="hidden" id="v-monto-pago">
-      <input type="hidden" id="v-ref-pago">
-      <input type="hidden" id="v-costo-cop">
-      <input type="hidden" id="c-rv-margen">
-
-    </div>
-
-    <!-- Cuerpo Envío Externo -->
-    <div id="mv-body-envio" style="display:none;padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">
-        Envío Externo — Skydropx
-      </div>
-      <div id="mv-envio-status" style="margin-bottom:16px;"></div>
-      <div class="grid3" style="margin-bottom:14px;">
-        <div class="fg">
-          <label class="fl2">Fecha *</label>
-          <input type="date" id="mvs-fecha">
-        </div>
-        <div class="fg">
-          <label class="fl2">N° Venta ML</label>
-          <input type="text" id="mvs-num-venta" placeholder="ID automático" readonly style="background:#f3f7f7;color:var(--text2);">
-        </div>
-        <div class="fg">
-          <label class="fl2">N° Guía</label>
-          <input type="text" id="mvs-num-guia" placeholder="Ej: 2289039226">
-        </div>
-      </div>
-      <div class="grid3" style="margin-bottom:14px;">
-        <div class="fg">
-          <label class="fl2">Transportadora</label>
-          <input type="text" id="mvs-transportadora" list="mvs-trans-list" placeholder="Ej: Servientrega">
-          <datalist id="mvs-trans-list">
-            <option value="Servientrega"><option value="Coordinadora"><option value="Envia"><option value="Interrapidisimo"><option value="TCC"><option value="Domina">
-          </datalist>
-        </div>
-        <div class="fg">
-          <label class="fl2">Valor (COP$)</label>
-          <input type="text" inputmode="numeric" id="mvs-valor" placeholder="0">
-        </div>
-        <div class="fg">
-          <label class="fl2">Estado</label>
-          <select id="mvs-estado">
-            <option value="Pendiente">Pendiente</option>
-            <option value="En camino">En camino</option>
-            <option value="Entregado">Entregado</option>
-            <option value="Cancelado">Cancelado</option>
-            <option value="Devuelto">Devuelto</option>
-          </select>
-        </div>
-      </div>
-      <div class="grid2" style="margin-bottom:14px;">
-        <div class="fg">
-          <label class="fl2">Fuente de pago</label>
-          <select id="mvs-fuente">
-            <option value="skydropx">Skydropx</option>
-            <option value="bancolombia">Bancolombia</option>
-            <option value="nequi">Nequi</option>
-            <option value="efectivo">Efectivo</option>
-          </select>
-        </div>
-      </div>
-      <div id="mv-envio-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
-    </div>
-
-    <!-- Footer -->
-    <div style="padding:14px 24px;border-top:1px solid var(--border);background:#f7fafa;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-venta')" style="padding:10px 20px;font-size:13px;">Cancelar</button>
-      <button class="btn btn-primary" id="mv-btn-guardar" onclick="saveVenta()" style="padding:10px 24px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,137,123,.3);">Guardar Venta</button>
-    </div>
-
-  </div>
-</div>
-
-
-<!-- ═══════════════════ MODAL: PAGO MÚLTIPLE ENVÍOS ═══════════════════ -->
-<div class="overlay" id="modal-pago-multiple">
-  <div class="modal modal-lg">
-    <div class="mh">
-      <div class="mh-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Pago múltiple de envíos</div>
-      <button class="mclose" onclick="closeModal('modal-pago-multiple')">✕</button>
-    </div>
-    <div class="mc">
-      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-size:12px;font-weight:600;color:var(--teal-dark);">Total a pagar por los envíos seleccionados</span>
-        <span id="mpm-total" style="font-size:20px;font-weight:700;color:var(--teal-dark);">$ 0</span>
-      </div>
-      <div style="max-height:300px;overflow-y:auto;margin-bottom:14px;" id="mpm-lista"></div>
-      <div class="fg">
-        <label class="fl2">Nota del pago <small class="c-dim">(opcional, aplica a todos)</small></label>
-        <input type="text" id="mpm-nota" placeholder="Ej: pago en efectivo lote marzo...">
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-pago-multiple')">Cancelar</button>
-      <button class="btn btn-success" onclick="confirmarPagoMultiple()">Confirmar pago de todos</button>
-    </div>
-  </div>
-</div>
-
-
-<div class="overlay" id="modal-pago-envio">
-  <div class="modal">
-    <div class="mh">
-      <div class="mh-title">Registrar pago de envío</div>
-      <button class="mclose" onclick="closeModal('modal-pago-envio')">✕</button>
-    </div>
-    <div class="mc">
-      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
-      <div class="fg">
-        <label class="fl2" id="mpe-valor-label">Valor real del envío pagado (COP$) *</label>
-        <input type="text" inputmode="numeric" id="mpe-valor" placeholder="Ej: 19000">
-        <span id="mpe-valor-hint" style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span>
-        <div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;">
-          <span id="mpe-diff-text"></span>
-        </div>
-      </div>
-      <div class="fg">
-        <label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label>
-        <input type="text" id="mpe-nota" placeholder="Ej: pagado en efectivo, guía 12345...">
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-pago-envio')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarPagoEnvio()">Marcar como pagado</button>
-    </div>
-  </div>
-</div>
-
-<div class="overlay" id="modal-tienda">
-  <div class="modal">
-    <div class="mh">
-      <div class="mh-title" id="mt-title">Nueva Tienda</div>
-      <button class="mclose" onclick="closeModal('modal-tienda')">✕</button>
-    </div>
-    <div class="mc">
-      <!-- Foto de perfil -->
-      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:18px;">
-        <div id="t-foto-preview" onclick="document.getElementById('t-foto-input').click()"
-          style="width:80px;height:80px;border-radius:50%;border:3px dashed var(--border);
-                 background:var(--bg);display:flex;align-items:center;justify-content:center;
-                 cursor:pointer;overflow:hidden;transition:border-color .2s;"
-          onmouseover="this.style.borderColor='var(--teal)'"
-          onmouseout="this.style.borderColor='var(--border)'">
-          <span style="font-size:28px;opacity:.4;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span>
-        </div>
-        <input type="file" id="t-foto-input" accept="image/*" style="display:none"
-          onchange="previewFotoTienda(this)">
-        <span style="font-size:10px;color:var(--text3);">Clic para subir foto de perfil</span>
-        <input type="hidden" id="t-foto-data">
-      </div>
-      <div class="grid2">
-        <div class="fg span2"><label class="fl2">Nombre de la tienda *</label><input type="text" id="t-nombre" placeholder="Ej: SATARDSHOP"></div>
-        <div class="fg"><label class="fl2">Responsable</label><input type="text" id="t-resp" placeholder="Nombre del encargado"></div>
-        <div class="fg">
-          <label class="fl2">Estado de la tienda</label>
-          <select id="t-estado">
-            <option value="activa"> Activa</option>
-            <option value="inactiva"> Inactiva</option>
-          </select>
-        </div>
-        <div class="fg"><label class="fl2">Plataforma Mercado Pago</label><input type="text" id="t-mp-cuenta" placeholder="Ej: @satardshop"></div>
-        <div class="fg"><label class="fl2">Color identificativo</label><input type="color" id="t-color" value="#00897b" style="height:36px;padding:3px;"></div>
-        <div class="fg span2"><label class="fl2">Observaciones</label><textarea id="t-obs" rows="2" style="width:100%;resize:none;"></textarea></div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-tienda')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveTienda()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: PROBLEMA ═══════════════════ -->
-<div class="overlay" id="modal-problema">
-  <div class="modal modal-lg">
-    <div class="mh">
-      <div class="mh-title" id="mp-title">Registrar Problema</div>
-      <button class="mclose" onclick="closeModal('modal-problema')">✕</button>
-    </div>
-    <div class="mc">
-      <div class="fsec">Buscar venta relacionada</div>
-      <div class="fg">
-        <label class="fl2">ID de la venta o nombre del producto</label>
-        <div class="frow" style="gap:6px;">
-          <input type="text" id="p-buscar" placeholder="Ej: 2000015788963928 o 'Teclado'" style="flex:1;">
-          <button class="btn btn-ghost btn-sm" onclick="buscarVentaProblema()">Buscar</button>
-        </div>
-        <div id="p-buscar-resultado" style="margin-top:6px;"></div>
-      </div>
-      <div class="fg">
-        <label class="fl2">Número de venta <small class="c-dim">(opcional — si no está en Gestor de Ventas, escríbelo manualmente)</small></label>
-        <input type="text" id="p-num-venta-manual" placeholder="Ej: 2000015788963928 o referencia propia">
-      </div>
-
-      <div class="fsec">Datos del problema</div>
-      <div class="grid2">
-        <div class="fg">
-          <label class="fl2">Fecha del problema</label>
-          <input type="date" id="p-fecha">
-        </div>
-        <div class="fg">
-          <label class="fl2">Tipo de problema *</label>
-          <select id="p-tipo">
-          </select>
-        </div>
-        <div class="fg span2">
-          <label class="fl2">¿Qué sucedió? *</label>
-          <textarea id="p-descripcion" rows="3" style="width:100%;resize:none;" placeholder="Describe con detalle el problema..."></textarea>
-        </div>
-        <div class="fg span2">
-          <label class="fl2">Solución planteada</label>
-          <textarea id="p-solucion" rows="2" style="width:100%;resize:none;" placeholder="¿Qué se hará o qué se hizo?"></textarea>
-        </div>
-        <div class="fg">
-          <label class="fl2">Estado</label>
-          <select id="p-estado">
-            <option value="abierto">Abierto — sin resolver</option>
-            <option value="resuelto">Resuelto</option>
-            <option value="perdida">Resuelto con pérdida</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2">Valor de la pérdida (COP) <small class="c-dim">si aplica</small></label>
-          <input type="number" id="p-perdida" placeholder="0">
-        </div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveProblema()">Guardar Problema</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: DETALLE VENTA ═══════════════════ -->
-<div class="overlay" id="modal-detalle">
-  <div class="modal modal-xl">
-    <div class="mh">
-      <div class="mh-title" id="md-title">Detalle de Venta</div>
-      <button class="mclose" onclick="closeModal('modal-detalle')">✕</button>
-    </div>
-    <div class="mc" id="md-body"></div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button>
-      <button class="btn btn-primary btn-sm" id="md-btn-problema"> Registrar Problema</button>
-      <button class="btn btn-ghost btn-sm" id="md-btn-editar"> Editar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: MOVIMIENTO FINANCIERO ═══════════════════ -->
-<div class="overlay" id="modal-movimiento">
-  <div class="modal">
-    <div class="mh">
-      <div class="mh-title" id="mov-title">Nuevo Movimiento</div>
-      <button class="mclose" onclick="closeModal('modal-movimiento')">✕</button>
-    </div>
-    <div class="mc">
-      <div class="grid2">
-        <div class="fg">
-          <label class="fl2">Fecha</label>
-          <input type="date" id="mov-fecha">
-        </div>
-        <div class="fg">
-          <label class="fl2">Tipo *</label>
-          <select id="mov-tipo" onchange="_actualizarPreviewMovimiento()">
-            <option value="ingreso"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="5 12 12 5 19 12"/></svg> Ingreso</option>
-            <option value="egreso" selected><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg> Egreso / Gasto</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2">Fuente / Cuenta *</label>
-          <select id="mov-fuente" onchange="_actualizarPreviewMovimiento()">
-            <option value="mercadopago"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Mercado Pago</option>
-            <option value="bancolombia"> Bancolombia</option>
-            <option value="nequi"> Nequi</option>
-            <option value="daviplata"> Daviplata</option>
-            <option value="efectivo"> Efectivo</option>
-            <option value="tarjeta_credito"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Tarjeta de crédito</option>
-            <option value="otro"> Otro</option>
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2">Valor (COP$) *</label>
-          <input type="text" inputmode="numeric" id="mov-valor" placeholder="0" oninput="_actualizarPreviewMovimiento()">
-        </div>
-        <div class="fg span2" id="mov-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0;">
-          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px;" id="mov-preview-fuente-label">Fuente</div>
-          <div style="font-size:12px;color:var(--text2);">Antes: <strong id="mov-preview-antes">$ 0</strong> &nbsp;→&nbsp; Después: <strong id="mov-preview-despues">$ 0</strong></div>
-        </div>
-        <div class="fg span2">
-          <label class="fl2">Concepto *</label>
-          <input type="text" id="mov-concepto" placeholder="Ej: Pago Amazon, recarga MP, comisión ML...">
-        </div>
-        <div class="fg span2">
-          <label class="fl2">Notas</label>
-          <textarea id="mov-notas" rows="2" style="width:100%;resize:none;" placeholder="Observaciones adicionales..."></textarea>
-        </div>
-        <div class="fg span2" id="mov-err" style="margin:0;color:var(--red);font-size:12px;min-height:14px;"></div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-movimiento')">Cancelar</button>
-      <button class="btn btn-primary" id="mov-save-btn" onclick="saveMovimiento()">Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: MEMBRESÍA CENTRIS ═══════════════════ -->
-<div class="overlay" id="modal-membresia">
-  <div class="modal">
-    <div class="mh" style="background:linear-gradient(135deg, #1a2332 0%, #243049 60%, #1e3a5f 100%); color:#fff;">
-      <div class="mh-title" style="color:#fff;">Pago Membresía Centris</div>
-      <button class="mclose" onclick="closeModal('modal-membresia')" style="background:rgba(255,255,255,.1); border:none; color:#fff;">✕</button>
-    </div>
-    <div class="mc">
-      <div style="background:var(--teal-bg);border:1px solid #b8d8d8;border-radius:var(--radius);padding:10px 12px;margin-bottom:14px;font-size:12px;color:var(--teal-dark);">
-        ℹ️ Registra el pago mensual del software Centris para el manejo de tus tiendas ML.
-      </div>
-      <div class="grid2">
-        <div class="fg">
-          <label class="fl2">Mes correspondiente</label>
-          <input type="month" id="mem-mes">
-        </div>
-        <div class="fg">
-          <label class="fl2">Valor pagado (COP$) *</label>
-          <input type="number" id="mem-valor" placeholder="0" step="1">
-        </div>
-        <div class="fg">
-          <label class="fl2">Pagado con</label>
-          <select id="mem-fuente">
-          </select>
-        </div>
-        <div class="fg">
-          <label class="fl2">Fecha de pago</label>
-          <input type="date" id="mem-fecha">
-        </div>
-        <div class="fg span2">
-          <label class="fl2">Observaciones</label>
-          <input type="text" id="mem-obs" placeholder="Ej: Plan pro, descuento aplicado...">
-        </div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-membresia')">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveMembresia()"> Guardar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: NUEVA BILLETERA ═══════════════════ -->
-
-
-<!-- ═══════════════════ MODAL: CAMBIAR CÓDIGO ═══════════════════ -->
-<div class="overlay" id="modal-cambiar-codigo">
-  <div class="modal" style="max-width:420px;">
-    <div class="mh">
-      <div class="mh-title">Cambiar Código de Acceso</div>
-      <button class="mclose" onclick="closeModal('modal-cambiar-codigo')">✕</button>
-    </div>
-    <div class="mc">
-      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius);padding:10px 12px;margin-bottom:16px;font-size:12px;color:var(--teal-dark);">
-        ℹ️ El nuevo código se guardará de forma segura (cifrado SHA-256) en Firebase.
-      </div>
-      <div class="fg">
-        <label class="fl2">Código actual *</label>
-        <input type="password" id="cc-actual" placeholder="Ingresa el código actual">
-      </div>
-      <div class="fg">
-        <label class="fl2">Nuevo código *</label>
-        <input type="password" id="cc-nuevo" placeholder="Mínimo 4 caracteres">
-      </div>
-      <div class="fg">
-        <label class="fl2">Confirmar nuevo código *</label>
-        <input type="password" id="cc-confirmar" placeholder="Repite el nuevo código">
-      </div>
-      <div id="cc-error" style="font-size:12px;color:var(--red);margin-top:4px;min-height:18px;"></div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-cambiar-codigo')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarNuevoCodigo()">Guardar Código</button>
-    </div>
-  </div>
-</div>
 
 
 <!-- Firebase SDK -->
@@ -1718,283 +1143,173 @@
 <!-- 1. Firebase: config, caché, DB -->
 <script src="js/firebase.js"></script>
 <script>
-// ── Utilidades de autenticación compartidas ──
 async function _hashCode(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
-// ── Avatar upload ──
 function _applyAvatar(data) {
   localStorage.setItem('sm_avatar', data);
   const prev = document.getElementById('cfg-avatar-preview');
   if (prev) prev.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
   const remBtn = document.getElementById('cfg-avatar-remove');
   if (remBtn) remBtn.style.display = '';
-  const img  = document.getElementById('sb-avatar-img');
+  const img = document.getElementById('sb-avatar-img');
   const icon = document.getElementById('sb-avatar-icon');
   if (img && icon) { img.src = data; img.style.display = 'block'; icon.style.display = 'none'; }
 }
-
 function _uploadAvatar(input) {
-  const file = input.files[0];
-  if (!file) return;
+  const file = input.files[0]; if (!file) return;
   const reader = new FileReader();
   reader.onload = async function(e) {
-    const data = e.target.result;
-    _applyAvatar(data);
-    // Guardar en Firestore
-    try {
-      await _cfg('perfil').set({ foto: data }, { merge: true });
-      showToast('Foto guardada', 'success', 2000);
-    } catch(err) {
-      console.error('Error guardando foto:', err);
-      showToast('Error al guardar foto', 'error', 2500);
-    }
+    const data = e.target.result; _applyAvatar(data);
+    try { await _cfg('perfil').set({ foto: data }, { merge: true }); showToast('Foto guardada', 'success', 2000); }
+    catch(err) { showToast('Error al guardar foto', 'error', 2500); }
   };
   reader.readAsDataURL(file);
 }
-
 async function _removeAvatar() {
   localStorage.removeItem('sm_avatar');
   const prev = document.getElementById('cfg-avatar-preview');
   if (prev) prev.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
   const remBtn = document.getElementById('cfg-avatar-remove');
   if (remBtn) remBtn.style.display = 'none';
-  const img  = document.getElementById('sb-avatar-img');
+  const img = document.getElementById('sb-avatar-img');
   const icon = document.getElementById('sb-avatar-icon');
   if (img && icon) { img.style.display = 'none'; icon.style.display = ''; }
-  try {
-    await _cfg('perfil').set({ foto: '' }, { merge: true });
-    showToast('Foto eliminada', 'success', 2000);
-  } catch(err) { showToast('Error al eliminar foto', 'error', 2500); }
+  try { await _cfg('perfil').set({ foto: '' }, { merge: true }); showToast('Foto eliminada', 'success', 2000); }
+  catch(err) { showToast('Error al eliminar foto', 'error', 2500); }
 }
-
-// Carga avatar: primero localStorage (rápido), luego Firestore (actualizado)
 async function _loadCfgAvatar() {
-  // 1. Mostrar desde caché local inmediatamente
   const cached = localStorage.getItem('sm_avatar');
   if (cached) _applyAvatar(cached);
-  // 2. Luego cargar desde Firestore y sincronizar
   try {
     const snap = await _cfg('perfil').get();
     if (snap.exists) {
       const foto = snap.data().foto || '';
-      if (foto && foto !== cached) {
-        _applyAvatar(foto);
-      } else if (!foto && cached) {
-        // Firestore dice sin foto, limpiar local también
-        localStorage.removeItem('sm_avatar');
-      }
+      if (foto && foto !== cached) _applyAvatar(foto);
+      else if (!foto && cached) localStorage.removeItem('sm_avatar');
     }
-  } catch(err) { console.warn('No se pudo cargar foto desde Firestore:', err); }
+  } catch(err) {}
   const prev = document.getElementById('cfg-avatar-preview');
   const remBtn = document.getElementById('cfg-avatar-remove');
   const foto = localStorage.getItem('sm_avatar');
-  if (foto && prev) {
-    prev.innerHTML = `<img src="${foto}" style="width:100%;height:100%;object-fit:cover;">`;
-    if (remBtn) remBtn.style.display = '';
-  }
+  if (foto && prev) { prev.innerHTML = `<img src="${foto}" style="width:100%;height:100%;object-fit:cover;">`; if (remBtn) remBtn.style.display = ''; }
 }
-
 async function _verificarCodigoAcceso(codigo) {
   if (!codigo) return false;
   const hash = await _hashCode(codigo);
-  try {
-    const snap = await _getAuthDoc();
-    if (!snap.exists) return false;
-    return snap.data().hash === hash;
-  } catch(e) { console.error('Error verificando código:', e); return false; }
+  try { const snap = await _getAuthDoc(); if (!snap.exists) return false; return snap.data().hash === hash; }
+  catch(e) { return false; }
 }
-
 </script>
 
 <!-- 2. Core: utils, TRM, calcVenta, navegación -->
+<script src="js/core.js"></script>
 
+<!-- 3. Módulos de negocio -->
 <script>
-// ── Tab switcher Envíos ──
 function _switchEnvTab(tab) {
-  var isNac  = tab === 'internacionales';
-  var panelA = document.getElementById(isNac  ? 'panel-env-internacionales' : 'panel-env-externos');
+  var isNac = tab === 'internacionales';
+  var panelA = document.getElementById(isNac ? 'panel-env-internacionales' : 'panel-env-externos');
   var panelB = document.getElementById(!isNac ? 'panel-env-internacionales' : 'panel-env-externos');
   var tabNac = document.getElementById('tab-env-internacionales');
   var tabExt = document.getElementById('tab-env-externos');
-
-  // Save tab in URL hash
   var hashTab = isNac ? '#envios' : '#envios-externos';
   if (location.hash !== hashTab) history.replaceState(null, '', hashTab);
-
-  // Update tabs immediately
   tabNac.style.color        = isNac  ? '#1a4fa8' : 'var(--text3)';
   tabNac.style.borderBottom = isNac  ? '2px solid #1a4fa8' : '2px solid transparent';
   tabNac.style.fontWeight   = isNac  ? '700' : '600';
   tabExt.style.color        = !isNac ? '#1a4fa8' : 'var(--text3)';
   tabExt.style.borderBottom = !isNac ? '2px solid #1a4fa8' : '2px solid transparent';
   tabExt.style.fontWeight   = !isNac ? '700' : '600';
-
-  // Fade out current panel
   panelB.style.transition = 'opacity .15s';
-  panelB.style.opacity    = '0';
-
+  panelB.style.opacity = '0';
   setTimeout(function() {
-    panelB.style.display = 'none';
-    panelB.style.opacity = '';
-    panelB.style.transition = '';
-
-    // Show spinner in target panel briefly
-    panelA.style.display   = 'block';
-    panelA.style.opacity   = '0';
-    panelA.style.transition= 'opacity .2s';
-
-    // Show spinner overlay
+    panelB.style.display = 'none'; panelB.style.opacity = ''; panelB.style.transition = '';
+    panelA.style.display = 'block'; panelA.style.opacity = '0'; panelA.style.transition = 'opacity .2s';
     var spinner = document.getElementById('env-tab-spinner');
-    if (spinner) { spinner.style.display = 'flex'; }
-
+    if (spinner) spinner.style.display = 'flex';
     setTimeout(function() {
       if (spinner) spinner.style.display = 'none';
       panelA.style.opacity = '1';
       if (!isNac) _initEnviosSkyPanel();
     }, 500);
-
   }, 150);
 }
-// ── Alias por compatibilidad ──
 function _toggleEnviosExternos() { _switchEnvTab('externos'); }
-
-// ── Actualizar TODO el módulo de envíos sin cambiar pestaña ──
 async function _refreshTodoEnvios() {
   var btn = document.getElementById('btn-actualizar-envios');
   var svg = btn ? btn.querySelector('svg') : null;
   if (btn) { btn.disabled = true; btn.style.opacity = '.7'; }
   if (svg) svg.style.animation = '_envSpinAnim .6s linear infinite';
-
-  var enExternos = document.getElementById('panel-env-externos') &&
-                   document.getElementById('panel-env-externos').style.display !== 'none';
+  var enExternos = document.getElementById('panel-env-externos') && document.getElementById('panel-env-externos').style.display !== 'none';
   try {
     Object.keys(_cache).forEach(function(k){ _cache[k] = null; });
     await _cargarTodo();
     await render('envios');
-    if (enExternos) {
-      var sel = document.getElementById('sky-filtro-mes');
-      if (sel) sel.dataset.init = '';
-      await _initEnviosSkyPanel();
-      // Restaurar pestaña externa
-      _switchEnvTab('externos');
-    }
-  } catch(e) { console.error('Error al actualizar:', e); }
-
+    if (enExternos) { var sel = document.getElementById('sky-filtro-mes'); if (sel) sel.dataset.init = ''; await _initEnviosSkyPanel(); _switchEnvTab('externos'); }
+  } catch(e) { console.error(e); }
   if (btn) { btn.disabled = false; btn.style.opacity = ''; }
   if (svg) svg.style.animation = '';
 }
-
-// ── Actualizar panel Skydropx manualmente ──
 async function _refreshEnviosSky() {
-  const btn = document.getElementById('btn-actualizar-sky');
-  const svg = btn ? btn.querySelector('svg') : null;
-  if (btn) { btn.disabled = true; btn.style.opacity = '.7'; }
-  if (svg) svg.style.animation = '_envSpinAnim .6s linear infinite';
   try {
-    // Recargar desde Firestore usando _col de firebase.js
-    try {
-      var freshSnap = await _col('envios_sky').get();
-      _cache.envios_sky = freshSnap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
-    } catch(fetchErr) {
-      console.error('Error recargando envios_sky:', fetchErr);
-    }
-    await _renderEnviosSkyPanel();
-  } catch(e) { console.error('Error al actualizar sky:', e); }
-  if (btn) { btn.disabled = false; btn.style.opacity = ''; }
-  if (svg) svg.style.animation = '';
+    var freshSnap = await _col('envios_sky').get();
+    _cache.envios_sky = freshSnap.docs.map(function(d){ return Object.assign({id:d.id}, d.data()); });
+  } catch(fetchErr) { console.error(fetchErr); }
+  await _renderEnviosSkyPanel();
 }
-
 async function _initEnviosSkyPanel() {
   var sel = document.getElementById('sky-filtro-mes');
   if (sel && !sel.dataset.init) {
     var M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    var meses = Array.from({length:12}, function(_,i){
-      var d = new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7);
-    });
-    sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(function(m){
-      var parts = m.split('-');
-      return '<option value="'+m+'">'+M[parseInt(parts[1],10)-1]+' '+parts[0]+'</option>';
-    }).join('');
+    var meses = Array.from({length:12}, function(_,i){ var d = new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7); });
+    sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(function(m){ var parts = m.split('-'); return '<option value="'+m+'">'+M[parseInt(parts[1],10)-1]+' '+parts[0]+'</option>'; }).join('');
     sel.dataset.init = '1';
   }
   await _renderEnviosSkyPanel();
 }
-
 async function _renderEnviosSkyPanel() {
-  var el  = document.getElementById('envios-sky-panel');
+  var el = document.getElementById('envios-sky-panel');
   var mesFiltro = (document.getElementById('sky-filtro-mes')||{}).value || '';
   if (!el) return;
-
   var enviosSky = await DB.envios_sky();
-  var skyMes    = mesFiltro
-    ? enviosSky.filter(function(e){ return (e.fecha||'').startsWith(mesFiltro); })
-    : enviosSky.slice();
+  var skyMes = mesFiltro ? enviosSky.filter(function(e){ return (e.fecha||'').startsWith(mesFiltro); }) : enviosSky.slice();
   skyMes.sort(function(a,b){ return (b.fecha||'').localeCompare(a.fecha||''); });
-  var total     = skyMes.reduce(function(s,e){ return s+(parseFloat(e.valor)||0); }, 0);
-
+  var total = skyMes.reduce(function(s,e){ return s+(parseFloat(e.valor)||0); }, 0);
   var resEl = document.getElementById('sky-resumen-total');
-  if (resEl) resEl.innerHTML = skyMes.length
-    ? 'Total: <strong style="color:#dc2626;">'+fmt(total)+'</strong> &nbsp;·&nbsp; '+skyMes.length+' envío'+(skyMes.length!==1?'s':'')
-    : '';
-
-  if (!skyMes.length) {
-    el.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text3);font-size:12px;">Sin envíos Skydropx en este período.<br><span style="font-size:11px;">Usa el botón &quot;+ Registrar envío&quot; para agregar.</span></div>';
-    return;
-  }
-
-  var PILL = {
-    'Pendiente': {bg:'#ffc000',color:'#000'}, 'En camino': {bg:'#70ad47',color:'#fff'},
-    'Entregado': {bg:'#002060',color:'#fff'}, 'Novedad':   {bg:'#ff0000',color:'#fff'},
-  };
-
+  if (resEl) resEl.innerHTML = skyMes.length ? 'Total: <strong style="color:#dc2626;">'+fmt(total)+'</strong> &nbsp;·&nbsp; '+skyMes.length+' envío'+(skyMes.length!==1?'s':'') : '';
+  if (!skyMes.length) { el.innerHTML = '<div style="text-align:center;padding:28px;color:var(--text3);font-size:12px;">Sin envíos Skydropx en este período.</div>'; return; }
+  var PILL = {'Pendiente':{bg:'#ffc000',color:'#000'},'En camino':{bg:'#70ad47',color:'#fff'},'Entregado':{bg:'#002060',color:'#fff'},'Novedad':{bg:'#ff0000',color:'#fff'}};
   var rows = skyMes.map(function(e){
-    var p = PILL[e.estado||'Pendiente'] || PILL['Pendiente'];
-    var fl = FUENTES_LABEL[e.fuente_pago] || e.fuente_pago || 'Skydropx';
-    var id = e.id; var nv = e.num_venta||''; var ng = e.num_guia||'';
+    var p = PILL[e.estado||'Pendiente']||PILL['Pendiente'];
+    var fl = FUENTES_LABEL[e.fuente_pago]||e.fuente_pago||'Skydropx';
+    var id=e.id,nv=e.num_venta||'',ng=e.num_guia||'';
     return '<tr style="border-bottom:1px solid var(--border);">'
-      + '<td style="padding:8px 10px;font-size:12px;color:var(--text3);">'+fmtFecha(e.fecha)+'</td>'
-      + '<td style="padding:8px 10px;">'+(nv?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+nv+'">'+nv+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
-      + '<td style="padding:8px 10px;">'+(ng?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+ng+'">'+ng+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
-      + '<td style="padding:8px 10px;font-size:13px;font-weight:600;">'+(e.transportadora||'—')+'</td>'
-      + '<td style="padding:8px 10px;"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+p.bg+';color:'+p.color+';">'+(e.estado||'Pendiente')+'</span></td>'
-      + '<td style="padding:8px 10px;font-size:13px;">'+fmt(e.valor)+'</td>'
-      + '<td style="padding:8px 10px;font-size:11px;color:var(--text3);">'+fl+'</td>'
-      + '<td style="padding:8px 6px;text-align:center;white-space:nowrap;">'
-      + '<button class="btn btn-ghost btn-icon btn-sm" data-id="'+id+'" onclick="openModalEnvioSky(this.dataset.id)" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
-      + '<button class="btn btn-danger btn-icon btn-sm" data-id="'+id+'" onclick="deleteEnvioSky(this.dataset.id)" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>'
-      + '</td></tr>';
+      +'<td style="padding:8px 10px;font-size:12px;color:var(--text3);">'+fmtFecha(e.fecha)+'</td>'
+      +'<td style="padding:8px 10px;">'+(nv?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+nv+'">'+nv+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
+      +'<td style="padding:8px 10px;">'+(ng?'<span class="venta-id" onclick="copiarIdVenta(this.dataset.v,this)" data-v="'+ng+'">'+ng+'</span>':'<span style="color:var(--text3);">—</span>')+'</td>'
+      +'<td style="padding:8px 10px;font-size:13px;font-weight:600;">'+(e.transportadora||'—')+'</td>'
+      +'<td style="padding:8px 10px;"><span style="display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:'+p.bg+';color:'+p.color+';">'+(e.estado||'Pendiente')+'</span></td>'
+      +'<td style="padding:8px 10px;font-size:13px;">'+fmt(e.valor)+'</td>'
+      +'<td style="padding:8px 10px;font-size:11px;color:var(--text3);">'+fl+'</td>'
+      +'<td style="padding:8px 6px;text-align:center;white-space:nowrap;">'
+      +'<button class="btn btn-ghost btn-icon btn-sm" data-id="'+id+'" onclick="openModalEnvioSky(this.dataset.id)" title="Editar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>'
+      +'<button class="btn btn-danger btn-icon btn-sm" data-id="'+id+'" onclick="deleteEnvioSky(this.dataset.id)" title="Eliminar"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></button>'
+      +'</td></tr>';
   }).join('');
-
-  el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">'
-    + '<thead><tr style="border-bottom:2px solid var(--border);">'
-    + ['Fecha','N° Venta','Guía','Transportadora','Estado','Valor','Pagado desde',''].map(function(h){
-        return '<th style="padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;">'+h+'</th>';
-      }).join('')
-    + '</tr></thead><tbody>'+rows+'</tbody></table></div>';
-
-  // Animación de entrada suave para las filas
+  el.innerHTML = '<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;"><thead><tr style="border-bottom:2px solid var(--border);">'+['Fecha','N° Venta','Guía','Transportadora','Estado','Valor','Pagado desde',''].map(function(h){ return '<th style="padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;">'+h+'</th>'; }).join('')+'</tr></thead><tbody>'+rows+'</tbody></table></div>';
   requestAnimationFrame(function() {
     var trs = el.querySelectorAll('tbody tr');
     trs.forEach(function(row, i) {
-      row.style.opacity = '0';
-      row.style.transform = 'translateY(12px)';
-      var delay = i * 18;
-      requestAnimationFrame(function() {
-        row.style.transition = 'opacity .2s ease '+delay+'ms, transform .2s ease '+delay+'ms';
-        row.style.opacity = '1';
-        row.style.transform = 'translateY(0)';
-        setTimeout(function(){ row.style.transition=''; row.style.transform=''; }, 250+delay);
-      });
+      row.style.opacity='0'; row.style.transform='translateY(12px)';
+      var delay=i*18;
+      requestAnimationFrame(function(){ row.style.transition='opacity .2s ease '+delay+'ms, transform .2s ease '+delay+'ms'; row.style.opacity='1'; row.style.transform='translateY(0)'; setTimeout(function(){ row.style.transition=''; row.style.transform=''; }, 250+delay); });
     });
   });
 }
 </script>
 
-<script src="js/core.js"></script>
-
-<!-- 3. Módulos de negocio -->
 <script src="js/mod-finanzas.js"></script>
 <script src="js/mod-ventas.js"></script>
 <script src="js/mod-tiendas.js"></script>
@@ -2009,234 +1324,293 @@ async function _renderEnviosSkyPanel() {
 <!-- 4. Init: autenticación, toast, spinner, arranque -->
 <script src="js/app-init.js"></script>
 
-<!-- ═══════════════════ MODAL: GESTIONAR CATEGORÍAS DE PROBLEMA ═══════════════════ -->
-<div class="overlay" id="modal-categorias">
-  <div class="modal" style="max-width:480px;">
+<!-- ═══════════════════ MODALES ═══════════════════ -->
+<!-- ═══════════════════ MODAL: NUEVA / EDITAR AYUDA ═══════════════════ -->
+<div class="overlay" id="modal-ayuda">
+  <div class="modal" style="max-width:560px;">
     <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
       <div>
-        <div class="mh-title" style="color:#fff;font-size:15px;"> Categorías de Problema</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div>
+        <div class="mh-title" id="ma-title" style="color:#fff;font-size:15px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Nueva Ayuda</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Agrega un mensaje o instrucción reutilizable</div>
       </div>
-      <button class="mclose" onclick="closeModal('modal-categorias')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
-               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
-        onmouseover="this.style.background='rgba(255,255,255,.25)'"
-        onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+      <button class="mclose" onclick="closeModal('modal-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+        onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
-    <div class="mc" style="padding:16px 20px;">
-      <div id="cat-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div>
-      <div style="border-top:1px solid var(--border);padding-top:14px;">
-        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;
-                    color:var(--text2);margin-bottom:8px;">Nueva categoría</div>
+    <div class="mc">
+      <div class="fg"><label class="fl2">Título de la ayuda <span style="color:var(--red);">*</span></label><input type="text" id="ma-titulo" placeholder="Ej: Para pedir reembolso en Amazon"></div>
+      <div class="fg">
+        <label class="fl2">Categoría</label>
         <div style="display:flex;gap:8px;">
-          <input type="text" id="cat-nueva-label" placeholder="Ej: Fraude, Garantía..."
-            style="flex:1;border-radius:8px;"
-            onkeydown="if(event.key==='Enter') agregarCat()"
-            onfocus="this.style.borderColor='var(--teal)'"
-            onblur="this.style.borderColor='var(--border)'">
-          <button onclick="agregarCat()" class="btn btn-primary btn-sm" style="border-radius:8px;white-space:nowrap;">+ Agregar</button>
-        </div>
-      </div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-categorias')">Cerrar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL: CONFIRMAR ELIMINAR AYUDA ═══════════════════ -->
-<div class="overlay" id="modal-delete-ayuda">
-  <div class="modal" style="max-width:400px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 100%);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:15px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Eliminar ayuda</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Esta acción no se puede deshacer</div>
-      </div>
-      <button class="mclose" onclick="_cancelarEliminarAyuda()"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
-               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'"
-        onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="text-align:center;padding:28px 24px 20px;">
-      <div style="font-size:36px;margin-bottom:14px;animation:ayudaIn .3s ease;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>️</div>
-      <div style="font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.4;"
-           id="mdel-ayuda-nombre"></div>
-      <div id="mdel-ayuda-cat" style="margin-bottom:16px;"></div>
-      <div style="font-size:0.82rem;color:var(--text2);background:var(--red-bg);
-                  border:1px solid #fecaca;border-radius:8px;padding:10px 14px;">
-        ¿Estás seguro que quieres eliminar esta ayuda?
-      </div>
-    </div>
-    <div class="mf" style="gap:10px;">
-      <button class="btn btn-ghost" onclick="_cancelarEliminarAyuda()" style="flex:1;">Cancelar</button>
-      <button onclick="_confirmarEliminarAyuda()" style="
-        flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;
-        font-size:0.85rem;font-weight:700;font-family:inherit;
-        background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;
-        box-shadow:0 3px 10px rgba(220,38,38,.35);transition:opacity .15s;"
-        onmouseover="this.style.opacity='.88'" onmouseout="this.style.opacity='1'">
-        Sí, eliminar
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL ENVÍO SKYDROPX ═══════════════════ -->
-<div class="overlay" id="modal-envio-sky">
-  <div class="modal" style="max-width:480px;">
-    <div class="mh" style="background:linear-gradient(135deg,#1e3a5f,#243049);color:#fff;">
-      <div>
-        <div class="mh-title" id="modal-envio-sky-title" style="color:#fff;font-size:15px;">Registrar Envío Skydropx</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Se descontará automáticamente del saldo origen</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-envio-sky')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
-      <div class="g2">
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Fecha</label>
-          <input type="date" id="sky-fecha">
-        </div>
-        <div class="fg" style="margin:0;">
-          <label class="fl2">N° Venta</label>
-          <input type="text" id="sky-num-venta" placeholder="Ej: 2000012345678">
-        </div>
-      </div>
-      <div class="g2">
-        <div class="fg" style="margin:0;">
-          <label class="fl2">N° Guía</label>
-          <input type="text" id="sky-num-guia" placeholder="Código de guía">
-        </div>
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Transportadora</label>
-          <input type="text" id="sky-transportadora" list="sky-trans-list" placeholder="Ej: Servientrega"
-            style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
-          <datalist id="sky-trans-list">
-            <option value="Servientrega">
-            <option value="Coordinadora">
-            <option value="Envia">
-            <option value="Interrapidisimo">
-            <option value="TCC">
-            <option value="Domina">
-          </datalist>
-        </div>
-      </div>
-      <div class="g2">
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Estado del envío</label>
-          <select id="sky-estado" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
-            <option value="Pendiente">Pendiente</option>
-            <option value="En camino">En camino</option>
-            <option value="Entregado">Entregado</option>
-            <option value="Novedad">Novedad</option>
+          <select id="ma-categoria" style="flex:1;">
+            <option value="general">General</option><option value="reembolso">Reembolso</option>
+            <option value="demoras">Demoras</option><option value="cliente">Cliente</option>
+            <option value="amazon">Amazon</option><option value="mercadolibre">Mercado Libre</option>
+            <option value="envios">Envíos</option><option value="rastreo">Rastreo</option>
+            <option value="infracciones">Infracciones</option><option value="otro">Otro</option>
           </select>
+          <input type="text" id="ma-cat-nueva" placeholder="O escribe una nueva..." style="flex:1;">
         </div>
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Valor (COP$)</label>
-          <input type="text" inputmode="numeric" id="sky-valor" placeholder="0">
-        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:2px;">Selecciona una existente <em>o</em> escribe una nueva en el campo de la derecha.</div>
       </div>
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Descontar de</label>
-        <select id="sky-fuente" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select>
+      <div class="fg"><label class="fl2">Color de categoría</label><div id="ma-colores" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:2px;"></div></div>
+      <div class="fg"><label class="fl2">Contenido / Mensaje <span style="color:var(--red);">*</span></label><textarea id="ma-contenido" rows="7" placeholder="Escribe aquí el mensaje o instrucción..." style="width:100%;resize:vertical;font-size:0.85rem;border-radius:8px;"></textarea></div>
+      <input type="hidden" id="ma-id"><input type="hidden" id="ma-color" value="#00897b">
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-ayuda')">Cancelar</button><button class="btn btn-primary" id="ma-guardar-btn" onclick="guardarAyuda()">Guardar Ayuda</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: VER AYUDA ═══════════════════ -->
+<div class="overlay" id="modal-ver-ayuda">
+  <div class="modal" style="max-width:560px;">
+    <div class="mh" id="mva-header" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
+      <div style="flex:1;min-width:0;">
+        <div class="mh-title" id="mva-titulo" style="color:#fff;font-size:15px;"></div>
+        <div id="mva-cat-badge" style="margin-top:4px;"></div>
       </div>
+      <button class="mclose" onclick="closeModal('modal-ver-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+    </div>
+    <div class="mc">
+      <pre id="mva-contenido" style="white-space:pre-wrap;word-break:break-word;font-family:var(--font);font-size:0.9rem;line-height:1.7;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;max-height:55vh;overflow-y:auto;margin:0;"></pre>
     </div>
     <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-envio-sky')" style="flex:1;">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEnvioSky()" style="flex:1;">Guardar envío</button>
+      <button class="btn btn-ghost" onclick="closeModal('modal-ver-ayuda')">Cerrar</button>
+      <button class="btn btn-ghost" id="mva-edit-btn" onclick="" style="gap:5px;">Editar</button>
+      <button class="btn btn-primary" id="mva-copy-btn" onclick="" style="gap:5px;border-radius:20px;"><span id="mva-copy-icon"></span> Copiar texto</button>
+    </div>
+    <input type="hidden" id="mva-id">
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: NUEVA VENTA ═══════════════════ -->
+<div class="overlay" id="modal-venta">
+  <div class="modal modal-lg" style="border-radius:18px;overflow:hidden;border:none;max-height:95vh;">
+    <div style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
+      <div>
+        <div class="mh-title" id="mv-title" style="color:#fff;font-size:16px;font-weight:800;letter-spacing:-.2px;">Nueva Venta</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:1px;">Completa los campos para registrar</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-venta')" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:10px;font-size:16px;">✕</button>
+    </div>
+    <div id="mv-tabs" style="display:none;border-bottom:1px solid var(--border);background:#fff;padding:0 24px;">
+      <div style="display:flex;gap:0;">
+        <button id="mv-tab-venta" onclick="_mvTab('venta')" style="padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;border-bottom:2px solid var(--teal);color:var(--teal);font-family:inherit;">Venta</button>
+        <button id="mv-tab-envio" onclick="_mvTab('envio')" style="padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">Envío Externo</button>
+      </div>
+    </div>
+    <div class="mc" id="mv-body-venta" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Información general</div>
+      <div class="grid3" style="margin-bottom:16px;">
+        <div class="fg"><label class="fl2">Tienda *</label><select id="v-tienda"></select></div>
+        <div class="fg"><label class="fl2">ID Venta ML *</label><input type="text" id="v-id" placeholder="Ej: 2000015788963928"></div>
+        <div class="fg"><label class="fl2">Fecha de venta *</label><input type="date" id="v-fecha"></div>
+        <div class="fg"><label class="fl2">Unidades *</label><input type="number" id="v-udes" value="1" min="1" oninput="recalcVenta()"></div>
+        <div class="fg"><label class="fl2">Precio de venta (COP$) *</label><input type="text" inputmode="numeric" id="v-cop-venta" placeholder="0" oninput="recalcVenta()"></div>
+        <div class="fg"><label class="fl2">TRM del día <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span></label><input type="text" inputmode="numeric" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()"></div>
+        <div class="fg"><label class="fl2">Costo producto Amazon (USD$) *</label><input type="text" inputmode="decimal" id="v-costo-usd" placeholder="0.00" oninput="recalcVenta()"></div>
+        <div class="fg"><label class="fl2">Empresa de envío *</label><select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()"><option value="aguachica" selected>Aguachica</option><option value="servientrega">Servientrega</option><option value="otro">Otro</option></select></div>
+        <div class="fg"><label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label><input type="text" inputmode="numeric" id="v-envio-int-usd" placeholder="0" oninput="recalcVenta()"></div>
+        <div class="fg"><label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label><input type="text" inputmode="numeric" id="v-envio-extra" placeholder="0" oninput="recalcVenta()"></div>
+        <div class="fg"><label class="fl2">Validación de envío</label><select id="v-envio-validado" onchange="_toggleEnvioLock()"><option value="0">Sin validar</option><option value="1">Validado</option></select></div>
+        <div class="fg"><label class="fl2">Teléfono del cliente</label><input type="tel" id="v-tel" placeholder="3001234567"></div>
+        <div class="fg" style="grid-column:1/-1;"><label class="fl2">Nota <small class="c-dim">(opcional)</small></label><textarea id="v-nota" placeholder="Ej: empaque especial" rows="2" style="width:100%;resize:vertical;"></textarea></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:14px;overflow:hidden;border:1.5px solid var(--border);background:var(--white);box-shadow:0 2px 12px rgba(0,137,123,.08);">
+        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#f0fdf9,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ingresos</div><div id="c-rv-total" style="font-size:20px;font-weight:800;color:var(--teal);">$ 0</div></div>
+        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#fff5f5,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Costos</div><div id="c-total-costos" style="font-size:20px;font-weight:800;color:var(--red);">$ 0</div></div>
+        <div style="padding:14px 16px;text-align:center;background:linear-gradient(135deg,#f0fdf4,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ganancia</div><div id="c-rv-gan" style="font-size:20px;font-weight:800;color:var(--green);">$ 0</div></div>
+      </div>
+      <input type="hidden" id="v-envio-estimado"><input type="hidden" id="v-envio-real">
+      <input type="hidden" id="v-fuente-pago"><input type="hidden" id="v-monto-pago">
+      <input type="hidden" id="v-ref-pago"><input type="hidden" id="v-costo-cop">
+      <input type="hidden" id="c-rv-margen">
+    </div>
+    <div id="mv-body-envio" style="display:none;padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
+      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Envío Externo — Skydropx</div>
+      <div id="mv-envio-status" style="margin-bottom:16px;"></div>
+      <div class="grid3" style="margin-bottom:14px;">
+        <div class="fg"><label class="fl2">Fecha *</label><input type="date" id="mvs-fecha"></div>
+        <div class="fg"><label class="fl2">N° Venta ML</label><input type="text" id="mvs-num-venta" placeholder="ID automático" readonly style="background:#f3f7f7;color:var(--text2);"></div>
+        <div class="fg"><label class="fl2">N° Guía</label><input type="text" id="mvs-num-guia" placeholder="Ej: 2289039226"></div>
+      </div>
+      <div class="grid3" style="margin-bottom:14px;">
+        <div class="fg"><label class="fl2">Transportadora</label><input type="text" id="mvs-transportadora" list="mvs-trans-list" placeholder="Ej: Servientrega"><datalist id="mvs-trans-list"><option value="Servientrega"><option value="Coordinadora"><option value="Envia"><option value="Interrapidisimo"><option value="TCC"><option value="Domina"></datalist></div>
+        <div class="fg"><label class="fl2">Valor (COP$)</label><input type="text" inputmode="numeric" id="mvs-valor" placeholder="0"></div>
+        <div class="fg"><label class="fl2">Estado</label><select id="mvs-estado"><option value="Pendiente">Pendiente</option><option value="En camino">En camino</option><option value="Entregado">Entregado</option><option value="Cancelado">Cancelado</option><option value="Devuelto">Devuelto</option></select></div>
+      </div>
+      <div class="grid2" style="margin-bottom:14px;">
+        <div class="fg"><label class="fl2">Fuente de pago</label><select id="mvs-fuente"><option value="skydropx">Skydropx</option><option value="bancolombia">Bancolombia</option><option value="nequi">Nequi</option><option value="efectivo">Efectivo</option></select></div>
+      </div>
+      <div id="mv-envio-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid var(--border);background:#f7fafa;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-venta')" style="padding:10px 20px;font-size:13px;">Cancelar</button>
+      <button class="btn btn-primary" id="mv-btn-guardar" onclick="saveVenta()" style="padding:10px 24px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,137,123,.3);">Guardar Venta</button>
     </div>
   </div>
 </div>
 
-<!-- ═══════════════════ MODAL BILLETERA ═══════════════════ -->
+<!-- ═══════════════════ MODAL: PAGO MÚLTIPLE ENVÍOS ═══════════════════ -->
+<div class="overlay" id="modal-pago-multiple">
+  <div class="modal modal-lg">
+    <div class="mh"><div class="mh-title">Pago múltiple de envíos</div><button class="mclose" onclick="closeModal('modal-pago-multiple')">✕</button></div>
+    <div class="mc">
+      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:var(--radius-lg);padding:12px 16px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:12px;font-weight:600;color:var(--teal-dark);">Total a pagar por los envíos seleccionados</span>
+        <span id="mpm-total" style="font-size:20px;font-weight:700;color:var(--teal-dark);">$ 0</span>
+      </div>
+      <div style="max-height:300px;overflow-y:auto;margin-bottom:14px;" id="mpm-lista"></div>
+      <div class="fg"><label class="fl2">Nota del pago <small class="c-dim">(opcional, aplica a todos)</small></label><input type="text" id="mpm-nota" placeholder="Ej: pago en efectivo lote marzo..."></div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-pago-multiple')">Cancelar</button><button class="btn btn-success" onclick="confirmarPagoMultiple()">Confirmar pago de todos</button></div>
+  </div>
+</div>
 
+<div class="overlay" id="modal-pago-envio">
+  <div class="modal">
+    <div class="mh"><div class="mh-title">Registrar pago de envío</div><button class="mclose" onclick="closeModal('modal-pago-envio')">✕</button></div>
+    <div class="mc">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
+      <div class="fg"><label class="fl2" id="mpe-valor-label">Valor real del envío pagado (COP$) *</label><input type="text" inputmode="numeric" id="mpe-valor" placeholder="Ej: 19000"><span id="mpe-valor-hint" style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span><div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;"><span id="mpe-diff-text"></span></div></div>
+      <div class="fg"><label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label><input type="text" id="mpe-nota" placeholder="Ej: pagado en efectivo, guía 12345..."></div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-pago-envio')">Cancelar</button><button class="btn btn-primary" onclick="guardarPagoEnvio()">Marcar como pagado</button></div>
+  </div>
+</div>
 
-<!-- ═══════════════════ MODAL BILLETERA ═══════════════════ -->
+<div class="overlay" id="modal-tienda">
+  <div class="modal">
+    <div class="mh"><div class="mh-title" id="mt-title">Nueva Tienda</div><button class="mclose" onclick="closeModal('modal-tienda')">✕</button></div>
+    <div class="mc">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:18px;">
+        <div id="t-foto-preview" onclick="document.getElementById('t-foto-input').click()" style="width:80px;height:80px;border-radius:50%;border:3px dashed var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'"><span style="font-size:28px;opacity:.4;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></div>
+        <input type="file" id="t-foto-input" accept="image/*" style="display:none" onchange="previewFotoTienda(this)">
+        <span style="font-size:10px;color:var(--text3);">Clic para subir foto de perfil</span>
+        <input type="hidden" id="t-foto-data">
+      </div>
+      <div class="grid2">
+        <div class="fg span2"><label class="fl2">Nombre de la tienda *</label><input type="text" id="t-nombre" placeholder="Ej: SATARDSHOP"></div>
+        <div class="fg"><label class="fl2">Responsable</label><input type="text" id="t-resp" placeholder="Nombre del encargado"></div>
+        <div class="fg"><label class="fl2">Estado de la tienda</label><select id="t-estado"><option value="activa">Activa</option><option value="inactiva">Inactiva</option></select></div>
+        <div class="fg"><label class="fl2">Plataforma Mercado Pago</label><input type="text" id="t-mp-cuenta" placeholder="Ej: @satardshop"></div>
+        <div class="fg"><label class="fl2">Color identificativo</label><input type="color" id="t-color" value="#00897b" style="height:36px;padding:3px;"></div>
+        <div class="fg span2"><label class="fl2">Observaciones</label><textarea id="t-obs" rows="2" style="width:100%;resize:none;"></textarea></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-tienda')">Cancelar</button><button class="btn btn-primary" onclick="saveTienda()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: PROBLEMA ═══════════════════ -->
+<div class="overlay" id="modal-problema">
+  <div class="modal modal-lg">
+    <div class="mh"><div class="mh-title" id="mp-title">Registrar Problema</div><button class="mclose" onclick="closeModal('modal-problema')">✕</button></div>
+    <div class="mc">
+      <div class="fsec">Buscar venta relacionada</div>
+      <div class="fg"><label class="fl2">ID de la venta o nombre del producto</label><div class="frow" style="gap:6px;"><input type="text" id="p-buscar" placeholder="Ej: 2000015788963928 o 'Teclado'" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="buscarVentaProblema()">Buscar</button></div><div id="p-buscar-resultado" style="margin-top:6px;"></div></div>
+      <div class="fg"><label class="fl2">Número de venta <small class="c-dim">(opcional)</small></label><input type="text" id="p-num-venta-manual" placeholder="Ej: 2000015788963928 o referencia propia"></div>
+      <div class="fsec">Datos del problema</div>
+      <div class="grid2">
+        <div class="fg"><label class="fl2">Fecha del problema</label><input type="date" id="p-fecha"></div>
+        <div class="fg"><label class="fl2">Tipo de problema *</label><select id="p-tipo"></select></div>
+        <div class="fg span2"><label class="fl2">¿Qué sucedió? *</label><textarea id="p-descripcion" rows="3" style="width:100%;resize:none;" placeholder="Describe con detalle el problema..."></textarea></div>
+        <div class="fg span2"><label class="fl2">Solución planteada</label><textarea id="p-solucion" rows="2" style="width:100%;resize:none;" placeholder="¿Qué se hará o qué se hizo?"></textarea></div>
+        <div class="fg"><label class="fl2">Estado</label><select id="p-estado"><option value="abierto">Abierto — sin resolver</option><option value="resuelto">Resuelto</option><option value="perdida">Resuelto con pérdida</option></select></div>
+        <div class="fg"><label class="fl2">Valor de la pérdida (COP) <small class="c-dim">si aplica</small></label><input type="number" id="p-perdida" placeholder="0"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button><button class="btn btn-primary" onclick="saveProblema()">Guardar Problema</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: DETALLE VENTA ═══════════════════ -->
+<div class="overlay" id="modal-detalle">
+  <div class="modal modal-xl">
+    <div class="mh"><div class="mh-title" id="md-title">Detalle de Venta</div><button class="mclose" onclick="closeModal('modal-detalle')">✕</button></div>
+    <div class="mc" id="md-body"></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-detalle')">Cerrar</button><button class="btn btn-primary btn-sm" id="md-btn-problema">Registrar Problema</button><button class="btn btn-ghost btn-sm" id="md-btn-editar">Editar</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: MOVIMIENTO FINANCIERO ═══════════════════ -->
+<div class="overlay" id="modal-movimiento">
+  <div class="modal">
+    <div class="mh"><div class="mh-title" id="mov-title">Nuevo Movimiento</div><button class="mclose" onclick="closeModal('modal-movimiento')">✕</button></div>
+    <div class="mc">
+      <div class="grid2">
+        <div class="fg"><label class="fl2">Fecha</label><input type="date" id="mov-fecha"></div>
+        <div class="fg"><label class="fl2">Tipo *</label><select id="mov-tipo" onchange="_actualizarPreviewMovimiento()"><option value="ingreso">Ingreso</option><option value="egreso" selected>Egreso / Gasto</option></select></div>
+        <div class="fg"><label class="fl2">Fuente / Cuenta *</label><select id="mov-fuente" onchange="_actualizarPreviewMovimiento()"><option value="mercadopago">Mercado Pago</option><option value="bancolombia">Bancolombia</option><option value="nequi">Nequi</option><option value="daviplata">Daviplata</option><option value="efectivo">Efectivo</option><option value="otro">Otro</option></select></div>
+        <div class="fg"><label class="fl2">Valor (COP$) *</label><input type="text" inputmode="numeric" id="mov-valor" placeholder="0" oninput="_actualizarPreviewMovimiento()"></div>
+        <div class="fg span2" id="mov-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px;" id="mov-preview-fuente-label">Fuente</div>
+          <div style="font-size:12px;color:var(--text2);">Antes: <strong id="mov-preview-antes">$ 0</strong> &nbsp;→&nbsp; Después: <strong id="mov-preview-despues">$ 0</strong></div>
+        </div>
+        <div class="fg span2"><label class="fl2">Concepto *</label><input type="text" id="mov-concepto" placeholder="Ej: Pago Amazon, recarga MP, comisión ML..."></div>
+        <div class="fg span2"><label class="fl2">Notas</label><textarea id="mov-notas" rows="2" style="width:100%;resize:none;" placeholder="Observaciones adicionales..."></textarea></div>
+        <div class="fg span2" id="mov-err" style="margin:0;color:var(--red);font-size:12px;min-height:14px;"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-movimiento')">Cancelar</button><button class="btn btn-primary" id="mov-save-btn" onclick="saveMovimiento()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: MEMBRESÍA CENTRIS ═══════════════════ -->
+<div class="overlay" id="modal-membresia">
+  <div class="modal">
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;"><div class="mh-title" style="color:#fff;">Pago Membresía Centris</div><button class="mclose" onclick="closeModal('modal-membresia')" style="background:rgba(255,255,255,.1);border:none;color:#fff;">✕</button></div>
+    <div class="mc">
+      <div class="grid2">
+        <div class="fg"><label class="fl2">Mes correspondiente</label><input type="month" id="mem-mes"></div>
+        <div class="fg"><label class="fl2">Valor pagado (COP$) *</label><input type="number" id="mem-valor" placeholder="0" step="1"></div>
+        <div class="fg"><label class="fl2">Pagado con</label><select id="mem-fuente"></select></div>
+        <div class="fg"><label class="fl2">Fecha de pago</label><input type="date" id="mem-fecha"></div>
+        <div class="fg span2"><label class="fl2">Observaciones</label><input type="text" id="mem-obs" placeholder="Ej: Plan pro, descuento aplicado..."></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-membresia')">Cancelar</button><button class="btn btn-primary" onclick="saveMembresia()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: CAMBIAR CÓDIGO ═══════════════════ -->
+<div class="overlay" id="modal-cambiar-codigo">
+  <div class="modal" style="max-width:420px;">
+    <div class="mh"><div class="mh-title">Cambiar Código de Acceso</div><button class="mclose" onclick="closeModal('modal-cambiar-codigo')">✕</button></div>
+    <div class="mc">
+      <div class="fg"><label class="fl2">Código actual *</label><input type="password" id="cc-actual" placeholder="Ingresa el código actual"></div>
+      <div class="fg"><label class="fl2">Nuevo código *</label><input type="password" id="cc-nuevo" placeholder="Mínimo 4 caracteres"></div>
+      <div class="fg"><label class="fl2">Confirmar nuevo código *</label><input type="password" id="cc-confirmar" placeholder="Repite el nuevo código"></div>
+      <div id="cc-error" style="font-size:12px;color:var(--red);margin-top:4px;min-height:18px;"></div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-cambiar-codigo')">Cancelar</button><button class="btn btn-primary" onclick="guardarNuevoCodigo()">Guardar Código</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: NUEVA BILLETERA ═══════════════════ -->
 <div class="overlay" id="modal-billetera">
   <div class="modal" style="max-width:400px;">
     <div class="mh" style="background:linear-gradient(135deg,#0d4f4a 0%,#00897b 100%);color:#fff;">
-      <div>
-        <div class="mh-title" id="modal-billetera-title" style="color:#fff;font-size:15px;">Nueva Billetera</div>
-        <div class="mh-sub" style="color:rgba(255,255,255,.55);">Cuenta o billetera personalizada</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-billetera')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
-               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'"
-        onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+      <div><div class="mh-title" id="modal-billetera-title" style="color:#fff;font-size:15px;">Nueva Billetera</div><div class="mh-sub" style="color:rgba(255,255,255,.55);">Cuenta o billetera personalizada</div></div>
+      <button class="mclose" onclick="closeModal('modal-billetera')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
     </div>
     <div class="mc" style="display:flex;flex-direction:column;gap:14px;padding:20px 22px;">
-
-      <!-- Nombre -->
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Nombre de la billetera <span style="color:var(--red);">*</span></label>
-        <input type="text" id="bw-nombre" placeholder="Ej: Nu Diego, Davivienda Santi, Nequi..."
-          style="transition:border-color .15s;"
-          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''">
-      </div>
-
-      <!-- Tipo -->
+      <div class="fg" style="margin:0;"><label class="fl2">Nombre de la billetera <span style="color:var(--red);">*</span></label><input type="text" id="bw-nombre" placeholder="Ej: Nu Diego, Davivienda Santi, Nequi..."></div>
       <div class="fg" style="margin:0;">
         <label class="fl2">Tipo</label>
-        <select id="bw-tipo-select" onchange="document.getElementById('bw-tipo').value=this.value;document.getElementById('bw-tipo-custom').style.display=this.value==='otro'?'block':'none';"
-          style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
-          <option value="Nequi">Nequi</option>
-          <option value="Bancolombia">Bancolombia</option>
-          <option value="Nu">Nu</option>
-          <option value="Daviplata">Daviplata</option>
-          <option value="Cuenta de ahorros">Cuenta de ahorros</option>
-          <option value="Cuenta corriente">Cuenta corriente</option>
-          <option value="Billetera digital">Billetera digital</option>
-          <option value="otro">Otro...</option>
-        </select>
+        <select id="bw-tipo-select" onchange="document.getElementById('bw-tipo').value=this.value;document.getElementById('bw-tipo-custom').style.display=this.value==='otro'?'block':'none';"><option value="Nequi">Nequi</option><option value="Bancolombia">Bancolombia</option><option value="Nu">Nu</option><option value="Daviplata">Daviplata</option><option value="Cuenta de ahorros">Cuenta de ahorros</option><option value="Cuenta corriente">Cuenta corriente</option><option value="Billetera digital">Billetera digital</option><option value="otro">Otro...</option></select>
         <input type="hidden" id="bw-tipo" value="Neobank">
-        <input type="text" id="bw-tipo-custom" placeholder="Describe el tipo" style="display:none;margin-top:6px;transition:border-color .15s;"
-          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''">
+        <input type="text" id="bw-tipo-custom" placeholder="Describe el tipo" style="display:none;margin-top:6px;">
       </div>
-
-      <!-- Color / icono visual -->
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Color identificador</label>
-        <div style="display:flex;gap:8px;flex-wrap:wrap;" id="bw-color-picker">
-          <span data-color="#0ea5e9" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#0ea5e9;cursor:pointer;border:3px solid transparent;" title="Azul"></span>
-          <span data-color="#8b5cf6" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:3px solid transparent;" title="Morado"></span>
-          <span data-color="#ec4899" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ec4899;cursor:pointer;border:3px solid transparent;" title="Rosa"></span>
-          <span data-color="#f59e0b" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:pointer;border:3px solid transparent;" title="Naranja"></span>
-          <span data-color="#10b981" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#10b981;cursor:pointer;border:3px solid transparent;" title="Verde"></span>
-          <span data-color="#ef4444" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ef4444;cursor:pointer;border:3px solid transparent;" title="Rojo"></span>
-          <span data-color="#6b7280" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#6b7280;cursor:pointer;border:3px solid transparent;" title="Gris"></span>
-        </div>
-        <input type="hidden" id="bw-color" value="#0ea5e9">
-      </div>
-
-      <!-- Saldo inicial -->
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Saldo actual (COP$)</label>
-        <input type="text" inputmode="numeric" id="bw-saldo" placeholder="0"
-          style="transition:border-color .15s;"
-          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''">
-        <div style="font-size:10px;color:var(--text3);margin-top:4px;">Ingresa el saldo que tienes actualmente en esta cuenta.</div>
-      </div>
-
-      <!-- Es banco -->
+      <div class="fg" style="margin:0;"><label class="fl2">Color identificador</label><div style="display:flex;gap:8px;flex-wrap:wrap;" id="bw-color-picker"><span data-color="#0ea5e9" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#0ea5e9;cursor:pointer;border:3px solid transparent;"></span><span data-color="#8b5cf6" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:3px solid transparent;"></span><span data-color="#ec4899" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ec4899;cursor:pointer;border:3px solid transparent;"></span><span data-color="#f59e0b" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:pointer;border:3px solid transparent;"></span><span data-color="#10b981" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#10b981;cursor:pointer;border:3px solid transparent;"></span><span data-color="#ef4444" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ef4444;cursor:pointer;border:3px solid transparent;"></span><span data-color="#6b7280" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#6b7280;cursor:pointer;border:3px solid transparent;"></span></div><input type="hidden" id="bw-color" value="#0ea5e9"></div>
+      <div class="fg" style="margin:0;"><label class="fl2">Saldo actual (COP$)</label><input type="text" inputmode="numeric" id="bw-saldo" placeholder="0"><div style="font-size:10px;color:var(--text3);margin-top:4px;">Ingresa el saldo que tienes actualmente en esta cuenta.</div></div>
       <div class="fg" style="margin:0;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
           <input type="checkbox" id="bw-es-banco" style="width:auto;margin:2px 0 0 0;flex-shrink:0;">
-          <span>
-            <span style="font-size:13px;font-weight:600;color:var(--text);display:block;">Es una cuenta bancaria</span>
-            <span style="font-size:11px;color:var(--text3);">Las transferencias entre dos bancos quedan "Pendiente ingreso" hasta el siguiente día hábil. Entre una billetera y un banco (o entre billeteras) se refleja de inmediato.</span>
-          </span>
+          <span><span style="font-size:13px;font-weight:600;color:var(--text);display:block;">Es una cuenta bancaria</span><span style="font-size:11px;color:var(--text3);">Las transferencias entre dos bancos quedan "Pendiente ingreso" hasta el siguiente día hábil.</span></span>
         </label>
       </div>
-
     </div>
-    <div class="mf" style="gap:10px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-billetera')" style="flex:1;">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveNuevaBilletera()" style="flex:1;" id="bw-save-btn">Crear billetera</button>
-    </div>
+    <div class="mf" style="gap:10px;"><button class="btn btn-ghost" onclick="closeModal('modal-billetera')" style="flex:1;">Cancelar</button><button class="btn btn-primary" onclick="saveNuevaBilletera()" style="flex:1;" id="bw-save-btn">Crear billetera</button></div>
   </div>
 </div>
 
@@ -2244,381 +1618,227 @@ async function _renderEnviosSkyPanel() {
 <div class="overlay" id="modal-editar-saldo">
   <div class="modal" style="max-width:360px;">
     <div class="mh" style="background:linear-gradient(135deg,#0d4f4a,#00897b);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:14px;" id="editar-saldo-nombre">Editar Saldo</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Saldo actual: <span id="editar-saldo-actual">—</span></div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-editar-saldo')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+      <div><div class="mh-title" style="color:#fff;font-size:14px;" id="editar-saldo-nombre">Editar Saldo</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Saldo actual: <span id="editar-saldo-actual">—</span></div></div>
+      <button class="mclose" onclick="closeModal('modal-editar-saldo')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
     </div>
-    <div class="mc" style="padding:22px;">
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Nuevo saldo (COP$)</label>
-        <input type="number" id="editar-saldo-input" placeholder="0" step="1"
-          style="font-size:18px;font-weight:700;text-align:center;"
-          onfocus="this.style.borderColor='var(--teal)'" onblur="this.style.borderColor=''"
-          onkeydown="if(event.key==='Enter')saveEditarSaldo()">
-        <div id="editar-saldo-error" style="color:#dc2626;font-size:11px;margin-top:5px;min-height:14px;"></div>
-      </div>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-editar-saldo')" style="flex:1;">Cancelar</button>
-      <button class="btn btn-primary" onclick="saveEditarSaldo()" style="flex:1;">Guardar saldo</button>
-    </div>
+    <div class="mc" style="padding:22px;"><div class="fg" style="margin:0;"><label class="fl2">Nuevo saldo (COP$)</label><input type="number" id="editar-saldo-input" placeholder="0" step="1" style="font-size:18px;font-weight:700;text-align:center;" onkeydown="if(event.key==='Enter')saveEditarSaldo()"><div id="editar-saldo-error" style="color:#dc2626;font-size:11px;margin-top:5px;min-height:14px;"></div></div></div>
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-editar-saldo')" style="flex:1;">Cancelar</button><button class="btn btn-primary" onclick="saveEditarSaldo()" style="flex:1;">Guardar saldo</button></div>
   </div>
 </div>
 
 <!-- ═══════ MODAL ELIMINAR BILLETERA (código) ═══════ -->
 <div class="overlay" id="modal-del-billetera">
   <div class="modal" style="max-width:370px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar billetera</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="del-bw-nombre"></div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-del-billetera')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div>
-      <input type="password" id="del-bw-code-input" placeholder="Código de acceso"
-        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
-        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
-        onkeydown="if(event.key==='Enter')_confirmDeleteBilletera()">
-      <div id="del-bw-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-del-billetera')" style="flex:1;">Cancelar</button>
-      <button id="del-bw-confirm-btn" onclick="_confirmDeleteBilletera()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
-    </div>
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:14px;">Eliminar billetera</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="del-bw-nombre"></div></div><button class="mclose" onclick="closeModal('modal-del-billetera')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;"><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div><input type="password" id="del-bw-code-input" placeholder="Código de acceso" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')_confirmDeleteBilletera()"><div id="del-bw-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div></div>
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-del-billetera')" style="flex:1;">Cancelar</button><button id="del-bw-confirm-btn" onclick="_confirmDeleteBilletera()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button></div>
   </div>
 </div>
 
 <!-- ═══════ MODAL ELIMINAR MOVIMIENTO (código) ═══════ -->
 <div class="overlay" id="modal-del-movimiento">
   <div class="modal" style="max-width:370px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar movimiento</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-del-movimiento')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div>
-      <input type="password" id="del-mov-code-input" placeholder="Código de acceso"
-        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
-        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
-        onkeydown="if(event.key==='Enter')_confirmDeleteMovimiento()">
-      <div id="del-mov-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-del-movimiento')" style="flex:1;">Cancelar</button>
-      <button id="del-mov-confirm-btn" onclick="_confirmDeleteMovimiento()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
-    </div>
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:14px;">Eliminar movimiento</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div></div><button class="mclose" onclick="closeModal('modal-del-movimiento')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;"><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div><input type="password" id="del-mov-code-input" placeholder="Código de acceso" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')_confirmDeleteMovimiento()"><div id="del-mov-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div></div>
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-del-movimiento')" style="flex:1;">Cancelar</button><button id="del-mov-confirm-btn" onclick="_confirmDeleteMovimiento()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button></div>
   </div>
 </div>
 
-
-<!-- ═══════ MODAL CANCELAR TRANSFERENCIA PENDIENTE (código) ═══════ -->
-<div class="overlay" id="modal-cancelar-transferencia">
-  <div class="modal" style="max-width:380px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7d5c00,#9c7300);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:14px;">Cancelar transferencia</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-cancelar-transferencia')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
-        El dinero será devuelto a la billetera de origen.<br>Solo puedes cancelar antes de que se acredite en destino.<br>Ingresa tu código para continuar.
-      </div>
-      <input type="password" id="cancel-tr-code-input" placeholder="Código de acceso"
-        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
-        onfocus="this.style.borderColor='#7d5c00'" onblur="this.style.borderColor='var(--border)'"
-        onkeydown="if(event.key==='Enter')_confirmCancelarTransfer()">
-      <div id="cancel-tr-code-error" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-cancelar-transferencia')" style="flex:1;">Volver</button>
-      <button id="cancel-tr-confirm-btn" onclick="_confirmCancelarTransfer()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#7d5c00,#9c7300);color:#fff;">Cancelar transferencia</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════ MODAL ELIMINAR ENVÍO SKYDROPX (código) ═══════ -->
-<div class="overlay" id="modal-del-envio-sky">
-  <div class="modal" style="max-width:370px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar envío Skydropx</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-del-envio-sky')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>El saldo <strong>no</strong> se reintegrará automáticamente.</div>
-      <input type="password" id="del-envio-sky-code" placeholder="Código de acceso"
-        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
-        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
-        onkeydown="if(event.key==='Enter')_confirmDeleteEnvioSky()">
-      <div id="del-envio-sky-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-del-envio-sky')" style="flex:1;">Cancelar</button>
-      <button id="del-envio-sky-btn" onclick="_confirmDeleteEnvioSky()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL CREAR USUARIO ═══════════════════ -->
-<div class="overlay" id="modal-crear-usuario">
-  <div class="modal" style="max-width:400px;">
-    <div class="mh" style="background:linear-gradient(135deg,#1a4fa8,#1e40af);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:15px;">Nuevo usuario</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">El usuario podrá ingresar con estas credenciales</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-crear-usuario')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Nombre completo</label>
-        <input type="text" id="nu-nombre" placeholder="Ej: María García">
-      </div>
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Usuario <span style="font-size:10px;color:var(--text3);font-weight:400;">(sin espacios, en minúsculas)</span></label>
-        <input type="text" id="nu-usuario" placeholder="Ej: maria_garcia"
-          oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
-      </div>
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Contraseña</label>
-        <input type="password" id="nu-pass" placeholder="Mínimo 6 caracteres">
-      </div>
-      <div id="nu-error" style="color:#dc2626;font-size:11px;min-height:14px;"></div>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-crear-usuario')" style="flex:1;">Cancelar</button>
-      <button class="btn btn-primary" onclick="crearUsuario()" style="flex:1;" id="nu-btn">Crear usuario</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════ MODAL DESACTIVAR USUARIO (código) ═══════ -->
-<div class="overlay" id="modal-toggle-usuario">
-  <div class="modal" style="max-width:370px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
-      <div>
-        <div class="mh-title" style="color:#fff;font-size:14px;">Desactivar usuario</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
-      </div>
-      <button class="mclose" onclick="closeModal('modal-toggle-usuario')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
-    </div>
-    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
-      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
-        El usuario no podrá ingresar al sistema.<br>Ingresa tu código para confirmar.
-      </div>
-      <input type="password" id="toggle-user-code-input" placeholder="Código de acceso"
-        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
-        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
-        onkeydown="if(event.key==='Enter')_confirmToggleUsuario()">
-      <div id="toggle-user-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div>
-    </div>
-    <div class="mf" style="gap:8px;">
-      <button class="btn btn-ghost" onclick="closeModal('modal-toggle-usuario')" style="flex:1;">Cancelar</button>
-      <button id="toggle-user-confirm-btn" onclick="_confirmToggleUsuario()"
-        style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">
-        Desactivar
-      </button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL NUEVA/EDITAR TAREA ═══════════════════ -->
-<div class="overlay" id="modal-tarea">
-  <div class="modal" style="max-width:460px;">
-    <div class="mh">
-      <div class="mh-title" id="modal-tarea-title">Nueva tarea</div>
-      <button class="mclose" onclick="closeModal('modal-tarea')">✕</button>
-    </div>
-    <div class="mc" style="display:flex;flex-direction:column;gap:14px;">
-
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Nombre de la tarea</label>
-        <input type="text" id="tarea-nombre" placeholder="Ej: Revisar pedidos pendientes">
-      </div>
-
-      <div class="fg" style="margin:0;">
-        <label class="fl2">Descripción <span style="font-size:10px;color:var(--text3);font-weight:400;">(opcional)</span></label>
-        <input type="text" id="tarea-descripcion" placeholder="Detalles adicionales...">
-      </div>
-
-      <!-- Tipo -->
-      <div>
-        <label class="fl2" style="margin-bottom:8px;">Tipo de tarea</label>
-        <div style="display:flex;gap:10px;">
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
-            <input type="radio" name="tarea-tipo" id="tarea-tipo-recurrente" value="recurrente" onchange="_toggleTipoTarea()" checked>
-            Recurrente (días de la semana)
-          </label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
-            <input type="radio" name="tarea-tipo" id="tarea-tipo-puntual" value="puntual" onchange="_toggleTipoTarea()">
-            Solo un día
-          </label>
-        </div>
-      </div>
-
-      <!-- Días de semana -->
-      <div id="tarea-dias-wrap">
-        <label class="fl2" style="margin-bottom:8px;">Días de la semana</label>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;">
-          <button type="button" class="tarea-dia-btn" data-dia="1" onclick="_toggleDiaBtn(this)">Lun</button>
-          <button type="button" class="tarea-dia-btn" data-dia="2" onclick="_toggleDiaBtn(this)">Mar</button>
-          <button type="button" class="tarea-dia-btn" data-dia="3" onclick="_toggleDiaBtn(this)">Mié</button>
-          <button type="button" class="tarea-dia-btn" data-dia="4" onclick="_toggleDiaBtn(this)">Jue</button>
-          <button type="button" class="tarea-dia-btn" data-dia="5" onclick="_toggleDiaBtn(this)">Vie</button>
-          <button type="button" class="tarea-dia-btn" data-dia="6" onclick="_toggleDiaBtn(this)">Sáb</button>
-          <button type="button" class="tarea-dia-btn" data-dia="0" onclick="_toggleDiaBtn(this)">Dom</button>
-        </div>
-      </div>
-
-      <!-- Fecha puntual -->
-      <div id="tarea-fecha-wrap" style="display:none;">
-        <label class="fl2">Fecha</label>
-        <input type="date" id="tarea-fecha">
-      </div>
-
-      <div id="tarea-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-tarea')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarTarea()">Guardar tarea</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══════════════════ MODAL ELIMINAR TAREA ═══════════════════ -->
-<div class="overlay" id="modal-del-tarea">
-  <div class="modal" style="max-width:380px;">
-    <div class="mh" style="background:linear-gradient(135deg,#b0202e,#922032);color:#fff;">
-      <div class="mh-title" style="color:#fff;">Eliminar tarea</div>
-      <button class="mclose" onclick="closeModal('modal-del-tarea')" style="background:rgba(255,255,255,.15);border:none;color:#fff;">✕</button>
-    </div>
-    <div class="mc" style="text-align:center;padding:24px;">
-      <div style="font-size:13px;color:var(--text2);margin-bottom:16px;">
-        ¿Eliminar la tarea <strong id="del-tarea-nombre"></strong>?<br>
-        <span style="font-size:11px;color:var(--text3);">Esta acción no se puede deshacer.</span>
-      </div>
-      <input type="hidden" id="del-tarea-id-val">
-      <input type="password" id="del-tarea-code" placeholder="Código de acceso"
-        style="text-align:center;letter-spacing:2px;"
-        onkeydown="if(event.key==='Enter')confirmarDeleteTarea()">
-      <div id="del-tarea-err" style="color:var(--red);font-size:11px;margin-top:8px;min-height:14px;"></div>
-    </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-del-tarea')">Cancelar</button>
-      <button class="btn btn-danger" onclick="confirmarDeleteTarea()">Eliminar</button>
-    </div>
-  </div>
-</div>
-
-<style>
-.tarea-dia-btn {
-  padding: 6px 12px;border-radius: 20px;border: 1.5px solid var(--border);
-  background: var(--white);color: var(--text2);font-size: 12px;font-weight: 600;
-  cursor: pointer;font-family: inherit;transition: all .15s;
-}
-.tarea-dia-btn:hover { border-color: var(--teal); color: var(--teal); }
-.tarea-dia-btn.active { background: var(--teal); color: #fff; border-color: var(--teal-dark); }
-</style>
-
-
-
-<!-- ═══════════════════ MODAL TRANSFERENCIA ENTRE BILLETERAS ═══════════════════ -->
-<div class="overlay" id="modal-transferencia">
+<!-- ═══════════════════ MODAL: GESTIONAR CATEGORÍAS DE PROBLEMA ═══════════════════ -->
+<div class="overlay" id="modal-categorias">
   <div class="modal" style="max-width:480px;">
-    <div class="mh">
-      <div class="mh-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-        Transferir entre billeteras
-      </div>
-      <button class="mclose" onclick="closeModal('modal-transferencia')">✕</button>
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Categorías de Problema</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div></div><button class="mclose" onclick="closeModal('modal-categorias')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mc" style="padding:16px 20px;"><div id="cat-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div><div style="border-top:1px solid var(--border);padding-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:8px;">Nueva categoría</div><div style="display:flex;gap:8px;"><input type="text" id="cat-nueva-label" placeholder="Ej: Fraude, Garantía..." style="flex:1;border-radius:8px;" onkeydown="if(event.key==='Enter') agregarCat()"><button onclick="agregarCat()" class="btn btn-primary btn-sm" style="border-radius:8px;white-space:nowrap;">+ Agregar</button></div></div></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-categorias')">Cerrar</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: CONFIRMAR ELIMINAR AYUDA ═══════════════════ -->
+<div class="overlay" id="modal-delete-ayuda">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Eliminar ayuda</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Esta acción no se puede deshacer</div></div><button class="mclose" onclick="_cancelarEliminarAyuda()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mc" style="text-align:center;padding:28px 24px 20px;"><div style="font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.4;" id="mdel-ayuda-nombre"></div><div id="mdel-ayuda-cat" style="margin-bottom:16px;"></div><div style="font-size:0.82rem;color:var(--text2);background:var(--red-bg);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;">¿Estás seguro que quieres eliminar esta ayuda?</div></div>
+    <div class="mf" style="gap:10px;"><button class="btn btn-ghost" onclick="_cancelarEliminarAyuda()" style="flex:1;">Cancelar</button><button onclick="_confirmarEliminarAyuda()" style="flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Sí, eliminar</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL ENVÍO SKYDROPX ═══════════════════ -->
+<div class="overlay" id="modal-envio-sky">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1e3a5f,#243049);color:#fff;"><div><div class="mh-title" id="modal-envio-sky-title" style="color:#fff;font-size:15px;">Registrar Envío Skydropx</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Se descontará automáticamente del saldo origen</div></div><button class="mclose" onclick="closeModal('modal-envio-sky')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
+      <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Fecha</label><input type="date" id="sky-fecha"></div><div class="fg" style="margin:0;"><label class="fl2">N° Venta</label><input type="text" id="sky-num-venta" placeholder="Ej: 2000012345678"></div></div>
+      <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">N° Guía</label><input type="text" id="sky-num-guia" placeholder="Código de guía"></div><div class="fg" style="margin:0;"><label class="fl2">Transportadora</label><input type="text" id="sky-transportadora" list="sky-trans-list" placeholder="Ej: Servientrega" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"><datalist id="sky-trans-list"><option value="Servientrega"><option value="Coordinadora"><option value="Envia"><option value="Interrapidisimo"><option value="TCC"><option value="Domina"></datalist></div></div>
+      <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Estado del envío</label><select id="sky-estado" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"><option value="Pendiente">Pendiente</option><option value="En camino">En camino</option><option value="Entregado">Entregado</option><option value="Novedad">Novedad</option></select></div><div class="fg" style="margin:0;"><label class="fl2">Valor (COP$)</label><input type="text" inputmode="numeric" id="sky-valor" placeholder="0"></div></div>
+      <div class="fg" style="margin:0;"><label class="fl2">Descontar de</label><select id="sky-fuente" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select></div>
     </div>
-    <div class="mc" style="display:flex;flex-direction:column;gap:14px;">
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-envio-sky')" style="flex:1;">Cancelar</button><button class="btn btn-primary" onclick="saveEnvioSky()" style="flex:1;">Guardar envío</button></div>
+  </div>
+</div>
 
-      <div class="grid2">
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Desde</label>
-          <select id="tr-origen" onchange="_actualizarBancoTransfer()"></select>
-        </div>
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Hacia</label>
-          <select id="tr-destino" onchange="_actualizarBancoTransfer()"></select>
-        </div>
+
+<!-- ═══════════════════ MODAL CIERRE DE MES ═══════════════════ -->
+<div class="overlay" id="modal-cierre-mes">
+  <div class="modal" style="max-width:560px;width:95vw;font-family:Poppins,sans-serif;">
+
+    <div class="mh" style="background:#0d1f2d;color:#fff;padding:18px 24px;">
+      <div>
+        <div id="cm-titulo" style="font-size:16px;font-weight:700;color:#fff;letter-spacing:-.3px;">Cerrar mes</div>
+        <div id="cm-subtitulo" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Agrega gastos y divide la utilidad antes de cerrar</div>
       </div>
+      <button onclick="closeModal('modal-cierre-mes')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+    </div>
 
-      <div class="grid2">
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Valor a transferir (COP$)</label>
-          <input type="text" inputmode="numeric" id="tr-valor" placeholder="0" oninput="_actualizarBancoTransfer()">
-        </div>
-        <div class="fg" style="margin:0;">
-          <label class="fl2">Fecha</label>
-          <input type="date" id="tr-fecha">
-        </div>
-      </div>
-
+    <!-- PASO 1: reservado para flujo de edición de existente -->
+    <div id="cm-paso1" style="display:none;padding:20px 24px;flex-direction:column;gap:14px;">
       <div class="fg" style="margin:0;">
-        <label class="fl2">Descripción <small class="c-dim">(motivo de la transferencia)</small></label>
-        <input type="text" id="tr-descripcion" placeholder="Ej: Retiro para pago de proveedor">
+        <label class="fl2">Mes</label>
+        <select id="cm-mes"></select>
+      </div>
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Código de acceso</label>
+        <input type="password" id="cm-codigo" placeholder="Ingresa tu código" style="letter-spacing:2px;" onkeydown="if(event.key==='Enter')confirmarCierreMes()">
+      </div>
+      <div id="cm-err" style="color:var(--red);font-size:12px;min-height:14px;margin-top:-8px;"></div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button class="btn btn-ghost" onclick="closeModal('modal-cierre-mes')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmarCierreMes()" style="background:#0d1f2d;">Guardar</button>
+      </div>
+    </div>
+
+    <!-- PANEL PRINCIPAL -->
+    <div id="cm-panel" style="display:none;flex-direction:column;gap:18px;padding:20px 24px;overflow-y:auto;max-height:72vh;">
+
+      <!-- Selector de mes (solo al crear nuevo) -->
+      <div id="cm-mes-panel-wrap" style="margin:0;">
+        <label class="fl2" style="font-family:Poppins,sans-serif;">Mes</label>
+        <select id="cm-mes-panel" style="font-family:Poppins,sans-serif;"></select>
       </div>
 
-      <!-- Previsualización de saldos -->
-      <div id="tr-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+      <!-- Stats del mes -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;text-align:center;">
           <div>
-            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px;" id="tr-preview-origen-label">Origen</div>
-            <div style="font-size:12px;color:var(--text2);">Antes: <strong id="tr-preview-origen-antes">$ 0</strong></div>
-            <div style="font-size:12px;color:var(--red);">Después: <strong id="tr-preview-origen-despues">$ 0</strong></div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:4px;font-family:Poppins,sans-serif;">Ventas</div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Poppins,sans-serif;" id="cm-p-ventas">—</div>
           </div>
           <div>
-            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px;" id="tr-preview-destino-label">Destino</div>
-            <div style="font-size:12px;color:var(--text2);">Antes: <strong id="tr-preview-destino-antes">$ 0</strong></div>
-            <div style="font-size:12px;color:var(--green);">Después: <strong id="tr-preview-destino-despues">$ 0</strong></div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--text3);margin-bottom:4px;font-family:Poppins,sans-serif;">Ingresos</div>
+            <div style="font-size:15px;font-weight:700;color:var(--text);font-family:Poppins,sans-serif;" id="cm-p-ingresos">—</div>
+          </div>
+          <div style="border-left:1px solid var(--border);">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.8px;color:var(--teal);margin-bottom:4px;font-family:Poppins,sans-serif;">Utilidad</div>
+            <div style="font-size:15px;font-weight:600;color:var(--text);font-family:Poppins,sans-serif;" id="cm-p-ganancia-bruta">—</div>
           </div>
         </div>
       </div>
 
-      <!-- Aviso de bancos diferentes + checkbox día hábil -->
-      <div id="tr-banco-aviso" style="display:none;background:var(--yellow-bg);border:1px solid #f0c040;border-radius:10px;padding:12px 14px;">
-        <div style="font-size:12px;color:#7d5c00;margin-bottom:8px;"><strong>Bancos diferentes.</strong> <span id="tr-banco-aviso-txt"></span></div>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;font-weight:500;color:#7d5c00;">
-          <input type="checkbox" id="tr-banco-habil" checked onchange="_actualizarBancoTransfer()" style="width:auto;margin:0;">
-          Hoy es día hábil bancario para esta transferencia
-        </label>
+      <!-- Gastos adicionales -->
+      <div>
+        <div style="margin-bottom:10px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);font-family:Poppins,sans-serif;">Gastos adicionales</div>
+        </div>
+        <div id="cm-gastos-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+        <div id="cm-gastos-empty" style="display:none;"></div>
       </div>
 
-      <div id="tr-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
+      <!-- Cálculo utilidad -->
+      <div style="border-top:2px solid var(--border);padding-top:16px;display:flex;flex-direction:column;gap:8px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--text2);font-family:Poppins,sans-serif;">Utilidad bruta</span>
+          <span style="font-size:13px;font-weight:400;color:var(--text);font-family:Poppins,sans-serif;" id="cm-r-bruta">—</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <span style="font-size:12px;color:var(--text2);font-family:Poppins,sans-serif;">Total gastos adicionales</span>
+          <span style="font-size:13px;font-weight:400;color:var(--red);font-family:Poppins,sans-serif;" id="cm-r-gastos">— 0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding-top:10px;border-top:1px dashed var(--border);">
+          <span style="font-size:13px;font-weight:500;color:var(--text);font-family:Poppins,sans-serif;">Utilidad neta</span>
+          <span style="font-size:15px;font-weight:500;font-family:Poppins,sans-serif;" id="cm-r-neta">—</span>
+        </div>
+      </div>
+
+      <!-- División -->
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--text2);font-family:Poppins,sans-serif;">División de utilidad</div>
+          <input type="number" id="cm-trabajadores" value="1" min="1" max="20"
+            style="width:64px;text-align:center;font-size:14px;font-weight:700;padding:5px;border:1.5px solid var(--border);border-radius:8px;font-family:Poppins,sans-serif;"
+            oninput="_cmActualizarDivision()">
+        </div>
+        <div id="cm-division-resultado"></div>
+      </div>
+
+      <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:4px;">
+        <button class="btn btn-ghost" onclick="closeModal('modal-cierre-mes')" style="font-family:Poppins,sans-serif;">Cancelar</button>
+        <button class="btn btn-primary" onclick="_cmGuardarCambios()" style="background:#0d1f2d;font-family:Poppins,sans-serif;" id="cm-btn-guardar">Cerrar mes</button>
+      </div>
     </div>
-    <div class="mf">
-      <button class="btn btn-ghost" onclick="closeModal('modal-transferencia')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarTransferencia()">Transferir</button>
+
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL REABRIR MES ═══════════════════ -->
+<div class="overlay" id="modal-reabrir-mes">
+  <div class="modal" style="max-width:400px;font-family:Poppins,sans-serif;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Reabrir mes</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="cm-reabrir-mes-label"></div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-reabrir-mes')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">&#x2715;</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
+        Al reabrir, los datos del cierre se eliminarán.<br>Ingresa tu código para confirmar.
+      </div>
+      <input type="password" id="cm-reabrir-code" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:Poppins,sans-serif;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmarReabrirMes()">
+      <div id="cm-reabrir-err" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-reabrir-mes')" style="flex:1;">Cancelar</button>
+      <button onclick="_confirmarReabrirMes()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:Poppins,sans-serif;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Reabrir</button>
     </div>
   </div>
 </div>
+
+
+<!-- ═══════════════════ MODAL CONFIRMAR CIERRE DE MES ═══════════════════ -->
+<div class="overlay" id="modal-confirmar-cierre">
+  <div class="modal" style="max-width:420px;font-family:Poppins,sans-serif;">
+    <div class="mh" style="background:#0d1f2d;color:#fff;padding:18px 24px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Confirmar cierre</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Esta acción cerrará el mes de forma permanente</div>
+      </div>
+      <button onclick="closeModal('modal-confirmar-cierre')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;">
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;">Mes a cerrar</div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);" id="cm-confirm-mes-label">—</div>
+      </div>
+      <div style="background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:10px;padding:14px 16px;">
+        <div style="font-size:11px;color:var(--teal);margin-bottom:4px;text-transform:uppercase;letter-spacing:.6px;font-weight:600;">Utilidad neta</div>
+        <div style="font-size:16px;font-weight:600;color:var(--teal);" id="cm-confirm-utilidad">—</div>
+      </div>
+      <div style="font-size:12px;color:var(--text3);line-height:1.5;padding:4px 0;">
+        Una vez cerrado, este mes no aparecerá en la lista para cerrar nuevamente. Podrás reabrirlo si necesitas hacer correcciones.
+      </div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirmar-cierre')" style="font-family:Poppins,sans-serif;">Cancelar</button>
+      <button class="btn btn-primary" onclick="_cmGuardarCambiosConfirmado()" style="background:#0d1f2d;font-family:Poppins,sans-serif;">Cerrar mes</button>
+    </div>
+  </div>
+</div>
+
 
 </body>
 </html>

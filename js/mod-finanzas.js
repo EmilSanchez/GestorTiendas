@@ -23,6 +23,7 @@ function _mesLabel(ym) {
 async function renderFinanzas() {
   await _procesarTransferenciasPendientes();
   await _renderPendientesTransfer();
+  if (typeof renderCierresMes_Fin === 'function') renderCierresMes_Fin();
   const [movs, saldos, billeteras, tiendas, ventas, enviosSky] = await Promise.all([
     DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.ventas(), DB.envios_sky()
   ]);
@@ -32,8 +33,11 @@ async function renderFinanzas() {
   const mesAct2 = (document.getElementById('fin-filtro-mes')?.value) || mes();
   const ventasMes = ventas.filter(v => (v.fecha_venta||'').startsWith(mesAct2));
   const ganVentasMes = ventasMes.reduce((s,v) => s + calcVenta(v).ganancia, 0);
+  // Solo descontar envíos sky que NO están ligados a una venta registrada
+  // (los que sí tienen num_venta ya están contabilizados como costo en calcVenta)
+  const idsMlVentas = new Set(ventas.map(v => v.id_ml).filter(Boolean));
   const egSkyMes = enviosSky
-    .filter(e => (e.fecha||'').startsWith(mesAct2))
+    .filter(e => (e.fecha||'').startsWith(mesAct2) && !idsMlVentas.has(e.num_venta))
     .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
   const ganMes = ganVentasMes - egSkyMes;
   const ganEl  = document.getElementById('fin-ganancia-mes');
