@@ -32,7 +32,16 @@ async function renderFinanzas() {
   // Ganancia del mes actual (ventas - envíos sky - egresos externos)
   const mesAct2 = (document.getElementById('fin-filtro-mes')?.value) || mes();
   const ventasMes = ventas.filter(v => (v.fecha_venta||'').startsWith(mesAct2));
-  const ganVentasMes = ventasMes.reduce((s,v) => s + calcVenta(v).ganancia, 0);
+  // Use ganancia_congelada if the venta belongs to a CLOSED month (regardless of which month is being viewed)
+  let _cierresFinSet = new Set();
+  try { const _cl2 = await _getCierres(); _cl2.forEach(x => _cierresFinSet.add(x.mes)); } catch(e) {}
+  const ganVentasMes = ventasMes.reduce((s,v) => {
+    const mesDeLaVenta = (v.fecha_venta||'').slice(0,7);
+    const ganancia = (_cierresFinSet.has(mesDeLaVenta) && v.ganancia_congelada !== undefined)
+      ? v.ganancia_congelada
+      : calcVenta(v).ganancia;
+    return s + ganancia;
+  }, 0);
   // Solo descontar envíos sky que NO están ligados a una venta registrada
   // (los que sí tienen num_venta ya están contabilizados como costo en calcVenta)
   const idsMlVentas = new Set(ventas.map(v => v.id_ml).filter(Boolean));

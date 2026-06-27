@@ -52,7 +52,16 @@ async function renderVentasGanancias() {
   const labelPer    = _labelPeriodo(periodo);
 
   // Ganancia base de ventas
-  const ganVentas   = ventasPer.reduce((s,v) => s + calcVenta(v).ganancia,    0);
+  // Use ganancia_congelada when venta's month is closed
+  let _cierresMesSet = new Set();
+  try { const _clv = await _getCierres(); _clv.forEach(x => _cierresMesSet.add(x.mes)); } catch(e) {}
+  const _gananciaVenta = v => {
+    const mesDeLaVenta = (v.fecha_venta||'').slice(0,7);
+    return (_cierresMesSet.has(mesDeLaVenta) && v.ganancia_congelada !== undefined)
+      ? v.ganancia_congelada
+      : calcVenta(v).ganancia;
+  };
+  const ganVentas   = ventasPer.reduce((s,v) => s + _gananciaVenta(v), 0);
   const totalVenta  = ventasPer.reduce((s,v) => s + calcVenta(v).totalVenta,  0);
   const totalCostos = ventasPer.reduce((s,v) => s + calcVenta(v).totalCostos, 0);
 

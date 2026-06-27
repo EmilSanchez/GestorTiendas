@@ -1,3 +1,31 @@
+// ── Configuración de columnas opcionales de ventas ──
+var _vCfg = { nombre: false, telefono: true, contraentrega: false };
+
+async function _cargarConfigVentas() {
+  try {
+    const snap = await _cfg('ventas_config').get();
+    if (snap.exists) _vCfg = { nombre: false, telefono: true, contraentrega: false, ...snap.data() };
+  } catch(e) {}
+}
+
+async function openModalConfigVentas() {
+  await _cargarConfigVentas();
+  document.getElementById('vcfg-nombre').checked        = !!_vCfg.nombre;
+  document.getElementById('vcfg-telefono').checked      = !!_vCfg.telefono;
+  document.getElementById('vcfg-contraentrega').checked = !!_vCfg.contraentrega;
+  openModal('modal-config-ventas');
+}
+
+async function guardarConfigVentas() {
+  _vCfg = {
+    nombre:        document.getElementById('vcfg-nombre').checked,
+    telefono:      document.getElementById('vcfg-telefono').checked,
+    contraentrega: document.getElementById('vcfg-contraentrega').checked,
+  };
+  try { await _cfg('ventas_config').set(_vCfg); } catch(e) {}
+  await renderVentasGanancias();
+}
+
 /* Módulo Ventas CRUD — modal registro */
 
 // ── VENTAS ──
@@ -71,6 +99,74 @@ async function openModalVenta(id) {
   if (tabsEl) tabsEl.style.display = id ? 'block' : 'none';
   _mvTab('venta');
   if (id) _loadLinkedEnvio(id);
+
+  // Show/hide optional fields based on config
+  await _cargarConfigVentas();
+  const _vForCfg = id ? (await DB.ventas()).find(x=>x.id===id) : null;
+  _aplicarConfigCamposVenta(_vForCfg);
+
+  // Show mes cerrado warning if editing a venta from a closed month
+  const avisoEl = document.getElementById('v-mes-cerrado-aviso');
+  const labelEl = document.getElementById('v-mes-cerrado-label');
+  if (avisoEl) {
+    if (id && _vForCfg?.fecha_venta) {
+      const cerrado = await _esMesCerrado(_vForCfg.fecha_venta);
+      if (cerrado) {
+        const [y,m] = _vForCfg.fecha_venta.split('-');
+        const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const mesNombre = `${meses[parseInt(m)-1]} ${y}`;
+        const gananciaOriginal = _vForCfg.ganancia_congelada !== undefined ? _vForCfg.ganancia_congelada : calcVenta(_vForCfg).ganancia;
+        avisoEl.innerHTML = `
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <strong>${mesNombre} está cerrado.</strong> La ganancia registrada en ese mes fue <strong>${fmt(gananciaOriginal)}</strong>. Si editas esta venta y cambian los costos o ingresos, la diferencia quedará registrada en Finanzas del mes en curso — el mes cerrado no cambia.`;
+        avisoEl.style.display = '';
+      } else {
+        avisoEl.style.display = 'none';
+      }
+    } else {
+      avisoEl.style.display = 'none';
+    }
+  }
+}
+
+function _actualizarCabeceraVentas() {
+  const tr = document.getElementById('ventas-thead-tr');
+  if (!tr) return;
+  const th = (txt, extra='') => `<th style="position:sticky;top:0;z-index:2;background:#f3f8f8;${extra}">${txt}</th>`;
+  tr.innerHTML =
+    th('#') +
+    th('Tienda') +
+    th('ID Venta ML', 'text-align:center;') +
+    (_vCfg.nombre        ? th('Nombre') : '') +
+    (_vCfg.telefono      ? th('Teléfono') : '') +
+    (_vCfg.contraentrega ? th('CE', 'text-align:center;') : '') +
+    th('Valor COP') +
+    th('USD') +
+    th('TRM') +
+    th('Importadora', 'text-align:center;') +
+    th('Valor Envío', 'text-align:center;') +
+    th('Costo Total') +
+    th('Ganancia') +
+    th('Estado') +
+    th('');
+}
+
+function _aplicarConfigCamposVenta(v) {
+  const mostrar = (wrapId, val) => {
+    const el = document.getElementById(wrapId);
+    if (el) el.style.display = val ? '' : 'none';
+  };
+  mostrar('v-wrap-nombre',        _vCfg.nombre);
+  mostrar('v-wrap-telefono',      _vCfg.telefono);
+  mostrar('v-wrap-contraentrega', _vCfg.contraentrega);
+  if (v) {
+    if (_vCfg.nombre)        sv('v-nombre',        v.nombre_cliente || '');
+    if (_vCfg.contraentrega) document.getElementById('v-contraentrega').checked = !!v.contraentrega;
+  } else {
+    sv('v-nombre', '');
+    const chk = document.getElementById('v-contraentrega');
+    if (chk) chk.checked = false;
+  }
 }
 
 function _mvTab(tab) {
@@ -102,6 +198,20 @@ async function _loadLinkedEnvio(ventaId) {
   const envios = await DB.envios_sky();
   const envio = envios.find(e => e.num_venta === idMl || e.num_venta === ventaId);
   const statusEl = document.getElementById('mv-envio-status');
+
+  // Check if venta's month is closed and show warning
+  const mesCerrado = await _esMesCerrado(v?.fecha_venta);
+  if (mesCerrado && statusEl) {
+    const mesNombre = v?.fecha_venta ? (() => {
+      const [y,m] = v.fecha_venta.split('-');
+      const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+      return meses[parseInt(m)-1] + ' ' + y;
+    })() : '';
+    statusEl.innerHTML = `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:12px;color:#9a3412;margin-bottom:10px;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+      <strong>${mesNombre} está cerrado.</strong> Los costos adicionales de este envío se registrarán en el mes en curso (Finanzas &gt; Movimientos) y no afectarán el mes cerrado.
+    </div>`;
+  }
   if (envio) {
     window._mvEnvioId = envio.id;
     document.getElementById('mvs-fecha').value = envio.fecha || hoy();
@@ -136,18 +246,54 @@ async function _saveMvEnvio() {
   const id = window._mvEnvioId || uid();
   const esNuevo = !window._mvEnvioId;
   const ts = new Date().toISOString();
+
   await DB.upsertEnvioSky({id, fecha, num_venta, num_guia, transportadora: transport, estado, valor, fuente_pago: fuente, fecha_registro: ts, ...(esNuevo?{creado:ts}:{})});
-  if (esNuevo) {
+
+  // Determinar si el mes de la venta ya está cerrado
+  const ventas = await DB.ventas();
+  const venta = ventas.find(v => v.id === _editVentaId || v.id_ml === num_venta);
+  const mesCerrado = await _esMesCerrado(venta?.fecha_venta);
+
+  if (!mesCerrado) {
+    // Mes abierto: vincular el gasto al envio_extra de la venta para que afecte la ganancia del mes
+    if (venta) {
+      const extraAnterior = parseFloat(venta.envio_extra) || 0;
+      venta.envio_extra = esNuevo ? extraAnterior + valor : valor;
+      await DB.saveVentas(ventas);
+    }
+  } else {
+    // Mes cerrado: registrar el gasto en el mes en curso como movimiento
     const saldos = await DB.saldos();
     saldos[fuente] = (parseFloat(saldos[fuente])||0) - valor;
     await DB.saveSaldos(saldos);
+    await DB.upsertMovimiento({
+      id: 'sky_extra_' + id,
+      fecha: hoy(),
+      tipo: 'egreso',
+      fuente,
+      valor,
+      concepto: `Envío externo (mes cerrado)${num_venta?' · '+num_venta:''}`,
+      notas: `Transportadora: ${transport}. La venta es de un mes ya cerrado; el gasto se registra en el mes en curso.`,
+      fecha_registro: ts,
+      _sky_id: id,
+    });
+    showToast('Mes cerrado — el gasto se registró en el mes actual en Finanzas', 'info', 4000);
+  }
+
+  if (esNuevo) {
+    const saldos2 = await DB.saldos();
+    saldos2[fuente] = (parseFloat(saldos2[fuente])||0) - valor;
+    await DB.saveSaldos(saldos2);
     await DB.upsertMovimiento({id:'sky_'+id, fecha, tipo:'egreso', fuente, valor, concepto:`Envío Skydropx${num_venta?' · '+num_venta:''}`, notas:`Transportadora: ${transport}`, fecha_registro:ts, _sky_id:id});
   }
+
   window._mvEnvioId = id;
   closeModal('modal-venta');
   showToast('Envío guardado', 'success', 2000);
   if (typeof _renderEnviosSkyPanel === 'function') _renderEnviosSkyPanel();
 }
+
+// _esMesCerrado defined in core.js
 
 function recalcVenta() {
   const copVenta = _parseNum(gv('v-cop-venta'))    || 0;
@@ -260,7 +406,13 @@ async function saveVenta() {
   //if(!copVenta)  { alert('Ingresa el precio de venta en COP.'); return; }
   const producto = ''; // campo eliminado del formulario
 
-  const ventaExistente = _editVentaId ? (await DB.ventas()).find(x => x.id === _editVentaId) : null;
+  const _ventasActuales = await DB.ventas();
+  const ventaExistente = _editVentaId ? _ventasActuales.find(x => x.id === _editVentaId) : null;
+  // Para mes cerrado: usar ganancia_congelada si existe, sino calcular
+  const gananciaAntes = ventaExistente
+    ? (ventaExistente.ganancia_congelada !== undefined ? ventaExistente.ganancia_congelada : calcVenta(ventaExistente).ganancia)
+    : null;
+  const mesCerradoEdicion = ventaExistente ? await _esMesCerrado(ventaExistente.fecha_venta) : false;
   const trm       = _parseNum(gv('v-trm')) || TRM_ACTUAL;
   const envioTipo = gv('v-envio-tipo');
   const envioVal  = _parseNum(gv('v-envio-int-usd'))||0;
@@ -304,9 +456,66 @@ async function saveVenta() {
     monto_pago:    montoPago,
     ref_pago:      gv('v-ref-pago').trim(),
     nota:          gv('v-nota').trim(),
+    nombre_cliente: _vCfg.nombre ? gv('v-nombre').trim() : undefined,
+    contraentrega:  _vCfg.contraentrega ? (document.getElementById('v-contraentrega')?.checked || false) : undefined,
     estado:        _editVentaId ? ((await DB.ventas()).find(x=>x.id===_editVentaId)?.estado || 'pendiente') : 'pendiente',
     fecha_registro: new Date().toISOString(),
   });
+
+  // Si mes cerrado: congelar la ganancia original en la venta para que no cambie visualmente
+  if (mesCerradoEdicion && gananciaAntes !== null && _editVentaId) {
+    const ventasPost = await DB.ventas();
+    const vPost = ventasPost.find(x => x.id === _editVentaId);
+    if (vPost && vPost.ganancia_congelada === undefined) {
+      // Primera edición en mes cerrado: guardar ganancia original
+      vPost.ganancia_congelada = gananciaAntes;
+      await DB.saveVentas(ventasPost);
+    }
+  }
+
+  // Si editamos una venta de mes cerrado, registrar la diferencia como movimiento contable en el mes actual
+  // El mes cerrado NO se toca — la ganancia del cierre queda congelada
+  if (mesCerradoEdicion && gananciaAntes !== null) {
+    const ventasActualizadas = await DB.ventas();
+    const ventaActualizada = ventasActualizadas.find(x => x.id === _editVentaId);
+    if (ventaActualizada) {
+      // gananciaDespues = what calcVenta gives with NEW data
+      // gananciaAntes = the frozen/original value
+      // Only register diff if the "real" cost went up (loss vs original)
+      const gananciaDespues = calcVenta(ventaActualizada).ganancia;
+      const diferencia = gananciaDespues - gananciaAntes;
+      if (Math.abs(diferencia) >= 1) {
+        const ts = new Date().toISOString();
+        const esEgreso = diferencia < 0; // perdida = egreso en mes actual
+        const valor = Math.abs(Math.round(diferencia));
+        const idMl = ventaActualizada.id_ml || _editVentaId;
+        const [y,m] = (ventaActualizada.fecha_venta||hoy()).split('-');
+        const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+        const mesNombre = meses[parseInt(m)-1] + ' ' + y;
+
+        // Registrar como movimiento contable puro (no toca saldos de billeteras)
+        // tipo 'ajuste_cierre' para que no afecte totales de ingresos/egresos normales
+        // pero sí quede visible en el historial
+        await DB.upsertMovimiento({
+          id: 'ajuste_' + _editVentaId + '_' + Date.now(),
+          fecha: hoy(),
+          tipo: esEgreso ? 'egreso' : 'ingreso',
+          fuente: 'ganancia_mes_actual',
+          valor,
+          concepto: `Ajuste por edición · ${idMl} (${mesNombre} cerrado)`,
+          notas: `Venta editada de mes cerrado (${mesNombre}). ${esEgreso ? 'Pérdida' : 'Ganancia extra'} de ${fmt(valor)} registrada en el mes en curso. El mes cerrado no fue modificado.`,
+          fecha_registro: ts,
+          _ajuste_cierre: true,
+        });
+
+        const signo = esEgreso ? '−' : '+';
+        showToast(
+          `${mesNombre} cerrado — ${signo}${fmt(valor)} registrado en Finanzas del mes actual`,
+          'success', 4500
+        );
+      }
+    }
+  }
 
   // Registrar egreso automático si se indicó fuente de pago
   if(fuentePago && montoPago > 0 && !_editVentaId) {
@@ -350,9 +559,14 @@ async function saveVenta() {
 }
 
 async function renderVentas() {
+  await _cargarConfigVentas();
+  _actualizarCabeceraVentas();
   const tiendas   = await DB.tiendas();
   let ventas      = await DB.ventas();
   const problemas = await DB.problemas();
+  // Load closed months to freeze ganancia display
+  let _mesesCerrados = new Set();
+  try { const cierres = await _getCierres(); cierres.forEach(cl => _mesesCerrados.add(cl.mes)); } catch(e) {}
 
   // ── Banner: usar el período activo (igual que renderVentasGanancias) ──
   const periodo     = _getPeriodoActivo();
@@ -435,7 +649,12 @@ async function renderVentas() {
   document.getElementById('ventas-tbody').innerHTML = ventasMostrar.map((v)=>{
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const c = calcVenta(v);
-    const isLoss = c.ganancia < 0;
+    const mesCerradoRow = _mesesCerrados.has((v.fecha_venta||'').slice(0,7));
+    // For closed months: use frozen ganancia (never recalculate)
+    const gananciaDisplay = mesCerradoRow && v.ganancia_congelada !== undefined
+      ? v.ganancia_congelada
+      : c.ganancia;
+    const isLoss = gananciaDisplay < 0 && !mesCerradoRow;
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
 
 
@@ -449,7 +668,15 @@ async function renderVentas() {
         </span>
       </td>
       <td style="text-align:center;"><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${fmtFecha(v.fecha_venta)}</div></td>
-      <td class="td-mono c-dim">${v.telefono||'—'}</td>
+      ${_vCfg.nombre ? `<td style="font-size:12px;">${v.nombre_cliente||'—'}</td>` : ''}
+      ${_vCfg.telefono ? `<td class="td-mono c-dim">${v.telefono||'—'}</td>` : ''}
+      ${_vCfg.contraentrega ? `<td style="text-align:center;" data-vid-ce="${v.id}">
+        ${v.contraentrega
+          ? (v.estado==='entregado'
+              ? '<span style="font-size:10px;font-weight:700;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;border:1px solid #6ee7b7;">Contraentrega</span>'
+              : '<span style="font-size:10px;font-weight:700;background:#fff7ed;color:#9a3412;padding:2px 8px;border-radius:10px;border:1px solid #fed7aa;">Contraentrega</span>')
+          : '<span style="font-size:10px;font-weight:700;background:#d1fae5;color:#065f46;padding:2px 8px;border-radius:10px;border:1px solid #6ee7b7;">Pagó</span>'}
+      </td>` : ''}
       <td class="td-mono">${fmt(c.precioCOP)}</td>
       <td class="td-mono">${fmtU(v.costo_usd||0)}</td>
       <td class="td-mono c-dim">${v.trm?fmt(v.trm):'—'}</td>
@@ -472,8 +699,9 @@ async function renderVentas() {
         </div>
       </td>
       <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
-      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
-        ${fmt(c.ganancia)}
+      <td class="td-mono" style="color:${isLoss ? '#842029' : '#198754'};">
+        ${fmt(gananciaDisplay)}
+        ${mesCerradoRow ? `<div title="Mes cerrado — ganancia congelada" style="font-size:9px;font-weight:700;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:4px;border:1px solid #93c5fd;margin-top:2px;cursor:help;">CERRADO</div>` : ''}
       </td>
       <td>${_buildEstadoDrop(v.estado||'pendiente',['pendiente','en_camino','entregado','cancelado','problema','devuelto','error'],'_cambiarEstadoVenta',v.id)}</td>
       <td>
@@ -519,6 +747,24 @@ async function renderVentas() {
 // Estado change handler for ventas dropdown
 function _cambiarEstadoVenta(id, estado) {
   cambiarEstado(id, estado);
+  // Actualizar badge de contraentrega en tiempo real
+  if (_vCfg.contraentrega) {
+    const td = document.querySelector(`td[data-vid-ce="${id}"]`);
+    if (td) {
+      const span = td.querySelector('span');
+      if (span && span.textContent.trim() === 'Contraentrega') {
+        if (estado === 'entregado') {
+          span.style.background = '#d1fae5';
+          span.style.color = '#065f46';
+          span.style.borderColor = '#6ee7b7';
+        } else {
+          span.style.background = '#fff7ed';
+          span.style.color = '#9a3412';
+          span.style.borderColor = '#fed7aa';
+        }
+      }
+    }
+  }
 }
 
 async function cambiarEstado(id, estado) {
@@ -740,6 +986,8 @@ async function verDetalleVenta(id) {
         ${dr('Fecha entrega', v.fecha_entrega||'—')}
         ${dr('Cliente', v.cliente||'—')}
         ${dr('Teléfono', v.telefono||'—')}
+        ${_vCfg.nombre && v.nombre_cliente ? dr('Nombre cliente', v.nombre_cliente) : ''}
+        ${_vCfg.contraentrega ? dr('Contraentrega', v.contraentrega ? 'Sí' : 'No') : ''}
         ${dr('Producto', `<strong>${v.producto}</strong>`)}
         ${dr('Unidades', v.udes||1)}
         ${dr('Estado', `<span class="badge badge-${v.estado||'pendiente'}">${v.estado||'pendiente'}</span>`)}

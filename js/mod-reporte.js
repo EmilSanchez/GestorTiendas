@@ -330,12 +330,6 @@ var _cmModoEdicion  = false; // true = ya cerrado, editando
 const _fmtCOP = n => '$' + Number(n||0).toLocaleString('es-CO');
 
 // ── helpers Firestore ──
-async function _getCierres() {
-  try {
-    const snap = await _cfg('cierres_mes').get();
-    return snap.exists ? (snap.data().meses || []) : [];
-  } catch(e) { return []; }
-}
 async function _saveCierres(arr) {
   await _cfg('cierres_mes').set({ meses: arr });
 }
@@ -599,12 +593,14 @@ function _cmRenderGastos() {
         value="${g.concepto||''}"
         placeholder="Concepto del gasto"
         oninput="_cmUpdateGasto('${g.id}','concepto',this.value)"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();this.closest('.cm-gasto-row').querySelector('.cm-gasto-valor').focus();}"
         style="flex:1;font-size:13px;font-family:Poppins,sans-serif;border:none;outline:none;background:transparent;color:var(--text);">
       <span style="width:1px;height:18px;background:var(--border);flex-shrink:0;"></span>
       <input type="text" inputmode="numeric" class="cm-gasto-valor"
         value="${valFmt}"
         placeholder="0"
         oninput="_cmLiveFormatValor(this,'${g.id}')"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();}"
         style="width:130px;font-size:13px;font-weight:600;text-align:right;font-family:Poppins,sans-serif;border:none;outline:none;background:transparent;color:var(--text);">
       <button onclick="_cmEliminarGasto('${g.id}')" title="Eliminar"
         style="width:24px;height:24px;border:none;background:none;cursor:pointer;color:var(--text3);flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s;"

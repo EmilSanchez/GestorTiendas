@@ -172,7 +172,23 @@ const PAGES = {
 
 // ── HELPERS DE FUENTE DE PAGO ──
 // Billeteras: solo se cargan desde la BD. Sin valores hardcodeados.
-const FUENTES_LABEL = {};
+
+// ── Cierres de mes (disponible globalmente) ──
+async function _getCierres() {
+  try {
+    const snap = await _cfg('cierres_mes').get();
+    return snap.exists ? (snap.data().meses || []) : [];
+  } catch(e) { return []; }
+}
+async function _esMesCerrado(fecha) {
+  if (!fecha) return false;
+  const mes = (typeof fecha === 'string' ? fecha : '').slice(0, 7);
+  if (!mes) return false;
+  const cierres = await _getCierres();
+  return cierres.some(c => c.mes === mes);
+}
+
+const FUENTES_LABEL = { ganancia_mes_actual: 'Ganancia del mes en curso' };
 const FUENTES_ICON  = {};
 
 async function getSaldoFuente(fuente) {
