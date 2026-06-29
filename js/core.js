@@ -173,6 +173,37 @@ const PAGES = {
 // ── HELPERS DE FUENTE DE PAGO ──
 // Billeteras: solo se cargan desde la BD. Sin valores hardcodeados.
 
+
+// ── Animated counter ──
+function _countUp(el, targetVal, duration = 520) {
+  if (!el) return;
+  const isNeg = targetVal < 0;
+  const abs   = Math.abs(targetVal);
+
+  // Parse current displayed value as starting point
+  const curText = el.textContent || '';
+  const curNum  = parseFloat(curText.replace(/[^0-9.-]/g, '')) || 0;
+  const start   = Math.abs(curNum);
+
+  // If difference is tiny, just set directly
+  if (Math.abs(abs - start) < 500) { el.textContent = fmt(targetVal); return; }
+
+  const startTime = performance.now();
+  const diff = abs - start;
+
+  function step(now) {
+    const elapsed = now - startTime;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease out cubic
+    const ease = 1 - Math.pow(1 - progress, 3);
+    const current = start + diff * ease;
+    el.textContent = fmt(isNeg ? -current : current);
+    if (progress < 1) requestAnimationFrame(step);
+    else el.textContent = fmt(targetVal);
+  }
+  requestAnimationFrame(step);
+}
+
 // ── Cierres de mes (disponible globalmente) ──
 async function _getCierres() {
   try {

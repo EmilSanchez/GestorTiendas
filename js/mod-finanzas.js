@@ -32,27 +32,20 @@ async function renderFinanzas() {
   // Ganancia del mes actual (ventas - envíos sky - egresos externos)
   const mesAct2 = (document.getElementById('fin-filtro-mes')?.value) || mes();
   const ventasMes = ventas.filter(v => (v.fecha_venta||'').startsWith(mesAct2));
-  // Use ganancia_congelada if the venta belongs to a CLOSED month (regardless of which month is being viewed)
-  let _cierresFinSet = new Set();
-  try { const _cl2 = await _getCierres(); _cl2.forEach(x => _cierresFinSet.add(x.mes)); } catch(e) {}
-  const ganVentasMes = ventasMes.reduce((s,v) => {
-    const mesDeLaVenta = (v.fecha_venta||'').slice(0,7);
-    const ganancia = (_cierresFinSet.has(mesDeLaVenta) && v.ganancia_congelada !== undefined)
-      ? v.ganancia_congelada
-      : calcVenta(v).ganancia;
-    return s + ganancia;
-  }, 0);
-  // Solo descontar envíos sky que NO están ligados a una venta registrada
-  // (los que sí tienen num_venta ya están contabilizados como costo en calcVenta)
+  const ganVentasMes = ventasMes.reduce((s,v) => s + calcVenta(v).ganancia, 0);
   const idsMlVentas = new Set(ventas.map(v => v.id_ml).filter(Boolean));
   const egSkyMes = enviosSky
     .filter(e => (e.fecha||'').startsWith(mesAct2) && !idsMlVentas.has(e.num_venta))
     .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
-  const ganMes = ganVentasMes - egSkyMes;
+  // Sumar/restar ajustes de meses cerrados aplicados al mes en curso
+  const ajustesCierre = movs
+    .filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesAct2))
+    .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
+  const ganMes = ganVentasMes - egSkyMes + ajustesCierre;
   const ganEl  = document.getElementById('fin-ganancia-mes');
   if (ganEl) {
-    ganEl.textContent = fmt(ganMes);
     ganEl.style.color = ganMes >= 0 ? '#065f46' : '#7f1d1d';
+    _countUp(ganEl, ganMes);
   }
   const ganCntEl = document.getElementById('fin-ventas-mes-cnt');
   if (ganCntEl) ganCntEl.textContent = `${ventasMes.length} ventas · ${_mesLabel(mesAct2)}`;
@@ -92,7 +85,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         </button>
       </div>
-      <div class="fin-wallet-amount ${skySaldo<0?'neg':skySaldo===0?'zero':''}">${fmt(skySaldo)}</div>
+      <div class="fin-wallet-amount ${skySaldo<0?'neg':skySaldo===0?'zero':''}" data-saldo-anim="${skySaldo}">$ 0</div>
     </div>`;
 
   // MP por tienda — fijas
@@ -116,7 +109,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         </button>
       </div>
-      <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}">${fmt(s)}</div>
+      <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}" data-saldo-anim="${s}">$ 0</div>
     </div>`;
   });
 
@@ -139,7 +132,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
           onclick="event.stopPropagation();_pedirCodigoEliminarBilletera('${b.id}','${b.nombre.replace(/'/g,"\\'")}')"
           style="opacity:.4;flex-shrink:0;">${_FIN_ICON.trash}</button>
       </div>
-      <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}">${fmt(s)}</div>
+      <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}" data-saldo-anim="${s}">$ 0</div>
     </div>`;
   });
 

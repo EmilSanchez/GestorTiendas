@@ -131,8 +131,8 @@
 <nav id="sidebar">
 
   <!-- Perfil del usuario (arriba) -->
-  <div style="padding:1.1rem 1rem 0.8rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;">
-    <div id="sb-avatar" onclick="navigate('configuracion')" title="Ir a Configuración"
+  <div id="sb-avatar-wrap" style="padding:1.1rem 1rem 0.8rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;overflow:hidden;">
+    <div id="sb-avatar" onclick="toggleSidebar()" title="Colapsar menú"
       style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a4fa8,#0d3a8a);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;overflow:hidden;border:2px solid rgba(255,255,255,.12);transition:border-color .15s;"
       onmouseover="this.style.borderColor='rgba(255,255,255,.35)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)'">
       <svg id="sb-avatar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -145,18 +145,18 @@
   </div>
 
   <div class="sb-section" style="padding-top:0.8rem;">
-    <div class="nav-item active" data-page="ventas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="nb-label">Gestor Ventas</span></div>
-    <div class="nav-item" data-page="envios"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span><span class="nb-label">Envíos</span></div>
-    <div class="nav-item" data-page="problemas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span class="nb-label">Resolver</span></div>
-    <div class="nav-item" data-page="ayudas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="nb-label">Mensajes</span></div>
-    <div class="nav-item" data-page="finanzas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="nb-label">Finanzas</span></div>
-    <div class="nav-item" data-page="tareas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="nb-label">Tareas</span></div>
+    <div class="nav-item active" data-page="ventas" data-label="Gestor Ventas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="nb-label">Gestor Ventas</span></div>
+    <div class="nav-item" data-page="envios" data-label="Envíos"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span><span class="nb-label">Envíos</span></div>
+    <div class="nav-item" data-page="problemas" data-label="Resolver"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span class="nb-label">Resolver</span></div>
+    <div class="nav-item" data-page="ayudas" data-label="Mensajes"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="nb-label">Mensajes</span></div>
+    <div class="nav-item" data-page="finanzas" data-label="Finanzas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="nb-label">Finanzas</span></div>
+    <div class="nav-item" data-page="tareas" data-label="Tareas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="nb-label">Tareas</span></div>
   </div>
 
   <div style="flex:1;"></div>
 
   <div class="sb-section" style="padding-bottom:0.4rem;">
-    <div class="nav-item" data-page="configuracion"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nb-label">Configuración</span></div>
+    <div class="nav-item" data-page="configuracion" data-label="Configuración"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nb-label">Configuración</span></div>
   </div>
 
   <div style="padding:0.5rem 1rem 0.7rem;">
@@ -1901,6 +1901,103 @@ async function _renderEnviosSkyPanel() {
     </div>
   </div>
 </div>
+
+
+<!-- ═══════════════════ MODAL CONFIRMAR APLICAR DIFERENCIA CIERRE ═══════════════════ -->
+<div class="overlay" id="modal-aplicar-diferencia">
+  <div class="modal" style="max-width:420px;">
+    <div class="mh" style="background:#0d1f2d;color:#fff;padding:18px 24px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Aplicar diferencia al mes en curso</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;" id="aplDif-mes-label">—</div>
+      </div>
+      <button onclick="closeModal('modal-aplicar-diferencia')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px;">Ganancia actual del mes en curso</div>
+          <div style="font-size:14px;font-weight:600;color:var(--text);" id="aplDif-gan-actual">—</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px;">Diferencia a aplicar</div>
+          <div style="font-size:14px;font-weight:700;" id="aplDif-diferencia">—</div>
+        </div>
+      </div>
+      <div style="padding:12px 14px;background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:10px;">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--teal);margin-bottom:4px;">Ganancia del mes en curso después</div>
+        <div style="font-size:18px;font-weight:700;" id="aplDif-gan-despues">—</div>
+      </div>
+      <div style="font-size:11px;color:var(--text3);line-height:1.5;">
+        Esta acción quedará registrada en Finanzas como movimiento del mes en curso. No podrá aplicarse de nuevo para este mes cerrado.
+      </div>
+    </div>
+    <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-aplicar-diferencia')">Cancelar</button>
+      <button class="btn btn-primary" id="aplDif-confirmar-btn" onclick="_confirmarAplicarDiferencia()" style="background:#0d1f2d;">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- ═══════════════════ MODAL REVERTIR DIFERENCIA CIERRE ═══════════════════ -->
+<div class="overlay" id="modal-revertir-diferencia">
+  <div class="modal" style="max-width:400px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Revertir diferencia aplicada</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="revert-dif-mes-label">—</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-revertir-diferencia')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">&#x2715;</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
+        Se eliminará el movimiento de ajuste del mes en curso y la diferencia quedará pendiente de aplicar nuevamente.<br>Ingresa tu código para confirmar.
+      </div>
+      <input type="password" id="revert-dif-code" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmarRevertirDiferencia()">
+      <div id="revert-dif-err" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-revertir-diferencia')" style="flex:1;">Cancelar</button>
+      <button id="revert-dif-btn" onclick="_confirmarRevertirDiferencia()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Revertir</button>
+    </div>
+  </div>
+</div>
+<script>
+(function() {
+  function toggleSidebar() {
+    const main = document.getElementById('main') || document.querySelector('#main');
+    const sidebar = document.getElementById('sidebar');
+
+    // Snap margin instantly before animation — prevents full layout recalc on every frame
+    const collapsing = !document.body.classList.contains('sb-collapsed');
+    const newMargin = collapsing ? 'var(--sidebar-w-col)' : 'var(--sidebar-w)';
+    if (main) { main.style.transition = 'none'; main.style.marginLeft = newMargin; }
+
+    // Toggle class (triggers sidebar width CSS transition)
+    document.body.classList.toggle('sb-collapsed');
+    localStorage.setItem('sb_collapsed', collapsing ? '1' : '0');
+    const sb = document.getElementById('sb-avatar');
+    if (sb) sb.title = collapsing ? 'Expandir menú' : 'Colapsar menú';
+
+    // Re-enable main transitions after sidebar finishes (if ever needed)
+    if (main) setTimeout(() => { main.style.transition = ''; main.style.marginLeft = ''; }, 200);
+  }
+  window.toggleSidebar = toggleSidebar;
+
+  // Restore state on load instantly (no transition)
+  if (localStorage.getItem('sb_collapsed') === '1') {
+    document.body.classList.add('sb-collapsed');
+    const sb = document.getElementById('sb-avatar');
+    if (sb) sb.title = 'Expandir menú';
+  }
+})();
+</script>
 
 
 </body>

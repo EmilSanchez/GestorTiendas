@@ -43,8 +43,8 @@ function _labelPeriodo(periodo) {
 
 // ── VENTAS & GANANCIAS (FUSIONADO) ──
 async function renderVentasGanancias() {
-  const [ventas, tiendas, enviosSky] = await Promise.all([
-    DB.ventas(), DB.tiendas(), DB.envios_sky()
+  const [ventas, tiendas, enviosSky, movs] = await Promise.all([
+    DB.ventas(), DB.tiendas(), DB.envios_sky(), DB.movimientos()
   ]);
 
   const periodo     = _getPeriodoActivo();
@@ -52,16 +52,7 @@ async function renderVentasGanancias() {
   const labelPer    = _labelPeriodo(periodo);
 
   // Ganancia base de ventas
-  // Use ganancia_congelada when venta's month is closed
-  let _cierresMesSet = new Set();
-  try { const _clv = await _getCierres(); _clv.forEach(x => _cierresMesSet.add(x.mes)); } catch(e) {}
-  const _gananciaVenta = v => {
-    const mesDeLaVenta = (v.fecha_venta||'').slice(0,7);
-    return (_cierresMesSet.has(mesDeLaVenta) && v.ganancia_congelada !== undefined)
-      ? v.ganancia_congelada
-      : calcVenta(v).ganancia;
-  };
-  const ganVentas   = ventasPer.reduce((s,v) => s + _gananciaVenta(v), 0);
+  const ganVentas   = ventasPer.reduce((s,v) => s + calcVenta(v).ganancia, 0);
   const totalVenta  = ventasPer.reduce((s,v) => s + calcVenta(v).totalVenta,  0);
   const totalCostos = ventasPer.reduce((s,v) => s + calcVenta(v).totalCostos, 0);
 
@@ -72,7 +63,11 @@ async function renderVentasGanancias() {
     .filter(e => (e.fecha||'').startsWith(mesPer) && !idsMlSet.has(e.num_venta))
     .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
 
-  const totalGan = ganVentas - egresosSky;
+  // Include cierre adjustments applied to current period
+  const ajustesCierreBanner = movs
+    .filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesPer))
+    .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
+  const totalGan = ganVentas - egresosSky + ajustesCierreBanner;
   const marGen   = totalVenta > 0 ? (totalGan / totalVenta) * 100 : 0;
 
   const elGan = document.getElementById('vg-total-gan');
@@ -81,9 +76,9 @@ async function renderVentasGanancias() {
   const elMar = document.getElementById('vg-total-mar');
   const elCnt = document.getElementById('vg-total-cnt');
   const elSub = document.getElementById('vg-total-sub');
-  if (elGan) elGan.textContent = fmt(totalGan);
-  if (elIng) elIng.textContent = fmt(totalVenta);
-  if (elCos) elCos.textContent = fmt(totalCostos);
+  _countUp(elGan, totalGan);
+  _countUp(elIng, totalVenta);
+  _countUp(elCos, totalCostos);
   if (elMar) elMar.textContent = fmtP(marGen);
   if (elCnt) elCnt.textContent = ventasPer.length;
   if (elSub) elSub.textContent = labelPer;

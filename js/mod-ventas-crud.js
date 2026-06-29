@@ -105,20 +105,16 @@ async function openModalVenta(id) {
   const _vForCfg = id ? (await DB.ventas()).find(x=>x.id===id) : null;
   _aplicarConfigCamposVenta(_vForCfg);
 
-  // Show mes cerrado warning if editing a venta from a closed month
+  // Show simple mes cerrado notice
   const avisoEl = document.getElementById('v-mes-cerrado-aviso');
-  const labelEl = document.getElementById('v-mes-cerrado-label');
   if (avisoEl) {
     if (id && _vForCfg?.fecha_venta) {
       const cerrado = await _esMesCerrado(_vForCfg.fecha_venta);
       if (cerrado) {
         const [y,m] = _vForCfg.fecha_venta.split('-');
         const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-        const mesNombre = `${meses[parseInt(m)-1]} ${y}`;
-        const gananciaOriginal = _vForCfg.ganancia_congelada !== undefined ? _vForCfg.ganancia_congelada : calcVenta(_vForCfg).ganancia;
-        avisoEl.innerHTML = `
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;flex-shrink:0;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-          <strong>${mesNombre} está cerrado.</strong> La ganancia registrada en ese mes fue <strong>${fmt(gananciaOriginal)}</strong>. Si editas esta venta y cambian los costos o ingresos, la diferencia quedará registrada en Finanzas del mes en curso — el mes cerrado no cambia.`;
+        avisoEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <strong>${meses[parseInt(m)-1]} ${y} está cerrado.</strong> Cualquier cambio que afecte la ganancia aparecerá como diferencia en el cierre de ese mes. Puedes aplicarla al mes en curso desde Finanzas.`;
         avisoEl.style.display = '';
       } else {
         avisoEl.style.display = 'none';
@@ -408,11 +404,6 @@ async function saveVenta() {
 
   const _ventasActuales = await DB.ventas();
   const ventaExistente = _editVentaId ? _ventasActuales.find(x => x.id === _editVentaId) : null;
-  // Para mes cerrado: usar ganancia_congelada si existe, sino calcular
-  const gananciaAntes = ventaExistente
-    ? (ventaExistente.ganancia_congelada !== undefined ? ventaExistente.ganancia_congelada : calcVenta(ventaExistente).ganancia)
-    : null;
-  const mesCerradoEdicion = ventaExistente ? await _esMesCerrado(ventaExistente.fecha_venta) : false;
   const trm       = _parseNum(gv('v-trm')) || TRM_ACTUAL;
   const envioTipo = gv('v-envio-tipo');
   const envioVal  = _parseNum(gv('v-envio-int-usd'))||0;
@@ -462,60 +453,7 @@ async function saveVenta() {
     fecha_registro: new Date().toISOString(),
   });
 
-  // Si mes cerrado: congelar la ganancia original en la venta para que no cambie visualmente
-  if (mesCerradoEdicion && gananciaAntes !== null && _editVentaId) {
-    const ventasPost = await DB.ventas();
-    const vPost = ventasPost.find(x => x.id === _editVentaId);
-    if (vPost && vPost.ganancia_congelada === undefined) {
-      // Primera edición en mes cerrado: guardar ganancia original
-      vPost.ganancia_congelada = gananciaAntes;
-      await DB.saveVentas(ventasPost);
-    }
-  }
 
-  // Si editamos una venta de mes cerrado, registrar la diferencia como movimiento contable en el mes actual
-  // El mes cerrado NO se toca — la ganancia del cierre queda congelada
-  if (mesCerradoEdicion && gananciaAntes !== null) {
-    const ventasActualizadas = await DB.ventas();
-    const ventaActualizada = ventasActualizadas.find(x => x.id === _editVentaId);
-    if (ventaActualizada) {
-      // gananciaDespues = what calcVenta gives with NEW data
-      // gananciaAntes = the frozen/original value
-      // Only register diff if the "real" cost went up (loss vs original)
-      const gananciaDespues = calcVenta(ventaActualizada).ganancia;
-      const diferencia = gananciaDespues - gananciaAntes;
-      if (Math.abs(diferencia) >= 1) {
-        const ts = new Date().toISOString();
-        const esEgreso = diferencia < 0; // perdida = egreso en mes actual
-        const valor = Math.abs(Math.round(diferencia));
-        const idMl = ventaActualizada.id_ml || _editVentaId;
-        const [y,m] = (ventaActualizada.fecha_venta||hoy()).split('-');
-        const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-        const mesNombre = meses[parseInt(m)-1] + ' ' + y;
-
-        // Registrar como movimiento contable puro (no toca saldos de billeteras)
-        // tipo 'ajuste_cierre' para que no afecte totales de ingresos/egresos normales
-        // pero sí quede visible en el historial
-        await DB.upsertMovimiento({
-          id: 'ajuste_' + _editVentaId + '_' + Date.now(),
-          fecha: hoy(),
-          tipo: esEgreso ? 'egreso' : 'ingreso',
-          fuente: 'ganancia_mes_actual',
-          valor,
-          concepto: `Ajuste por edición · ${idMl} (${mesNombre} cerrado)`,
-          notas: `Venta editada de mes cerrado (${mesNombre}). ${esEgreso ? 'Pérdida' : 'Ganancia extra'} de ${fmt(valor)} registrada en el mes en curso. El mes cerrado no fue modificado.`,
-          fecha_registro: ts,
-          _ajuste_cierre: true,
-        });
-
-        const signo = esEgreso ? '−' : '+';
-        showToast(
-          `${mesNombre} cerrado — ${signo}${fmt(valor)} registrado en Finanzas del mes actual`,
-          'success', 4500
-        );
-      }
-    }
-  }
 
   // Registrar egreso automático si se indicó fuente de pago
   if(fuentePago && montoPago > 0 && !_editVentaId) {
@@ -650,11 +588,8 @@ async function renderVentas() {
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const c = calcVenta(v);
     const mesCerradoRow = _mesesCerrados.has((v.fecha_venta||'').slice(0,7));
-    // For closed months: use frozen ganancia (never recalculate)
-    const gananciaDisplay = mesCerradoRow && v.ganancia_congelada !== undefined
-      ? v.ganancia_congelada
-      : c.ganancia;
-    const isLoss = gananciaDisplay < 0 && !mesCerradoRow;
+    const gananciaDisplay = c.ganancia;
+    const isLoss = gananciaDisplay < 0;
     const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
 
 
@@ -699,9 +634,8 @@ async function renderVentas() {
         </div>
       </td>
       <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
-      <td class="td-mono" style="color:${isLoss ? '#842029' : '#198754'};">
+      <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
         ${fmt(gananciaDisplay)}
-        ${mesCerradoRow ? `<div title="Mes cerrado — ganancia congelada" style="font-size:9px;font-weight:700;background:#dbeafe;color:#1e40af;padding:1px 5px;border-radius:4px;border:1px solid #93c5fd;margin-top:2px;cursor:help;">CERRADO</div>` : ''}
       </td>
       <td>${_buildEstadoDrop(v.estado||'pendiente',['pendiente','en_camino','entregado','cancelado','problema','devuelto','error'],'_cambiarEstadoVenta',v.id)}</td>
       <td>

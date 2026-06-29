@@ -343,27 +343,82 @@ async function renderCierresMes_Fin() {
   const cardEl = document.getElementById('fin-cierres-card');
   const listaEl = document.getElementById('fin-cierres-lista');
   if (!listaEl) return;
-  const cierres = await _getCierres();
-  if (!cierres.length) {
-    if (cardEl) cardEl.style.display = 'none';
-    return;
-  }
+  const [cierres, ventas, enviosSky] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky()]);
+  if (!cierres.length) { if (cardEl) cardEl.style.display = 'none'; return; }
   if (cardEl) cardEl.style.display = '';
-  listaEl.innerHTML = `<div style="display:flex;flex-direction:column;gap:8px;">
-    ${cierres.sort((a,b)=>b.mes.localeCompare(a.mes)).map(cl=>`
-    <div style="display:flex;align-items:center;gap:12px;padding:11px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
-      <div style="flex:1;">
-        <span style="font-size:13px;font-weight:700;color:var(--text);">${_repFmtMes(cl.mes)}</span>
-        <span style="font-size:11px;color:var(--text3);margin-left:8px;">${cl.num_ventas} ventas</span>
-      </div>
-      <span style="font-size:12px;color:var(--text2);">Ingresos <strong>${cl.ingresos_fmt}</strong></span>
-      <span style="font-size:13px;font-weight:700;color:${parseFloat(cl.utilidad_raw||cl.ganancia_raw)>=0?'var(--green)':'var(--red)'};">
-        Utilidad ${cl.utilidad_fmt||cl.ganancia_fmt}
-      </span>
-      <span style="font-size:9px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-weight:700;border:1px solid #93c5fd;white-space:nowrap;">CERRADO</span>
-      <button class="btn btn-ghost btn-sm" onclick="abrirCierreExistente('${cl.mes}')" style="font-size:11px;padding:4px 10px;">Ver / Editar</button>
-      <button class="btn btn-ghost btn-sm" onclick="_reabrirMes('${cl.mes}')" style="font-size:11px;color:var(--red);padding:4px 10px;">Reabrir</button>
-    </div>`).join('')}
+
+  const idsMl = new Set(ventas.map(v=>v.id_ml).filter(Boolean));
+
+  listaEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;">
+    ${cierres.sort((a,b)=>b.mes.localeCompare(a.mes)).map(cl => {
+      const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(cl.mes));
+      const egSky = enviosSky.filter(e=>(e.fecha||'').startsWith(cl.mes)&&!idsMl.has(e.num_venta)).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+      const ganActual = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky;
+      const ganOriginal = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
+      const diferencia = ganActual - ganOriginal;
+      const hasDiff = Math.abs(diferencia) >= 1;
+      const diffColor = diferencia >= 0 ? 'var(--green)' : 'var(--red)';
+      const diffSign = diferencia >= 0 ? '+' : '';
+      const yaAplicado = !!cl.diferencia_aplicada;
+
+      return `
+      <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
+
+        <!-- Encabezado compacto -->
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:6px;">
+          <div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.2;">${_repFmtMes(cl.mes)}</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:2px;">${cl.num_ventas} ventas</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+            <span style="font-size:8px;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:20px;font-weight:700;border:1px solid #93c5fd;white-space:nowrap;">CERRADO</span>
+          </div>
+        </div>
+
+        <!-- Utilidades -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          <div style="padding:7px 9px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Al cierre</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);">${_fmtCOP(ganOriginal)}</div>
+          </div>
+          <div style="padding:7px 9px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Actual</div>
+            <div style="font-size:12px;font-weight:600;color:var(--text);">${_fmtCOP(ganActual)}</div>
+          </div>
+        </div>
+
+        <!-- Diferencia + acción -->
+        ${hasDiff ? `
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+          <div>
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:2px;">Diferencia</div>
+            <div style="font-size:13px;font-weight:700;color:${diffColor};">${diffSign}${_fmtCOP(diferencia)}</div>
+          </div>
+          ${!yaAplicado ? `
+          <button onclick="_aplicarDiferenciaCierre('${cl.mes}',${Math.round(diferencia)})" title="${diferencia>=0?'Sumar':'Descontar'} del mes en curso"
+            style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;background:${diferencia>=0?'var(--teal)':'#dc2626'};color:#fff;white-space:nowrap;transition:opacity .15s;"
+            onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+            Aplicar al mes en curso
+          </button>` : `
+          <span style="font-size:9px;background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:20px;font-weight:700;border:1px solid #6ee7b7;white-space:nowrap;">APLICADO</span>
+          <button onclick="_pedirRevertirDiferencia('${cl.mes}')" title="Revertir diferencia aplicada"
+            style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;color:var(--text3);padding:0;transition:all .15s;"
+            onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'"
+            onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+          </button>`}
+        </div>` : `
+        <div style="font-size:11px;color:var(--text3);text-align:center;padding:2px 0;">Sin diferencias pendientes</div>`}
+
+        <!-- Acciones secundarias -->
+        <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:8px;margin-top:-2px;">
+          <button class="btn btn-ghost btn-sm" onclick="abrirCierreExistente('${cl.mes}')" style="font-size:11px;padding:3px 9px;">Ver / Editar</button>
+          ${!yaAplicado ? `<button class="btn btn-ghost btn-sm" onclick="_reabrirMes('${cl.mes}')" style="font-size:11px;padding:3px 9px;color:var(--red);">Reabrir</button>` : ''}
+        </div>
+
+      </div>`;
+    }).join('')}
   </div>`;
 }
 
@@ -731,19 +786,22 @@ async function _cmGuardarCambiosConfirmado() {
   const trabNum     = Math.max(1, parseInt(document.getElementById('cm-trabajadores')?.value)||1);
 
   if (idx < 0) {
-    // Nuevo cierre — guardar directamente
+    // Nuevo cierre — guardar ganancia_original = ganancia al momento del cierre
     const nuevo = {
       mes: _cmMesActual,
-      num_ventas:   _cmNumVentas,
-      ingresos_fmt: _fmtCOP(_cmIngresos),
-      ingresos_raw: _cmIngresos,
-      ganancia_fmt: _fmtCOP(_cmGanBruta),
-      ganancia_raw: _cmGanBruta,
-      utilidad_fmt: _fmtCOP(utilidad),
-      utilidad_raw: utilidad,
-      gastos:       _cmGastos.map(g=>({id:g.id, concepto:g.concepto, valor:parseFloat(g.valor)||0})),
-      trabajadores: trabNum,
-      fecha_cierre: new Date().toISOString(),
+      num_ventas:     _cmNumVentas,
+      ingresos_fmt:   _fmtCOP(_cmIngresos),
+      ingresos_raw:   _cmIngresos,
+      ganancia_fmt:   _fmtCOP(_cmGanBruta),
+      ganancia_raw:   _cmGanBruta,
+      ganancia_original: _cmGanBruta,  // CONGELADO al momento del cierre — nunca cambia
+      utilidad_fmt:   _fmtCOP(utilidad),
+      utilidad_raw:   utilidad,
+      utilidad_original: utilidad,     // Utilidad congelada al cierre
+      gastos:         _cmGastos.map(g=>({id:g.id, concepto:g.concepto, valor:parseFloat(g.valor)||0})),
+      trabajadores:   trabNum,
+      diferencia_aplicada: false,      // flag: si ya se aplicó la diferencia al mes en curso
+      fecha_cierre:   new Date().toISOString(),
     };
     cierres.push(nuevo);
     await _saveCierres(cierres);
@@ -810,4 +868,141 @@ async function _confirmarReabrirMes() {
   await renderCierresMes();
   closeModal('modal-reabrir-mes');
   showToast(`${_repFmtMes(_reabrirMesPendiente)} reabierto`, 'success', 2000);
+}
+
+// ── Aplicar diferencia de cierre al mes en curso — primero mostrar modal de confirmación ──
+var _aplDifMesPendiente = '';
+var _aplDifValorPendiente = 0;
+
+async function _aplicarDiferenciaCierre(mes, diferencia) {
+  if (!diferencia || Math.abs(diferencia) < 1) return;
+  _aplDifMesPendiente  = mes;
+  _aplDifValorPendiente = diferencia;
+
+  // Calcular ganancia actual del mes en curso
+  const [movs, ventas, enviosSky] = await Promise.all([DB.movimientos(), DB.ventas(), DB.envios_sky()]);
+  const mesActual = hoy().slice(0, 7);
+  const ventasMesActual = ventas.filter(v => (v.fecha_venta||'').startsWith(mesActual));
+  const idsMl = new Set(ventas.map(v => v.id_ml).filter(Boolean));
+  const egSky = enviosSky.filter(e => (e.fecha||'').startsWith(mesActual) && !idsMl.has(e.num_venta)).reduce((s,e) => s+(parseFloat(e.valor)||0), 0);
+  const ajustesYa = movs.filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesActual)).reduce((s,m) => s + (m.tipo==='ingreso'?(parseFloat(m.valor)||0):-(parseFloat(m.valor)||0)), 0);
+  const ganActualMes = ventasMesActual.reduce((s,v) => s+calcVenta(v).ganancia, 0) - egSky + ajustesYa;
+  const ganDespues = ganActualMes + diferencia;
+
+  const diffSign = diferencia >= 0 ? '+' : '';
+  const diffColor = diferencia >= 0 ? 'var(--teal)' : 'var(--red)';
+  const despuesColor = ganDespues >= 0 ? 'var(--teal)' : 'var(--red)';
+
+  document.getElementById('aplDif-mes-label').textContent = `${_repFmtMes(mes)} → ${_repFmtMes(mesActual)}`;
+  document.getElementById('aplDif-gan-actual').textContent = _fmtCOP(ganActualMes);
+  const difEl = document.getElementById('aplDif-diferencia');
+  difEl.textContent = `${diffSign}${_fmtCOP(diferencia)}`;
+  difEl.style.color = diffColor;
+  const despEl = document.getElementById('aplDif-gan-despues');
+  despEl.textContent = _fmtCOP(ganDespues);
+  despEl.style.color = despuesColor;
+
+  openModal('modal-aplicar-diferencia');
+}
+
+async function _confirmarAplicarDiferencia() {
+  closeModal('modal-aplicar-diferencia');
+  const mes = _aplDifMesPendiente;
+  const diferencia = _aplDifValorPendiente;
+  if (!mes || !diferencia) return;
+
+  const esIngreso = diferencia > 0;
+  const valor = Math.abs(diferencia);
+  const ts = new Date().toISOString();
+  const mesNombre = _repFmtMes(mes);
+
+  await DB.upsertMovimiento({
+    id: 'dif_cierre_' + mes + '_' + Date.now(),
+    fecha: hoy(),
+    tipo: esIngreso ? 'ingreso' : 'egreso',
+    fuente: 'mercadopago', // fuente genérica visible en movimientos
+    valor,
+    concepto: `${esIngreso ? 'Ajuste positivo' : 'Ajuste de pérdida'} · ${mesNombre} (mes cerrado)`,
+    notas: `Diferencia aplicada del mes cerrado ${mesNombre}. ${esIngreso ? 'Ganancia adicional' : 'Pérdida'} de ${_fmtCOP(valor)}.`,
+    fecha_registro: ts,
+    _ajuste_cierre: true,
+  });
+
+  const cierres = await _getCierres();
+  const cl = cierres.find(c => c.mes === mes);
+  if (cl) {
+    cl.diferencia_aplicada = true;
+    cl.diferencia_valor = diferencia;
+    cl.diferencia_fecha = hoy();
+    await _saveCierres(cierres);
+  }
+
+  await renderCierresMes_Fin();
+  if (typeof renderFinanzas === 'function') await renderFinanzas();
+  if (typeof renderVentasGanancias === 'function') renderVentasGanancias();
+
+  showToast(
+    `${esIngreso ? '+' : '−'}${_fmtCOP(valor)} aplicado al mes en curso`,
+    'success', 3000
+  );
+}
+
+
+// ── Revertir diferencia de cierre aplicada ──
+var _revertirMesPendiente = '';
+function _pedirRevertirDiferencia(mes) {
+  _revertirMesPendiente = mes;
+  const inp = document.getElementById('revert-dif-code');
+  const err = document.getElementById('revert-dif-err');
+  if (inp) inp.value = '';
+  if (err) err.textContent = '';
+  document.getElementById('revert-dif-mes-label').textContent = _repFmtMes(mes);
+  openModal('modal-revertir-diferencia');
+  setTimeout(() => inp && inp.focus(), 150);
+}
+
+async function _confirmarRevertirDiferencia() {
+  const inp = document.getElementById('revert-dif-code');
+  const err = document.getElementById('revert-dif-err');
+  const btn = document.getElementById('revert-dif-btn');
+  const codigo = inp?.value.trim();
+  if (!codigo) { if (err) err.textContent = 'Ingresa el código.'; return; }
+  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
+
+  try {
+    const ok = await _verificarCodigoAcceso(codigo);
+    if (!ok) { if (err) err.textContent = 'Código incorrecto.'; inp.value = ''; inp.focus(); return; }
+
+    const mes = _revertirMesPendiente;
+    const cierres = await _getCierres();
+    const cl = cierres.find(c => c.mes === mes);
+    if (!cl || !cl.diferencia_aplicada) {
+      if (err) err.textContent = 'No hay diferencia aplicada para este mes.'; return;
+    }
+
+    // Eliminar el movimiento de ajuste del mes en curso
+    const movs = await DB.movimientos();
+    const ajuste = movs.find(m => m._ajuste_cierre && m.concepto && m.concepto.includes(_repFmtMes(mes)));
+    if (ajuste) {
+      await DB.deleteMovimiento(ajuste.id);
+    }
+
+    // Desmarcar el cierre
+    cl.diferencia_aplicada = false;
+    delete cl.diferencia_valor;
+    delete cl.diferencia_fecha;
+    await _saveCierres(cierres);
+
+    closeModal('modal-revertir-diferencia');
+    await renderCierresMes_Fin();
+    if (typeof renderFinanzas === 'function') await renderFinanzas();
+    if (typeof renderVentasGanancias === 'function') renderVentasGanancias();
+    showToast(`Diferencia de ${_repFmtMes(mes)} revertida`, 'success', 2500);
+
+  } catch(e) {
+    if (err) err.textContent = 'Error al verificar.';
+    console.error(e);
+  } finally {
+    if (btn) { btn.textContent = 'Revertir'; btn.disabled = false; }
+  }
 }
