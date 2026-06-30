@@ -70,19 +70,59 @@ async function _cargarTodo() {
 }
 
 // ══ Sync helpers ══
+// ── Estado de sincronización visible al usuario ──
+let _pendingSyncs = 0;
+function _syncStart() {
+  _pendingSyncs++;
+  _updateSyncIndicator();
+}
+function _syncEnd(ok) {
+  _pendingSyncs = Math.max(0, _pendingSyncs - 1);
+  _updateSyncIndicator();
+  if (!ok && typeof showToast === 'function') {
+    showToast('No se pudo guardar — revisa tu conexión e inténtalo de nuevo', 'error', 5000);
+  }
+}
+function _updateSyncIndicator() {
+  const el = document.getElementById('sync-indicator');
+  if (!el) return;
+  if (_pendingSyncs > 0) {
+    el.style.display = 'flex';
+    el.querySelector('span').textContent = 'Guardando...';
+    el.style.background = '#fff7ed'; el.style.color = '#9a3412'; el.style.borderColor = '#fed7aa';
+  } else {
+    el.querySelector('span').textContent = 'Guardado';
+    el.style.background = '#d1fae5'; el.style.color = '#065f46'; el.style.borderColor = '#6ee7b7';
+    setTimeout(() => { if (_pendingSyncs === 0) el.style.display = 'none'; }, 1200);
+  }
+}
+
+// ── Sync functions: ahora retornan promesas reales que esperan confirmación de Firestore ──
 function _syncCol(nombre, arr) {
+  _syncStart();
   const b = _db.batch();
   arr.forEach(item => b.set(_doc(nombre, item.id), JSON.parse(JSON.stringify(item))));
-  b.commit().catch(e => console.warn('Firebase sync error:', e));
+  return b.commit()
+    .then(() => { _syncEnd(true); })
+    .catch(e => { console.error('Firebase sync error:', e); _syncEnd(false); throw e; });
 }
 function _syncDoc(colNombre, id, obj) {
-  _doc(colNombre, id).set(JSON.parse(JSON.stringify(obj))).catch(e => console.warn(e));
+  _syncStart();
+  return _doc(colNombre, id).set(JSON.parse(JSON.stringify(obj)))
+    .then(() => { _syncEnd(true); })
+    .catch(e => { console.error('Firebase sync error:', e); _syncEnd(false); throw e; });
 }
 function _syncCfg(docId, obj) {
-  _cfg(docId).set(JSON.parse(JSON.stringify(obj))).catch(e => console.warn(e));
+  _syncStart();
+  return _cfg(docId).set(JSON.parse(JSON.stringify(obj)))
+    .then(() => { _syncEnd(true); })
+    .catch(e => { console.error('Firebase sync error:', e); _syncEnd(false); throw e; });
 }
 function _delDoc(colNombre, id) {
-  _doc(colNombre, id).delete().catch(e => console.warn(e));
+  _syncStart();
+  return _doc(colNombre, id).delete()
+    .then(() => { _syncEnd(true); })
+    .catch(e => { console.error('Firebase sync error:', e); _syncEnd(false); throw e; });
 }
 
 // ══ Auth doc por usuario ══
@@ -106,33 +146,33 @@ const DB = {
   saldos:       () => Promise.resolve(_cache.saldos      || {}),
   ajustes:      () => Promise.resolve(_cache.ajustes     || {}),
 
-  saveTiendas:     (arr) => { _cache.tiendas     = arr; _syncCol('tiendas',arr);     return Promise.resolve(); },
-  saveVentas:      (arr) => { _cache.ventas      = arr; _syncCol('ventas',arr);      return Promise.resolve(); },
-  saveProblemas:   (arr) => { _cache.problemas   = arr; _syncCol('problemas',arr);   return Promise.resolve(); },
-  saveMovimientos: (arr) => { _cache.movimientos = arr; _syncCol('movimientos',arr); return Promise.resolve(); },
-  saveMembresias:  (arr) => { _cache.membresias  = arr; _syncCol('membresias',arr);  return Promise.resolve(); },
-  saveBilleteras:  (arr) => { _cache.billeteras  = arr; _syncCol('billeteras',arr);  return Promise.resolve(); },
-  deleteBilletera: (id)  => { _cache.billeteras  = (_cache.billeteras||[]).filter(x=>x.id!==id); _delDoc('billeteras',id); return Promise.resolve(); },
-  saveSaldos:      (obj) => { _cache.saldos      = obj; _syncCfg('saldos',obj);      return Promise.resolve(); },
-  saveAjustes:     (obj) => { _cache.ajustes     = obj; _syncCfg('ajustes',obj);     return Promise.resolve(); },
+  saveTiendas:     (arr) => { _cache.tiendas     = arr; return _syncCol('tiendas',arr); },
+  saveVentas:      (arr) => { _cache.ventas      = arr; return _syncCol('ventas',arr); },
+  saveProblemas:   (arr) => { _cache.problemas   = arr; return _syncCol('problemas',arr); },
+  saveMovimientos: (arr) => { _cache.movimientos = arr; return _syncCol('movimientos',arr); },
+  saveMembresias:  (arr) => { _cache.membresias  = arr; return _syncCol('membresias',arr); },
+  saveBilleteras:  (arr) => { _cache.billeteras  = arr; return _syncCol('billeteras',arr); },
+  deleteBilletera: (id)  => { _cache.billeteras  = (_cache.billeteras||[]).filter(x=>x.id!==id); return _delDoc('billeteras',id); },
+  saveSaldos:      (obj) => { _cache.saldos      = obj; return _syncCfg('saldos',obj); },
+  saveAjustes:     (obj) => { _cache.ajustes     = obj; return _syncCfg('ajustes',obj); },
 
-  upsertTienda:    (t) => { const a=_cache.tiendas||[];    const i=a.findIndex(x=>x.id===t.id); i>=0?a[i]=t:a.push(t); _cache.tiendas=a;    _syncDoc('tiendas',t.id,t);    return Promise.resolve(); },
-  upsertVenta:     (v) => { const a=_cache.ventas||[];     const i=a.findIndex(x=>x.id===v.id); i>=0?a[i]=v:a.push(v); _cache.ventas=a;     _syncDoc('ventas',v.id,v);     return Promise.resolve(); },
-  upsertProblema:  (p) => { const a=_cache.problemas||[];  const i=a.findIndex(x=>x.id===p.id); i>=0?a[i]=p:a.push(p); _cache.problemas=a;  _syncDoc('problemas',p.id,p);  return Promise.resolve(); },
-  upsertMovimiento:(m) => { const a=_cache.movimientos||[];const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); _cache.movimientos=a;_syncDoc('movimientos',m.id,m); return Promise.resolve(); },
-  upsertMembresia: (m) => { const a=_cache.membresias||[]; const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); _cache.membresias=a; _syncDoc('membresias',m.id,m); return Promise.resolve(); },
+  upsertTienda:    (t) => { const a=_cache.tiendas||[];    const i=a.findIndex(x=>x.id===t.id); i>=0?a[i]=t:a.push(t); _cache.tiendas=a;    return _syncDoc('tiendas',t.id,t); },
+  upsertVenta:     (v) => { const a=_cache.ventas||[];     const i=a.findIndex(x=>x.id===v.id); i>=0?a[i]=v:a.push(v); _cache.ventas=a;     return _syncDoc('ventas',v.id,v); },
+  upsertProblema:  (p) => { const a=_cache.problemas||[];  const i=a.findIndex(x=>x.id===p.id); i>=0?a[i]=p:a.push(p); _cache.problemas=a;  return _syncDoc('problemas',p.id,p); },
+  upsertMovimiento:(m) => { const a=_cache.movimientos||[];const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); _cache.movimientos=a;return _syncDoc('movimientos',m.id,m); },
+  upsertMembresia: (m) => { const a=_cache.membresias||[]; const i=a.findIndex(x=>x.id===m.id); i>=0?a[i]=m:a.push(m); _cache.membresias=a; return _syncDoc('membresias',m.id,m); },
 
   deleteVenta:      (id) => { _cache.ventas      = (_cache.ventas     ||[]).filter(x=>x.id!==id); _delDoc('ventas',id);      return Promise.resolve(); },
   deleteProblema:   (id) => { _cache.problemas   = (_cache.problemas  ||[]).filter(x=>x.id!==id); _delDoc('problemas',id);   return Promise.resolve(); },
   deleteMovimiento: (id) => { _cache.movimientos = (_cache.movimientos||[]).filter(x=>x.id!==id); _delDoc('movimientos',id); return Promise.resolve(); },
 
   envios:       () => Promise.resolve(_cache.envios || []),
-  saveEnvios:   (arr) => { _cache.envios=arr; _syncCol('envios',arr); return Promise.resolve(); },
-  upsertEnvio:  (e)   => { const a=_cache.envios||[];const i=a.findIndex(x=>x.id===e.id);i>=0?a[i]=e:a.push(e);_cache.envios=a;_syncDoc('envios',e.id,e); return Promise.resolve(); },
+  saveEnvios:   (arr) => { _cache.envios=arr; return _syncCol('envios',arr); },
+  upsertEnvio:  (e)   => { const a=_cache.envios||[];const i=a.findIndex(x=>x.id===e.id);i>=0?a[i]=e:a.push(e);_cache.envios=a;return _syncDoc('envios',e.id,e); },
   deleteEnvio:  (id)  => { _cache.envios=(_cache.envios||[]).filter(x=>x.id!==id);_delDoc('envios',id); return Promise.resolve(); },
 
   envios_sky:     () => Promise.resolve(_cache.envios_sky || []),
-  upsertEnvioSky: (e)  => { const a=_cache.envios_sky||[];const i=a.findIndex(x=>x.id===e.id);i>=0?a[i]=e:a.push(e);_cache.envios_sky=a;_syncDoc('envios_sky',e.id,e); return Promise.resolve(); },
+  upsertEnvioSky: (e)  => { const a=_cache.envios_sky||[];const i=a.findIndex(x=>x.id===e.id);i>=0?a[i]=e:a.push(e);_cache.envios_sky=a;return _syncDoc('envios_sky',e.id,e); },
   deleteEnvioSky: (id) => { _cache.envios_sky=(_cache.envios_sky||[]).filter(x=>x.id!==id);_delDoc('envios_sky',id); return Promise.resolve(); },
 
   // ── Gestión de usuarios (solo admin) ──

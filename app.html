@@ -161,6 +161,10 @@
 
   <div style="padding:0.5rem 1rem 0.7rem;">
     <div class="sb-ver" id="db-status">v6.0 · Conectando...</div>
+    <div id="sync-indicator" style="display:none;position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:99999;align-items:center;gap:7px;padding:7px 16px;border-radius:30px;font-size:12px;font-weight:600;border:1px solid;box-shadow:0 4px 16px rgba(0,0,0,.12);font-family:inherit;transition:background .2s,color .2s,border-color .2s;">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      <span>Guardado</span>
+    </div>
   </div>
 
 </nav>
@@ -1997,6 +2001,16 @@ async function _renderEnviosSkyPanel() {
     if (sb) sb.title = 'Expandir menú';
   }
 })();
+</script>
+
+<script>
+window.addEventListener('beforeunload', function(e) {
+  if (typeof _pendingSyncs !== 'undefined' && _pendingSyncs > 0) {
+    e.preventDefault();
+    e.returnValue = 'Hay cambios guardándose. Si sales ahora podrías perder información.';
+    return e.returnValue;
+  }
+});
 </script>
 
 
