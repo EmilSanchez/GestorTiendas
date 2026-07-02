@@ -396,6 +396,9 @@ async function cargarDolarComprasEnConfig() {
 }
 
 async function saveVenta() {
+  const _saveBtn = document.getElementById('mv-btn-guardar');
+  if (_saveBtn) { _saveBtn.disabled = true; _saveBtn.textContent = 'Guardando...'; }
+  try {
   const tienda   = gv('v-tienda');
   const copVenta = _parseNum(gv('v-cop-venta')) || 0;
   if(!tienda)    { alert('Selecciona una tienda.'); return; }
@@ -450,7 +453,7 @@ async function saveVenta() {
     nombre_cliente: _vCfg.nombre ? gv('v-nombre').trim() : undefined,
     contraentrega:  _vCfg.contraentrega ? (document.getElementById('v-contraentrega')?.checked || false) : undefined,
     estado:        _editVentaId ? ((await DB.ventas()).find(x=>x.id===_editVentaId)?.estado || 'pendiente') : 'pendiente',
-    fecha_registro: new Date().toISOString(),
+    fecha_registro: ventaExistente?.fecha_registro || new Date().toISOString(),
   });
 
 
@@ -491,11 +494,16 @@ async function saveVenta() {
   }
 
   closeModal('modal-venta');
-  showConfirmAnim('venta', !!_editVentaId);
+  if (!_editVentaId) showConfirmAnim('venta', false);
   await renderVentasGanancias();
   await updateAlertaBadge();
+  } catch(err) {
+    console.error('saveVenta error:', err);
+    showToast('Error al guardar — verifica tu conexión', 'error', 4500);
+  } finally {
+    if (_saveBtn) { _saveBtn.disabled = false; _saveBtn.textContent = 'Guardar Venta'; }
+  }
 }
-
 async function renderVentas() {
   await _cargarConfigVentas();
   _actualizarCabeceraVentas();
@@ -702,32 +710,34 @@ function _cambiarEstadoVenta(id, estado) {
 }
 
 async function cambiarEstado(id, estado) {
-  const ventas = await DB.ventas();
-  const v = ventas.find(x=>x.id===id);
-  if(v) {
-    v.estado = estado;
-    await DB.saveVentas(ventas);
-    await updateAlertaBadge();
-    // Sincronizar estado con envío externo (sky) si existe
-    try {
-      const enviosSky = await DB.envios_sky();
-      const envio = enviosSky.find(e => e.num_venta === v.id_ml || e.num_venta === v.id);
-      if (envio) {
-        // Mapear estado de venta → estado de envío
-        const mapaEstado = {
-          'pendiente':   'Pendiente',
-          'en_camino':   'En camino',
-          'entregado':   'Entregado',
-          'cancelado':   'Cancelado',
-          'devuelto':    'Devuelto',
-          'problema':    'Pendiente',
-          'error':       'Pendiente',
-        };
-        const nuevoEstadoEnvio = mapaEstado[estado] || 'Pendiente';
-        envio.estado = nuevoEstadoEnvio;
-        await DB.upsertEnvioSky(envio);
-      }
-    } catch(e) { console.warn('No se pudo sincronizar envío:', e); }
+  // Block UI via sync indicator while saving
+  _syncStart();
+  try {
+    const ventas = await DB.ventas();
+    const v = ventas.find(x=>x.id===id);
+    if(v) {
+      v.estado = estado;
+      await DB.saveVentas(ventas);
+      await updateAlertaBadge();
+      // Sincronizar estado con envío externo (sky) si existe
+      try {
+        const enviosSky = await DB.envios_sky();
+        const envio = enviosSky.find(e => e.num_venta === v.id_ml || e.num_venta === v.id);
+        if (envio) {
+          const mapaEstado = {
+            'pendiente': 'Pendiente', 'en_camino': 'En camino',
+            'entregado': 'Entregado', 'cancelado': 'Cancelado',
+            'devuelto':  'Devuelto',  'problema':  'Pendiente', 'error': 'Pendiente',
+          };
+          envio.estado = mapaEstado[estado] || 'Pendiente';
+          await DB.upsertEnvioSky(envio);
+        }
+      } catch(e) { console.warn('No se pudo sincronizar envío:', e); }
+    }
+    _syncEnd(true);
+  } catch(err) {
+    _syncEnd(false);
+    console.error('cambiarEstado error:', err);
   }
 }
 

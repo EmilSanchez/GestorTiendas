@@ -84,16 +84,34 @@ function _syncEnd(ok) {
   }
 }
 function _updateSyncIndicator() {
-  const el = document.getElementById('sync-indicator');
+  const el       = document.getElementById('sync-indicator');
+  const label    = document.getElementById('sync-label');
+  const check    = document.getElementById('sync-icon-check');
+  const dots     = document.getElementById('sync-dots');
   if (!el) return;
+
   if (_pendingSyncs > 0) {
-    el.style.display = 'flex';
-    el.querySelector('span').textContent = 'Guardando...';
-    el.style.background = '#fff7ed'; el.style.color = '#9a3412'; el.style.borderColor = '#fed7aa';
+    el.style.display     = 'flex';
+    el.style.background  = '#fff7ed';
+    el.style.color       = '#9a3412';
+    el.style.borderColor = '#fed7aa';
+    if (label) label.textContent = 'Guardando';
+    if (check) check.style.display = 'none';
+    if (dots)  dots.style.display  = 'inline-flex';
+    // Block pointer events on the whole app while saving
+    const main = document.getElementById('main');
+    if (main) main.style.pointerEvents = 'none';
   } else {
-    el.querySelector('span').textContent = 'Guardado';
-    el.style.background = '#d1fae5'; el.style.color = '#065f46'; el.style.borderColor = '#6ee7b7';
-    setTimeout(() => { if (_pendingSyncs === 0) el.style.display = 'none'; }, 1200);
+    el.style.background  = '#d1fae5';
+    el.style.color       = '#065f46';
+    el.style.borderColor = '#6ee7b7';
+    if (label) label.textContent = 'Guardado';
+    if (check) check.style.display = 'inline-flex';
+    if (dots)  dots.style.display  = 'none';
+    // Restore interactions
+    const main = document.getElementById('main');
+    if (main) main.style.pointerEvents = '';
+    setTimeout(() => { if (_pendingSyncs === 0) el.style.display = 'none'; }, 1400);
   }
 }
 
@@ -164,16 +182,16 @@ const DB = {
 
   deleteVenta:      (id) => { _cache.ventas      = (_cache.ventas     ||[]).filter(x=>x.id!==id); _delDoc('ventas',id);      return Promise.resolve(); },
   deleteProblema:   (id) => { _cache.problemas   = (_cache.problemas  ||[]).filter(x=>x.id!==id); _delDoc('problemas',id);   return Promise.resolve(); },
-  deleteMovimiento: (id) => { _cache.movimientos = (_cache.movimientos||[]).filter(x=>x.id!==id); _delDoc('movimientos',id); return Promise.resolve(); },
+  deleteMovimiento: (id) => { _cache.movimientos = (_cache.movimientos||[]).filter(x=>x.id!==id); return _delDoc('movimientos',id); },
 
   envios:       () => Promise.resolve(_cache.envios || []),
   saveEnvios:   (arr) => { _cache.envios=arr; return _syncCol('envios',arr); },
   upsertEnvio:  (e)   => { const a=_cache.envios||[];const i=a.findIndex(x=>x.id===e.id);i>=0?a[i]=e:a.push(e);_cache.envios=a;return _syncDoc('envios',e.id,e); },
-  deleteEnvio:  (id)  => { _cache.envios=(_cache.envios||[]).filter(x=>x.id!==id);_delDoc('envios',id); return Promise.resolve(); },
+  deleteEnvio:  (id)  => { _cache.envios=(_cache.envios||[]).filter(x=>x.id!==id);return _delDoc('envios',id); },
 
   envios_sky:     () => Promise.resolve(_cache.envios_sky || []),
   upsertEnvioSky: (e)  => { const a=_cache.envios_sky||[];const i=a.findIndex(x=>x.id===e.id);i>=0?a[i]=e:a.push(e);_cache.envios_sky=a;return _syncDoc('envios_sky',e.id,e); },
-  deleteEnvioSky: (id) => { _cache.envios_sky=(_cache.envios_sky||[]).filter(x=>x.id!==id);_delDoc('envios_sky',id); return Promise.resolve(); },
+  deleteEnvioSky: (id) => { _cache.envios_sky=(_cache.envios_sky||[]).filter(x=>x.id!==id);return _delDoc('envios_sky',id); },
 
   // ── Gestión de usuarios (solo admin) ──
   getUsuarios: () => _db.collection('usuarios').get().then(snap =>
