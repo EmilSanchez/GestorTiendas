@@ -663,26 +663,7 @@ async function renderVentas() {
     </tr>`;
   }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 
-  // Deslizamiento suave hacia la izquierda
-  const _tbody = document.getElementById('ventas-tbody');
-  if (_tbody) {
-    _tbody.style.transition = 'none';
-    _tbody.style.opacity = '0';
-    _tbody.style.transform = 'translateX(18px)';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      _tbody.style.transition = 'opacity .22s ease, transform .22s ease';
-      _tbody.style.opacity = '1';
-      _tbody.style.transform = 'translateX(0)';
-      setTimeout(() => {
-        _tbody.style.transition = '';
-        _tbody.style.transform = '';
-        // Restaurar fila seleccionada
-        if (typeof _restoreSelectedRow === 'function') _restoreSelectedRow();
-        // Toast "Actualizado"
-        showToast('Actualizado', 'success', 1800);
-      }, 240);
-    }));
-  }
+  if (typeof _restoreSelectedRow === 'function') _restoreSelectedRow();
 
 }
 
