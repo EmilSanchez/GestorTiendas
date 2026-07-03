@@ -175,33 +175,38 @@ const PAGES = {
 
 
 // ── Animated counter ──
-function _countUp(el, targetVal, duration = 520) {
+function _countUp(el, targetVal, duration = 900) {
   if (!el) return;
-  const isNeg = targetVal < 0;
-  const abs   = Math.abs(targetVal);
 
-  // Parse current displayed value as starting point
+  // Cancel any running animation on this element
+  if (el._countUpRaf) { cancelAnimationFrame(el._countUpRaf); el._countUpRaf = null; }
+
+  // Parse current displayed value as starting point (animate FROM current, not from 0)
   const curText = el.textContent || '';
-  const curNum  = parseFloat(curText.replace(/[^0-9.-]/g, '')) || 0;
-  const start   = Math.abs(curNum);
+  const curNum  = parseFloat(curText.replace(/[$.\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
+  const startVal = curNum;
 
-  // If difference is tiny, just set directly
-  if (Math.abs(abs - start) < 500) { el.textContent = fmt(targetVal); return; }
+  // If difference is tiny, just set directly — no animation needed
+  if (Math.abs(targetVal - startVal) < 200) { el.textContent = fmt(targetVal); return; }
 
   const startTime = performance.now();
-  const diff = abs - start;
+  const diff = targetVal - startVal;
 
   function step(now) {
     const elapsed = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    // Ease out cubic
+    // Ease out cubic — fast start, gentle end
     const ease = 1 - Math.pow(1 - progress, 3);
-    const current = start + diff * ease;
-    el.textContent = fmt(isNeg ? -current : current);
-    if (progress < 1) requestAnimationFrame(step);
-    else el.textContent = fmt(targetVal);
+    const current = startVal + diff * ease;
+    el.textContent = fmt(current);
+    if (progress < 1) {
+      el._countUpRaf = requestAnimationFrame(step);
+    } else {
+      el.textContent = fmt(targetVal);
+      el._countUpRaf = null;
+    }
   }
-  requestAnimationFrame(step);
+  el._countUpRaf = requestAnimationFrame(step);
 }
 
 // ── Cierres de mes (disponible globalmente) ──

@@ -874,35 +874,58 @@ async function _confirmarReabrirMes() {
 var _aplDifMesPendiente = '';
 var _aplDifValorPendiente = 0;
 
+// Cache para el modal
+var _aplDifVentas = [], _aplDifMovs = [], _aplDifSky = [];
+
 async function _aplicarDiferenciaCierre(mes, diferencia) {
   if (!diferencia || Math.abs(diferencia) < 1) return;
-  _aplDifMesPendiente  = mes;
+  _aplDifMesPendiente   = mes;
   _aplDifValorPendiente = diferencia;
 
-  // Calcular ganancia actual del mes en curso
-  const [movs, ventas, enviosSky] = await Promise.all([DB.movimientos(), DB.ventas(), DB.envios_sky()]);
-  const mesActual = hoy().slice(0, 7);
-  const ventasMesActual = ventas.filter(v => (v.fecha_venta||'').startsWith(mesActual));
-  const idsMl = new Set(ventas.map(v => v.id_ml).filter(Boolean));
-  const egSky = enviosSky.filter(e => (e.fecha||'').startsWith(mesActual) && !idsMl.has(e.num_venta)).reduce((s,e) => s+(parseFloat(e.valor)||0), 0);
-  const ajustesYa = movs.filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesActual)).reduce((s,m) => s + (m.tipo==='ingreso'?(parseFloat(m.valor)||0):-(parseFloat(m.valor)||0)), 0);
-  const ganActualMes = ventasMesActual.reduce((s,v) => s+calcVenta(v).ganancia, 0) - egSky + ajustesYa;
-  const ganDespues = ganActualMes + diferencia;
+  [_aplDifMovs, _aplDifVentas, _aplDifSky] = await Promise.all([DB.movimientos(), DB.ventas(), DB.envios_sky()]);
+
+  // Poblar selector con meses NO cerrados (los abiertos disponibles)
+  const cierres = await _getCierres();
+  const cerrados = new Set(cierres.map(c => c.mes));
+  // Generar últimos 6 meses que no estén cerrados
+  const mesesDisp = [];
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
+    const m = d.toISOString().slice(0,7);
+    if (!cerrados.has(m)) mesesDisp.push(m);
+  }
+
+  const sel = document.getElementById('aplDif-mes-destino');
+  if (sel) {
+    sel.innerHTML = mesesDisp.map(m => `<option value="${m}">${_repFmtMes(m)}</option>`).join('');
+    sel.value = mesesDisp[0] || hoy().slice(0,7);
+  }
+
+  document.getElementById('aplDif-mes-label').textContent = _repFmtMes(mes);
 
   const diffSign = diferencia >= 0 ? '+' : '';
   const diffColor = diferencia >= 0 ? 'var(--teal)' : 'var(--red)';
-  const despuesColor = ganDespues >= 0 ? 'var(--teal)' : 'var(--red)';
-
-  document.getElementById('aplDif-mes-label').textContent = `${_repFmtMes(mes)} → ${_repFmtMes(mesActual)}`;
-  document.getElementById('aplDif-gan-actual').textContent = _fmtCOP(ganActualMes);
   const difEl = document.getElementById('aplDif-diferencia');
   difEl.textContent = `${diffSign}${_fmtCOP(diferencia)}`;
   difEl.style.color = diffColor;
+
+  _aplDifCambiarMes(sel?.value || hoy().slice(0,7));
+  openModal('modal-aplicar-diferencia');
+}
+
+function _aplDifCambiarMes(mesDestino) {
+  const diferencia = _aplDifValorPendiente;
+  const idsMl = new Set(_aplDifVentas.map(v => v.id_ml).filter(Boolean));
+  const ventasMes = _aplDifVentas.filter(v => (v.fecha_venta||'').startsWith(mesDestino));
+  const egSky = _aplDifSky.filter(e => (e.fecha||'').startsWith(mesDestino) && !idsMl.has(e.num_venta)).reduce((s,e) => s+(parseFloat(e.valor)||0), 0);
+  const ajustesYa = _aplDifMovs.filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesDestino)).reduce((s,m) => s+(m.tipo==='ingreso'?(parseFloat(m.valor)||0):-(parseFloat(m.valor)||0)), 0);
+  const ganMes = ventasMes.reduce((s,v) => s+calcVenta(v).ganancia, 0) - egSky + ajustesYa;
+  const ganDespues = ganMes + diferencia;
+
+  document.getElementById('aplDif-gan-actual').textContent = _fmtCOP(ganMes);
   const despEl = document.getElementById('aplDif-gan-despues');
   despEl.textContent = _fmtCOP(ganDespues);
-  despEl.style.color = despuesColor;
-
-  openModal('modal-aplicar-diferencia');
+  despEl.style.color = ganDespues >= 0 ? 'var(--teal)' : 'var(--red)';
 }
 
 async function _confirmarAplicarDiferencia() {
@@ -916,9 +939,15 @@ async function _confirmarAplicarDiferencia() {
   const ts = new Date().toISOString();
   const mesNombre = _repFmtMes(mes);
 
+  const mesDestino = document.getElementById('aplDif-mes-destino')?.value || hoy().slice(0,7);
+  // Use last day of the selected month as the movement date
+  const [dy, dm] = mesDestino.split('-');
+  const lastDay = new Date(parseInt(dy), parseInt(dm), 0).getDate();
+  const fechaMov = `${mesDestino}-${String(lastDay).padStart(2,'0')}`;
+
   await DB.upsertMovimiento({
     id: 'dif_cierre_' + mes + '_' + Date.now(),
-    fecha: hoy(),
+    fecha: fechaMov,
     tipo: esIngreso ? 'ingreso' : 'egreso',
     fuente: 'mercadopago', // fuente genérica visible en movimientos
     valor,
