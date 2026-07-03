@@ -1034,4 +1034,4 @@ async function _confirmarRevertirDiferencia() {
   } finally {
     if (btn) { btn.textContent = 'Revertir'; btn.disabled = false; }
   }
-}
+} 
