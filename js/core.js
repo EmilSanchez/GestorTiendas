@@ -175,7 +175,7 @@ const PAGES = {
 
 
 // ── Animated counter ──
-function _countUp(el, targetVal, duration = 900) {
+function _countUp(el, targetVal, duration = 1400) {
   if (!el) return;
 
   // Cancel any running animation on this element
@@ -347,6 +347,8 @@ async function navigate(page) {
   // Guardar página actual en el hash para sobrevivir recargas
   if(location.hash !== '#' + page) history.replaceState(null, '', '#' + page);
   await render(page);
+  // Update mobile bottom nav
+  if (typeof setActiveMobileNav === 'function') setActiveMobileNav(page);
 }
 
 async function render(page) {
