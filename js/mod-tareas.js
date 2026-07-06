@@ -101,7 +101,7 @@ async function renderTareas() {
         <div style="font-size:12px;">Registra una nueva tarea o agenda una tarea recurrente para este día.</div>
       </div>
     ` : `
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;" id="tareas-hoy-list">
+      <div style="display:flex;flex-direction:column;gap:8px;" id="tareas-hoy-list">
         ${hoyOrdenadas.map(t => _renderTareaItem(t, fecha)).join('')}
       </div>
     `}
@@ -152,7 +152,7 @@ function _renderNoCumplidas(noCumplidas) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--red);">No cumplidas</div>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      <div style="display:flex;flex-direction:column;gap:8px;">
         ${noCumplidas.map(t => `
           <div class="tarea-item-card" style="border-left-color:#fca5a5;opacity:.85;">
             <div style="width:22px;height:22px;border-radius:6px;border:2px solid #fca5a5;background:var(--red-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">

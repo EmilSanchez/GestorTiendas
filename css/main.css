@@ -1122,3 +1122,163 @@ body.sb-collapsed #sb-avatar {
   /* Session time bigger on mobile */
   #cfg-session-time{ font-size:28px !important; }
 }
+
+/* ═══════════════════════════════════════
+   MODULE-SPECIFIC MOBILE FIXES
+═══════════════════════════════════════ */
+@media(max-width:600px){
+
+  /* ── VENTAS: banner 2x2 grid ── */
+  #page-ventas > .card:first-child {
+    padding: .75rem !important;
+    margin-bottom: 10px !important;
+  }
+  #page-ventas > .card:first-child > div {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    overflow: visible !important;
+  }
+  /* Each stat block */
+  #page-ventas > .card:first-child > div > div:not(#vg-por-tienda) {
+    padding: 10px 12px !important;
+    border-right: none !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 10px !important;
+    background: var(--white) !important;
+  }
+  /* Tiendas por tienda — hide on mobile, info is in table */
+  #vg-por-tienda { display: none !important; }
+
+  /* Stat numbers smaller on mobile */
+  #vg-total-gan, #vg-total-ing, #vg-total-cos, #vg-total-cnt {
+    font-size: 15px !important;
+  }
+
+  /* ── VENTAS: filters bar reorganized ── */
+  .filters-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+    padding: .7rem .75rem !important;
+    align-items: start !important;
+  }
+  /* Search spans full width */
+  .filters-bar #vf-search { grid-column: 1 / -1 !important; }
+  /* Date picker spans full width */
+  .filters-bar #drp-wrap { grid-column: 1 / -1 !important; }
+  /* Label + select pairs */
+  .filters-bar .fl { display: none !important; } /* hide labels, selects are self-explanatory */
+  /* Bottom row: limpiar + actualizar + config in one row */
+  .filters-bar .spacer { display: none !important; }
+  #btn-limpiar-ventas {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    justify-content: center !important;
+  }
+  /* Keep actualizar + config small, put nueva venta full width */
+  .filters-bar > button[onclick*="openModalVenta"] {
+    grid-column: 1 / -1 !important;
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 11px 14px !important;
+  }
+  /* Actualizar + config share a row via flex wrapper trick */
+  #btn-actualizar-ventas,
+  .filters-bar > button[onclick*="openModalConfigVentas"] {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* ── VENTAS: date range picker as bottom sheet ── */
+  #drp-btn { width: 100% !important; min-width: unset !important; justify-content: center !important; }
+  #drp-panel {
+    position: fixed !important;
+    inset: auto 0 0 0 !important;
+    min-width: unset !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 75vh !important;
+    overflow-y: auto !important;
+    z-index: 999 !important;
+    box-shadow: 0 -8px 40px rgba(0,0,0,.18) !important;
+  }
+  /* Shortcuts: pill row */
+  .drp-shortcuts {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--border) !important;
+    padding: 10px 12px !important;
+    gap: 6px !important;
+    min-width: unset !important;
+  }
+  .drp-sc {
+    padding: 5px 12px !important;
+    border-radius: 20px !important;
+    border: 1px solid var(--border) !important;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+  }
+  /* Calendar: single column */
+  .drp-body { flex-direction: column !important; }
+  .drp-cals { flex-direction: column !important; padding: 12px !important; gap: 0 !important; }
+  .drp-cal + .drp-cal {
+    margin-left: 0 !important;
+    padding-left: 0 !important;
+    border-left: none !important;
+    border-top: 1px solid var(--border) !important;
+    padding-top: 14px !important;
+    margin-top: 14px !important;
+  }
+  .drp-footer {
+    padding: 10px 14px !important;
+    gap: 8px !important;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom)) !important;
+  }
+  .drp-footer .btn { flex: 1; justify-content: center; }
+
+  /* ── TAREAS: single column ── */
+  #tareas-hoy-list,
+  #tareas-hoy-list ~ div[style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  /* Force all task grids to single column */
+  [style*="grid-template-columns:1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+  .tarea-item-card {
+    padding: 11px 13px !important;
+  }
+
+  /* ── FINANZAS: compact header ── */
+  #page-finanzas .card:first-of-type .card-header,
+  #page-finanzas > .card > .card-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
+  }
+  /* Finanzas buttons row */
+  #page-finanzas .page-header,
+  #page-finanzas [style*="justify-content:space-between"] {
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  /* Make finanzas header buttons wrap into 2 per row */
+  #page-finanzas [style*="justify-content:space-between"] > button,
+  #page-finanzas [style*="justify-content:space-between"] > select {
+    flex: 1 !important;
+    min-width: calc(50% - 4px) !important;
+  }
+  /* Ganancia mes: prominent */
+  #fin-ganancia-mes { font-size: 22px !important; }
+
+  /* ── FINANZAS: billeteras 2 col ── */
+  #fin-billeteras {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .fin-wallet-card { padding: 10px 12px !important; }
+
+  /* ── MOVIMIENTOS: compact rows ── */
+  #fin-movimientos > div { font-size: 12px !important; }
+}

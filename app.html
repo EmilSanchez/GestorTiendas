@@ -285,13 +285,14 @@
           </button>
           <div id="drp-panel" style="display:none;"></div>
         </div>
-        <div class="spacer"></div>
-        <button class="btn btn-ghost btn-sm" id="btn-limpiar-ventas" style="display:none;" onclick="clearVentaFilters()"> Limpiar</button>
-        <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
-        <button class="btn btn-ghost btn-sm" onclick="openModalConfigVentas()" title="Configurar columnas" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-        </button>
-        <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
+        <!-- Actions row: limpiar + actualizar + config + nueva venta -->
+        <div style="display:flex;gap:6px;align-items:center;width:100%;">
+          <button class="btn btn-ghost btn-sm" id="btn-limpiar-ventas" style="display:none;" onclick="clearVentaFilters()">Limpiar</button>
+          <div style="flex:1;"></div>
+          <button class="btn btn-ghost btn-sm" id="btn-actualizar-ventas" onclick="refreshModulo('ventas')" title="Actualizar" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
+          <button class="btn btn-ghost btn-sm" onclick="openModalConfigVentas()" title="Configurar columnas" style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+          <button class="btn btn-primary btn-sm" onclick="openModalVenta()">+ Nueva Venta</button>
+        </div>
       </div>
       <div class="table-wrap" style="max-height:calc(100vh - 230px);overflow-y:auto;">
         <table>
@@ -622,19 +623,19 @@
     <section class="page-section" id="page-finanzas">
 
       <!-- Header -->
-      <div class="frow mb16" style="flex-wrap:wrap;gap:8px;align-items:center;">
-        <div style="flex:1;min-width:160px;">
+      <div style="margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px;">
           <div style="font-size:15px;font-weight:700;letter-spacing:.2px;color:var(--text);">Control Financiero</div>
-        </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
           <select id="fin-filtro-mes" style="font-size:12px;padding:5px 10px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;" onchange="renderFinanzas()"></select>
-          <button class="btn btn-ghost btn-sm" onclick="openModalNuevaBilletera()">+ Billetera</button>
-          <button class="btn btn-ghost btn-sm" onclick="openModalTransferencia()">
+        </div>
+        <div id="fin-btns-row" style="display:flex;gap:6px;flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm" onclick="openModalNuevaBilletera()" style="flex:1;min-width:0;justify-content:center;">+ Billetera</button>
+          <button class="btn btn-ghost btn-sm" onclick="openModalTransferencia()" style="flex:1;min-width:0;justify-content:center;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             Transferir
           </button>
-          <button class="btn btn-ghost btn-sm" onclick="openModalMovimiento()">+ Movimiento</button>
-          <button class="btn btn-ghost btn-sm" onclick="abrirModalCierreMes()">
+          <button class="btn btn-ghost btn-sm" onclick="openModalMovimiento()" style="flex:1;min-width:0;justify-content:center;">+ Movimiento</button>
+          <button class="btn btn-ghost btn-sm" onclick="abrirModalCierreMes()" style="flex:1;min-width:0;justify-content:center;">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             Cerrar mes
           </button>
