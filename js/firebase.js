@@ -147,8 +147,8 @@ async function _cargarTodo() {
   _cache.saldos      = sDoc.exists  ? sDoc.data()  : {};
   _cache.ajustes     = ajDoc.exists ? ajDoc.data() : {};
 
-  // Iniciar listeners en tiempo real después de la carga inicial
-  _iniciarListeners();
+  // Listeners desactivados — consumen demasiado cupo de Firestore
+  // _iniciarListeners();
 }
 
 // ══ Sync helpers ══
