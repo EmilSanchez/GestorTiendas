@@ -255,7 +255,7 @@ async function _saveMvEnvio() {
     if (venta) {
       const extraAnterior = parseFloat(venta.envio_extra) || 0;
       venta.envio_extra = esNuevo ? extraAnterior + valor : valor;
-      await DB.saveVentas(ventas);
+      await DB.upsertVenta(venta);  // Solo 1 escritura
     }
   } else {
     // Mes cerrado: registrar el gasto en el mes en curso como movimiento
@@ -698,7 +698,7 @@ async function cambiarEstado(id, estado) {
     const v = ventas.find(x=>x.id===id);
     if(v) {
       v.estado = estado;
-      await DB.saveVentas(ventas);
+      await DB.upsertVenta(v);  // Solo escribe 1 documento, no los 143
       await updateAlertaBadge();
       // Sincronizar estado con envío externo (sky) si existe
       try {
@@ -872,7 +872,7 @@ async function _confirmarValidarEnvio() {
     if (_validarEnvioEsServientrega) {
       vv.envio_pagado = true;   // ← AGREGAR ESTA LÍNEA
     }
-    await DB.saveVentas(ventas);
+    await DB.upsertVenta(vv);  // Solo 1 escritura
     showConfirmAnim('validado', false);
     await renderVentas();
   }
