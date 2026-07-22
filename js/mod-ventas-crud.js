@@ -287,6 +287,9 @@ async function _saveMvEnvio() {
   closeModal('modal-venta');
   showToast('Envío guardado', 'success', 2000);
   if (typeof _renderEnviosSkyPanel === 'function') _renderEnviosSkyPanel();
+  // Re-renderizar tabla y banner para reflejar el nuevo envio_extra en ganancia
+  await renderVentas();
+  await renderVentasGanancias();
 }
 
 // _esMesCerrado defined in core.js
