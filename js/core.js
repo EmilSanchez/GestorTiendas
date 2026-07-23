@@ -181,9 +181,10 @@ function _countUp(el, targetVal, duration = 1400) {
   // Cancel any running animation on this element
   if (el._countUpRaf) { cancelAnimationFrame(el._countUpRaf); el._countUpRaf = null; }
 
-  // Parse current displayed value as starting point (animate FROM current, not from 0)
-  const curText = el.textContent || '';
-  const curNum  = parseFloat(curText.replace(/[$.\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
+  // Use animFrom dataset if set (preserved before a re-render), else use current text
+  const sourceText = el.dataset.animFrom || el.textContent || '';
+  if (el.dataset.animFrom) delete el.dataset.animFrom; // consume it
+  const curNum  = parseFloat(sourceText.replace(/[$.\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
   const startVal = curNum;
 
   // If difference is tiny, just set directly — no animation needed

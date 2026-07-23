@@ -287,7 +287,13 @@ async function _saveMvEnvio() {
   closeModal('modal-venta');
   showToast('Envío guardado', 'success', 2000);
   if (typeof _renderEnviosSkyPanel === 'function') _renderEnviosSkyPanel();
-  // Re-renderizar tabla y banner para reflejar el nuevo envio_extra en ganancia
+  // Capturar valores actuales ANTES del render para que la animación parta de ahí
+  const _ganEl = document.getElementById('vg-total-gan');
+  const _ingEl = document.getElementById('vg-total-ing');
+  const _cosEl = document.getElementById('vg-total-cos');
+  if (_ganEl) _ganEl.dataset.animFrom = _ganEl.textContent;
+  if (_ingEl) _ingEl.dataset.animFrom = _ingEl.textContent;
+  if (_cosEl) _cosEl.dataset.animFrom = _cosEl.textContent;
   await renderVentas();
   await renderVentasGanancias();
 }
