@@ -170,32 +170,94 @@ async function renderUsuarios() {
     return;
   }
 
+  const MODULOS_LABEL = {ventas:'Ventas',envios:'Envíos',problemas:'Resolver',ayudas:'Mensajes',finanzas:'Finanzas',tareas:'Tareas'};
+
+  // Cargar fotos de perfil de cada usuario
+  const fotos = {};
+  await Promise.all(usuarios.map(async u => {
+    try {
+      const snap = await _db.collection(`usuarios/${u.uid}/config`).doc('perfil').get();
+      if (snap.exists && snap.data().foto) fotos[u.uid] = snap.data().foto;
+    } catch(e) {}
+  }));
+
   el.innerHTML = usuarios.map(u => {
     const activo = u.activo !== false;
+    const permisos = u.permisos || {ventas:true,envios:true,problemas:true,ayudas:true,tareas:true};
+    const permPills = Object.entries(MODULOS_LABEL).map(([key,label]) => {
+      const tiene = permisos[key] !== false;
+      return `<span style="font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;background:${tiene?'#dbeafe':'#f3f4f6'};color:${tiene?'#1e40af':'#9ca3af'};border:1px solid ${tiene?'#93c5fd':'#e5e7eb'};">${label}</span>`;
+    }).join('');
+    const avatarInner = fotos[u.uid]
+      ? `<img src="${fotos[u.uid]}" style="width:100%;height:100%;object-fit:cover;">`
+      : `<span style="font-size:14px;font-weight:700;">${(u.nombre||u.usuario||'?').charAt(0).toUpperCase()}</span>`;
     return `
-    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--white);">
-      <div style="width:34px;height:34px;border-radius:50%;background:${activo?'#1a4fa8':'#6b7280'};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;font-size:13px;font-weight:700;">
-        ${(u.nombre||u.usuario||'?').charAt(0).toUpperCase()}
+    <div style="border:1px solid var(--border);border-radius:10px;background:var(--white);overflow:hidden;margin-bottom:6px;">
+      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;">
+        <div style="width:38px;height:38px;border-radius:50%;background:${activo?'#1a4fa8':'#6b7280'};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;overflow:hidden;border:2px solid var(--border);">
+          ${avatarInner}
+        </div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--text);">${u.nombre||'—'}</div>
+          <div style="font-size:11px;color:var(--text3);margin-top:1px;">
+            @${u.usuario||u.uid} ·
+            <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:${u.rol==='colaborador'?'#fef3c7':'#dbeafe'};color:${u.rol==='colaborador'?'#92400e':'#1e40af'};">${u.rol==='colaborador'?'Colaborador':'Usuario'}</span> ·
+            ${activo?'<span style="color:#065f46;font-weight:600;">Activo</span>':'<span style="color:#7f1d1d;font-weight:600;">Inactivo</span>'}
+          </div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="openModalCrearUsuario('${u.uid}')" style="font-size:11px;padding:4px 9px;">Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="_toggleUsuario('${u.uid}',${!activo})"
+          style="color:${activo?'var(--red)':'var(--green)'};font-size:11px;padding:4px 9px;">
+          ${activo?'Desactivar':'Activar'}
+        </button>
       </div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:700;color:var(--text);">${u.nombre||'—'}</div>
-        <div style="font-size:11px;color:var(--text3);">@${u.usuario||u.uid} · ${activo?'<span style="color:#065f46;font-weight:600;">Activo</span>':'<span style="color:#7f1d1d;font-weight:600;">Inactivo</span>'}</div>
-      </div>
-      <button class="btn btn-ghost btn-sm" onclick="_toggleUsuario('${u.uid}',${!activo})"
-        style="color:${activo?'var(--red)':'var(--green)'};">
-        ${activo?'Desactivar':'Activar'}
-      </button>
+      ${u.rol==='colaborador'?`<div style="padding:6px 14px 10px;border-top:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap;">${permPills}</div>`:''}
     </div>`;
   }).join('');
 }
 
-function openModalCrearUsuario() {
+function openModalCrearUsuario(uid = null) {
+  const isEdit = !!uid;
+  document.getElementById('nu-modal-title').textContent = isEdit ? 'Editar usuario' : 'Nuevo usuario';
   document.getElementById('nu-nombre').value = '';
   document.getElementById('nu-usuario').value = '';
   document.getElementById('nu-pass').value = '';
   document.getElementById('nu-error').textContent = '';
-  document.getElementById('nu-btn').textContent = 'Crear usuario';
+  document.getElementById('nu-btn').textContent = isEdit ? 'Guardar cambios' : 'Crear usuario';
+  document.getElementById('nu-btn').onclick = isEdit ? () => editarUsuario(uid) : crearUsuario;
   document.getElementById('nu-btn').disabled = false;
+  // Reset role selector
+  const rolEl = document.getElementById('nu-rol');
+  if (rolEl) rolEl.value = 'usuario';
+  const permsWrap = document.getElementById('nu-permisos-wrap');
+  if (permsWrap) permsWrap.style.display = 'none';
+  // Reset checkboxes to default (all on except finanzas)
+  ['ventas','envios','problemas','ayudas','tareas'].forEach(m => {
+    const el = document.getElementById('nu-p-' + m);
+    if (el) el.checked = true;
+  });
+  const finEl = document.getElementById('nu-p-finanzas');
+  if (finEl) finEl.checked = false;
+  // Hide pass field when editing
+  const passWrap = document.getElementById('nu-pass-wrap');
+  if (passWrap) passWrap.style.display = isEdit ? 'none' : '';
+
+  if (isEdit) {
+    // Load existing user data
+    DB.getUsuarios().then(usuarios => {
+      const u = usuarios.find(x => x.uid === uid);
+      if (!u) return;
+      document.getElementById('nu-nombre').value = u.nombre || '';
+      document.getElementById('nu-usuario').value = u.usuario || '';
+      if (rolEl) { rolEl.value = u.rol === 'colaborador' ? 'colaborador' : 'usuario'; _toggleColaboradorPerms(); }
+      const perms = u.permisos || {};
+      ['ventas','envios','problemas','ayudas','tareas','finanzas'].forEach(m => {
+        const el = document.getElementById('nu-p-' + m);
+        if (el) el.checked = perms[m] !== false;
+      });
+    });
+  }
+  window._editUsuarioUid = isEdit ? uid : null;
   openModal('modal-crear-usuario');
 }
 
@@ -222,7 +284,17 @@ async function crearUsuario() {
     const uid  = 'u_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
     const hash = await _hashCode(pass);
 
-    await DB.crearUsuario({ uid, usuario, nombre, rol:'usuario', activo:true, hash });
+    // Leer permisos seleccionados
+    const permisos = {};
+    ['ventas','envios','problemas','ayudas','tareas','finanzas'].forEach(m => {
+      const el = document.getElementById('nu-p-' + m);
+      permisos[m] = el ? el.checked : true;
+    });
+
+    const rolSeleccionado = document.getElementById('nu-rol')?.value || 'usuario';
+    const datosUsuario = { uid, usuario, nombre, rol: rolSeleccionado, activo:true, hash };
+    if (rolSeleccionado === 'colaborador') datosUsuario.permisos = permisos;
+    await DB.crearUsuario(datosUsuario);
 
     closeModal('modal-crear-usuario');
     await renderUsuarios();
@@ -292,4 +364,33 @@ function _toggleTiendaRow(id) {
   const open = el.style.display === 'none' || el.style.display === '';
   el.style.display = open ? 'block' : 'none';
   if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+
+async function editarUsuario(uid) {
+  const nombre  = document.getElementById('nu-nombre').value.trim();
+  const errEl   = document.getElementById('nu-error');
+  const btn     = document.getElementById('nu-btn');
+  errEl.textContent = '';
+  if (!nombre) { errEl.textContent = 'El nombre es requerido.'; return; }
+  btn.textContent = 'Guardando...'; btn.disabled = true;
+  try {
+    const permisos = {};
+    ['ventas','envios','problemas','ayudas','tareas','finanzas'].forEach(m => {
+      const el = document.getElementById('nu-p-' + m);
+      permisos[m] = el ? el.checked : true;
+    });
+    await _db.collection('usuarios').doc(uid).update({ nombre, permisos });
+    closeModal('modal-crear-usuario');
+    await renderUsuarios();
+    showToast('Usuario actualizado', 'success');
+  } catch(e) {
+    errEl.textContent = 'Error al actualizar.';
+    btn.textContent = 'Guardar cambios'; btn.disabled = false;
+  }
+}
+
+function _toggleColaboradorPerms() {
+  const rol = document.getElementById('nu-rol')?.value;
+  const wrap = document.getElementById('nu-permisos-wrap');
+  if (wrap) wrap.style.display = rol === 'colaborador' ? 'block' : 'none';
 }

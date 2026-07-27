@@ -320,7 +320,9 @@ async function doLogin(){
     if(!userData.activo){_showError('Usuario desactivado. Contacta al administrador.');_setLoading(false);return;}
     const authSnap=await _db.collection(`usuarios/${userDoc.id}/config`).doc('auth').get();
     if(!authSnap.exists||authSnap.data().hash!==hash){_showError('Contraseña incorrecta.');_setLoading(false);return;}
-    localStorage.setItem(_SK,JSON.stringify({uid:userDoc.id,rol:userData.rol||'usuario',usuario:userData.usuario,nombre:userData.nombre,ts:Date.now()}));
+    const _sesionData = {uid:userDoc.id,rol:userData.rol||'usuario',usuario:userData.usuario,nombre:userData.nombre,ts:Date.now()};
+      if(userData.rol==='colaborador') _sesionData.permisos = userData.permisos||{};
+      localStorage.setItem(_SK,JSON.stringify(_sesionData));
     window.location.href='app.html';
   }catch(e){console.error(e);_showError('Error de conexión. Intenta de nuevo.');_setLoading(false);}
 }

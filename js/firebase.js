@@ -20,20 +20,29 @@ const _db = firebase.firestore();
 // ══════════════════════════════════════════════════════════
 let _currentUser = null; // objeto {uid, usuario, rol, ...}
 
-function _isAdmin() { return _currentUser?.rol === 'admin'; }
+function _isAdmin()        { return _currentUser?.rol === 'admin'; }
+function _isColaborador()  { return _currentUser?.rol === 'colaborador'; }
+// Colaboradores usan las mismas colecciones del admin (raíz)
+function _usaRaiz()        { return _isAdmin() || _isColaborador(); }
+
+// Perfil personal: siempre va a la ruta propia del usuario, nunca a la raíz
+function _cfgPerfil() {
+  if (_isAdmin()) return _db.collection('config').doc('perfil');
+  return _db.collection(`usuarios/${_currentUser.uid}/config`).doc('perfil');
+}
 
 function _col(nombre) {
-  return _isAdmin()
+  return _usaRaiz()
     ? _db.collection(nombre)
     : _db.collection(`usuarios/${_currentUser.uid}/${nombre}`);
 }
 function _doc(col, id) {
-  return _isAdmin()
+  return _usaRaiz()
     ? _db.collection(col).doc(id)
     : _db.collection(`usuarios/${_currentUser.uid}/${col}`).doc(id);
 }
 function _cfg(docId) {
-  return _isAdmin()
+  return _usaRaiz()
     ? _db.collection('config').doc(docId)
     : _db.collection(`usuarios/${_currentUser.uid}/config`).doc(docId);
 }

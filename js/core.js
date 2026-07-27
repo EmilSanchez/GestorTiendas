@@ -333,6 +333,13 @@ async function renderEnviosMes() {
 
 // ── NAVEGACIÓN ──
 async function navigate(page) {
+  // Solo los colaboradores tienen restricciones de módulos
+  if (window._userPermisos) {
+    if (window._userPermisos[page] === false) {
+      showToast('No tienes acceso a este módulo', 'error', 2500);
+      return;
+    }
+  }
   // Limpiar timer de sesión si se navega fuera de configuración
   if(page !== 'configuracion' && window._sessionTimerInterval) {
     clearInterval(window._sessionTimerInterval);

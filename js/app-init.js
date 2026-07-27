@@ -296,20 +296,27 @@ async function init() {
 }
 
 // ── Sidebar avatar ──
+function _avatarKey() {
+  // Clave única por usuario para evitar mezclar fotos en localStorage
+  const uid = _currentUser?.uid || 'anon';
+  return 'sm_avatar_' + uid;
+}
 async function _loadSbAvatar() {
-  // Mostrar inmediatamente desde caché local
-  const cached = localStorage.getItem('sm_avatar');
+  // Mostrar inmediatamente desde caché local del usuario actual
+  const key = _avatarKey();
+  const cached = localStorage.getItem(key);
   if (cached) _setSbAvatarImg(cached);
   // Luego sincronizar desde Firestore
   try {
-    const snap = await _cfg('perfil').get();
+    const snap = await _cfgPerfil().get();
     if (snap.exists) {
       const foto = snap.data().foto || '';
       if (foto) {
-        localStorage.setItem('sm_avatar', foto);
+        localStorage.setItem(key, foto);
         _setSbAvatarImg(foto);
       } else {
-        localStorage.removeItem('sm_avatar');
+        localStorage.removeItem(key);
+        if (!cached) _setSbAvatarImg('');
       }
     }
   } catch(e) {}
@@ -376,6 +383,19 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (emailEl) emailEl.textContent = sesion.rol === 'admin' ? 'Administrador' : `@${sesion.usuario}`;
   // Cargar foto de perfil al iniciar
   _loadSbAvatar();
+
+  // ── Aplicar restricciones solo para colaboradores ──
+  if (sesion.rol === 'colaborador') {
+    const permisos = sesion.permisos || {};
+    // Ocultar nav items sin acceso
+    document.querySelectorAll('.nav-item[data-page]').forEach(el => {
+      const page = el.dataset.page;
+      if (permisos[page] === false) el.style.display = 'none';
+    });
+    window._userPermisos = permisos;
+  } else {
+    window._userPermisos = null; // admin y usuarios normales: sin restricciones
+  }
 
   await init();
 });

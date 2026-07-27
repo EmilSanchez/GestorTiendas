@@ -935,15 +935,14 @@
 
 <!-- ═══════════════════ MODAL CREAR USUARIO ═══════════════════ -->
 <div class="overlay" id="modal-crear-usuario">
-  <div class="modal" style="max-width:400px;">
+  <div class="modal" style="max-width:480px;width:95vw;">
     <div class="mh" style="background:linear-gradient(135deg,#1a4fa8,#1e40af);color:#fff;">
       <div>
-        <div class="mh-title" style="color:#fff;font-size:15px;">Nuevo usuario</div>
-        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">El usuario podrá ingresar con estas credenciales</div>
+        <div class="mh-title" id="nu-modal-title" style="color:#fff;font-size:15px;">Nuevo usuario</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Credenciales y módulos a los que tendrá acceso</div>
       </div>
       <button class="mclose" onclick="closeModal('modal-crear-usuario')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
-        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
     </div>
     <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
       <div class="fg" style="margin:0;">
@@ -955,10 +954,58 @@
         <input type="text" id="nu-usuario" placeholder="Ej: maria_garcia"
           oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9_]/g,'')">
       </div>
-      <div class="fg" style="margin:0;">
+      <div class="fg" id="nu-pass-wrap" style="margin:0;">
         <label class="fl2">Contraseña</label>
         <input type="password" id="nu-pass" placeholder="Mínimo 6 caracteres">
       </div>
+
+      <!-- Tipo de usuario -->
+      <div class="fg" style="margin:0;">
+        <label class="fl2">Tipo de usuario</label>
+        <select id="nu-rol" onchange="_toggleColaboradorPerms()" style="width:100%;">
+          <option value="usuario">Usuario independiente — maneja sus propios datos</option>
+          <option value="colaborador">Colaborador — asistente del admin, ve los mismos datos</option>
+        </select>
+      </div>
+
+      <!-- Permisos de módulos (solo para colaboradores) -->
+      <div id="nu-permisos-wrap" style="border-top:1px solid var(--border);padding-top:13px;display:none;">
+        <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:10px;">Módulos con acceso</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+            onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="checkbox" id="nu-p-ventas" checked style="width:15px;height:15px;">
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Gestor Ventas</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+            onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="checkbox" id="nu-p-envios" checked style="width:15px;height:15px;">
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Envíos</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+            onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="checkbox" id="nu-p-problemas" checked style="width:15px;height:15px;">
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Resolver</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+            onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="checkbox" id="nu-p-ayudas" checked style="width:15px;height:15px;">
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Mensajes</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+            onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="checkbox" id="nu-p-finanzas" style="width:15px;height:15px;">
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Finanzas</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+            onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
+            <input type="checkbox" id="nu-p-tareas" checked style="width:15px;height:15px;">
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Tareas</span>
+          </label>
+        </div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;">Configuración solo está disponible para el administrador.</div>
+      </div>
+
       <div id="nu-error" style="color:#dc2626;font-size:11px;min-height:14px;"></div>
     </div>
     <div class="mf" style="gap:8px;">
@@ -1002,7 +1049,7 @@
 
 <!-- ═══════════════════ MODAL NUEVA/EDITAR TAREA ═══════════════════ -->
 <div class="overlay" id="modal-tarea">
-  <div class="modal" style="max-width:460px;">
+  <div class="modal" style="max-width:480px;width:95vw;">
     <div class="mh">
       <div class="mh-title" id="modal-tarea-title">Nueva tarea</div>
       <button class="mclose" onclick="closeModal('modal-tarea')">✕</button>
@@ -1188,7 +1235,8 @@ async function _hashCode(str) {
   return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
 }
 function _applyAvatar(data) {
-  localStorage.setItem('sm_avatar', data);
+  const _avKey = 'sm_avatar_' + (_currentUser?.uid || 'anon');
+  localStorage.setItem(_avKey, data);
   const prev = document.getElementById('cfg-avatar-preview');
   if (prev) prev.innerHTML = `<img src="${data}" style="width:100%;height:100%;object-fit:cover;">`;
   const remBtn = document.getElementById('cfg-avatar-remove');
@@ -1202,13 +1250,14 @@ function _uploadAvatar(input) {
   const reader = new FileReader();
   reader.onload = async function(e) {
     const data = e.target.result; _applyAvatar(data);
-    try { await _cfg('perfil').set({ foto: data }, { merge: true }); showToast('Foto guardada', 'success', 2000); }
+    try { await _cfgPerfil().set({ foto: data }, { merge: true }); showToast('Foto guardada', 'success', 2000); }
     catch(err) { showToast('Error al guardar foto', 'error', 2500); }
   };
   reader.readAsDataURL(file);
 }
 async function _removeAvatar() {
-  localStorage.removeItem('sm_avatar');
+  const _avKey = 'sm_avatar_' + (_currentUser?.uid || 'anon');
+  localStorage.removeItem(_avKey);
   const prev = document.getElementById('cfg-avatar-preview');
   if (prev) prev.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
   const remBtn = document.getElementById('cfg-avatar-remove');
@@ -1216,14 +1265,14 @@ async function _removeAvatar() {
   const img = document.getElementById('sb-avatar-img');
   const icon = document.getElementById('sb-avatar-icon');
   if (img && icon) { img.style.display = 'none'; icon.style.display = ''; }
-  try { await _cfg('perfil').set({ foto: '' }, { merge: true }); showToast('Foto eliminada', 'success', 2000); }
+  try { await _cfgPerfil().set({ foto: '' }, { merge: true }); showToast('Foto eliminada', 'success', 2000); }
   catch(err) { showToast('Error al eliminar foto', 'error', 2500); }
 }
 async function _loadCfgAvatar() {
-  const cached = localStorage.getItem('sm_avatar');
+  const cached = localStorage.getItem('sm_avatar_' + (_currentUser?.uid || 'anon'));
   if (cached) _applyAvatar(cached);
   try {
-    const snap = await _cfg('perfil').get();
+    const snap = await _cfgPerfil().get();
     if (snap.exists) {
       const foto = snap.data().foto || '';
       if (foto && foto !== cached) _applyAvatar(foto);
@@ -1232,7 +1281,7 @@ async function _loadCfgAvatar() {
   } catch(err) {}
   const prev = document.getElementById('cfg-avatar-preview');
   const remBtn = document.getElementById('cfg-avatar-remove');
-  const foto = localStorage.getItem('sm_avatar');
+  const foto = localStorage.getItem('sm_avatar_' + (_currentUser?.uid || 'anon'));
   if (foto && prev) { prev.innerHTML = `<img src="${foto}" style="width:100%;height:100%;object-fit:cover;">`; if (remBtn) remBtn.style.display = ''; }
 }
 async function _verificarCodigoAcceso(codigo) {
