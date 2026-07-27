@@ -139,6 +139,13 @@ async function generarReporteVentas() {
   let resumenFilas = '';
   let totalGlobalVentas = 0, totalGlobalGanancia = 0, totalGlobalCostos = 0;
 
+  // ── Calcular qué tiendas aparecen en el reporte ──
+  const tiendasEnVentas = [...new Set(
+    ventas
+      .filter(v => meses.some(m => (v.fecha_venta||'').startsWith(m)))
+      .map(v => v.tienda_id)
+  )].filter(Boolean);
+
   for (const mes of meses) {
     const ventasMes = ventas
       .filter(v => (v.fecha_venta||'').startsWith(mes))
@@ -228,6 +235,66 @@ async function generarReporteVentas() {
   const fechaGen = new Date().toLocaleDateString('es-CO', {day:'2-digit',month:'long',year:'numeric'});
   const margenGlobal = totalGlobalVentas > 0 ? ((totalGlobalGanancia / totalGlobalVentas) * 100).toFixed(1) : '0.0';
 
+  // ── Build tienda summary now that totals are computed ──
+  let resumenTiendas = '';
+  if (tiendasEnVentas.length > 1) {
+    const tiendaStats = {};
+    tiendasEnVentas.forEach(tid => {
+      const ventasTienda = ventas.filter(v =>
+        meses.some(m => (v.fecha_venta||'').startsWith(m)) && v.tienda_id === tid
+      );
+      const ingresos = ventasTienda.reduce((s,v) => s + calcVenta(v).totalVenta, 0);
+      const ganancia = ventasTienda.reduce((s,v) => s + calcVenta(v).ganancia, 0);
+      const costos   = ventasTienda.reduce((s,v) => s + calcVenta(v).costoTotal, 0);
+      tiendaStats[tid] = { nombre: tiendaMap[tid]||tid, ventas: ventasTienda.length, ingresos, ganancia, costos };
+    });
+
+    const totalVentas2 = Object.values(tiendaStats).reduce((s,t)=>s+t.ventas,0);
+    const totalIng2    = Object.values(tiendaStats).reduce((s,t)=>s+t.ingresos,0);
+    const totalCos2    = Object.values(tiendaStats).reduce((s,t)=>s+t.costos,0);
+
+    resumenTiendas = `
+    <div style="margin-bottom:28px;page-break-inside:avoid;">
+      <h2>Resumen por tienda</h2>
+      <table style="width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;">
+        <thead>
+          <tr style="background:#0d1f2d;color:#fff;">
+            <th style="padding:9px 12px;font-size:10px;font-weight:700;text-align:left;text-transform:uppercase;letter-spacing:.5px;">Tienda</th>
+            <th style="padding:9px 12px;font-size:10px;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:.5px;"># Ventas</th>
+            <th style="padding:9px 12px;font-size:10px;font-weight:700;text-align:right;text-transform:uppercase;letter-spacing:.5px;">Ingresos</th>
+            <th style="padding:9px 12px;font-size:10px;font-weight:700;text-align:right;text-transform:uppercase;letter-spacing:.5px;">Costos</th>
+            <th style="padding:9px 12px;font-size:10px;font-weight:700;text-align:right;text-transform:uppercase;letter-spacing:.5px;">Ganancia</th>
+            <th style="padding:9px 12px;font-size:10px;font-weight:700;text-align:center;text-transform:uppercase;letter-spacing:.5px;">Margen</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${Object.values(tiendaStats).sort((a,b) => b.ganancia - a.ganancia).map((t, i) => {
+            const mg = t.ingresos > 0 ? ((t.ganancia / t.ingresos) * 100).toFixed(1) : '0.0';
+            const gc = t.ganancia >= 0 ? '#16a34a' : '#dc2626';
+            return `<tr style="background:${i%2===0?'#fff':'#f8fafb'};border-bottom:1px solid #e5e7eb;">
+              <td style="padding:9px 12px;font-size:12px;font-weight:700;color:#1f2937;">${t.nombre}</td>
+              <td style="padding:9px 12px;font-size:12px;text-align:center;color:#374151;">${t.ventas}</td>
+              <td style="padding:9px 12px;font-size:12px;text-align:right;color:#374151;">${fmtCOP(t.ingresos)}</td>
+              <td style="padding:9px 12px;font-size:12px;text-align:right;color:#dc2626;">${fmtCOP(t.costos)}</td>
+              <td style="padding:9px 12px;font-size:12px;text-align:right;font-weight:800;color:${gc};">${fmtCOP(t.ganancia)}</td>
+              <td style="padding:9px 12px;font-size:12px;text-align:center;color:#6b7280;">${mg}%</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+        <tfoot>
+          <tr style="background:#f0fdf4;border-top:2px solid #86efac;">
+            <td style="padding:9px 12px;font-size:12px;font-weight:700;color:#1f2937;">Total</td>
+            <td style="padding:9px 12px;font-size:12px;text-align:center;font-weight:700;color:#374151;">${totalVentas2}</td>
+            <td style="padding:9px 12px;font-size:12px;text-align:right;font-weight:700;color:#374151;">${fmtCOP(totalIng2)}</td>
+            <td style="padding:9px 12px;font-size:12px;text-align:right;font-weight:700;color:#dc2626;">${fmtCOP(totalCos2)}</td>
+            <td style="padding:9px 12px;font-size:13px;text-align:right;font-weight:800;color:${totalGlobalGanancia>=0?'#16a34a':'#dc2626'};">${fmtCOP(totalGlobalGanancia)}</td>
+            <td style="padding:9px 12px;font-size:12px;text-align:center;color:#6b7280;">${margenGlobal}%</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>`;
+  }
+
   // HTML del reporte completo
   const html = `<!DOCTYPE html>
 <html lang="es">
@@ -267,6 +334,9 @@ async function generarReporteVentas() {
       <div style="font-size:11px;color:#6b7280;">de ${fmtCOP(totalGlobalVentas)} en ventas · margen ${margenGlobal}%</div>
     </div>
   </div>
+
+  <!-- Resumen por tienda (solo cuando hay múltiples) -->
+  ${resumenTiendas}
 
   <!-- Tabla resumen por mes -->
   <div style="margin-bottom:28px;">
