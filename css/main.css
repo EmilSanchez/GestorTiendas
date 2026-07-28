@@ -71,6 +71,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);display:flex
 .nav-item:hover{background:rgba(255,255,255,0.08);color:rgba(255,255,255,0.9);}
 .nav-item.active{background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;font-weight:600;box-shadow:0 2px 8px rgba(26,79,168,.4);}
 .nav-item .ni{font-size:1rem;width:1.1rem;text-align:center;}
+
+/* ── Submenú Envíos (acordeón) ── */
+.nav-submenu{max-height:0;overflow:hidden;transition:max-height .25s ease;}
+.nav-submenu.open{max-height:120px;}
+.nav-subitem{padding-left:0.85rem;font-size:.8rem;}
+.nav-subitem .nb-label{font-size:.8rem;}
+.nav-subdot{width:5px;height:5px;border-radius:50%;background:currentColor;display:inline-block;opacity:.7;}
+
+/* Mini-loader de 3 puntos dentro del sub-ítem seleccionado */
+/* Loader grande centrado en el área de contenido (al entrar a cualquier módulo) */
+#app-content-loader{display:none;position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:400;align-items:center;justify-content:center;}
+.app-load-dots{display:flex;align-items:flex-end;gap:7px;}
+.app-load-dots span{width:9px;height:9px;border-radius:50%;background:#1a4fa8;animation:appDotBounce 1s ease-in-out infinite;}
+.app-load-dots span:nth-child(1){animation-delay:0s;}
+.app-load-dots span:nth-child(2){animation-delay:.15s;}
+.app-load-dots span:nth-child(3){animation-delay:.3s;}
+@keyframes appDotBounce{0%,80%,100%{transform:translateY(0);opacity:.45;}40%{transform:translateY(-11px);opacity:1;}}
+body.sb-collapsed #envios-chevron,
+body.sb-collapsed .nav-submenu{display:none;}
 .nb{margin-left:auto;background:#e53935;color:#fff;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
 .sb-bottom{margin-top:auto;padding:0.75rem 1rem;border-top:1px solid rgba(255,255,255,0.06);}
 .sb-ver{font-size:0.6rem;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-mono);}
@@ -156,6 +175,7 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 /* ── MODAL ── */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;display:none;align-items:center;justify-content:center;padding:1rem;}
 .overlay.open{display:flex;}
+.overlay-suave{background:rgba(0,0,0,.05) !important;backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);}
 .modal{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.15);animation:mIn .15s ease;}
 .modal-lg{max-width:780px;}
 .modal-xl{max-width:920px;}
@@ -467,7 +487,8 @@ body.sb-collapsed #sb-avatar{margin:0 auto;}
   #cfg-tiendas-grid{ gap:8px !important; }
   #fin-cierres-lista > div{ grid-template-columns:1fr !important; }
   #ayudas-grid{ grid-template-columns:1fr !important; }
-  #tareas-hoy-list{ display:flex !important; flex-direction:column !important; gap:8px !important; }
+  #tareas-lista-hoy{ grid-template-columns:1fr !important; }
+  #tareas-main-grid{ grid-template-columns:1fr !important; }
   .filters-bar{ flex-direction:column !important; gap:8px !important; }
   .filters-bar .fl{ display:none !important; }
   .filters-bar .spacer{ display:none !important; }

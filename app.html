@@ -170,7 +170,23 @@
 
   <div class="sb-section" style="padding-top:0.8rem;">
     <div class="nav-item active" data-page="ventas" data-label="Gestor Ventas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span><span class="nb-label">Gestor Ventas</span></div>
-    <div class="nav-item" data-page="envios" data-label="Envíos"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span><span class="nb-label">Envíos</span></div>
+    <div class="nav-item" id="nav-envios-toggle" data-label="Envíos" onclick="toggleEnviosMenu()" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:0.55rem;min-width:0;">
+        <span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg></span>
+        <span class="nb-label">Envíos</span>
+      </span>
+      <svg id="envios-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .22s ease;flex-shrink:0;opacity:.6;"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+    <div class="nav-submenu" id="envios-submenu">
+      <div class="nav-item nav-subitem" id="nav-envios-internos" onclick="goEnviosInternos()">
+        <span class="ni"><span class="nav-subdot"></span></span>
+        <span class="nb-label">Envíos Internacionales</span>
+      </div>
+      <div class="nav-item nav-subitem" id="nav-envios-externos" onclick="goEnviosExternos()">
+        <span class="ni"><span class="nav-subdot"></span></span>
+        <span class="nb-label">Envíos Externos</span>
+      </div>
+    </div>
     <div class="nav-item" data-page="problemas" data-label="Resolver"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span class="nb-label">Resolver</span></div>
     <div class="nav-item" data-page="ayudas" data-label="Mensajes"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="nb-label">Mensajes</span></div>
     <div class="nav-item" data-page="finanzas" data-label="Finanzas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="nb-label">Finanzas</span></div>
@@ -207,6 +223,11 @@
 
 <!-- ═══════════════════ MAIN ═══════════════════ -->
 <div id="main">
+
+  <!-- Loader grande al entrar a cualquier módulo -->
+  <div id="app-content-loader">
+    <div class="app-load-dots"><span></span><span></span><span></span></div>
+  </div>
 
   <!-- PAGE CONTENT -->
   <div id="page-content">
@@ -316,27 +337,14 @@
     <!-- ══════════════ ENVÍOS ══════════════ -->
     <section class="page-section" id="page-envios">
 
-      <!-- Header: tabs + actualizar -->
+      <!-- Header: título + actualizar -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-        <div style="display:flex;gap:0;border-bottom:2px solid var(--border);flex:1;">
-          <button id="tab-env-internacionales" onclick="_switchEnvTab('internacionales')"
-            style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;color:#1a4fa8;border-bottom:2px solid #1a4fa8;margin-bottom:-2px;transition:all .15s;">
-            Envíos Internacionales
-          </button>
-          <button id="tab-env-externos" onclick="_switchEnvTab('externos')"
-            style="padding:10px 22px;border:none;background:transparent;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .15s;">
-            Envíos Externos · Skydropx
-          </button>
-        </div>
+        <div id="env-panel-title" style="font-size:15px;font-weight:700;color:var(--text);">Envíos Internacionales</div>
         <button id="btn-actualizar-envios" onclick="_refreshTodoEnvios()" title="Actualizar módulo"
           style="width:32px;height:32px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;margin-left:12px;flex-shrink:0;"
           class="btn btn-ghost btn-sm"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></button>
       </div>
 
-      <!-- Spinner de transición entre pestañas -->
-      <div id="env-tab-spinner" style="display:none;align-items:center;justify-content:center;padding:48px 0;">
-        <div style="width:28px;height:28px;border:3px solid #e5e7eb;border-top-color:#1a4fa8;border-radius:50%;animation:_envSpinAnim .5s linear infinite;"></div>
-      </div>
       <style>@keyframes _envSpinAnim{to{transform:rotate(360deg);}}</style>
 
       <!-- ═══ PANEL: INTERNACIONALES ═══ -->
@@ -1164,6 +1172,17 @@
         <input type="text" id="tarea-descripcion" placeholder="Detalles adicionales...">
       </div>
 
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="fg" style="margin:0;">
+          <label class="fl2">Categoría</label>
+          <select id="tarea-categoria" style="width:100%;"><option value="">Sin categoría</option></select>
+        </div>
+        <div class="fg" style="margin:0;">
+          <label class="fl2">Tienda</label>
+          <select id="tarea-tienda" style="width:100%;"><option value="">Sin tienda / todas</option></select>
+        </div>
+      </div>
+
       <!-- Tipo -->
       <div>
         <label class="fl2" style="margin-bottom:8px;">Tipo de tarea</label>
@@ -1229,6 +1248,38 @@
     <div class="mf">
       <button class="btn btn-ghost" onclick="closeModal('modal-del-tarea')">Cancelar</button>
       <button class="btn btn-danger" onclick="confirmarDeleteTarea()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: VER TODAS LAS NO CUMPLIDAS ═══════════════════ -->
+<div class="overlay overlay-suave" id="modal-no-cumplidas">
+  <div class="modal" style="max-width:480px;width:95vw;">
+    <div class="mh" style="background:var(--sidebar-bg);color:#fff;">
+      <div><div class="mh-title" style="color:#fff;">Tareas no cumplidas</div><div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;"><span id="modal-no-cumplidas-count">0</span> pendiente(s) atrasada(s)</div></div>
+      <button class="mclose" onclick="closeModal('modal-no-cumplidas')" style="background:rgba(255,255,255,.15);border:none;color:#fff;">✕</button>
+    </div>
+    <div class="mc" style="max-height:60vh;overflow-y:auto;">
+      <div id="modal-no-cumplidas-list"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-no-cumplidas')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: VER TODAS LAS TAREAS (LISTA PRINCIPAL) ═══════════════════ -->
+<div class="overlay overlay-suave" id="modal-tareas-pendientes">
+  <div class="modal" style="max-width:760px;width:95vw;">
+    <div class="mh" style="background:var(--sidebar-bg);color:#fff;">
+      <div><div class="mh-title" style="color:#fff;" id="modal-pendientes-title">Pendientes de hoy</div><div style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;" id="modal-pendientes-count">0 tareas</div></div>
+      <button class="mclose" onclick="closeModal('modal-tareas-pendientes')" style="background:rgba(255,255,255,.15);border:none;color:#fff;">✕</button>
+    </div>
+    <div class="mc" style="max-height:65vh;overflow-y:auto;">
+      <div id="modal-pendientes-list" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:stretch;"></div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-ghost" onclick="closeModal('modal-tareas-pendientes')">Cerrar</button>
     </div>
   </div>
 </div>
@@ -1396,34 +1447,67 @@ async function _verificarCodigoAcceso(codigo) {
 <!-- 3. Módulos de negocio -->
 <script>
 function _switchEnvTab(tab) {
-  var isNac = tab === 'internacionales';
-  var panelA = document.getElementById(isNac ? 'panel-env-internacionales' : 'panel-env-externos');
-  var panelB = document.getElementById(!isNac ? 'panel-env-internacionales' : 'panel-env-externos');
-  var tabNac = document.getElementById('tab-env-internacionales');
-  var tabExt = document.getElementById('tab-env-externos');
+  var isNac   = tab === 'internacionales';
+  var panelA  = document.getElementById(isNac ? 'panel-env-internacionales' : 'panel-env-externos');
+  var panelB  = document.getElementById(!isNac ? 'panel-env-internacionales' : 'panel-env-externos');
+  var titleEl = document.getElementById('env-panel-title');
   var hashTab = isNac ? '#envios' : '#envios-externos';
   if (location.hash !== hashTab) history.replaceState(null, '', hashTab);
-  tabNac.style.color        = isNac  ? '#1a4fa8' : 'var(--text3)';
-  tabNac.style.borderBottom = isNac  ? '2px solid #1a4fa8' : '2px solid transparent';
-  tabNac.style.fontWeight   = isNac  ? '700' : '600';
-  tabExt.style.color        = !isNac ? '#1a4fa8' : 'var(--text3)';
-  tabExt.style.borderBottom = !isNac ? '2px solid #1a4fa8' : '2px solid transparent';
-  tabExt.style.fontWeight   = !isNac ? '700' : '600';
-  panelB.style.transition = 'opacity .15s';
-  panelB.style.opacity = '0';
-  setTimeout(function() {
-    panelB.style.display = 'none'; panelB.style.opacity = ''; panelB.style.transition = '';
-    panelA.style.display = 'block'; panelA.style.opacity = '0'; panelA.style.transition = 'opacity .2s';
-    var spinner = document.getElementById('env-tab-spinner');
-    if (spinner) spinner.style.display = 'flex';
-    setTimeout(function() {
-      if (spinner) spinner.style.display = 'none';
-      panelA.style.opacity = '1';
-      if (!isNac) _initEnviosSkyPanel();
-    }, 500);
-  }, 150);
+
+  _marcarEnviosSubActivo(tab);
+
+  if (titleEl) titleEl.textContent = isNac ? 'Envíos Internacionales' : 'Envíos Externos · Skydropx';
+  if (panelB) panelB.style.display = 'none';
+  if (panelA) { panelA.style.display = 'block'; panelA.style.opacity = '1'; }
+  if (!isNac) _initEnviosSkyPanel();
 }
 function _toggleEnviosExternos() { _switchEnvTab('externos'); }
+
+// ── Menú acordeón "Envíos" en el sidebar ──
+function _enviosMenuOpen(open) {
+  const sub   = document.getElementById('envios-submenu');
+  const chev  = document.getElementById('envios-chevron');
+  if (!sub) return;
+  sub.classList.toggle('open', open);
+  if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+function toggleEnviosMenu() {
+  const sub = document.getElementById('envios-submenu');
+  if (!sub) return;
+  _enviosMenuOpen(!sub.classList.contains('open'));
+}
+
+// Marca el sub-ítem activo con el mismo fondo azul que los demás módulos.
+// Se llama siempre DESPUÉS de navigate('envios'), ya que navigate() limpia
+// las clases "active" de todo el sidebar al principio de su ejecución.
+function _marcarEnviosSubActivo(tab) {
+  const isNac = tab === 'internacionales';
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (isNac) document.getElementById('nav-envios-internos')?.classList.add('active');
+  else       document.getElementById('nav-envios-externos')?.classList.add('active');
+  _enviosMenuOpen(true);
+}
+
+async function goEnviosInternos() { await _irAEnvios('internacionales'); }
+async function goEnviosExternos()  { await _irAEnvios('externos'); }
+
+// Flujo: 1) resaltar de una vez el sub-ítem  2) mostrar loader grande en el
+// área de contenido (~550ms)  3) cargar los datos reales  4) mostrar el
+// panel y re-confirmar el resaltado del sidebar
+async function _irAEnvios(tab) {
+  _marcarEnviosSubActivo(tab);
+  _showAppLoader(true);
+
+  await new Promise(r => setTimeout(r, 550));
+  await navigate('envios');
+  _switchEnvTab(tab);
+
+  _showAppLoader(false);
+}
+function _showAppLoader(show) {
+  const ov = document.getElementById('app-content-loader');
+  if (ov) ov.style.display = show ? 'flex' : 'none';
+}
 async function _refreshTodoEnvios() {
   var btn = document.getElementById('btn-actualizar-envios');
   var svg = btn ? btn.querySelector('svg') : null;
@@ -1855,6 +1939,15 @@ async function _renderEnviosSkyPanel() {
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL: GESTIONAR CATEGORÍAS DE TAREA ═══════════════════ -->
+<div class="overlay" id="modal-categorias-tareas">
+  <div class="modal" style="max-width:480px;">
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Categorías de Tarea</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div></div><button class="mclose" onclick="closeModal('modal-categorias-tareas')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mc" style="padding:16px 20px;"><div id="cat-tareas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div><div style="border-top:1px solid var(--border);padding-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:8px;">Nueva categoría</div><div style="display:flex;gap:8px;"><input type="text" id="cat-tareas-nueva-label" placeholder="Ej: Garantía, Fraude..." style="flex:1;border-radius:8px;" onkeydown="if(event.key==='Enter') agregarTareaCat()"><button onclick="agregarTareaCat()" class="btn btn-primary btn-sm" style="border-radius:8px;white-space:nowrap;">+ Agregar</button></div></div></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-categorias-tareas')">Cerrar</button></div>
+  </div>
+</div>
+
 <!-- ═══════════════════ MODAL: CONFIRMAR ELIMINAR AYUDA ═══════════════════ -->
 <div class="overlay" id="modal-delete-ayuda">
   <div class="modal" style="max-width:400px;">
@@ -2256,6 +2349,18 @@ document.addEventListener('DOMContentLoaded', () => {
         setActiveMobileNav(el.dataset.page);
       }
     });
+  });
+  document.getElementById('nav-envios-internos')?.addEventListener('click', () => {
+    if (_isMobile()) {
+      setTimeout(closeMobileNav, 120);
+      setActiveMobileNav('envios');
+    }
+  });
+  document.getElementById('nav-envios-externos')?.addEventListener('click', () => {
+    if (_isMobile()) {
+      setTimeout(closeMobileNav, 120);
+      setActiveMobileNav('envios');
+    }
   });
 
   // Swipe left on sidebar to close
