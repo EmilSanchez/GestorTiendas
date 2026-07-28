@@ -469,7 +469,7 @@ async function renderCierresMes_Fin() {
             style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;background:${diferencia>=0?'var(--teal)':'#dc2626'};color:#fff;white-space:nowrap;transition:opacity .15s;"
             onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-            Aplicar al mes en curso
+            Descontar
           </button>` : `
           <span style="font-size:9px;background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:20px;font-weight:700;border:1px solid #6ee7b7;white-space:nowrap;">APLICADO</span>
           <button onclick="_pedirRevertirDiferencia('${cl.mes}')" title="Revertir diferencia aplicada"

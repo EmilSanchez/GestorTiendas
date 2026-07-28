@@ -307,58 +307,73 @@ async function renderProblemas() {
     return;
   }
 
-  document.getElementById('problemas-container').innerHTML = problemas.map(p => {
-    const t = tiendas.find(x => x.id === p.tienda_id);
-    const v = ventas.find(x => x.id === p.venta_id);
-    const c = v ? calcVenta(v) : null;
-    return `<div class="prob-card">
-      <div class="prob-header">
-        <div>
-          <div style="display:flex;gap:8px;align-items:center;margin-bottom:5px;">
-            <span class="badge badge-${p.estado}">${p.estado}</span>
-            <span style="font-size:11px;font-weight:600;color:var(--teal);">${TIPO_LABELS[p.tipo] || p.tipo_label || p.tipo}</span>
-            ${p.valor_perdida>0?`<span class="badge badge-perdida">Pérdida: ${fmt(p.valor_perdida)}</span>`:''}
-          </div>
-          <div style="font-size:12px;color:var(--text2);">
-            Venta: <span class="venta-id" onclick="copiarIdVenta('${p.id_ml_venta||p.venta_id||''}',this)"
-              title="Clic para copiar ID">${p.id_ml_venta||p.venta_id||'—'}</span>
-            ${p.producto ? ` — <strong>${p.producto}</strong>` : ''}
-            ${t ? `<span class="c-dim" style="margin-left:6px;">· ${t.nombre}</span>` : ''}
-          </div>
+  // Estado badge config
+  const ESTADO_CFG = {
+    abierto:  { bg:'#fef3c7', color:'#92400e', label:'ABIERTO'  },
+    resuelto: { bg:'#d1fae5', color:'#065f46', label:'RESUELTO' },
+    perdida:  { bg:'#fee2e2', color:'#991b1b', label:'PÉRDIDA'  },
+  };
+
+  const cards = problemas.map(p => {
+    const t  = tiendas.find(x => x.id === p.tienda_id);
+    const v  = ventas.find(x => x.id === p.venta_id);
+    const cv = v ? calcVenta(v) : null;
+    const ec = ESTADO_CFG[p.estado] || { bg:'#f3f4f6', color:'#374151', label: p.estado };
+    const tipoLabel = TIPO_LABELS[p.tipo] || p.tipo_label || p.tipo || '';
+
+    return `
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;transition:box-shadow .15s;height:100%;box-sizing:border-box;"
+      onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow)'">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
+          <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:${ec.bg};color:${ec.color};letter-spacing:.4px;">${ec.label}</span>
+          <span style="font-size:12px;font-weight:600;color:var(--teal);">${tipoLabel}</span>
+          ${p.valor_perdida > 0 ? `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#991b1b;">Pérdida: ${fmt(p.valor_perdida)}</span>` : ''}
         </div>
-        <div style="text-align:right;font-size:11px;color:var(--text3);">
-          ${fmtFecha(p.fecha)}
-          ${c ? `<div class="mono" style="font-size:11px;margin-top:2px;">Venta: ${fmt(c.totalVenta)}</div>` : ''}
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:11px;color:var(--text3);font-weight:500;">${fmtFecha(p.fecha)}</div>
+          ${cv ? `<div style="font-size:11px;font-weight:700;color:var(--text2);margin-top:2px;">Venta: ${fmt(cv.totalVenta)}</div>` : ''}
         </div>
       </div>
-      <div class="prob-body">
-        <div style="margin-bottom:8px;">
-          <strong style="color:var(--text);">Problema:</strong>
-          <span style="color:var(--text2);margin-left:4px;">${p.descripcion}</span>
-        </div>
-        ${p.solucion
-          ? `<div style="background:var(--teal-bg);border-left:3px solid var(--teal);border-radius:0 var(--radius) var(--radius) 0;padding:8px 12px;font-size:12px;">
-               <strong style="color:var(--teal-dark);"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Solución:</strong>
-               <span style="color:var(--text2);margin-left:4px;">${p.solucion}</span>
-               ${p.fecha_resolucion?`<div style="font-size:10px;color:var(--text3);margin-top:3px;">Resuelta el ${p.fecha_resolucion}</div>`:''}
-             </div>`
-          : p.estado!=='abierto'
-            ? `<div style="background:var(--yellow-bg);border-left:3px solid var(--yellow);border-radius:0 var(--radius) var(--radius) 0;padding:7px 12px;font-size:11px;color:var(--yellow);">Sin solución registrada</div>`
-            : ''
-        }
+      <div style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+        <span style="font-weight:600;">Venta:</span>
+        <span class="venta-id" onclick="copiarIdVenta('${p.id_ml_venta||p.venta_id||''}',this)">${p.id_ml_venta||p.venta_id||'—'}</span>
+        ${t ? `<span style="color:var(--text3);">· ${t.nombre}</span>` : ''}
       </div>
-      <div class="prob-footer">
+      <div style="font-size:13px;color:var(--text2);line-height:1.5;">
+        <strong style="color:var(--text);">Problema:</strong>
+        <span style="margin-left:4px;">${p.descripcion}</span>
+      </div>
+      <div style="${p.solucion ? 'background:var(--teal-bg);border-left:3px solid var(--teal);color:var(--text2);' : 'background:var(--bg);border-left:3px solid var(--border);color:var(--text3);'}border-radius:0 8px 8px 0;padding:9px 13px;font-size:12px;line-height:1.5;">
+        <strong style="${p.solucion ? 'color:var(--teal-dark);' : 'color:var(--text3);'}display:flex;align-items:center;gap:5px;margin-bottom:3px;">
+          ${p.solucion
+            ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
+            : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`}
+          Solución:
+        </strong>
+        ${p.solucion || '<span style="font-style:italic;">Sin solución planteada</span>'}
+        ${p.fecha_resolucion ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">Resuelta el ${p.fecha_resolucion}</div>` : ''}
+      </div>
+      <div style="flex:1;"></div>
+      <div style="display:flex;align-items:center;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
         <button class="btn btn-ghost btn-sm" onclick="openModalProblema(null,'${p.id}')">Editar</button>
-        ${p.estado==='abierto' ? `
-          <button class="btn btn-success btn-sm" onclick="openResolverProblema('${p.id}','resuelto')">Resolver</button>
+        ${p.estado === 'abierto' ? `
+          <button class="btn btn-success btn-sm" onclick="openResolverProblema('${p.id}','resuelto')" style="display:flex;align-items:center;gap:4px;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Resolver
+          </button>
           <button class="btn btn-danger btn-sm" onclick="openResolverProblema('${p.id}','perdida')">Pérdida</button>` : ''}
-        <div class="spacer"></div>
-        <button class="btn btn-danger btn-icon btn-sm" onclick="deleteProb('${p.id}')"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
+        <div style="flex:1;"></div>
+        <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteProb('${p.id}')" style="color:var(--red);border-color:transparent;"
+          onmouseover="this.style.background='var(--red-bg)'" onmouseout="this.style.background=''">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+        </button>
       </div>
     </div>`;
-  }).join('');
-}
+  });
 
+  document.getElementById('problemas-container').innerHTML =
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px;">${cards.join('')}</div>`;
+}
 async function resolverProblema(id, estado) {
   await openResolverProblema(id, estado);
 }

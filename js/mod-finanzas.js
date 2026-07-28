@@ -44,11 +44,23 @@ async function renderFinanzas() {
   const ganMes = ganVentasMes - egSkyMes + ajustesCierre;
   const ganEl  = document.getElementById('fin-ganancia-mes');
   if (ganEl) {
-    ganEl.style.color = ganMes >= 0 ? '#065f46' : '#7f1d1d';
+    ganEl.style.color = ganMes >= 0 ? 'var(--green)' : 'var(--red)';
     _countUp(ganEl, ganMes);
   }
   const ganCntEl = document.getElementById('fin-ventas-mes-cnt');
   if (ganCntEl) ganCntEl.textContent = `${ventasMes.length} ventas · ${_mesLabel(mesAct2)}`;
+
+  // New stat elements
+  const ingresosMes = movs.filter(m=>m.tipo==='ingreso'&&m.fecha?.startsWith(mesAct2)).reduce((s,m)=>s+(parseFloat(m.valor)||0),0);
+  const egresosMes  = movs.filter(m=>m.tipo==='egreso'&&m.fecha?.startsWith(mesAct2)).reduce((s,m)=>s+(parseFloat(m.valor)||0),0);
+  const netoMes     = ingresosMes - egresosMes;
+
+  ['fin-stat-ingresos','fin-res-ingresos'].forEach(id => { const el=document.getElementById(id); if(el) _countUp(el, ingresosMes); });
+  ['fin-stat-egresos','fin-res-egresos'].forEach(id  => { const el=document.getElementById(id); if(el) _countUp(el, egresosMes);  });
+  ['fin-res-neto'].forEach(id => { const el=document.getElementById(id); if(el){ el.style.color=netoMes>=0?'var(--teal)':'var(--red)'; _countUp(el, netoMes); } });
+
+  // Ganancia card color update for dark card
+  if (ganEl) ganEl.style.color = ganMes >= 0 ? 'var(--green)' : 'var(--red)';
 
   const mesEl = document.getElementById('fin-filtro-mes');
   if (mesEl && !mesEl.dataset.init) {
@@ -57,6 +69,16 @@ async function renderFinanzas() {
     mesEl.dataset.init = '1';
   }
   const mesAct = mesEl?.value || mes();
+
+  // Saldo total
+  const saldoTotalEl = document.getElementById('fin-saldo-total');
+  if (saldoTotalEl) {
+    const totalSaldo = Object.entries(saldos)
+      .filter(([k]) => !k.startsWith('_'))
+      .reduce((s,[,v]) => s + (parseFloat(v)||0), 0);
+    _countUp(saldoTotalEl, totalSaldo);
+    saldoTotalEl.style.color = totalSaldo >= 0 ? 'var(--teal)' : 'var(--red)';
+  }
 
   _renderBilleteras(saldos, billeteras, tiendas);
 
