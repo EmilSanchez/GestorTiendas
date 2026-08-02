@@ -415,12 +415,12 @@ async function renderCierresMes_Fin() {
   if (!listaEl) return;
   const [cierres, ventas, enviosSky] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky()]);
   if (!cierres.length) { if (cardEl) cardEl.style.display = 'none'; return; }
-  if (cardEl) cardEl.style.display = '';
+  if (cardEl) cardEl.style.display = 'flex';
 
   const idsMl = new Set(ventas.map(v=>v.id_ml).filter(Boolean));
 
   listaEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;">
-    ${cierres.sort((a,b)=>b.mes.localeCompare(a.mes)).map(cl => {
+    ${cierres.sort((a,b)=> new Date(b.fecha_cierre||0) - new Date(a.fecha_cierre||0)).map(cl => {
       const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(cl.mes));
       const egSky = enviosSky.filter(e=>(e.fecha||'').startsWith(cl.mes)&&!idsMl.has(e.num_venta)).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
       const ganActual = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky;
@@ -447,22 +447,22 @@ async function renderCierresMes_Fin() {
 
         <!-- Utilidades -->
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
-          <div style="padding:7px 9px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
-            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Al cierre</div>
-            <div style="font-size:12px;font-weight:600;color:var(--text);">${_fmtCOP(ganOriginal)}</div>
+          <div style="padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:4px;">Al cierre</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${_fmtCOP(ganOriginal)}</div>
           </div>
-          <div style="padding:7px 9px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
-            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Actual</div>
-            <div style="font-size:12px;font-weight:600;color:var(--text);">${_fmtCOP(ganActual)}</div>
+          <div style="padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:4px;">Actual</div>
+            <div style="font-size:14px;font-weight:700;color:var(--text);">${_fmtCOP(ganActual)}</div>
           </div>
         </div>
 
         <!-- Diferencia + acción -->
         ${hasDiff ? `
-        <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
           <div>
-            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:2px;">Diferencia</div>
-            <div style="font-size:13px;font-weight:700;color:${diffColor};">${diffSign}${_fmtCOP(diferencia)}</div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Diferencia</div>
+            <div style="font-size:16px;font-weight:800;color:${diffColor};">${diffSign}${_fmtCOP(diferencia)}</div>
           </div>
           ${!yaAplicado ? `
           <button onclick="_aplicarDiferenciaCierre('${cl.mes}',${Math.round(diferencia)})" title="${diferencia>=0?'Sumar':'Descontar'} del mes en curso"
@@ -508,8 +508,10 @@ async function abrirModalCierreMes() {
 
   if (!meses.length) { showToast('No hay meses disponibles para cerrar.','info',2500); return; }
 
-  // Calcular datos del mes seleccionado por defecto
-  const mes = meses[0];
+  // Usar el mes que el usuario tiene seleccionado en el filtro de Finanzas,
+  // siempre que tenga ventas y no esté ya cerrado; si no, usar el más reciente disponible.
+  const mesFiltroActual = document.getElementById('fin-filtro-mes')?.value;
+  const mes = (mesFiltroActual && meses.includes(mesFiltroActual)) ? mesFiltroActual : meses[0];
   const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(mes));
   const idsMl = new Set(ventas.map(v=>v.id_ml).filter(Boolean));
   const egSky = enviosSky
@@ -543,6 +545,7 @@ async function abrirModalCierreMes() {
   const sel = document.getElementById('cm-mes-panel');
   if (sel) {
     sel.innerHTML = meses.map(m=>`<option value="${m}">${_repFmtMes(m)}</option>`).join('');
+    sel.value = mes;
     sel.onchange = async () => {
       const m2 = sel.value;
       _cmMesActual = m2;

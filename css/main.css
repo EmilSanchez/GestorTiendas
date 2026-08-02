@@ -483,9 +483,12 @@ body.sb-collapsed #sb-avatar{margin:0 auto;}
   .drp-footer{ padding:10px 14px calc(10px + env(safe-area-inset-bottom)) !important; gap:8px !important; }
   .drp-footer .btn{ flex:1; justify-content:center; }
   #vg-por-tienda{ display:none !important; }
-  #fin-billeteras{ grid-template-columns:1fr 1fr !important; gap:8px !important; }
+  #fin-billeteras{ gap:8px !important; }
+  #fin-billeteras .fin-wallet-card{ flex:0 0 170px !important; min-width:170px !important; }
   #cfg-tiendas-grid{ gap:8px !important; }
   #fin-cierres-lista > div{ grid-template-columns:1fr !important; }
+  #fin-fila2{ grid-template-columns:1fr !important; height:auto !important; }
+  #fin-cierres-card, #fin-movimientos{ max-height:420px; }
   #ayudas-grid{ grid-template-columns:1fr !important; }
   #tareas-lista-hoy{ grid-template-columns:1fr !important; }
   #tareas-main-grid{ grid-template-columns:1fr !important; }

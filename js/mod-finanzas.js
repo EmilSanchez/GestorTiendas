@@ -23,7 +23,7 @@ function _mesLabel(ym) {
 async function renderFinanzas() {
   await _procesarTransferenciasPendientes();
   await _renderPendientesTransfer();
-  if (typeof renderCierresMes_Fin === 'function') renderCierresMes_Fin();
+  if (typeof renderCierresMes_Fin === 'function') await renderCierresMes_Fin();
   const [movs, saldos, billeteras, tiendas, ventas, enviosSky] = await Promise.all([
     DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.ventas(), DB.envios_sky()
   ]);
@@ -55,9 +55,10 @@ async function renderFinanzas() {
   const egresosMes  = movs.filter(m=>m.tipo==='egreso'&&m.fecha?.startsWith(mesAct2)).reduce((s,m)=>s+(parseFloat(m.valor)||0),0);
   const netoMes     = ingresosMes - egresosMes;
 
-  ['fin-stat-ingresos','fin-res-ingresos'].forEach(id => { const el=document.getElementById(id); if(el) _countUp(el, ingresosMes); });
-  ['fin-stat-egresos','fin-res-egresos'].forEach(id  => { const el=document.getElementById(id); if(el) _countUp(el, egresosMes);  });
-  ['fin-res-neto'].forEach(id => { const el=document.getElementById(id); if(el){ el.style.color=netoMes>=0?'var(--teal)':'var(--red)'; _countUp(el, netoMes); } });
+  document.getElementById('fin-stat-ingresos') && _countUp(document.getElementById('fin-stat-ingresos'), ingresosMes);
+  document.getElementById('fin-stat-egresos')  && _countUp(document.getElementById('fin-stat-egresos'), egresosMes);
+  const netoStatEl = document.getElementById('fin-stat-neto');
+  if (netoStatEl) { netoStatEl.style.color = netoMes >= 0 ? 'var(--teal)' : 'var(--red)'; _countUp(netoStatEl, netoMes); }
 
   // Ganancia card color update for dark card
   if (ganEl) ganEl.style.color = ganMes >= 0 ? 'var(--green)' : 'var(--red)';
@@ -107,6 +108,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         </button>
       </div>
+      <div class="fin-wallet-eyebrow">Saldo</div>
       <div class="fin-wallet-amount ${skySaldo<0?'neg':skySaldo===0?'zero':''}" data-saldo-anim="${skySaldo}">$ 0</div>
     </div>`;
 
@@ -131,6 +133,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         </button>
       </div>
+      <div class="fin-wallet-eyebrow">Saldo</div>
       <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}" data-saldo-anim="${s}">$ 0</div>
     </div>`;
   });
@@ -154,11 +157,18 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
           onclick="event.stopPropagation();_pedirCodigoEliminarBilletera('${b.id}','${b.nombre.replace(/'/g,"\\'")}')"
           style="opacity:.4;flex-shrink:0;">${_FIN_ICON.trash}</button>
       </div>
+      <div class="fin-wallet-eyebrow">Saldo</div>
       <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}" data-saldo-anim="${s}">$ 0</div>
     </div>`;
   });
 
   el.innerHTML = [skyCard, ...mpCards, ...bwCards].join('');
+
+  // Animar/mostrar el valor real de cada saldo (antes se quedaba siempre en "$ 0")
+  el.querySelectorAll('[data-saldo-anim]').forEach(node => {
+    const val = parseFloat(node.dataset.saldoAnim) || 0;
+    _countUp(node, val);
+  });
 }
 
 async function _toggleEsBancoFijo(key) {
@@ -236,9 +246,50 @@ async function _confirmDeleteBilletera() {
 }
 
 // ── MOVIMIENTOS ──
+var _finMovFiltradosActual = [];
+var _finMesActualLabel = '';
+
+function _finMovRowHtml(m) {
+  const isIng = m.tipo==='ingreso' || (m.tipo==='transferencia' && false);
+  const isSkyAuto = !!m._sky_id;
+  const isTransfer = m.tipo === 'transferencia';
+  const isPendiente = isTransfer && m.pendiente;
+
+  // Fuente label
+  let fl = '—';
+  if (m.fuente?.startsWith('mercadopago_')) {
+    const t = _finTiendas.find(x=>x.id===m.fuente.replace('mercadopago_',''));
+    fl = 'MP · '+(t?t.nombre:m.fuente);
+  } else if (m.fuente==='skydropx') {
+    fl = 'Skydropx';
+  } else {
+    fl = FUENTES_LABEL[m.fuente]||m.fuente||'—';
+  }
+
+  const iconBg = isTransfer ? '#e0e7ff' : (isIng?'#d1fae5':'#fee2e2');
+  const iconEl = isTransfer
+    ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
+    : (isIng?_FIN_ICON.up:_FIN_ICON.down);
+  return `
+  <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);">
+    <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${iconBg};flex-shrink:0;">
+      ${iconEl}
+    </span>
+    <div style="flex:1;min-width:0;">
+      <div style="font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}${isSkyAuto?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AUTO</span>':''}${isPendiente?' <span style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;border:1px solid #f0c040;">PENDIENTE INGRESO</span>':''}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${m.fecha} <span style="opacity:.35;">·</span> <span style="color:var(--teal);font-weight:600;">${fl}</span>${isTransfer && m.notas ? ` <span style="opacity:.35;">·</span> ${m.notas}` : ''}${isPendiente?` <span style="opacity:.35;">·</span> <span style="color:var(--yellow);">Disponible ${fmtFecha(m.fecha_disponible)}</span>`:''}</div>
+    </div>
+    <span style="font-size:15.5px;font-weight:800;color:${isTransfer?'#4338ca':(isIng?'#16a34a':'#dc2626')};white-space:nowrap;">${isTransfer?'⇄':(isIng?'+':'−')}${fmt(m.valor)}</span>
+    ${isPendiente?`<button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>`:''}
+    ${!isSkyAuto && !isTransfer?`<button class="btn btn-ghost btn-icon btn-sm" onclick="openModalMovimiento('${m.id}')">${_FIN_ICON.edit}</button>`:''}
+    <button class="btn btn-danger btn-icon btn-sm" onclick="_pedirCodigoEliminarMovimiento('${m.id}')">${_FIN_ICON.trash}</button>
+  </div>`;
+}
+
 function _renderMovimientos(movMes, mesAct) {
   const el = document.getElementById('fin-movimientos');
   if (!el) return;
+  _finMesActualLabel = _mesLabel(mesAct);
 
   // Filter tabs: todos / venta (ML auto) / skydropx / externo (manual)
   const activeTab = document.querySelector('.fin-mov-tab.active')?.dataset.tab || 'todos';
@@ -256,7 +307,7 @@ function _renderMovimientos(movMes, mesAct) {
   if (activeTab === 'transferencia') filtrados = movMes.filter(_isTransfer);
 
   const tabs = `
-    <div style="display:flex;gap:4px;margin-bottom:12px;">
+    <div style="display:flex;gap:4px;margin-bottom:12px;flex-shrink:0;">
       ${['todos','venta','skydropx','externo','transferencia'].map(t=>{
         const labels={todos:'Todos',venta:'Ventas ML',skydropx:'Skydropx',externo:'Externos',transferencia:'Transferencias'};
         const isActive = activeTab===t;
@@ -270,24 +321,25 @@ function _renderMovimientos(movMes, mesAct) {
   el.innerHTML = tabs;  // will be rebuilt below
 
   movMes = filtrados;
+  _finMovFiltradosActual = filtrados;
 
   const totalIng = movMes.filter(m=>m.tipo==='ingreso').reduce((s,m)=>s+m.valor,0);
   const totalEgr = movMes.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.valor,0);
   const net = totalIng - totalEgr;
 
   const resumen = `
-    <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;">
-      <div style="flex:1;padding:10px 16px;border-right:1px solid var(--border);">
-        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Ingresos</div>
-        <div style="font-size:15px;font-weight:700;color:#065f46;">${fmt(totalIng)}</div>
+    <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
+      <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">Ingresos</div>
+        <div style="font-size:19px;font-weight:800;color:#065f46;">${fmt(totalIng)}</div>
       </div>
-      <div style="flex:1;padding:10px 16px;border-right:1px solid var(--border);">
-        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Egresos</div>
-        <div style="font-size:15px;font-weight:700;color:#7f1d1d;">${fmt(totalEgr)}</div>
+      <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border);">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">Egresos</div>
+        <div style="font-size:19px;font-weight:800;color:#7f1d1d;">${fmt(totalEgr)}</div>
       </div>
-      <div style="flex:1;padding:10px 16px;">
-        <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:4px;">Neto</div>
-        <div style="font-size:15px;font-weight:700;color:${net>=0?'#065f46':'#7f1d1d'};">${net>=0?'+':''}${fmt(net)}</div>
+      <div style="flex:1;padding:12px 16px;">
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">Neto</div>
+        <div style="font-size:19px;font-weight:800;color:${net>=0?'#065f46':'#7f1d1d'};">${net>=0?'+':''}${fmt(net)}</div>
       </div>
     </div>`;
 
@@ -296,44 +348,23 @@ function _renderMovimientos(movMes, mesAct) {
     return;
   }
 
-  const rows = movMes.map(m => {
-    const isIng = m.tipo==='ingreso' || (m.tipo==='transferencia' && false);
-    const isSkyAuto = !!m._sky_id;
-    const isTransfer = m.tipo === 'transferencia';
-    const isPendiente = isTransfer && m.pendiente;
+  const LIMITE_PREVIEW = 6;
+  const visibles = movMes.slice(0, LIMITE_PREVIEW);
+  const rows = visibles.map(_finMovRowHtml).join('');
+  const verTodos = movMes.length > LIMITE_PREVIEW
+    ? `<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:10px;flex-shrink:0;" onclick="_abrirModalMovimientos()">Ver todos los movimientos (${movMes.length})</button>`
+    : '';
 
-    // Fuente label
-    let fl = '—';
-    if (m.fuente?.startsWith('mercadopago_')) {
-      const t = _finTiendas.find(x=>x.id===m.fuente.replace('mercadopago_',''));
-      fl = 'MP · '+(t?t.nombre:m.fuente);
-    } else if (m.fuente==='skydropx') {
-      fl = 'Skydropx';
-    } else {
-      fl = FUENTES_LABEL[m.fuente]||m.fuente||'—';
-    }
+  el.innerHTML += resumen + `<div style="flex:1;min-height:0;overflow-y:auto;padding-right:2px;">${rows}</div>` + verTodos;
+}
 
-    const iconBg = isTransfer ? '#e0e7ff' : (isIng?'#d1fae5':'#fee2e2');
-    const iconEl = isTransfer
-      ? '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
-      : (isIng?_FIN_ICON.up:_FIN_ICON.down);
-    return `
-    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);">
-      <span style="width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${iconBg};flex-shrink:0;">
-        ${iconEl}
-      </span>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}${isSkyAuto?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AUTO</span>':''}${isPendiente?' <span style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;border:1px solid #f0c040;">PENDIENTE INGRESO</span>':''}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px;">${m.fecha} <span style="opacity:.35;">·</span> <span style="color:var(--teal);font-weight:600;">${fl}</span>${isTransfer && m.notas ? ` <span style="opacity:.35;">·</span> ${m.notas}` : ''}${isPendiente?` <span style="opacity:.35;">·</span> <span style="color:var(--yellow);">Disponible ${fmtFecha(m.fecha_disponible)}</span>`:''}</div>
-      </div>
-      <span style="font-size:13px;font-weight:800;color:${isTransfer?'#4338ca':(isIng?'#16a34a':'#dc2626')};white-space:nowrap;">${isTransfer?'⇄':(isIng?'+':'−')}${fmt(m.valor)}</span>
-      ${isPendiente?`<button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>`:''}
-      ${!isSkyAuto && !isTransfer?`<button class="btn btn-ghost btn-icon btn-sm" onclick="openModalMovimiento('${m.id}')">${_FIN_ICON.edit}</button>`:''}
-      <button class="btn btn-danger btn-icon btn-sm" onclick="_pedirCodigoEliminarMovimiento('${m.id}')">${_FIN_ICON.trash}</button>
-    </div>`;
-  }).join('');
-
-  el.innerHTML += resumen + `<div style="max-height:340px;overflow-y:auto;padding-right:2px;">${rows}</div>`;
+// ── Modal: ver todos los movimientos del mes (respeta el filtro de pestaña activo) ──
+function _abrirModalMovimientos() {
+  const countEl = document.getElementById('modal-fin-mov-count');
+  if (countEl) countEl.textContent = `${_finMovFiltradosActual.length} movimiento${_finMovFiltradosActual.length===1?'':'s'} · ${_finMesActualLabel}`;
+  const list = document.getElementById('modal-fin-mov-list');
+  if (list) list.innerHTML = _finMovFiltradosActual.map(_finMovRowHtml).join('');
+  openModal('modal-fin-movimientos');
 }
 
 // ── ELIMINAR MOVIMIENTO CON CÓDIGO ──
