@@ -236,7 +236,13 @@ async function init() {
   await populateSelects();
 
   document.querySelectorAll('.nav-item[data-page]').forEach(el => {
-    el.addEventListener('click', () => navigate(el.dataset.page));
+    el.addEventListener('click', async () => {
+      const page = el.dataset.page;
+      if (typeof _showAppLoader === 'function') _showAppLoader(true);
+      await new Promise(r => setTimeout(r, 550));
+      await navigate(page);
+      if (typeof _showAppLoader === 'function') _showAppLoader(false);
+    });
   });
 
   document.getElementById('btn-nueva-venta')?.addEventListener('click', () => openModalVenta());
@@ -280,8 +286,8 @@ async function init() {
   const startPage = VALID_PAGES.includes(hashPage) ? hashPage : 'ventas';
   await navigate(startPage);
   // Restore sub-tab if needed
-  if (hashRaw === 'envios-externos' && typeof _switchEnvTab === 'function') {
-    setTimeout(() => _switchEnvTab('externos'), 100);
+  if (startPage === 'envios' && typeof _switchEnvTab === 'function') {
+    _switchEnvTab(hashRaw === 'envios-externos' ? 'externos' : 'internacionales');
   }
   try { await updateAlertaBadge(); } catch(e) { console.warn('Badge error:', e); }
 
