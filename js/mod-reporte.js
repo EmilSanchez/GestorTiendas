@@ -492,9 +492,16 @@ async function renderCierresMes_Fin() {
   </div>`;
 }
 
+// ── Ajustes de cierre (pérdida/ganancia de meses cerrados) aplicados a un mes dado ──
+function _cmAjusteCierreMes(movs, mesStr) {
+  return (movs || [])
+    .filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesStr))
+    .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
+}
+
 // ── Abrir modal para NUEVO cierre ──
 async function abrirModalCierreMes() {
-  const [ventas, enviosSky, cierres] = await Promise.all([DB.ventas(), DB.envios_sky(), _getCierres()]);
+  const [ventas, enviosSky, cierres, movs] = await Promise.all([DB.ventas(), DB.envios_sky(), _getCierres(), DB.movimientos()]);
   const cerrados = new Set(cierres.map(c=>c.mes));
   const mesesSet = new Set(ventas.map(v=>(v.fecha_venta||'').slice(0,7)).filter(Boolean));
   const meses = [...mesesSet].sort().reverse().filter(m=>!cerrados.has(m));
@@ -511,7 +518,7 @@ async function abrirModalCierreMes() {
 
   _cmMesActual  = mes;
   _cmIngresos   = ventasMes.reduce((s,v)=>s+calcVenta(v).totalVenta, 0);
-  _cmGanBruta   = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia, 0) - egSky;
+  _cmGanBruta   = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia, 0) - egSky + _cmAjusteCierreMes(movs, mes);
   _cmNumVentas  = ventasMes.length;
   _cmModoEdicion = false;
   _cmGastos = [];
@@ -542,7 +549,7 @@ async function abrirModalCierreMes() {
       const vm2 = ventas.filter(v=>(v.fecha_venta||'').startsWith(m2));
       const eg2 = enviosSky.filter(e=>(e.fecha||'').startsWith(m2)&&!idsMl.has(e.num_venta)).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
       _cmIngresos  = vm2.reduce((s,v)=>s+calcVenta(v).totalVenta,0);
-      _cmGanBruta  = vm2.reduce((s,v)=>s+calcVenta(v).ganancia,0) - eg2;
+      _cmGanBruta  = vm2.reduce((s,v)=>s+calcVenta(v).ganancia,0) - eg2 + _cmAjusteCierreMes(movs, m2);
       _cmNumVentas = vm2.length;
       _cmGastos = [];
       document.getElementById('cm-p-ventas').textContent   = _cmNumVentas;
@@ -601,7 +608,7 @@ async function abrirCierreExistente(mes) {
 async function _cmActualizarPreview() {
   const mes = document.getElementById('cm-mes')?.value;
   if (!mes) return;
-  const [ventas, enviosSky] = await Promise.all([DB.ventas(), DB.envios_sky()]);
+  const [ventas, enviosSky, movs] = await Promise.all([DB.ventas(), DB.envios_sky(), DB.movimientos()]);
 
   const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(mes));
   const idsMl = new Set(ventas.map(v=>v.id_ml).filter(Boolean));
@@ -610,7 +617,7 @@ async function _cmActualizarPreview() {
     .reduce((s,e)=>s+(parseFloat(e.valor)||0), 0);
 
   _cmIngresos  = ventasMes.reduce((s,v)=>s+calcVenta(v).totalVenta, 0);
-  _cmGanBruta  = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia, 0) - egSky;
+  _cmGanBruta  = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia, 0) - egSky + _cmAjusteCierreMes(movs, mes);
   _cmNumVentas = ventasMes.length;
 
   const el = document.getElementById('cm-resumen-fin');
