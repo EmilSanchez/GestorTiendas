@@ -488,7 +488,7 @@ body.sb-collapsed #sb-avatar{margin:0 auto;}
   #cfg-tiendas-grid{ gap:8px !important; }
   #fin-cierres-lista > div{ grid-template-columns:1fr !important; }
   #fin-fila2{ grid-template-columns:1fr !important; height:auto !important; }
-  #fin-cierres-card, #fin-movimientos{ max-height:420px; }
+  #fin-cierres-card, #fin-movimientos-card{ max-height:420px !important; }
   #ayudas-grid{ grid-template-columns:1fr !important; }
   #tareas-lista-hoy{ grid-template-columns:1fr !important; }
   #tareas-main-grid{ grid-template-columns:1fr !important; }
@@ -502,4 +502,8 @@ body.sb-collapsed #sb-avatar{margin:0 auto;}
   #fin-btns-row .btn{ justify-content:center !important; font-size:12px !important; padding:9px 6px !important; }
   #page-configuracion > div:nth-child(2){ grid-template-columns:1fr !important; }
   #page-configuracion > div:nth-child(3){ grid-template-columns:1fr !important; }
+}
+
+@media (max-width: 900px) {
+  #fin-fila2 { grid-template-columns: 1fr !important; }
 }

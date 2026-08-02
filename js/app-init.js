@@ -238,6 +238,7 @@ async function init() {
   document.querySelectorAll('.nav-item[data-page]').forEach(el => {
     el.addEventListener('click', async () => {
       const page = el.dataset.page;
+      if (typeof _enviosMenuOpen === 'function') _enviosMenuOpen(false);
       if (typeof _showAppLoader === 'function') _showAppLoader(true);
       await new Promise(r => setTimeout(r, 550));
       await navigate(page);

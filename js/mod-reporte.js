@@ -413,17 +413,17 @@ async function renderCierresMes_Fin() {
   const cardEl = document.getElementById('fin-cierres-card');
   const listaEl = document.getElementById('fin-cierres-lista');
   if (!listaEl) return;
-  const [cierres, ventas, enviosSky] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky()]);
+  const [cierres, ventas, enviosSky, movs] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky(), DB.movimientos()]);
   if (!cierres.length) { if (cardEl) cardEl.style.display = 'none'; return; }
   if (cardEl) cardEl.style.display = 'flex';
 
   const idsMl = new Set(ventas.map(v=>v.id_ml).filter(Boolean));
 
-  listaEl.innerHTML = `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px;">
+  listaEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr;gap:10px;">
     ${cierres.sort((a,b)=> new Date(b.fecha_cierre||0) - new Date(a.fecha_cierre||0)).map(cl => {
       const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(cl.mes));
       const egSky = enviosSky.filter(e=>(e.fecha||'').startsWith(cl.mes)&&!idsMl.has(e.num_venta)).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
-      const ganActual = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky;
+      const ganActual = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky + _cmAjusteCierreMes(movs, cl.mes);
       const ganOriginal = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
       const diferencia = ganActual - ganOriginal;
       const hasDiff = Math.abs(diferencia) >= 1;
