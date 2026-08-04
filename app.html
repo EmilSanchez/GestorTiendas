@@ -710,7 +710,7 @@
       </div>
 
       <!-- ── Fila 1: Stat cards + Billeteras ── -->
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;align-items:start;">
+      <div style="display:grid;grid-template-columns:380px 1fr;gap:14px;margin-bottom:14px;align-items:start;">
 
         <!-- Stat card ganancia -->
         <div class="card" style="margin:0;">
@@ -742,7 +742,7 @@
       </div>
 
       <!-- ── Fila 2: Meses cerrados + Movimientos ── -->
-      <div id="fin-fila2" style="display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:stretch;">
+      <div style="display:grid;grid-template-columns:380px 1fr;gap:14px;margin-bottom:14px;align-items:start;">
 
         <!-- Columna izquierda: pendientes + cierres -->
         <div style="display:flex;flex-direction:column;gap:14px;min-height:0;">
@@ -778,6 +778,25 @@
         #fin-billeteras::-webkit-scrollbar-track{ background:transparent; }
         #fin-billeteras::-webkit-scrollbar-thumb{ background:var(--border); border-radius:10px; }
         #fin-billeteras::-webkit-scrollbar-thumb:hover{ background:var(--text3); }
+        #fin-cierres-lista{
+          scrollbar-width:thin;
+          scrollbar-color:var(--border) transparent;
+          padding-right:10px;
+          margin-right:-4px;
+        }
+        #fin-cierres-lista::-webkit-scrollbar{ width:6px; }
+        #fin-cierres-lista::-webkit-scrollbar-track{ background:transparent; }
+        #fin-cierres-lista::-webkit-scrollbar-thumb{ background:var(--border); border-radius:10px; }
+        #fin-cierres-lista::-webkit-scrollbar-thumb:hover{ background:var(--text3); }
+        #fin-movimientos{
+          scrollbar-width:thin;
+          scrollbar-color:var(--border) transparent;
+          padding-right:10px;
+        }
+        #fin-movimientos::-webkit-scrollbar{ width:6px; }
+        #fin-movimientos::-webkit-scrollbar-track{ background:transparent; }
+        #fin-movimientos::-webkit-scrollbar-thumb{ background:var(--border); border-radius:10px; }
+        #fin-movimientos::-webkit-scrollbar-thumb:hover{ background:var(--text3); }
         .fin-wallet-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;flex:0 0 210px;min-width:210px;scroll-snap-align:start;}
         .fin-wallet-card:hover{box-shadow:var(--shadow-md);border-color:var(--teal);transform:translateY(-2px);}
         .fin-wallet-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
