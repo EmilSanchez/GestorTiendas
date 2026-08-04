@@ -284,7 +284,14 @@ async function init() {
   const hashRaw  = location.hash.replace('#','');
   // Support sub-tab hashes like 'envios-externos'
   const hashPage = hashRaw === 'envios-externos' ? 'envios' : hashRaw;
-  const startPage = VALID_PAGES.includes(hashPage) ? hashPage : 'ventas';
+  let startPage = VALID_PAGES.includes(hashPage) ? hashPage : 'ventas';
+
+  // Si el usuario no tiene acceso a esa página, abrir el primer módulo permitido
+  const _perms = window._userPermisos;
+  if (_perms && _perms[startPage] === false) {
+    startPage = VALID_PAGES.find(p => p !== 'configuracion' && _perms[p] !== false) || 'configuracion';
+  }
+
   await navigate(startPage);
   // Restore sub-tab if needed
   if (startPage === 'envios' && typeof _switchEnvTab === 'function') {
@@ -391,17 +398,22 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Cargar foto de perfil al iniciar
   _loadSbAvatar();
 
-  // ── Aplicar restricciones solo para colaboradores ──
-  if (sesion.rol === 'colaborador') {
+  // ── Aplicar restricciones de módulos (cualquier rol excepto admin) ──
+  if (sesion.rol !== 'admin') {
     const permisos = sesion.permisos || {};
     // Ocultar nav items sin acceso
     document.querySelectorAll('.nav-item[data-page]').forEach(el => {
       const page = el.dataset.page;
       if (permisos[page] === false) el.style.display = 'none';
     });
+    // El submenú de Envíos no tiene data-page: se oculta con su ítem padre
+    if (permisos.envios === false) {
+      document.getElementById('nav-envios-toggle')?.style.setProperty('display','none');
+      document.getElementById('envios-submenu')?.style.setProperty('display','none');
+    }
     window._userPermisos = permisos;
   } else {
-    window._userPermisos = null; // admin y usuarios normales: sin restricciones
+    window._userPermisos = null; // admin: sin restricciones
   }
 
   await init();

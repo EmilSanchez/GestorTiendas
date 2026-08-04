@@ -170,7 +170,7 @@ async function renderUsuarios() {
     return;
   }
 
-  const MODULOS_LABEL = {ventas:'Ventas',envios:'Envíos',problemas:'Resolver',ayudas:'Mensajes',finanzas:'Finanzas',tareas:'Tareas'};
+  const MODULOS_LABEL = {ventas:'Ventas',envios:'Envíos',problemas:'Pendientes',ayudas:'Ayudas',finanzas:'Finanzas',tareas:'Tareas'};
 
   // Cargar fotos de perfil de cada usuario
   const fotos = {};
@@ -230,7 +230,7 @@ function openModalCrearUsuario(uid = null) {
   const rolEl = document.getElementById('nu-rol');
   if (rolEl) rolEl.value = 'usuario';
   const permsWrap = document.getElementById('nu-permisos-wrap');
-  if (permsWrap) permsWrap.style.display = 'none';
+  if (permsWrap) permsWrap.style.display = 'block';
   // Reset checkboxes to default (all on except finanzas)
   ['ventas','envios','problemas','ayudas','tareas'].forEach(m => {
     const el = document.getElementById('nu-p-' + m);
@@ -292,8 +292,7 @@ async function crearUsuario() {
     });
 
     const rolSeleccionado = document.getElementById('nu-rol')?.value || 'usuario';
-    const datosUsuario = { uid, usuario, nombre, rol: rolSeleccionado, activo:true, hash };
-    if (rolSeleccionado === 'colaborador') datosUsuario.permisos = permisos;
+    const datosUsuario = { uid, usuario, nombre, rol: rolSeleccionado, activo:true, hash, permisos };
     await DB.crearUsuario(datosUsuario);
 
     closeModal('modal-crear-usuario');
@@ -390,7 +389,8 @@ async function editarUsuario(uid) {
 }
 
 function _toggleColaboradorPerms() {
-  const rol = document.getElementById('nu-rol')?.value;
+  // Los permisos de módulos aplican a cualquier rol (colaborador o independiente),
+  // así que el panel se mantiene siempre visible.
   const wrap = document.getElementById('nu-permisos-wrap');
-  if (wrap) wrap.style.display = rol === 'colaborador' ? 'block' : 'none';
+  if (wrap) wrap.style.display = 'block';
 }

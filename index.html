@@ -321,7 +321,7 @@ async function doLogin(){
     const authSnap=await _db.collection(`usuarios/${userDoc.id}/config`).doc('auth').get();
     if(!authSnap.exists||authSnap.data().hash!==hash){_showError('Contraseña incorrecta.');_setLoading(false);return;}
     const _sesionData = {uid:userDoc.id,rol:userData.rol||'usuario',usuario:userData.usuario,nombre:userData.nombre,ts:Date.now()};
-      if(userData.rol==='colaborador') _sesionData.permisos = userData.permisos||{};
+      if(userData.rol!=='admin') _sesionData.permisos = userData.permisos||{};
       localStorage.setItem(_SK,JSON.stringify(_sesionData));
     window.location.href='app.html';
   }catch(e){console.error(e);_showError('Error de conexión. Intenta de nuevo.');_setLoading(false);}

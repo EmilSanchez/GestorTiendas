@@ -205,8 +205,8 @@
         <span class="nb-label">Envíos Externos</span>
       </div>
     </div>
-    <div class="nav-item" data-page="problemas" data-label="Resolver"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span class="nb-label">Resolver</span></div>
-    <div class="nav-item" data-page="ayudas" data-label="Mensajes"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="nb-label">Mensajes</span></div>
+    <div class="nav-item" data-page="problemas" data-label="Pendientes"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span class="nb-label">Pendientes</span></div>
+    <div class="nav-item" data-page="ayudas" data-label="Ayudas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="nb-label">Ayudas</span></div>
     <div class="nav-item" data-page="finanzas" data-label="Finanzas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="nb-label">Finanzas</span></div>
     <div class="nav-item" data-page="tareas" data-label="Tareas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="nb-label">Tareas</span></div>
   </div>
@@ -629,7 +629,7 @@
       <!-- Header -->
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
         <div>
-          <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Problemas por resolver</div>
+          <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Pendientes por resolver</div>
           <div style="font-size:12px;color:var(--text3);margin-top:2px;">Gestiona y da solución a novedades reportadas en tus ventas</div>
         </div>
         <div style="display:flex;align-items:center;gap:8px;">
@@ -817,7 +817,7 @@
       <div class="frow mb16" style="align-items:flex-start;gap:12px;flex-wrap:wrap;">
         <div style="flex:1;min-width:200px;">
           <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:var(--text3);margin-bottom:3px;">Base de Conocimiento</div>
-          <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Mensajes</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Ayudas</div>
         </div>
         <div class="spacer"></div>
         <!-- Buscador Ayudas -->
@@ -1086,12 +1086,12 @@
           <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-problemas" checked style="width:15px;height:15px;">
-            <span style="font-size:12px;font-weight:600;color:var(--text);">Resolver</span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Pendientes</span>
           </label>
           <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-ayudas" checked style="width:15px;height:15px;">
-            <span style="font-size:12px;font-weight:600;color:var(--text);">Mensajes</span>
+            <span style="font-size:12px;font-weight:600;color:var(--text);">Ayudas</span>
           </label>
           <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
@@ -1104,7 +1104,7 @@
             <span style="font-size:12px;font-weight:600;color:var(--text);">Tareas</span>
           </label>
         </div>
-        <div style="font-size:10px;color:var(--text3);margin-top:8px;">Configuración solo está disponible para el administrador.</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:8px;">Aplica a cualquier tipo de usuario. Configuración solo está disponible para el administrador.</div>
       </div>
 
       <div id="nu-error" style="color:#dc2626;font-size:11px;min-height:14px;"></div>
@@ -1388,7 +1388,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
 <!-- 1. Firebase: config, caché, DB -->
-<script src="js/firebase.js?v=360201"></script>
+<script src="js/firebase.js?v=360415"></script>
 <script>
 async function _hashCode(str) {
   const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
@@ -1453,7 +1453,7 @@ async function _verificarCodigoAcceso(codigo) {
 </script>
 
 <!-- 2. Core: utils, TRM, calcVenta, navegación -->
-<script src="js/core.js?v=360201"></script>
+<script src="js/core.js?v=360415"></script>
 
 <!-- 3. Módulos de negocio -->
 <script>
@@ -1592,19 +1592,19 @@ async function _renderEnviosSkyPanel() {
 }
 </script>
 
-<script src="js/mod-finanzas.js?v=360201"></script>
-<script src="js/mod-ventas.js?v=360201"></script>
-<script src="js/mod-tiendas.js?v=360201"></script>
-<script src="js/mod-configuracion.js?v=360201"></script>
-<script src="js/mod-ventas-crud.js?v=360201"></script>
-<script src="js/mod-problemas.js?v=360201"></script>
-<script src="js/mod-envios.js?v=360201"></script>
-<script src="js/mod-ayudas.js?v=360201"></script>
-<script src="js/mod-tareas.js?v=360201"></script>
-<script src="js/mod-reporte.js?v=360201"></script>
+<script src="js/mod-finanzas.js?v=360415"></script>
+<script src="js/mod-ventas.js?v=360415"></script>
+<script src="js/mod-tiendas.js?v=360415"></script>
+<script src="js/mod-configuracion.js?v=360415"></script>
+<script src="js/mod-ventas-crud.js?v=360415"></script>
+<script src="js/mod-problemas.js?v=360415"></script>
+<script src="js/mod-envios.js?v=360415"></script>
+<script src="js/mod-ayudas.js?v=360415"></script>
+<script src="js/mod-tareas.js?v=360415"></script>
+<script src="js/mod-reporte.js?v=360415"></script>
 
 <!-- 4. Init: autenticación, toast, spinner, arranque -->
-<script src="js/app-init.js?v=360201"></script>
+<script src="js/app-init.js?v=360415"></script>
 
 <!-- ═══════════════════ MODALES ═══════════════════ -->
 <!-- ═══════════════════ MODAL: NUEVA / EDITAR AYUDA ═══════════════════ -->

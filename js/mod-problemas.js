@@ -358,10 +358,9 @@ async function renderProblemas() {
       <div style="display:flex;align-items:center;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
         <button class="btn btn-ghost btn-sm" onclick="openModalProblema(null,'${p.id}')">Editar</button>
         ${p.estado === 'abierto' ? `
-          <button class="btn btn-success btn-sm" onclick="openResolverProblema('${p.id}','resuelto')" style="display:flex;align-items:center;gap:4px;">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Resolver
-          </button>
-          <button class="btn btn-danger btn-sm" onclick="openResolverProblema('${p.id}','perdida')">Pérdida</button>` : ''}
+          <button class="btn btn-success btn-sm" onclick="openResolverProblema('${p.id}','resuelto')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>Resolver
+          </button>` : ''}
         <div style="flex:1;"></div>
         <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteProb('${p.id}')" style="color:var(--red);border-color:transparent;"
           onmouseover="this.style.background='var(--red-bg)'" onmouseout="this.style.background=''">
