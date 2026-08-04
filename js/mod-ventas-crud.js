@@ -889,11 +889,15 @@ async function _confirmarValidarEnvio() {
 }
 
 function clearVentaFilters() {
-  ['vf-search','vf-mes','vf-desde','vf-hasta'].forEach(i => sv(i,''));
-  ['vf-tienda','vf-estado','vf-trans'].forEach(i => sv(i,'')); 
+  ['vf-search','vf-desde','vf-hasta'].forEach(i => sv(i,''));
+  ['vf-tienda','vf-estado','vf-trans'].forEach(i => sv(i,''));
+  // Volver al mes actual
+  sv('vf-mes', typeof mes === 'function' ? mes() : '');
   // Resetear DRP visual
   if (typeof _DRP !== 'undefined') {
     _DRP.selStart = null; _DRP.selEnd = null; _DRP.activeShortcut = 'month';
+    const n = new Date();
+    _DRP.viewY = n.getFullYear(); _DRP.viewM = n.getMonth();
   }
   if (typeof _drpUpdateLabel === 'function') _drpUpdateLabel();
   renderVentasGanancias();
@@ -1101,6 +1105,7 @@ function _drpRender() {
     { k:'30d',   l:'Últimos 30 días'},
     { k:'month', l:'Este mes'       },
     { k:'lastm', l:'Mes pasado'     },
+    { k:'all',   l:'Ver todo'       },
   ];
 
   const labelHtml = _DRP.selStart
@@ -1222,6 +1227,16 @@ function _drpApplyShortcut(k, render=true) {
       _DRP.selStart = _drpFmt(lm); _DRP.selEnd = _drpFmt(le);
       _DRP.viewY = lm.getFullYear(); _DRP.viewM = lm.getMonth(); break;
     }
+    case 'all': {
+      // Desde la primera venta registrada hasta hoy
+      const ventas = (typeof _cache !== 'undefined' && _cache.ventas) ? _cache.ventas : [];
+      const fechas = ventas.map(v => v.fecha_venta).filter(Boolean).sort();
+      _DRP.selStart = fechas.length ? fechas[0] : `${now.getFullYear()}-01-01`;
+      _DRP.selEnd   = _drpToday();
+      const [sy, sm] = _DRP.selStart.split('-');
+      _DRP.viewY = parseInt(sy, 10); _DRP.viewM = parseInt(sm, 10) - 1;
+      break;
+    }
   }
   if (render) _drpRender();
 }
@@ -1242,7 +1257,11 @@ function _drpApply() {
 
 function _drpClear() {
   _DRP.selStart = null; _DRP.selEnd = null; _DRP.activeShortcut = 'month';
-  ['vf-desde','vf-hasta','vf-mes'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  const n = new Date();
+  _DRP.viewY = n.getFullYear(); _DRP.viewM = n.getMonth();
+  ['vf-desde','vf-hasta'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  const elMes = document.getElementById('vf-mes');
+  if (elMes) elMes.value = (typeof mes === 'function' ? mes() : '');
   _drpUpdateLabel();
   renderVentasGanancias();
 }

@@ -95,36 +95,84 @@ function _iniciarListeners() {
   // Skip re-render when change came from this client
   const _esExterno = () => !_ownWrite && _pendingSyncs === 0;
 
-  const colecciones = [
-    { nombre: 'ventas',      pages: ['ventas'],              key: 'ventas'      },
-    { nombre: 'tiendas',     pages: ['ventas'],              key: 'tiendas'     },
-    { nombre: 'problemas',   pages: ['problemas'],           key: 'problemas'   },
-    { nombre: 'movimientos', pages: ['finanzas'],            key: 'movimientos' },
-    { nombre: 'billeteras',  pages: ['finanzas'],            key: 'billeteras'  },
-    { nombre: 'envios',      pages: ['envios'],              key: 'envios'      },
-    { nombre: 'envios_sky',  pages: ['envios','finanzas'],   key: 'envios_sky'  },
-    { nombre: 'membresias',  pages: ['finanzas'],            key: 'membresias'  },
-  ];
+  // ── Ventana de tiempo real ──
+  // Solo escuchamos los datos recientes. Lo histórico ya está en caché desde
+  // _cargarTodo() y prácticamente no cambia, así que no vale la pena pagar
+  // lecturas por mantenerlo escuchando en vivo.
+  const _DIAS_LIVE = 120;
+  const _corte = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() - _DIAS_LIVE);
+    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+  })();
 
-  colecciones.forEach(({ nombre, pages, key }) => {
-    const unsub = _col(nombre).onSnapshot({ includeMetadataChanges: false }, snap => {
-      // fromCache=true means it's our own write reflected locally — skip render
+  // Aplica los cambios de un snapshot sobre el caché, documento por documento.
+  // Esto evita reconstruir el array completo en cada cambio.
+  function _parchearCache(key, snap) {
+    if (!Array.isArray(_cache[key])) _cache[key] = [];
+    const arr = _cache[key];
+    let cambios = 0;
+    snap.docChanges().forEach(ch => {
+      const idx = arr.findIndex(x => x.id === ch.doc.id);
+      if (ch.type === 'removed') {
+        if (idx >= 0) { arr.splice(idx, 1); cambios++; }
+      } else {
+        const obj = { id: ch.doc.id, ...ch.doc.data() };
+        if (idx >= 0) {
+          // Solo cuenta como cambio si el contenido realmente difiere
+          if (JSON.stringify(arr[idx]) !== JSON.stringify(obj)) { arr[idx] = obj; cambios++; }
+        } else { arr.push(obj); cambios++; }
+      }
+    });
+    return cambios;
+  }
+
+  function _escuchar({ nombre, key, pages, campoFecha }) {
+    // Si la colección tiene campo de fecha, acotamos la consulta a lo reciente
+    const ref = campoFecha
+      ? _col(nombre).where(campoFecha, '>=', _corte)
+      : _col(nombre);
+
+    let primerSnapshot = true;
+    const unsub = ref.onSnapshot({ includeMetadataChanges: false }, snap => {
       if (snap.metadata.fromCache) return;
-      const datos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-      _cache[key] = datos;
+      const cambios = _parchearCache(key, snap);
+      // El primer snapshot son los datos que ya teníamos: no re-renderizar
+      if (primerSnapshot) {
+        primerSnapshot = false;
+        console.log(`[live] escuchando "${nombre}" (${snap.size} docs)`);
+        return;
+      }
+      if (!cambios) return;
+      console.log(`[live] cambio detectado en "${nombre}" (${cambios}) · externo=${_esExterno()}`);
       if (_esExterno()) pages.forEach(p => _debouncedRender(p));
     }, err => console.warn(`Listener ${nombre}:`, err));
     _unsubscribers.push(unsub);
-  });
+  }
 
-  // Config docs
+  [
+    // Colecciones grandes → acotadas por fecha
+    { nombre:'ventas',      key:'ventas',      pages:['ventas','envios'],    campoFecha:'fecha_venta' },
+    { nombre:'movimientos', key:'movimientos', pages:['finanzas'],           campoFecha:'fecha' },
+    { nombre:'envios_sky',  key:'envios_sky',  pages:['envios','finanzas'],  campoFecha:'fecha' },
+    // Colecciones pequeñas → completas (su costo es despreciable)
+    { nombre:'tiendas',     key:'tiendas',     pages:['ventas'] },
+    { nombre:'problemas',   key:'problemas',   pages:['problemas'] },
+    { nombre:'billeteras',  key:'billeteras',  pages:['finanzas'] },
+    { nombre:'envios',      key:'envios',      pages:['envios'] },
+    { nombre:'membresias',  key:'membresias',  pages:['finanzas'] },
+  ].forEach(_escuchar);
+
+  // Config docs (1 documento cada uno → costo mínimo)
   [
     { docId: 'saldos',  key: 'saldos',  page: 'finanzas' },
     { docId: 'ajustes', key: 'ajustes', page: 'finanzas' },
   ].forEach(({ docId, key, page }) => {
+    let primero = true;
     const unsub = _cfg(docId).onSnapshot({ includeMetadataChanges: false }, snap => {
       if (snap.metadata.fromCache) return;
       _cache[key] = snap.exists ? snap.data() : {};
+      if (primero) { primero = false; return; }
       if (_esExterno()) _debouncedRender(page);
     }, err => console.warn(`Listener config/${docId}:`, err));
     _unsubscribers.push(unsub);
@@ -156,8 +204,9 @@ async function _cargarTodo() {
   _cache.saldos      = sDoc.exists  ? sDoc.data()  : {};
   _cache.ajustes     = ajDoc.exists ? ajDoc.data() : {};
 
-  // Listeners desactivados — consumen demasiado cupo de Firestore
-  // _iniciarListeners();
+  // Tiempo real: se conecta una sola vez por sesión (el guard interno evita
+  // reconexiones costosas si _cargarTodo vuelve a ejecutarse).
+  _iniciarListeners();
 }
 
 // ══ Sync helpers ══
