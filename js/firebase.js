@@ -51,7 +51,7 @@ function _cfg(docId) {
 const _cache = {
   tiendas:null, ventas:null, problemas:null, movimientos:null,
   membresias:null, billeteras:null, envios:null, envios_sky:null,
-  saldos:null, ajustes:null,
+  saldos:null, ajustes:null, ayudas:null,
 };
 
 async function _fetchCol(nombre) {
@@ -161,6 +161,7 @@ function _iniciarListeners() {
     { nombre:'billeteras',  key:'billeteras',  pages:['finanzas'] },
     { nombre:'envios',      key:'envios',      pages:['envios'] },
     { nombre:'membresias',  key:'membresias',  pages:['finanzas'] },
+    { nombre:'ayudas',      key:'ayudas',      pages:['ayudas'] },
   ].forEach(_escuchar);
 
   // Config docs (1 documento cada uno → costo mínimo)
@@ -187,10 +188,10 @@ function _detenerListeners() {
 
 async function _cargarTodo() {
   // Carga inicial: leer todo de Firestore una sola vez
-  const [t,v,p,m,mem,b,env,esky,sDoc,ajDoc] = await Promise.all([
+  const [t,v,p,m,mem,b,env,esky,ayu,sDoc,ajDoc] = await Promise.all([
     _fetchCol('tiendas'), _fetchCol('ventas'), _fetchCol('problemas'),
     _fetchCol('movimientos'), _fetchCol('membresias'), _fetchCol('billeteras'),
-    _fetchCol('envios'), _fetchCol('envios_sky'),
+    _fetchCol('envios'), _fetchCol('envios_sky'), _fetchCol('ayudas'),
     _cfg('saldos').get(), _cfg('ajustes').get(),
   ]);
   _cache.tiendas     = t;
@@ -201,6 +202,7 @@ async function _cargarTodo() {
   _cache.billeteras  = b;
   _cache.envios      = env;
   _cache.envios_sky  = esky;
+  _cache.ayudas      = ayu;
   _cache.saldos      = sDoc.exists  ? sDoc.data()  : {};
   _cache.ajustes     = ajDoc.exists ? ajDoc.data() : {};
 
@@ -340,6 +342,10 @@ const DB = {
   envios_sky:     () => Promise.resolve(_cache.envios_sky || []),
   upsertEnvioSky: (e)  => { const a=_cache.envios_sky||[];const i=a.findIndex(x=>x.id===e.id);i>=0?a[i]=e:a.push(e);_cache.envios_sky=a;return _syncDoc('envios_sky',e.id,e); },
   deleteEnvioSky: (id) => { _cache.envios_sky=(_cache.envios_sky||[]).filter(x=>x.id!==id);return _delDoc('envios_sky',id); },
+
+  ayudas:       () => Promise.resolve(_cache.ayudas || []),
+  upsertAyuda:  (a)  => { const arr=_cache.ayudas||[];const i=arr.findIndex(x=>x.id===a.id);i>=0?arr[i]=a:arr.push(a);_cache.ayudas=arr;return _syncDoc('ayudas',a.id,a); },
+  deleteAyuda:  (id) => { _cache.ayudas=(_cache.ayudas||[]).filter(x=>x.id!==id);return _delDoc('ayudas',id); },
 
   // ── Gestión de usuarios (solo admin) ──
   getUsuarios: () => _db.collection('usuarios').get().then(snap =>

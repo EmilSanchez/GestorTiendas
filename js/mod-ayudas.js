@@ -1,9 +1,8 @@
 /* Módulo Ayudas */
 
-// MÓDULO AYUDAS — localStorage, CRUD, UI
+// MÓDULO AYUDAS — sincronizado con Firebase (DB.ayudas), CRUD, UI
 // ══════════════════════════════════════════════════════════
 
-const _AYUDAS_KEY = 'mm_ayudas_v1';
 var _ayudas = [];
 var _ayudaCatActiva = '__todas__';
 
@@ -19,30 +18,48 @@ const _CAT_COLORES = {
   rastreo:'#1a4fa8', infracciones:'#1a4fa8', general:'#1a4fa8', otro:'#1a4fa8'
 };
 
-function _loadAyudas() {
-  try {
-    const raw = localStorage.getItem(_AYUDAS_KEY);
-    _ayudas = raw ? JSON.parse(raw) : [];
-    // Normalizar todos los colores a azul rey
-    let changed = false;
-    _ayudas.forEach(a => {
-      if (a.color !== '#1a4fa8') { a.color = '#1a4fa8'; changed = true; }
-    });
-    if (changed) localStorage.setItem(_AYUDAS_KEY, JSON.stringify(_ayudas));
-  } catch { _ayudas = []; }
-}
-
-function _saveAyudas() {
-  localStorage.setItem(_AYUDAS_KEY, JSON.stringify(_ayudas));
-}
-
 function _ayudaId() {
   return 'ay_' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
 }
 
-// ── PRE-CARGA: insertar ayudas del screenshot si no hay ninguna ──
-function _precargarAyudas() {
-  if(_ayudas.length > 0) return;
+// ── PRE-CARGA: insertar ayudas del screenshot si no hay ninguna en toda la cuenta ──
+// Se guarda una marca en config('ayudas_seed') para no volver a sembrarlas
+// si en algún momento quedan en cero (por ejemplo, si se borran todas).
+async function _precargarAyudas() {
+  if (_ayudas.length > 0) return;
+  try {
+    const seedDoc = await _cfg('ayudas_seed').get();
+    if (seedDoc.exists) return; // ya se sembraron alguna vez, no repetir
+  } catch(e) { /* si falla la verificación, seguimos con precaución */ }
+
+  // Migración: si este dispositivo tenía ayudas guardadas localmente (versión
+  // anterior, antes de sincronizar con Firebase), se migran a la base de datos
+  // en vez de perderse al pasar a la nueva versión sincronizada.
+  let nuevas = [];
+  try {
+    const raw = localStorage.getItem('mm_ayudas_v1');
+    const local = raw ? JSON.parse(raw) : [];
+    if (Array.isArray(local) && local.length) {
+      nuevas = local.map(a => ({
+        id: a.id || _ayudaId(),
+        titulo: a.titulo || '',
+        categoria: a.categoria || 'general',
+        color: a.color || '#1a4fa8',
+        contenido: a.contenido || '',
+        ts: a.ts || Date.now(),
+        ...(a.tsEdit ? { tsEdit: a.tsEdit } : {}),
+      }));
+    }
+  } catch(e) { /* localStorage corrupto o no accesible: seguimos sin migrar */ }
+
+  if (nuevas.length) {
+    // Se migró contenido local existente: no se agregan las ayudas de ejemplo.
+    await Promise.all(nuevas.map(a => DB.upsertAyuda(a)));
+    _ayudas = nuevas;
+    try { await _cfg('ayudas_seed').set({ done:true, migrado:true, fecha:new Date().toISOString() }); } catch(e) {}
+    return;
+  }
+
   const datos = [
     { titulo:'Mensajes para quitar demoras', categoria:'demoras', color:'#1a4fa8',
       contenido:'Buenos días, espero se encuentre bien, lo que pasa es que tengo unas ventas las cuales no logré despachar a tiempo el pedido indicado por cuestión de las fuertes lluvias en mi ciudad, literalmente las calles estaban totalmente inundadas, por favor me pueden ayudar para que esto no me afecte en mi reputación. Ya siempre trato de despachar todo a tiempo, pero esta vez se me salió de las manos con varios productos' },
@@ -79,23 +96,28 @@ function _precargarAyudas() {
     { titulo:'Pedir número a clientes', categoria:'cliente', color:'#1a4fa8',
       contenido:'Buen día, espero te encuentres bien, con el fin de mantenerte informado por todos los canales posibles a cerca del proceso de tu compra, estamos solicitando tu número de contacto.\n\nQue tengas un excelente día' },
   ];
-  datos.forEach(d => {
-    _ayudas.push({
-      id: _ayudaId(),
-      titulo: d.titulo,
-      categoria: d.categoria,
-      color: d.color,
-      contenido: d.contenido,
-      ts: Date.now()
-    });
-  });
-  _saveAyudas();
+
+  nuevas = datos.map(d => ({
+    id: _ayudaId(),
+    titulo: d.titulo,
+    categoria: d.categoria,
+    color: d.color,
+    contenido: d.contenido,
+    ts: Date.now()
+  }));
+
+  // Guardar cada una en Firebase (quedan disponibles para todos los dispositivos)
+  await Promise.all(nuevas.map(a => DB.upsertAyuda(a)));
+  _ayudas = nuevas;
+
+  // Marcar que ya se sembraron, para no duplicarlas en el futuro
+  try { await _cfg('ayudas_seed').set({ done: true, fecha: new Date().toISOString() }); } catch(e) {}
 }
 
 // ── RENDER PRINCIPAL ──
 async function renderAyudas() {
-  _loadAyudas();
-  _precargarAyudas();
+  _ayudas = await DB.ayudas();
+  await _precargarAyudas();
   renderAyudasFiltradas();
 }
 
@@ -264,16 +286,33 @@ async function guardarAyuda() {
 
   await new Promise(r => setTimeout(r, 380));
 
+  let ayudaGuardada;
   if(id) {
     // Editar
     const idx = _ayudas.findIndex(a=>a.id===id);
-    if(idx>=0) _ayudas[idx] = { ..._ayudas[idx], titulo, contenido, categoria, color, tsEdit:Date.now() };
+    ayudaGuardada = idx>=0 ? { ..._ayudas[idx], titulo, contenido, categoria, color, tsEdit:Date.now() }
+                           : { id, titulo, contenido, categoria, color, tsEdit:Date.now() };
   } else {
     // Nuevo
-    _ayudas.unshift({ id:_ayudaId(), titulo, contenido, categoria, color, ts:Date.now() });
+    ayudaGuardada = { id:_ayudaId(), titulo, contenido, categoria, color, ts:Date.now() };
   }
 
-  _saveAyudas();
+  try {
+    await DB.upsertAyuda(ayudaGuardada);
+    _ayudas = await DB.ayudas();
+    if (!id) {
+      // Nuevo: moverlo al frente para mantener "más reciente primero"
+      const idx = _ayudas.findIndex(a => a.id === ayudaGuardada.id);
+      if (idx > 0) { const [item] = _ayudas.splice(idx,1); _ayudas.unshift(item); }
+    }
+  } catch(e) {
+    console.error(e);
+    btn.innerHTML = origText;
+    btn.disabled = false;
+    showToast('No se pudo guardar la ayuda — revisa tu conexión', 'error', 4000);
+    return;
+  }
+
   btn.innerHTML = origText;
   btn.disabled = false;
   closeModal('modal-ayuda');
@@ -366,11 +405,18 @@ function eliminarAyuda(id) {
   document.getElementById('modal-delete-ayuda').classList.add('open');
 }
 
-function _confirmarEliminarAyuda() {
+async function _confirmarEliminarAyuda() {
   if (!_ayudaIdPendienteEliminar) return;
-  _ayudas = _ayudas.filter(x => x.id !== _ayudaIdPendienteEliminar);
-  _saveAyudas();
+  const id = _ayudaIdPendienteEliminar;
   _ayudaIdPendienteEliminar = null;
+  try {
+    await DB.deleteAyuda(id);
+    _ayudas = await DB.ayudas();
+  } catch(e) {
+    console.error(e);
+    showToast('No se pudo eliminar — revisa tu conexión', 'error', 4000);
+    return;
+  }
   closeModal('modal-delete-ayuda');
   showToast('<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg> Ayuda eliminada', 'info', 2000);
   renderAyudasFiltradas();
