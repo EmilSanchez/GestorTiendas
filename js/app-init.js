@@ -350,28 +350,23 @@ var _selectedVentaId = null;
 
 function _selectRow(tr) {
   const tbody = tr.closest('tbody');
-  if (tbody) tbody.querySelectorAll('tr').forEach(r => {
-    r.classList.remove('tr-selected');
-    r.style.background = '';
-    r.style.boxShadow  = '';
-  });
+  if (tbody) tbody.querySelectorAll('tr').forEach(r => r.classList.remove('tr-selected'));
   // Quitar .copied de cualquier badge al seleccionar nueva fila
   document.querySelectorAll('.venta-id.copied').forEach(b => b.classList.remove('copied'));
   tr.classList.add('tr-selected');
-  tr.style.setProperty('background', 'rgba(0,137,123,.22)', 'important');
-  tr.style.setProperty('box-shadow', 'inset 3px 0 0 #00897b', 'important');
   // Guardar id para restaurar después de re-render
   _selectedVentaId = tr.dataset.vid || null;
+}
+
+function _clearSelectedRow() {
+  _selectedVentaId = null;
+  document.querySelectorAll('#ventas-tbody tr.tr-selected').forEach(r => r.classList.remove('tr-selected'));
 }
 
 function _restoreSelectedRow() {
   if (!_selectedVentaId) return;
   const tr = document.querySelector(`#ventas-tbody tr[data-vid="${_selectedVentaId}"]`);
-  if (tr) {
-    tr.classList.add('tr-selected');
-    tr.style.setProperty('background', 'rgba(0,137,123,.22)', 'important');
-    tr.style.setProperty('box-shadow', 'inset 3px 0 0 #00897b', 'important');
-  }
+  if (tr) tr.classList.add('tr-selected');
 }
 
 // ══════════════════════════════════════════════════════════

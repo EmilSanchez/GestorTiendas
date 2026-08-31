@@ -430,13 +430,22 @@ async function _initEnviosSkyPanel() {
 async function _renderEnviosSkyPanel() {
   const el  = document.getElementById('envios-sky-panel');
   const mesFiltro = document.getElementById('sky-filtro-mes')?.value || '';
+  const busq = (document.getElementById('sky-search')?.value || '').trim().toLowerCase();
   if (!el) return;
 
   const enviosSky = await DB.envios_sky();
-  const skyMes    = (mesFiltro
+  let skyMes = (mesFiltro
     ? enviosSky.filter(e => (e.fecha||'').startsWith(mesFiltro))
     : [...enviosSky]
-  ).sort((a,b) => {
+  );
+  if (busq) {
+    skyMes = skyMes.filter(e =>
+      (e.num_guia||'').toLowerCase().includes(busq) ||
+      (e.producto||'').toLowerCase().includes(busq) ||
+      (e.num_venta||'').toLowerCase().includes(busq)
+    );
+  }
+  skyMes = skyMes.sort((a,b) => {
     const fd = (b.fecha||'').localeCompare(a.fecha||'');
     if (fd !== 0) return fd;
     return (b.creado||b.fecha_registro||'').localeCompare(a.creado||a.fecha_registro||'');
@@ -456,7 +465,7 @@ async function _renderEnviosSkyPanel() {
   };
 
   if (!skyMes.length) {
-    el.innerHTML = `<div style="text-align:center;padding:28px;color:var(--text3);font-size:12px;">Sin envíos registrados en este período.</div>`;
+    el.innerHTML = `<div style="text-align:center;padding:28px;color:var(--text3);font-size:12px;">${busq ? 'Sin resultados para tu búsqueda.' : 'Sin envíos registrados en este período.'}</div>`;
     return;
   }
 
@@ -466,6 +475,7 @@ async function _renderEnviosSkyPanel() {
       <td style="padding:8px 10px;">${e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;">${e.num_guia  ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;">${_buildEstadoDrop(e.estado||'Pendiente',['Pendiente','En camino','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
       <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;">${fmt(e.valor)}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${FUENTES_LABEL[e.fuente_pago]||e.fuente_pago||'Skydropx'}</td>
@@ -483,7 +493,7 @@ async function _renderEnviosSkyPanel() {
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="border-bottom:2px solid var(--border);">
-          ${['Fecha','N° Venta','Guía','Transportadora','Estado','Valor','Pagado desde',''].map(h =>
+          ${['Fecha','N° Venta','Guía','Transportadora','Producto','Estado','Valor','Pagado desde',''].map(h =>
             `<th style="padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;">${h}</th>`
           ).join('')}
         </tr></thead>

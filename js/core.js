@@ -150,13 +150,20 @@ function calcVenta(v) {
     envioIntCOP = envioVal;
   }
 
-  const totalVenta  = precioCOP;
-  const totalCostos = costoCOP + envioIntCOP + envioExtra;
+  // Ingresos extra / Gastos extra — listas con motivo, editables desde el modal de venta
+  const ingresosExtraLista = Array.isArray(v.ingresos_extra) ? v.ingresos_extra : [];
+  const gastosExtraLista   = Array.isArray(v.gastos_extra)   ? v.gastos_extra   : [];
+  const ingresosExtra = ingresosExtraLista.reduce((s,i) => s + (parseFloat(i.valor)||0), 0);
+  const gastosExtra   = gastosExtraLista.reduce((s,g) => s + (parseFloat(g.valor)||0), 0);
+
+  const totalVenta  = precioCOP + ingresosExtra;
+  const totalCostos = costoCOP + envioIntCOP + envioExtra + gastosExtra;
   const ganancia    = totalVenta - totalCostos;
   const margen      = totalVenta > 0 ? (ganancia / totalVenta) * 100 : 0;
   const usd         = trm > 0 ? precioCOP / trm : 0;
 
   return { udes, usd, trm, precioCOP, costoCOP, envioIntCOP, envioExtra,
+           ingresosExtra, gastosExtra, ingresosExtraLista, gastosExtraLista,
            totalVenta, totalCostos, ganancia, margen };
 }
 
@@ -379,7 +386,7 @@ const _ESTADO_COLORS = {
   cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000', label:'CANCELADO' },
   problema:  { bg:'#f9a825', color:'#000', border:'#e08c00', label:'PROBLEMA'  },
   devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc', label:'DEVUELTO'  },
-  error:     { bg:'#a61c00', color:'#fff', border:'#7a1400', label:'ERROR'      },
+  error:     { bg:'#006930', color:'#fff', border:'#004d23', label:'DESPACHADO' },
   // Skydropx keys (capitalized)
   Pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800', label:'PENDIENTE' },
   'En camino':{ bg:'#70ad47', color:'#fff', border:'#5a9438', label:'EN CAMINO' },

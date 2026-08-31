@@ -31,6 +31,60 @@ async function guardarConfigVentas() {
 // ── VENTAS ──
 var _editVentaId = null;
 
+// ── Ingresos extra / Gastos extra (lista editable con motivo) ──
+var _mvExtras = { ingreso: [], gasto: [] };
+
+function _renderExtrasList(tipo) {
+  const arr  = _mvExtras[tipo] || [];
+  const wrap = document.getElementById(tipo === 'ingreso' ? 'v-ingresos-extra-list' : 'v-gastos-extra-list');
+  if (!wrap) return;
+  if (!arr.length) {
+    wrap.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:2px 0 6px;">Sin ${tipo === 'ingreso' ? 'ingresos' : 'gastos'} extra registrados.</div>`;
+    return;
+  }
+  wrap.innerHTML = arr.map(item => `
+    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;" data-extra-row="${item.id}">
+      <input type="text" inputmode="numeric" placeholder="Monto" value="${item.valor !== undefined && item.valor !== null ? item.valor : ''}"
+        oninput="_updExtra('${tipo}','${item.id}','valor',this.value)"
+        style="width:110px;flex-shrink:0;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
+      <input type="text" placeholder="Motivo (ej: reembolso del cliente)" value="${(item.motivo||'').replace(/"/g,'&quot;')}"
+        oninput="_updExtra('${tipo}','${item.id}','motivo',this.value)"
+        style="flex:1;min-width:0;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
+      <button type="button" onclick="_removeExtra('${tipo}','${item.id}')" title="Eliminar"
+        style="width:28px;height:28px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:none;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;">✕</button>
+    </div>`).join('');
+}
+
+function _addExtra(tipo) {
+  if (!_mvExtras[tipo]) _mvExtras[tipo] = [];
+  _mvExtras[tipo].push({ id: uid(), valor: '', motivo: '' });
+  _renderExtrasList(tipo);
+  recalcVenta();
+}
+
+function _updExtra(tipo, id, campo, valor) {
+  const item = (_mvExtras[tipo]||[]).find(x => x.id === id);
+  if (!item) return;
+  item[campo] = valor;
+  if (campo === 'valor') recalcVenta();
+}
+
+function _removeExtra(tipo, id) {
+  _mvExtras[tipo] = (_mvExtras[tipo]||[]).filter(x => x.id !== id);
+  _renderExtrasList(tipo);
+  recalcVenta();
+}
+
+function _extrasTotal(tipo) {
+  return (_mvExtras[tipo]||[]).reduce((s,i) => s + (_parseNum(i.valor)||0), 0);
+}
+
+function _extrasLimpios(tipo) {
+  return (_mvExtras[tipo]||[])
+    .filter(i => (_parseNum(i.valor)||0) !== 0 || (i.motivo||'').trim())
+    .map(i => ({ id: i.id, valor: _parseNum(i.valor)||0, motivo: (i.motivo||'').trim(), ...(i._sky_id ? { _sky_id: i._sky_id } : {}) }));
+}
+
 function _toggleEnvioLock() {
   const validado = document.getElementById('v-envio-validado')?.value === '1';
   const input    = document.getElementById('v-envio-int-usd');
@@ -73,12 +127,18 @@ async function openModalVenta(id) {
       sv('v-envio-real',     v.envio_real_cop||'');
       sv('v-envio-validado', v.envio_validado ? '1' : '0');
       setTimeout(_toggleEnvioLock, 0);
+      // Ingresos extra / Gastos extra — clonar desde la venta persistida
+      _mvExtras = {
+        ingreso: (Array.isArray(v.ingresos_extra) ? v.ingresos_extra : []).map(i => ({ ...i })),
+        gasto:   (Array.isArray(v.gastos_extra)   ? v.gastos_extra   : []).map(g => ({ ...g })),
+      };
     }
   } else {
     ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-udes',1);
     sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
     sv('v-envio-validado','0');
+    _mvExtras = { ingreso: [], gasto: [] };
     setTimeout(_toggleEnvioLock, 0);
     // Prellenar TRM con el dólar fijo configurado en BD
     sv('v-trm', getDolarComprasConfigurado());
@@ -91,6 +151,8 @@ async function openModalVenta(id) {
       badge.style.color      = desdeBD ? 'var(--green)'    : 'var(--yellow)';
     }
   }
+  _renderExtrasList('ingreso');
+  _renderExtrasList('gasto');
   recalcVenta();
   openModal('modal-venta');
 
@@ -187,48 +249,134 @@ function _mvTab(tab) {
   }
 }
 
+// Arma el select "Fuente de pago" del envío externo únicamente con las billeteras
+// configuradas en Finanzas (sin valores fijos en el código).
+async function _populateMvsFuente(selected) {
+  const sel = document.getElementById('mvs-fuente');
+  if (!sel) return;
+  const billeteras = await DB.billeteras();
+  sel.innerHTML = billeteras.length
+    ? billeteras.map(b => `<option value="${b.id}">${b.nombre}</option>`).join('')
+    : '<option value="skydropx">Skydropx</option>';
+  if (selected && Array.from(sel.options).some(o => o.value === selected)) sel.value = selected;
+}
+
+function _mvNuevoEnvio() {
+  window._mvEnvioId = null;
+  sv('mvs-fecha', hoy());
+  sv('mvs-num-guia', '');
+  sv('mvs-transportadora', 'Servientrega');
+  sv('mvs-valor', '');
+  sv('mvs-estado', 'Pendiente');
+  sv('mvs-producto', '');
+  const fuenteSel = document.getElementById('mvs-fuente');
+  if (fuenteSel && fuenteSel.options.length) fuenteSel.selectedIndex = 0;
+  const statusEl = document.getElementById('mv-envio-status');
+  if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid #f0c040;">Nuevo envío externo — sin guardar</span>';
+  const errEl = document.getElementById('mv-envio-err');
+  if (errEl) errEl.textContent = '';
+  const inp = document.getElementById('mvs-num-guia');
+  if (inp) setTimeout(() => inp.focus(), 50);
+}
+
+async function _editarEnvioDeVenta(id) {
+  const envios = await DB.envios_sky();
+  const e = envios.find(x => x.id === id);
+  if (!e) return;
+  window._mvEnvioId = e.id;
+  sv('mvs-fecha', e.fecha || hoy());
+  sv('mvs-num-guia', e.num_guia || '');
+  sv('mvs-transportadora', e.transportadora || '');
+  sv('mvs-valor', e.valor || '');
+  sv('mvs-estado', e.estado || 'Pendiente');
+  sv('mvs-producto', e.producto || '');
+  sv('mvs-fuente', e.fuente_pago || '');
+  const statusEl = document.getElementById('mv-envio-status');
+  if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--teal-bg);color:var(--teal);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid rgba(0,137,123,.2);">Editando envío existente</span>';
+}
+
 async function _loadLinkedEnvio(ventaId) {
+  window._mvEnvioId = null; // evitar arrastrar estado de una venta anterior
   const ventas = await DB.ventas();
   const v = ventas.find(x => x.id === ventaId);
   const idMl = v?.id_ml || ventaId;
   const envios = await DB.envios_sky();
-  const envio = envios.find(e => e.num_venta === idMl || e.num_venta === ventaId);
+  const enviosVenta = envios
+    .filter(e => e.num_venta === idMl || e.num_venta === ventaId)
+    .sort((a,b) => (b.fecha_registro||b.creado||'').localeCompare(a.fecha_registro||a.creado||''));
   const statusEl = document.getElementById('mv-envio-status');
+  const listaEl  = document.getElementById('mv-envios-lista');
+  const badgeEl  = document.getElementById('mv-envio-count-badge');
 
-  // Check if venta's month is closed and show warning
+  await _populateMvsFuente();
+
+  if (badgeEl) {
+    if (enviosVenta.length) { badgeEl.textContent = String(enviosVenta.length); badgeEl.style.display = 'inline-block'; }
+    else { badgeEl.style.display = 'none'; }
+  }
+
+  // Aviso de mes cerrado
   const mesCerrado = await _esMesCerrado(v?.fecha_venta);
-  if (mesCerrado && statusEl) {
+  let avisoHtml = '';
+  if (mesCerrado) {
     const mesNombre = v?.fecha_venta ? (() => {
       const [y,m] = v.fecha_venta.split('-');
       const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
       return meses[parseInt(m)-1] + ' ' + y;
     })() : '';
-    statusEl.innerHTML = `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:12px;color:#9a3412;margin-bottom:10px;">
+    avisoHtml = `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:12px;color:#9a3412;margin-bottom:10px;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-      <strong>${mesNombre} está cerrado.</strong> Los costos adicionales de este envío se registrarán en el mes en curso (Finanzas &gt; Movimientos) y no afectarán el mes cerrado.
+      <strong>${mesNombre} está cerrado.</strong> El costo de este envío se sumará automáticamente a los gastos extra de la venta y aparecerá como diferencia en Finanzas.
     </div>`;
   }
-  if (envio) {
-    window._mvEnvioId = envio.id;
-    document.getElementById('mvs-fecha').value = envio.fecha || hoy();
-    document.getElementById('mvs-num-venta').value = envio.num_venta || idMl;
-    document.getElementById('mvs-num-guia').value = envio.num_guia || '';
-    document.getElementById('mvs-transportadora').value = envio.transportadora || '';
-    document.getElementById('mvs-valor').value = envio.valor || '';
-    document.getElementById('mvs-estado').value = envio.estado || 'Pendiente';
-    document.getElementById('mvs-fuente').value = envio.fuente_pago || 'skydropx';
-    if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--teal-bg);color:var(--teal);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid rgba(0,137,123,.2);">Envío registrado — editando</span>';
+
+  // Lista de envíos ya registrados para esta venta + botón para agregar otro
+  if (listaEl) {
+    let html = '';
+    if (enviosVenta.length) {
+      html += `<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:6px;">
+        ${enviosVenta.length} envío${enviosVenta.length!==1?'s':''} externo${enviosVenta.length!==1?'s':''} registrado${enviosVenta.length!==1?'s':''}
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px;margin-bottom:12px;">
+        ${enviosVenta.map(e => `
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;">
+            <div style="font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;">
+              <strong>${e.num_guia || 'Sin guía'}</strong>${e.producto ? ' · ' + e.producto : ''}
+              <span class="c-dim"> · ${fmt(e.valor)}</span>
+            </div>
+            <button type="button" class="btn btn-ghost btn-sm" style="font-size:10px;padding:2px 8px;flex-shrink:0;" onclick="_editarEnvioDeVenta('${e.id}')">Editar</button>
+          </div>`).join('')}
+      </div>`;
+    }
+    html += `<button type="button" class="btn btn-ghost btn-sm" style="font-size:11px;margin-bottom:12px;" onclick="_mvNuevoEnvio()">+ Registrar otro envío externo</button>`;
+    listaEl.innerHTML = html;
+  }
+
+  if (enviosVenta.length) {
+    // Cargar el más reciente por defecto al abrir
+    const e = enviosVenta[0];
+    window._mvEnvioId = e.id;
+    sv('mvs-fecha', e.fecha || hoy());
+    sv('mvs-num-venta', e.num_venta || idMl);
+    sv('mvs-num-guia', e.num_guia || '');
+    sv('mvs-transportadora', e.transportadora || '');
+    sv('mvs-valor', e.valor || '');
+    sv('mvs-estado', e.estado || 'Pendiente');
+    sv('mvs-producto', e.producto || '');
+    await _populateMvsFuente(e.fuente_pago);
+    if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--teal-bg);color:var(--teal);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid rgba(0,137,123,.2);">Editando el envío más reciente</span>';
   } else {
-    window._mvEnvioId = null;
-    document.getElementById('mvs-fecha').value = hoy();
-    document.getElementById('mvs-num-venta').value = idMl;
-    document.getElementById('mvs-num-guia').value = '';
-    document.getElementById('mvs-transportadora').value = 'Servientrega';
-    document.getElementById('mvs-valor').value = '';
-    document.getElementById('mvs-estado').value = 'Pendiente';
-    document.getElementById('mvs-fuente').value = 'skydropx';
+    sv('mvs-fecha', hoy());
+    sv('mvs-num-venta', idMl);
+    sv('mvs-num-guia', '');
+    sv('mvs-transportadora', 'Servientrega');
+    sv('mvs-valor', '');
+    sv('mvs-estado', 'Pendiente');
+    sv('mvs-producto', '');
     if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid #f0c040;">Sin envío externo registrado</span>';
   }
+
+  if (statusEl) statusEl.innerHTML = avisoHtml + (statusEl.innerHTML || '');
 }
 
 async function _saveMvEnvio() {
@@ -238,54 +386,77 @@ async function _saveMvEnvio() {
   const num_guia = document.getElementById('mvs-num-guia').value.trim();
   const transport = document.getElementById('mvs-transportadora').value || 'Servientrega';
   const estado = document.getElementById('mvs-estado').value || 'Pendiente';
+  const producto = (document.getElementById('mvs-producto')?.value || '').trim();
   const fuente = document.getElementById('mvs-fuente').value || 'skydropx';
   const id = window._mvEnvioId || uid();
   const esNuevo = !window._mvEnvioId;
   const ts = new Date().toISOString();
 
-  await DB.upsertEnvioSky({id, fecha, num_venta, num_guia, transportadora: transport, estado, valor, fuente_pago: fuente, fecha_registro: ts, ...(esNuevo?{creado:ts}:{})});
+  // Capturar el registro anterior para no descontar dos veces el saldo al editar
+  const enviosPrev = await DB.envios_sky();
+  const anterior = enviosPrev.find(e => e.id === id);
+  const valorAnterior  = anterior ? (parseFloat(anterior.valor)||0) : 0;
+  const fuenteAnterior = anterior ? (anterior.fuente_pago || null) : null;
+
+  await DB.upsertEnvioSky({id, fecha, num_venta, num_guia, transportadora: transport, estado, valor, producto, fuente_pago: fuente, fecha_registro: ts, ...(esNuevo?{creado:ts}:{})});
+
+  // ── Movimiento de caja: se descuenta una sola vez; al editar se ajusta la diferencia ──
+  const saldos = await DB.saldos();
+  if (!esNuevo && fuenteAnterior) {
+    saldos[fuenteAnterior] = (parseFloat(saldos[fuenteAnterior])||0) + valorAnterior;
+  }
+  saldos[fuente] = (parseFloat(saldos[fuente])||0) - valor;
+  await DB.saveSaldos(saldos);
 
   // Determinar si el mes de la venta ya está cerrado
   const ventas = await DB.ventas();
   const venta = ventas.find(v => v.id === _editVentaId || v.id_ml === num_venta);
   const mesCerrado = await _esMesCerrado(venta?.fecha_venta);
+  const motivoGasto = `Envío externo${num_guia ? ' · Guía ' + num_guia : ''}${producto ? ' · ' + producto : ''}`;
 
   if (!mesCerrado) {
     // Mes abierto: vincular el gasto al envio_extra de la venta para que afecte la ganancia del mes
     if (venta) {
       const extraAnterior = parseFloat(venta.envio_extra) || 0;
-      venta.envio_extra = esNuevo ? extraAnterior + valor : valor;
-      await DB.upsertVenta(venta);  // Solo 1 escritura
+      venta.envio_extra = esNuevo ? extraAnterior + valor : (extraAnterior - valorAnterior + valor);
+      await DB.upsertVenta(venta);
     }
-  } else {
-    // Mes cerrado: registrar el gasto en el mes en curso como movimiento
-    const saldos = await DB.saldos();
-    saldos[fuente] = (parseFloat(saldos[fuente])||0) - valor;
-    await DB.saveSaldos(saldos);
     await DB.upsertMovimiento({
-      id: 'sky_extra_' + id,
-      fecha: hoy(),
-      tipo: 'egreso',
-      fuente,
-      valor,
-      concepto: `Envío externo (mes cerrado)${num_venta?' · '+num_venta:''}`,
-      notas: `Transportadora: ${transport}. La venta es de un mes ya cerrado; el gasto se registra en el mes en curso.`,
-      fecha_registro: ts,
-      _sky_id: id,
+      id: 'sky_' + id, fecha, tipo: 'egreso', fuente, valor,
+      concepto: `Envío Skydropx${num_venta ? ' · ' + num_venta : ''}${num_guia ? ' · ' + num_guia : ''}`,
+      notas: `Transportadora: ${transport}${producto ? '. Producto: ' + producto : ''}`,
+      fecha_registro: ts, _sky_id: id,
     });
-    showToast('Mes cerrado — el gasto se registró en el mes actual en Finanzas', 'info', 4000);
-  }
-
-  if (esNuevo) {
-    const saldos2 = await DB.saldos();
-    saldos2[fuente] = (parseFloat(saldos2[fuente])||0) - valor;
-    await DB.saveSaldos(saldos2);
-    await DB.upsertMovimiento({id:'sky_'+id, fecha, tipo:'egreso', fuente, valor, concepto:`Envío Skydropx${num_venta?' · '+num_venta:''}`, notas:`Transportadora: ${transport}`, fecha_registro:ts, _sky_id:id});
+  } else {
+    // Mes cerrado: el costo se suma automáticamente a los gastos extra de la venta,
+    // para que quede reflejado en su ganancia y se detecte como diferencia del cierre.
+    if (venta) {
+      venta.gastos_extra = Array.isArray(venta.gastos_extra) ? venta.gastos_extra : [];
+      const idx = venta.gastos_extra.findIndex(g => g._sky_id === id);
+      if (idx >= 0) {
+        venta.gastos_extra[idx].valor  = valor;
+        venta.gastos_extra[idx].motivo = motivoGasto;
+      } else {
+        venta.gastos_extra.push({ id: uid(), valor, motivo: motivoGasto, fecha: ts, _sky_id: id });
+      }
+      await DB.upsertVenta(venta);
+      // Mantener sincronizado el estado en memoria del tab "Venta" para que
+      // "Guardar Venta" no sobrescriba este gasto recién agregado.
+      _mvExtras.gasto = venta.gastos_extra.map(g => ({ ...g }));
+      _renderExtrasList('gasto');
+      recalcVenta();
+    }
+    await DB.upsertMovimiento({
+      id: 'sky_' + id, fecha: hoy(), tipo: 'egreso', fuente, valor,
+      concepto: `Envío externo (mes cerrado)${num_venta ? ' · ' + num_venta : ''}`,
+      notas: `Transportadora: ${transport}${producto ? '. Producto: ' + producto : ''}. Venta de un mes cerrado — el costo se sumó a gastos extra de la venta y quedará como diferencia en Finanzas.`,
+      fecha_registro: ts, _sky_id: id,
+    });
+    showToast('Mes cerrado — el costo se agregó a gastos extra de la venta', 'info', 4200);
   }
 
   window._mvEnvioId = id;
-  closeModal('modal-venta');
-  showToast('Envío guardado', 'success', 2000);
+  showToast(esNuevo ? 'Envío registrado' : 'Envío actualizado', 'success', 2000);
   if (typeof _renderEnviosSkyPanel === 'function') _renderEnviosSkyPanel();
   // Capturar valores actuales ANTES del render para que la animación parta de ahí
   const _ganEl = document.getElementById('vg-total-gan');
@@ -296,6 +467,9 @@ async function _saveMvEnvio() {
   if (_cosEl) _cosEl.dataset.animFrom = _cosEl.textContent;
   await renderVentas();
   await renderVentasGanancias();
+  // Refrescar la lista/contador de envíos de esta venta y dejar el formulario listo para otro envío
+  if (_editVentaId) await _loadLinkedEnvio(_editVentaId);
+  _mvNuevoEnvio();
 }
 
 // _esMesCerrado defined in core.js
@@ -328,8 +502,11 @@ function recalcVenta() {
     }
   }
 
-  const totalV = copVenta;
-  const totalC = costoCOP + envioIntCOP + envExtra;
+  const ingresosExtraTotal = _extrasTotal('ingreso');
+  const gastosExtraTotal   = _extrasTotal('gasto');
+
+  const totalV = copVenta + ingresosExtraTotal;
+  const totalC = costoCOP + envioIntCOP + envExtra + gastosExtraTotal;
   const gan    = totalV - totalC;
   const mar    = totalV > 0 ? (gan / totalV) * 100 : 0;
 
@@ -463,6 +640,8 @@ async function saveVenta() {
     contraentrega:  _vCfg.contraentrega ? (document.getElementById('v-contraentrega')?.checked || false) : undefined,
     estado:        _editVentaId ? ((await DB.ventas()).find(x=>x.id===_editVentaId)?.estado || 'pendiente') : 'pendiente',
     fecha_registro: ventaExistente?.fecha_registro || new Date().toISOString(),
+    ingresos_extra: _extrasLimpios('ingreso'),
+    gastos_extra:   _extrasLimpios('gasto'),
   });
 
 
@@ -598,7 +777,7 @@ async function renderVentas() {
     cancelado: { bg:'#ff0000', color:'#000', border:'#cc0000' },
     problema:  { bg:'#f9a825', color:'#000', border:'#e08c00' },
     devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc' },
-    error:     { bg:'#a61c00', color:'#fff', border:'#7a1400' },
+    error:     { bg:'#006930', color:'#fff', border:'#004d23' },
   };
 
   document.getElementById('ventas-tbody').innerHTML = ventasMostrar.map((v)=>{
@@ -607,7 +786,7 @@ async function renderVentas() {
     const mesCerradoRow = _mesesCerrados.has((v.fecha_venta||'').slice(0,7));
     const gananciaDisplay = c.ganancia;
     const isLoss = gananciaDisplay < 0;
-    const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', otro:'Otro' }[v.envio_tipo]||v.envio_tipo||'—';
+    const envioLabel = { ml:'ML', servientrega:'Servientrega', aguachica:'Aguachica', inventario:'Inventario', otro:'Pendiente' }[v.envio_tipo]||v.envio_tipo||'—';
 
 
     return `<tr class="${isLoss?'loss-row':''}" data-vid="${v.id}" onclick="_selectRow(this)">
@@ -635,6 +814,7 @@ async function renderVentas() {
       <td style="font-size:11px;text-align:center;vertical-align:middle;">
         <span class="badge badge-${v.envio_tipo==='ml'?'en_camino':v.envio_tipo==='servientrega'?'entregado':v.envio_tipo==='aguachica'?'en_camino':''}"
           ${v.envio_tipo==='otro'?`style="background:#f0f0f0;color:#555;border:1px solid #ccc;"`:''}
+          ${v.envio_tipo==='inventario'?`style="background:#002060;color:#fff;border:1px solid #001540;"`:''}
         >${envioLabel}</span>
       </td>
       <td style="font-size:11px;text-align:center;vertical-align:middle;">
@@ -717,7 +897,7 @@ async function cambiarEstado(id, estado) {
           const mapaEstado = {
             'pendiente': 'Pendiente', 'en_camino': 'En camino',
             'entregado': 'Entregado', 'cancelado': 'Cancelado',
-            'devuelto':  'Devuelto',  'problema':  'Pendiente', 'error': 'Pendiente',
+            'devuelto':  'Devuelto',  'problema':  'Pendiente', 'error': 'En camino',
           };
           envio.estado = mapaEstado[estado] || 'Pendiente';
           await DB.upsertEnvioSky(envio);
@@ -900,6 +1080,7 @@ function clearVentaFilters() {
     _DRP.viewY = n.getFullYear(); _DRP.viewM = n.getMonth();
   }
   if (typeof _drpUpdateLabel === 'function') _drpUpdateLabel();
+  if (typeof _clearSelectedRow === 'function') _clearSelectedRow();
   renderVentasGanancias();
 }
 
@@ -938,10 +1119,17 @@ async function verDetalleVenta(id) {
           <div class="cr"><span class="cr-label">TRM aplicado</span><span class="cr-val neu">${fmt(v.trm)}</span></div>
           <div class="cr"><span class="cr-label">Precio COP</span><span class="cr-val neu fw7">${fmt(c.precioCOP)}</span></div>
           <div class="cr"><span class="cr-label">Unidades</span><span class="cr-val neu">× ${c.udes}</span></div>
+          ${c.ingresosExtra ? `<div class="cr"><span class="cr-label">Ingresos extra</span><span class="cr-val" style="color:var(--green);">+${fmt(c.ingresosExtra)}</span></div>` : ''}
           <div class="cr total"><span class="cr-label">Total Venta</span><span class="cr-val neu">${fmt(c.totalVenta)}</span></div>
           <div class="cr"><span class="cr-label">Costo producto</span><span class="cr-val neg">−${fmt(c.costoCOP*c.udes)}</span></div>
           <div class="cr"><span class="cr-label">Envío internacional</span><span class="cr-val neg">−${fmt(c.envioIntCOP)}</span></div>
           <div class="cr"><span class="cr-label">Envío extra local</span><span class="cr-val neg">−${fmt(c.envioExtra)}</span></div>
+          ${c.gastosExtra ? `<div class="cr"><span class="cr-label">Gastos extra</span><span class="cr-val neg">−${fmt(c.gastosExtra)}</span></div>` : ''}
+          ${(c.ingresosExtraLista.length || c.gastosExtraLista.length) ? `
+          <div style="margin:4px 0 2px;font-size:10px;color:var(--text3);">
+            ${c.ingresosExtraLista.map(i=>`<div>+ ${fmt(i.valor)} — ${i.motivo||'sin motivo'}</div>`).join('')}
+            ${c.gastosExtraLista.map(g=>`<div>− ${fmt(g.valor)} — ${g.motivo||'sin motivo'}</div>`).join('')}
+          </div>` : ''}
           <div class="cr total">
             <span class="cr-label fw7">GANANCIA NETA</span>
             <span class="cr-val fw7" style="color:${c.ganancia>=0?'var(--green)':'var(--red)'};">${fmt(c.ganancia)}</span>

@@ -286,14 +286,15 @@
           <option value="cancelado">CANCELADA</option>
           <option value="problema">PROBLEMA</option>
           <option value="devuelto">DEVUELTO</option>
-          <option value="error">ERROR</option>
+          <option value="error">DESPACHADO</option>
         </select>
         <span class="fl">Transportadora</span>
           <select id="vf-trans" onchange="renderVentasGanancias()">
           <option value="">Todas</option>
           <option value="servientrega">Servientrega</option>
           <option value="aguachica">Aguachica</option>
-          <option value="otro">Otro</option>
+          <option value="inventario">Inventario</option>
+          <option value="otro">Pendiente</option>
         </select>
         <!-- Campos ocultos — la lógica JS los sigue leyendo -->
         <input type="hidden" id="vf-mes">
@@ -427,8 +428,10 @@
       <!-- ═══ PANEL: EXTERNOS (Skydropx) ═══ -->
       <div id="panel-env-externos" style="display:none;">
 
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-          <div style="display:flex;align-items:center;gap:8px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            <input type="text" id="sky-search" placeholder="Buscar por guía, producto o venta..." oninput="_renderEnviosSkyPanel()"
+              style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;min-width:220px;">
             <select id="sky-filtro-mes" onchange="_renderEnviosSkyPanel()"
               style="padding:7px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;background:var(--white);">
             </select>
@@ -758,7 +761,10 @@
 
           <!-- Meses cerrados -->
           <div class="card" id="fin-cierres-card" style="margin:0;display:none;flex:1;min-height:0;max-height:560px;flex-direction:column;">
-            <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px;flex-shrink:0;">Meses cerrados</div>
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-shrink:0;flex-wrap:wrap;gap:4px;">
+              <div style="font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:.6px;">Meses cerrados</div>
+              <div id="fin-cierres-dif-total" style="font-size:11px;color:var(--text3);"></div>
+            </div>
             <div id="fin-cierres-lista" style="flex:1;min-height:0;overflow-y:auto;"></div>
           </div>
         </div>
@@ -1677,7 +1683,7 @@ async function _renderEnviosSkyPanel() {
     <div id="mv-tabs" style="display:none;border-bottom:1px solid var(--border);background:#fff;padding:0 24px;">
       <div style="display:flex;gap:0;">
         <button id="mv-tab-venta" onclick="_mvTab('venta')" style="padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;border-bottom:2px solid var(--teal);color:var(--teal);font-family:inherit;">Venta</button>
-        <button id="mv-tab-envio" onclick="_mvTab('envio')" style="padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">Envío Externo</button>
+        <button id="mv-tab-envio" onclick="_mvTab('envio')" style="padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">Envío Externo <span id="mv-envio-count-badge" style="display:none;font-size:10px;font-weight:700;background:var(--teal);color:#fff;padding:1px 6px;border-radius:10px;margin-left:3px;"></span></button>
       </div>
     </div>
     <div class="mc" id="mv-body-venta" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
@@ -1690,7 +1696,7 @@ async function _renderEnviosSkyPanel() {
         <div class="fg"><label class="fl2">Precio de venta (COP$) *</label><input type="text" inputmode="numeric" id="v-cop-venta" placeholder="0" oninput="recalcVenta()"></div>
         <div class="fg"><label class="fl2">TRM del día <span id="trm-auto-badge" style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 5px;border-radius:3px;margin-left:4px;">MANUAL</span></label><input type="text" inputmode="numeric" id="v-trm" placeholder="Ej: 4150" oninput="recalcVenta()"></div>
         <div class="fg"><label class="fl2">Costo producto Amazon (USD$) *</label><input type="text" inputmode="decimal" id="v-costo-usd" placeholder="0.00" oninput="recalcVenta()"></div>
-        <div class="fg"><label class="fl2">Empresa de envío *</label><select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()"><option value="aguachica" selected>Aguachica</option><option value="servientrega">Servientrega</option><option value="otro">Otro</option></select></div>
+        <div class="fg"><label class="fl2">Empresa de envío *</label><select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()"><option value="aguachica" selected>Aguachica</option><option value="servientrega">Servientrega</option><option value="inventario">Inventario</option><option value="otro">Pendiente</option></select></div>
         <div class="fg"><label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label><input type="text" inputmode="numeric" id="v-envio-int-usd" placeholder="0" oninput="recalcVenta()"></div>
         <div class="fg"><label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label><input type="text" inputmode="numeric" id="v-envio-extra" placeholder="0" oninput="recalcVenta()"></div>
         <div class="fg"><label class="fl2">Validación de envío</label><select id="v-envio-validado" onchange="_toggleEnvioLock()"><option value="0">Sin validar</option><option value="1">Validado</option></select></div>
@@ -1705,6 +1711,25 @@ async function _renderEnviosSkyPanel() {
         </div>
         <div class="fg" style="grid-column:1/-1;"><label class="fl2">Nota <small class="c-dim">(opcional)</small></label><textarea id="v-nota" placeholder="Ej: empaque especial" rows="2" style="width:100%;resize:vertical;"></textarea></div>
       </div>
+
+      <!-- Ingresos extra / Gastos extra -->
+      <div class="g2" style="margin-bottom:16px;">
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="fsec" style="margin:0;">Ingresos extra</div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="_addExtra('ingreso')" style="font-size:11px;padding:3px 10px;">+ Agregar</button>
+          </div>
+          <div id="v-ingresos-extra-list"></div>
+        </div>
+        <div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div class="fsec" style="margin:0;">Gastos extra</div>
+            <button type="button" class="btn btn-ghost btn-sm" onclick="_addExtra('gasto')" style="font-size:11px;padding:3px 10px;">+ Agregar</button>
+          </div>
+          <div id="v-gastos-extra-list"></div>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:14px;overflow:hidden;border:1.5px solid var(--border);background:var(--white);box-shadow:0 2px 12px rgba(0,137,123,.08);">
         <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#f0fdf9,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ingresos</div><div id="c-rv-total" style="font-size:20px;font-weight:800;color:var(--teal);">$ 0</div></div>
         <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#fff5f5,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Costos</div><div id="c-total-costos" style="font-size:20px;font-weight:800;color:var(--red);">$ 0</div></div>
@@ -1724,6 +1749,7 @@ async function _renderEnviosSkyPanel() {
     </div>
     <div id="mv-body-envio" style="display:none;padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
       <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Envío Externo — Skydropx</div>
+      <div id="mv-envios-lista"></div>
       <div id="mv-envio-status" style="margin-bottom:16px;"></div>
       <div class="grid3" style="margin-bottom:14px;">
         <div class="fg"><label class="fl2">Fecha *</label><input type="date" id="mvs-fecha"></div>
@@ -1736,7 +1762,8 @@ async function _renderEnviosSkyPanel() {
         <div class="fg"><label class="fl2">Estado</label><select id="mvs-estado"><option value="Pendiente">Pendiente</option><option value="En camino">En camino</option><option value="Entregado">Entregado</option><option value="Cancelado">Cancelado</option><option value="Devuelto">Devuelto</option></select></div>
       </div>
       <div class="grid2" style="margin-bottom:14px;">
-        <div class="fg"><label class="fl2">Fuente de pago</label><select id="mvs-fuente"><option value="skydropx">Skydropx</option><option value="bancolombia">Bancolombia</option><option value="nequi">Nequi</option><option value="efectivo">Efectivo</option></select></div>
+        <div class="fg"><label class="fl2">Producto</label><input type="text" id="mvs-producto" placeholder="Ej: Audífonos Bluetooth X200"></div>
+        <div class="fg"><label class="fl2">Fuente de pago</label><select id="mvs-fuente"></select></div>
       </div>
       <div id="mv-envio-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
     </div>
@@ -1976,7 +2003,7 @@ async function _renderEnviosSkyPanel() {
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Fecha</label><input type="date" id="sky-fecha"></div><div class="fg" style="margin:0;"><label class="fl2">N° Venta</label><input type="text" id="sky-num-venta" placeholder="Ej: 2000012345678"></div></div>
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">N° Guía</label><input type="text" id="sky-num-guia" placeholder="Código de guía"></div><div class="fg" style="margin:0;"><label class="fl2">Transportadora</label><input type="text" id="sky-transportadora" list="sky-trans-list" placeholder="Ej: Servientrega" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"><datalist id="sky-trans-list"><option value="Servientrega"><option value="Coordinadora"><option value="Envia"><option value="Interrapidisimo"><option value="TCC"><option value="Domina"></datalist></div></div>
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Estado del envío</label><select id="sky-estado" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"><option value="Pendiente">Pendiente</option><option value="En camino">En camino</option><option value="Entregado">Entregado</option><option value="Novedad">Novedad</option></select></div><div class="fg" style="margin:0;"><label class="fl2">Valor (COP$)</label><input type="text" inputmode="numeric" id="sky-valor" placeholder="0"></div></div>
-      <div class="fg" style="margin:0;"><label class="fl2">Descontar de</label><select id="sky-fuente" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select></div>
+      <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Producto</label><input type="text" id="sky-producto" placeholder="Ej: Audífonos Bluetooth X200" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></div><div class="fg" style="margin:0;"><label class="fl2">Descontar de</label><select id="sky-fuente" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select></div></div>
     </div>
     <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-envio-sky')" style="flex:1;">Cancelar</button><button class="btn btn-primary" onclick="saveEnvioSky()" style="flex:1;">Guardar envío</button></div>
   </div>
@@ -2228,7 +2255,7 @@ async function _renderEnviosSkyPanel() {
         <div style="font-size:18px;font-weight:700;" id="aplDif-gan-despues">—</div>
       </div>
       <div style="font-size:11px;color:var(--text3);line-height:1.5;">
-        Quedará registrado en Finanzas como movimiento del mes que elijas. No podrá aplicarse de nuevo para este mes cerrado.
+        Quedará registrado en Finanzas como movimiento del mes que elijas y se guardará en el historial de diferencias aplicadas de este cierre. Si más adelante surge una nueva diferencia en este mes cerrado, podrás aplicarla de nuevo.
       </div>
     </div>
     <div style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">

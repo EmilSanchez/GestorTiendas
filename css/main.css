@@ -40,8 +40,11 @@
 table tbody tr.tr-selected,
 table tbody tr.tr-selected:hover,
 table tbody tr.loss-row.tr-selected {
-  background: rgba(0,137,123,.18) !important;
-  box-shadow: inset 3px 0 0 var(--teal);
+  background: #f4fafa !important;
+}
+table tbody tr.tr-selected td,
+table tbody tr.tr-selected:hover td {
+  background: #f4fafa !important;
 }
 
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}

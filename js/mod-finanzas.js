@@ -438,6 +438,7 @@ function _renderEnviosSky(skyMes, mesAct) {
         ${e.num_guia ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)" title="Clic para copiar">${e.num_guia}</span>` : '<span style="color:var(--text3);">—</span>'}
       </td>
       <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;font-weight:600;">${e.transportadora||'—'}</td>
+      <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;">${_buildEstadoDrop(estado,['Pendiente','En camino','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
       <td style="padding:8px 10px;font-size:13px;color:var(--text);font-family:Arial,sans-serif;">${fmt(e.valor)}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fuenteLabel}</td>
@@ -448,7 +449,7 @@ function _renderEnviosSky(skyMes, mesAct) {
     </tr>`;
   }).join('');
   el.innerHTML=`<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;">
-    <thead><tr style="border-bottom:2px solid var(--border);">${['Fecha','N° Venta','Guía','Transportadora','Estado','Valor','Pagado desde',''].map(h=>`<th style="padding:6px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;font-family:Arial,sans-serif;">${h}</th>`).join('')}</tr></thead>
+    <thead><tr style="border-bottom:2px solid var(--border);">${['Fecha','N° Venta','Guía','Transportadora','Producto','Estado','Valor','Pagado desde',''].map(h=>`<th style="padding:6px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;font-family:Arial,sans-serif;">${h}</th>`).join('')}</tr></thead>
     <tbody>${rows}</tbody></table></div>
     <div style="padding:8px 0 0;font-size:11px;color:var(--text3);text-align:right;">Total: <strong style="color:#dc2626;">${fmt(total)}</strong> en ${_mesLabel(mesAct)}</div>`;
 }
@@ -466,9 +467,9 @@ async function openModalEnvioSky(id) {
   document.getElementById('sky-fuente').innerHTML=opts;
   if(id){
     const e=(await DB.envios_sky()).find(x=>x.id===id);
-    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'Servientrega');sv('sky-valor',e.valor||'');sv('sky-fuente',e.fuente_pago||'skydropx');sv('sky-estado',e.estado||'Pendiente');}
+    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'Servientrega');sv('sky-valor',e.valor||'');sv('sky-producto',e.producto||'');sv('sky-fuente',e.fuente_pago||'skydropx');sv('sky-estado',e.estado||'Pendiente');}
   } else {
-    sv('sky-fecha',hoy());sv('sky-num-venta','');sv('sky-num-guia','');sv('sky-transportadora','Servientrega');sv('sky-valor','');sv('sky-fuente','skydropx');sv('sky-estado','Pendiente');
+    sv('sky-fecha',hoy());sv('sky-num-venta','');sv('sky-num-guia','');sv('sky-transportadora','Servientrega');sv('sky-valor','');sv('sky-producto','');sv('sky-fuente','skydropx');sv('sky-estado','Pendiente');
   }
   document.getElementById('modal-envio-sky-title').textContent=id?'Editar Envío':'Registrar Envío Skydropx';
   openModal('modal-envio-sky');
@@ -476,11 +477,11 @@ async function openModalEnvioSky(id) {
 async function saveEnvioSky() {
   const valor=_parseNum(gv('sky-valor'))||0;
   // valor 0 es permitido
-  const fecha=gv('sky-fecha')||hoy(),num_venta=gv('sky-num-venta').trim(),num_guia=gv('sky-num-guia').trim(),transport=gv('sky-transportadora')||'Servientrega',fuente_pago=gv('sky-fuente')||'skydropx',estado=gv('sky-estado')||'Pendiente';
+  const fecha=gv('sky-fecha')||hoy(),num_venta=gv('sky-num-venta').trim(),num_guia=gv('sky-num-guia').trim(),transport=gv('sky-transportadora')||'Servientrega',producto=(gv('sky-producto')||'').trim(),fuente_pago=gv('sky-fuente')||'skydropx',estado=gv('sky-estado')||'Pendiente';
   const id=_editEnvioSkyId||uid();
   const _tsNow = new Date().toISOString();
   const _esNuevo = !_editEnvioSkyId;
-  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,estado,valor,fuente_pago,fecha_registro:_tsNow,...(_esNuevo?{creado:_tsNow}:{})});
+  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,estado,valor,producto,fuente_pago,fecha_registro:_tsNow,...(_esNuevo?{creado:_tsNow}:{})});
   const saldos=await DB.saldos();
   saldos[fuente_pago]=(parseFloat(saldos[fuente_pago])||0)-valor;
   await DB.saveSaldos(saldos);

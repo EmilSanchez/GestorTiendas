@@ -119,11 +119,11 @@ async function generarReporteVentas() {
 
   const ESTADOS = {
     pendiente: 'Pendiente', en_camino: 'En camino', entregado: 'Entregado',
-    cancelado: 'Cancelado', devuelto: 'Devuelto', problema: 'Problema', error: 'Error'
+    cancelado: 'Cancelado', devuelto: 'Devuelto', problema: 'Problema', error: 'Despachado'
   };
   const ESTADO_COLOR = {
     pendiente: '#f59e0b', en_camino: '#3b82f6', entregado: '#16a34a',
-    cancelado: '#6b7280', devuelto: '#8b5cf6', problema: '#dc2626', error: '#dc2626'
+    cancelado: '#6b7280', devuelto: '#8b5cf6', problema: '#dc2626', error: '#006930'
   };
 
   const fmtCOP = n => `$${Number(n||0).toLocaleString('es-CO')}`;
@@ -409,9 +409,32 @@ async function renderCierresMes() {
   await renderCierresMes_Fin();
 }
 
+// Devuelve el historial de diferencias aplicadas de un cierre, normalizado.
+// Compatible con cierres antiguos que solo tenían el flag booleano diferencia_aplicada.
+function _getHistorialDif(cl) {
+  if (Array.isArray(cl.historial_dif)) return cl.historial_dif;
+  if (cl.diferencia_aplicada) {
+    return [{
+      id: 'legacy', valor: parseFloat(cl.diferencia_valor)||0,
+      mes_destino: '', fecha: cl.diferencia_fecha||'', movimiento_id: null, legacy: true,
+    }];
+  }
+  return [];
+}
+
+function _toggleHistorialDif(btn) {
+  const wrap = btn.nextElementSibling;
+  if (!wrap) return;
+  const isOpen = wrap.style.display === 'flex';
+  wrap.style.display = isOpen ? 'none' : 'flex';
+  const svg = btn.querySelector('svg');
+  if (svg) svg.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
 async function renderCierresMes_Fin() {
-  const cardEl = document.getElementById('fin-cierres-card');
+  const cardEl  = document.getElementById('fin-cierres-card');
   const listaEl = document.getElementById('fin-cierres-lista');
+  const totalEl = document.getElementById('fin-cierres-dif-total');
   if (!listaEl) return;
   const [cierres, ventas, enviosSky, movs] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky(), DB.movimientos()]);
   if (!cierres.length) { if (cardEl) cardEl.style.display = 'none'; return; }
@@ -419,17 +442,34 @@ async function renderCierresMes_Fin() {
 
   const idsMl = new Set(ventas.map(v=>v.id_ml).filter(Boolean));
 
+  // Contador global: cuántas diferencias se han aplicado y por cuánto en total
+  let totalAplicadoGlobal = 0, countAplicadoGlobal = 0;
+  cierres.forEach(cl => {
+    const hist = _getHistorialDif(cl);
+    countAplicadoGlobal += hist.length;
+    totalAplicadoGlobal += hist.reduce((s,h) => s + (parseFloat(h.valor)||0), 0);
+  });
+  if (totalEl) {
+    totalEl.innerHTML = countAplicadoGlobal
+      ? `${countAplicadoGlobal} diferencia${countAplicadoGlobal!==1?'s':''} aplicada${countAplicadoGlobal!==1?'s':''} · <b style="color:${totalAplicadoGlobal>=0?'var(--teal)':'var(--red)'};">${totalAplicadoGlobal>=0?'+':''}${_fmtCOP(totalAplicadoGlobal)}</b>`
+      : '';
+  }
+
   listaEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr;gap:10px;">
     ${cierres.sort((a,b)=> new Date(b.fecha_cierre||0) - new Date(a.fecha_cierre||0)).map(cl => {
       const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(cl.mes));
       const egSky = enviosSky.filter(e=>(e.fecha||'').startsWith(cl.mes)&&!idsMl.has(e.num_venta)).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
-      const ganActual = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky + _cmAjusteCierreMes(movs, cl.mes);
+      const ganActual   = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky + _cmAjusteCierreMes(movs, cl.mes);
       const ganOriginal = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
-      const diferencia = ganActual - ganOriginal;
-      const hasDiff = Math.abs(diferencia) >= 1;
-      const diffColor = diferencia >= 0 ? 'var(--green)' : 'var(--red)';
-      const diffSign = diferencia >= 0 ? '+' : '';
-      const yaAplicado = !!cl.diferencia_aplicada;
+      const diferenciaTotal = ganActual - ganOriginal;
+
+      const historial      = _getHistorialDif(cl);
+      const totalAplicado  = historial.reduce((s,h) => s + (parseFloat(h.valor)||0), 0);
+      const diferenciaPend = diferenciaTotal - totalAplicado;
+      const hasPending     = Math.abs(diferenciaPend) >= 1;
+      const pendColor      = diferenciaPend >= 0 ? 'var(--green)' : 'var(--red)';
+      const pendSign       = diferenciaPend >= 0 ? '+' : '';
+      const tieneHistorial = historial.length > 0;
 
       return `
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:10px;">
@@ -457,34 +497,55 @@ async function renderCierresMes_Fin() {
           </div>
         </div>
 
-        <!-- Diferencia + acción -->
-        ${hasDiff ? `
+        <!-- Diferencia pendiente + acción -->
+        ${hasPending ? `
         <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 10px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
           <div>
-            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Diferencia</div>
-            <div style="font-size:16px;font-weight:800;color:${diffColor};">${diffSign}${_fmtCOP(diferencia)}</div>
+            <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Diferencia pendiente</div>
+            <div style="font-size:16px;font-weight:800;color:${pendColor};">${pendSign}${_fmtCOP(diferenciaPend)}</div>
           </div>
-          ${!yaAplicado ? `
-          <button onclick="_aplicarDiferenciaCierre('${cl.mes}',${Math.round(diferencia)})" title="${diferencia>=0?'Sumar':'Descontar'} del mes en curso"
-            style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;background:${diferencia>=0?'var(--teal)':'#dc2626'};color:#fff;white-space:nowrap;transition:opacity .15s;"
+          <button onclick="_aplicarDiferenciaCierre('${cl.mes}',${Math.round(diferenciaPend)})" title="${diferenciaPend>=0?'Sumar':'Descontar'} del mes en curso"
+            style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;background:${diferenciaPend>=0?'var(--teal)':'#dc2626'};color:#fff;white-space:nowrap;transition:opacity .15s;"
             onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
-            Descontar
-          </button>` : `
-          <span style="font-size:9px;background:#d1fae5;color:#065f46;padding:2px 7px;border-radius:20px;font-weight:700;border:1px solid #6ee7b7;white-space:nowrap;">APLICADO</span>
-          <button onclick="_pedirRevertirDiferencia('${cl.mes}')" title="Revertir diferencia aplicada"
-            style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;color:var(--text3);padding:0;transition:all .15s;"
-            onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'"
-            onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
-          </button>`}
+            ${tieneHistorial ? 'Aplicar diferencia nueva' : (diferenciaPend>=0?'Sumar':'Descontar')}
+          </button>
         </div>` : `
         <div style="font-size:11px;color:var(--text3);text-align:center;padding:2px 0;">Sin diferencias pendientes</div>`}
+
+        <!-- Historial de diferencias aplicadas -->
+        ${tieneHistorial ? `
+        <div>
+          <button type="button" onclick="_toggleHistorialDif(this)" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:2px 0;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-family:inherit;">
+            <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .15s;"><polyline points="6 9 12 15 18 9"/></svg>
+            Historial de diferencias aplicadas (${historial.length})
+          </button>
+          <div style="display:none;flex-direction:column;gap:5px;margin-top:6px;">
+            ${historial.slice().sort((a,b)=>(b.fecha||'').localeCompare(a.fecha||'')).map(h => {
+              const hVal   = parseFloat(h.valor)||0;
+              const hColor = hVal >= 0 ? 'var(--green)' : 'var(--red)';
+              const hSign  = hVal >= 0 ? '+' : '';
+              return `
+              <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;padding:6px 8px;background:var(--white);border:1px solid var(--border);border-radius:7px;font-size:11px;">
+                <div>
+                  <span style="font-weight:700;color:${hColor};">${hSign}${_fmtCOP(hVal)}</span>
+                  <span class="c-dim"> · ${h.mes_destino ? _repFmtMes(h.mes_destino) : '—'}${h.fecha ? ' · '+h.fecha : ''}</span>
+                </div>
+                <button onclick="_pedirRevertirDiferencia('${cl.mes}','${h.id}')" title="Revertir esta diferencia aplicada"
+                  style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;color:var(--text3);padding:0;flex-shrink:0;"
+                  onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'"
+                  onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
+                </button>
+              </div>`;
+            }).join('')}
+          </div>
+        </div>` : ''}
 
         <!-- Acciones secundarias -->
         <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:8px;margin-top:-2px;">
           <button class="btn btn-ghost btn-sm" onclick="abrirCierreExistente('${cl.mes}')" style="font-size:11px;padding:3px 9px;">Ver / Editar</button>
-          ${!yaAplicado ? `<button class="btn btn-ghost btn-sm" onclick="_reabrirMes('${cl.mes}')" style="font-size:11px;padding:3px 9px;color:var(--red);">Reabrir</button>` : ''}
+          ${!tieneHistorial ? `<button class="btn btn-ghost btn-sm" onclick="_reabrirMes('${cl.mes}')" style="font-size:11px;padding:3px 9px;color:var(--red);">Reabrir</button>` : ''}
         </div>
 
       </div>`;
@@ -1018,6 +1079,7 @@ async function _confirmarAplicarDiferencia() {
   const valor = Math.abs(diferencia);
   const ts = new Date().toISOString();
   const mesNombre = _repFmtMes(mes);
+  const movId = 'dif_cierre_' + mes + '_' + Date.now();
 
   const mesDestino = document.getElementById('aplDif-mes-destino')?.value || hoy().slice(0,7);
   // Use last day of the selected month as the movement date
@@ -1026,7 +1088,7 @@ async function _confirmarAplicarDiferencia() {
   const fechaMov = `${mesDestino}-${String(lastDay).padStart(2,'0')}`;
 
   await DB.upsertMovimiento({
-    id: 'dif_cierre_' + mes + '_' + Date.now(),
+    id: movId,
     fecha: fechaMov,
     tipo: esIngreso ? 'ingreso' : 'egreso',
     fuente: 'mercadopago', // fuente genérica visible en movimientos
@@ -1040,6 +1102,15 @@ async function _confirmarAplicarDiferencia() {
   const cierres = await _getCierres();
   const cl = cierres.find(c => c.mes === mes);
   if (cl) {
+    if (!Array.isArray(cl.historial_dif)) cl.historial_dif = [];
+    cl.historial_dif.push({
+      id: uid(),
+      valor: diferencia,           // con signo (+ ingreso, − pérdida)
+      mes_destino: mesDestino,
+      fecha: hoy(),
+      movimiento_id: movId,
+    });
+    // Se mantienen por compatibilidad con datos/versiones anteriores
     cl.diferencia_aplicada = true;
     cl.diferencia_valor = diferencia;
     cl.diferencia_fecha = hoy();
@@ -1057,10 +1128,12 @@ async function _confirmarAplicarDiferencia() {
 }
 
 
-// ── Revertir diferencia de cierre aplicada ──
+// ── Revertir una diferencia de cierre aplicada (del historial) ──
 var _revertirMesPendiente = '';
-function _pedirRevertirDiferencia(mes) {
+var _revertirEntryPendiente = '';
+function _pedirRevertirDiferencia(mes, entryId) {
   _revertirMesPendiente = mes;
+  _revertirEntryPendiente = entryId;
   const inp = document.getElementById('revert-dif-code');
   const err = document.getElementById('revert-dif-err');
   if (inp) inp.value = '';
@@ -1083,23 +1156,36 @@ async function _confirmarRevertirDiferencia() {
     if (!ok) { if (err) err.textContent = 'Código incorrecto.'; inp.value = ''; inp.focus(); return; }
 
     const mes = _revertirMesPendiente;
+    const entryId = _revertirEntryPendiente;
     const cierres = await _getCierres();
     const cl = cierres.find(c => c.mes === mes);
-    if (!cl || !cl.diferencia_aplicada) {
-      if (err) err.textContent = 'No hay diferencia aplicada para este mes.'; return;
-    }
+    if (!cl) { if (err) err.textContent = 'No se encontró el cierre.'; return; }
+
+    const historial = _getHistorialDif(cl);
+    const entry = historial.find(h => h.id === entryId);
+    if (!entry) { if (err) err.textContent = 'No se encontró esa diferencia aplicada.'; return; }
 
     // Eliminar el movimiento de ajuste del mes en curso
     const movs = await DB.movimientos();
-    const ajuste = movs.find(m => m._ajuste_cierre && m.concepto && m.concepto.includes(_repFmtMes(mes)));
-    if (ajuste) {
-      await DB.deleteMovimiento(ajuste.id);
-    }
+    const ajuste = entry.movimiento_id
+      ? movs.find(m => m.id === entry.movimiento_id)
+      : movs.find(m => m._ajuste_cierre && m.concepto && m.concepto.includes(_repFmtMes(mes)));
+    if (ajuste) await DB.deleteMovimiento(ajuste.id);
 
-    // Desmarcar el cierre
-    cl.diferencia_aplicada = false;
-    delete cl.diferencia_valor;
-    delete cl.diferencia_fecha;
+    if (entry.legacy) {
+      // Cierre con formato antiguo (un solo flag booleano)
+      cl.diferencia_aplicada = false;
+      delete cl.diferencia_valor;
+      delete cl.diferencia_fecha;
+    } else {
+      cl.historial_dif = historial.filter(h => h.id !== entryId);
+      // Si ya no queda historial, limpiar también los campos antiguos de compatibilidad
+      if (!cl.historial_dif.length) {
+        cl.diferencia_aplicada = false;
+        delete cl.diferencia_valor;
+        delete cl.diferencia_fecha;
+      }
+    }
     await _saveCierres(cierres);
 
     closeModal('modal-revertir-diferencia');
