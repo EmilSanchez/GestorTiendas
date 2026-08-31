@@ -82,7 +82,7 @@
         <div id="ve-subtitulo" style="font-size:11px;color:rgba(255,255,255,.55);margin-top:2px;"></div>
       </div>
       <button onclick="_cancelValidarEnvio()" style="background:rgba(255,255,255,.1);border:none;color:#fff;
-        width:28px;height:28px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
+        width:28px;height:28px;border-radius:8px;cursor:default;font-size:16px;display:flex;align-items:center;justify-content:center;">✕</button>
     </div>
 
     <!-- Info estimado -->
@@ -120,13 +120,13 @@
     <div style="padding:16px 22px;display:flex;gap:10px;margin-top:8px;">
       <button onclick="_cancelValidarEnvio()" style="
         flex:1;padding:11px;border:1px solid #d8e4e3;border-radius:10px;
-        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:pointer;">
+        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:default;">
         Cancelar
       </button>
       <button onclick="_confirmarValidarEnvio()" style="
         flex:2;padding:11px;border:none;border-radius:10px;
         background:linear-gradient(135deg,#00897b,#00695c);color:#fff;
-        font-size:13px;font-weight:700;cursor:pointer;
+        font-size:13px;font-weight:700;cursor:default;
         box-shadow:0 4px 12px rgba(0,137,123,.35);">
         Confirmar valor real
       </button>
@@ -156,13 +156,13 @@
     <div style="display:flex;gap:10px;margin-top:16px;">
       <button onclick="_cancelDeleteVenta()" style="
         flex:1;padding:11px;border:1px solid #d8e4e3;border-radius:10px;
-        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:pointer;">
+        background:#fff;color:#476060;font-size:13px;font-weight:600;cursor:default;">
         Cancelar
       </button>
       <button id="delete-confirm-btn" onclick="_confirmDeleteVenta()" style="
         flex:1;padding:11px;border:none;border-radius:10px;
         background:linear-gradient(135deg,#dc3545,#b02a37);color:#fff;
-        font-size:13px;font-weight:700;cursor:pointer;
+        font-size:13px;font-weight:700;cursor:default;
         box-shadow:0 4px 12px rgba(220,53,69,.35);">
         Eliminar
       </button>
@@ -175,7 +175,7 @@
   <!-- Perfil del usuario (arriba) -->
   <div id="sb-avatar-wrap" style="padding:1.1rem 1rem 0.8rem;border-bottom:1px solid rgba(255,255,255,.06);display:flex;align-items:center;gap:10px;overflow:hidden;">
     <div id="sb-avatar" onclick="toggleSidebar()" title="Colapsar menú"
-      style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a4fa8,#0d3a8a);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;overflow:hidden;border:2px solid rgba(255,255,255,.12);transition:border-color .15s;"
+      style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#1a4fa8,#0d3a8a);display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:default;overflow:hidden;border:2px solid rgba(255,255,255,.12);transition:border-color .15s;"
       onmouseover="this.style.borderColor='rgba(255,255,255,.35)'" onmouseout="this.style.borderColor='rgba(255,255,255,.12)'">
       <svg id="sb-avatar-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <img id="sb-avatar-img" src="" alt="" style="display:none;width:100%;height:100%;object-fit:cover;">
@@ -414,7 +414,7 @@
         <div class="table-wrap">
           <table>
             <thead><tr>
-              <th style="width:36px;text-align:center;"><input type="checkbox" id="chk-all-envios" onchange="toggleAllEnvios(this.checked)" style="cursor:pointer;"></th>
+              <th style="width:36px;text-align:center;"><input type="checkbox" id="chk-all-envios" onchange="toggleAllEnvios(this.checked)" style="cursor:default;"></th>
               <th>#</th><th>Tienda</th><th>ID Venta ML</th><th>Fecha</th>
               <th>Transportadora</th><th>Valor Envío</th><th>Estado</th><th>Pago</th><th></th>
             </tr></thead>
@@ -447,7 +447,7 @@
       </div>
 
       <style>
-        .env-stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:11px 14px;cursor:pointer;transition:box-shadow .15s,border-color .15s;}
+        .env-stat-card{background:var(--white);border:1px solid var(--border);border-radius:10px;padding:11px 14px;cursor:default;transition:box-shadow .15s,border-color .15s;}
         .env-stat-card:hover{box-shadow:var(--shadow-md);border-color:#b2dfdb;}
         .env-stat-label{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:7px;}
         .env-stat-row{display:flex;align-items:baseline;gap:6px;margin-bottom:4px;}
@@ -490,7 +490,7 @@
             <div style="flex:1;">
               <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Se muestra en el panel lateral</div>
               <div style="display:flex;gap:6px;">
-                <label class="btn btn-ghost btn-sm" style="cursor:pointer;display:inline-flex;align-items:center;gap:5px;">
+                <label class="btn btn-ghost btn-sm" style="cursor:default;display:inline-flex;align-items:center;gap:5px;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   Subir foto
                   <input type="file" accept="image/*" style="display:none;" onchange="_uploadAvatar(this)">
@@ -585,15 +585,15 @@
           <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:8px;">¿Qué período incluir?</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;" id="rep-periodo-btns">
             <button class="rep-periodo-btn active" data-tipo="actual" onclick="_repSelPeriodo(this)"
-              style="padding:5px 13px;border-radius:20px;border:1.5px solid var(--teal);background:var(--teal);color:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+              style="padding:5px 13px;border-radius:20px;border:1.5px solid var(--teal);background:var(--teal);color:#fff;font-size:12px;font-weight:600;cursor:default;font-family:inherit;">
               Mes actual
             </button>
             <button class="rep-periodo-btn" data-tipo="todos" onclick="_repSelPeriodo(this)"
-              style="padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+              style="padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:default;font-family:inherit;">
               Todos los meses
             </button>
             <button class="rep-periodo-btn" data-tipo="seleccionar" onclick="_repSelPeriodo(this)"
-              style="padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;">
+              style="padding:5px 13px;border-radius:20px;border:1.5px solid var(--border);background:var(--white);color:var(--text2);font-size:12px;font-weight:600;cursor:default;font-family:inherit;">
               Seleccionar meses
             </button>
           </div>
@@ -803,7 +803,7 @@
         #fin-movimientos::-webkit-scrollbar-track{ background:transparent; }
         #fin-movimientos::-webkit-scrollbar-thumb{ background:var(--border); border-radius:10px; }
         #fin-movimientos::-webkit-scrollbar-thumb:hover{ background:var(--text3); }
-        .fin-wallet-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:pointer;transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;flex:0 0 210px;min-width:210px;scroll-snap-align:start;}
+        .fin-wallet-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:14px 16px;cursor:default;transition:box-shadow .18s ease,border-color .18s ease,transform .18s ease;flex:0 0 210px;min-width:210px;scroll-snap-align:start;}
         .fin-wallet-card:hover{box-shadow:var(--shadow-md);border-color:var(--teal);transform:translateY(-2px);}
         .fin-wallet-top{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
         .fin-wallet-icon{width:32px;height:32px;border-radius:10px;background:var(--teal-bg);display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -856,7 +856,7 @@
   <div class="modal" style="max-width:480px;">
     <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;">
       <div class="mh-title" id="mrp-title" style="color:#fff;font-size:15px;">Resolver Problema</div>
-      <button class="mclose" onclick="closeModal('modal-resolver-problema')" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+      <button class="mclose" onclick="closeModal('modal-resolver-problema')" style="background:rgba(255,255,255,.12);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button>
     </div>
     <div class="mc" style="padding:20px 22px;">
       <!-- Info del problema -->
@@ -907,7 +907,7 @@
       </div>
       <button class="mclose" onclick="closeModal('modal-delete-problema')"
         style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
-               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+               border-radius:8px;font-size:16px;cursor:default;transition:background .15s;"
         onmouseover="this.style.background='rgba(255,255,255,.28)'"
         onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
@@ -928,7 +928,7 @@
     <div class="mf" style="gap:10px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-delete-problema');document.getElementById('del-prob-code-input').value='';document.getElementById('del-prob-code-error').textContent='';" style="flex:1;">Cancelar</button>
       <button onclick="_confirmDeleteProb()" id="del-prob-confirm-btn" style="
-        flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;
+        flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:default;
         font-size:0.85rem;font-weight:700;font-family:inherit;
         background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;
         box-shadow:0 3px 10px rgba(220,38,38,.35);transition:opacity .15s;"
@@ -948,7 +948,7 @@
       </div>
       <button class="mclose" onclick="closeModal('modal-toggle-tienda')"
         style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;
-               border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+               border-radius:8px;font-size:16px;cursor:default;transition:background .15s;"
         onmouseover="this.style.background='rgba(255,255,255,.28)'"
         onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
@@ -969,7 +969,7 @@
     <div class="mf" style="gap:10px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-toggle-tienda');document.getElementById('toggle-tienda-code-input').value='';document.getElementById('toggle-tienda-code-error').textContent='';" style="flex:1;">Cancelar</button>
       <button onclick="_confirmToggleTienda()" id="toggle-tienda-confirm-btn" style="
-        flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;
+        flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:default;
         font-size:0.85rem;font-weight:700;font-family:inherit;color:#fff;
         background:linear-gradient(135deg,#dc2626,#b91c1c);
         box-shadow:0 3px 10px rgba(0,0,0,.2);transition:opacity .15s;"
@@ -993,7 +993,7 @@
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
       </div>
       <button class="mclose" onclick="closeModal('modal-cancelar-transferencia')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;"
         onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;">
@@ -1008,7 +1008,7 @@
     </div>
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-cancelar-transferencia')" style="flex:1;">Volver</button>
-      <button id="cancel-tr-confirm-btn" onclick="_confirmCancelarTransfer()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#7d5c00,#9c7300);color:#fff;">Cancelar transferencia</button>
+      <button id="cancel-tr-confirm-btn" onclick="_confirmCancelarTransfer()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#7d5c00,#9c7300);color:#fff;">Cancelar transferencia</button>
     </div>
   </div>
 </div>
@@ -1022,7 +1022,7 @@
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
       </div>
       <button class="mclose" onclick="closeModal('modal-del-envio-sky')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;"
         onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;">
@@ -1035,7 +1035,7 @@
     </div>
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-del-envio-sky')" style="flex:1;">Cancelar</button>
-      <button id="del-envio-sky-btn" onclick="_confirmDeleteEnvioSky()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
+      <button id="del-envio-sky-btn" onclick="_confirmDeleteEnvioSky()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
     </div>
   </div>
 </div>
@@ -1049,7 +1049,7 @@
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Credenciales y módulos a los que tendrá acceso</div>
       </div>
       <button class="mclose" onclick="closeModal('modal-crear-usuario')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button>
     </div>
     <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
       <div class="fg" style="margin:0;">
@@ -1079,32 +1079,32 @@
       <div id="nu-permisos-wrap" style="border-top:1px solid var(--border);padding-top:13px;display:none;">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:10px;">Módulos con acceso</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:7px;">
-          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:default;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-ventas" checked style="width:15px;height:15px;">
             <span style="font-size:12px;font-weight:600;color:var(--text);">Gestor Ventas</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:default;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-envios" checked style="width:15px;height:15px;">
             <span style="font-size:12px;font-weight:600;color:var(--text);">Envíos</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:default;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-problemas" checked style="width:15px;height:15px;">
             <span style="font-size:12px;font-weight:600;color:var(--text);">Pendientes</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:default;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-ayudas" checked style="width:15px;height:15px;">
             <span style="font-size:12px;font-weight:600;color:var(--text);">Ayudas</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:default;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-finanzas" style="width:15px;height:15px;">
             <span style="font-size:12px;font-weight:600;color:var(--text);">Finanzas</span>
           </label>
-          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:pointer;background:var(--bg);transition:border-color .15s;"
+          <label style="display:flex;align-items:center;gap:8px;padding:9px 11px;border:1px solid var(--border);border-radius:8px;cursor:default;background:var(--bg);transition:border-color .15s;"
             onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'">
             <input type="checkbox" id="nu-p-tareas" checked style="width:15px;height:15px;">
             <span style="font-size:12px;font-weight:600;color:var(--text);">Tareas</span>
@@ -1131,7 +1131,7 @@
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
       </div>
       <button class="mclose" onclick="closeModal('modal-toggle-usuario')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;"
         onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;">
@@ -1147,7 +1147,7 @@
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-toggle-usuario')" style="flex:1;">Cancelar</button>
       <button id="toggle-user-confirm-btn" onclick="_confirmToggleUsuario()"
-        style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">
+        style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">
         Desactivar
       </button>
     </div>
@@ -1188,11 +1188,11 @@
       <div>
         <label class="fl2" style="margin-bottom:8px;">Tipo de tarea</label>
         <div style="display:flex;gap:10px;">
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
+          <label style="display:flex;align-items:center;gap:7px;cursor:default;font-size:13px;font-weight:500;">
             <input type="radio" name="tarea-tipo" id="tarea-tipo-recurrente" value="recurrente" onchange="_toggleTipoTarea()" checked>
             Recurrente (días de la semana)
           </label>
-          <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:13px;font-weight:500;">
+          <label style="display:flex;align-items:center;gap:7px;cursor:default;font-size:13px;font-weight:500;">
             <input type="radio" name="tarea-tipo" id="tarea-tipo-puntual" value="puntual" onchange="_toggleTipoTarea()">
             Solo un día
           </label>
@@ -1305,7 +1305,7 @@
 .tarea-dia-btn {
   padding: 6px 12px;border-radius: 20px;border: 1.5px solid var(--border);
   background: var(--white);color: var(--text2);font-size: 12px;font-weight: 600;
-  cursor: pointer;font-family: inherit;transition: all .15s;
+  cursor:default;font-family: inherit;transition: all .15s;
 }
 .tarea-dia-btn:hover { border-color: var(--teal); color: var(--teal); }
 .tarea-dia-btn.active { background: var(--teal); color: #fff; border-color: var(--teal-dark); }
@@ -1371,7 +1371,7 @@
       <!-- Aviso de bancos diferentes + checkbox día hábil -->
       <div id="tr-banco-aviso" style="display:none;background:var(--yellow-bg);border:1px solid #f0c040;border-radius:10px;padding:12px 14px;">
         <div style="font-size:12px;color:#7d5c00;margin-bottom:8px;"><strong>Bancos diferentes.</strong> <span id="tr-banco-aviso-txt"></span></div>
-        <label style="display:flex;align-items:center;gap:7px;cursor:pointer;font-size:12px;font-weight:500;color:#7d5c00;">
+        <label style="display:flex;align-items:center;gap:7px;cursor:default;font-size:12px;font-weight:500;color:#7d5c00;">
           <input type="checkbox" id="tr-banco-habil" checked onchange="_actualizarBancoTransfer()" style="width:auto;margin:0;">
           Hoy es día hábil bancario para esta transferencia
         </label>
@@ -1621,7 +1621,7 @@ async function _renderEnviosSkyPanel() {
         <div class="mh-title" id="ma-title" style="color:#fff;font-size:15px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg> Nueva Ayuda</div>
         <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Agrega un mensaje o instrucción reutilizable</div>
       </div>
-      <button class="mclose" onclick="closeModal('modal-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;transition:background .15s;"
+      <button class="mclose" onclick="closeModal('modal-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;transition:background .15s;"
         onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
     </div>
     <div class="mc">
@@ -1656,7 +1656,7 @@ async function _renderEnviosSkyPanel() {
         <div class="mh-title" id="mva-titulo" style="color:#fff;font-size:15px;"></div>
         <div id="mva-cat-badge" style="margin-top:4px;"></div>
       </div>
-      <button class="mclose" onclick="closeModal('modal-ver-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+      <button class="mclose" onclick="closeModal('modal-ver-ayuda')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button>
     </div>
     <div class="mc">
       <pre id="mva-contenido" style="white-space:pre-wrap;word-break:break-word;font-family:var(--font);font-size:0.9rem;line-height:1.7;color:var(--text);background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:14px 16px;max-height:55vh;overflow-y:auto;margin:0;"></pre>
@@ -1682,8 +1682,8 @@ async function _renderEnviosSkyPanel() {
     </div>
     <div id="mv-tabs" style="display:none;border-bottom:1px solid var(--border);background:#fff;padding:0 24px;">
       <div style="display:flex;gap:0;">
-        <button id="mv-tab-venta" onclick="_mvTab('venta')" style="padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;border:none;background:none;border-bottom:2px solid var(--teal);color:var(--teal);font-family:inherit;">Venta</button>
-        <button id="mv-tab-envio" onclick="_mvTab('envio')" style="padding:10px 18px;font-size:13px;font-weight:500;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">Envío Externo <span id="mv-envio-count-badge" style="display:none;font-size:10px;font-weight:700;background:var(--teal);color:#fff;padding:1px 6px;border-radius:10px;margin-left:3px;"></span></button>
+        <button id="mv-tab-venta" onclick="_mvTab('venta')" style="padding:10px 18px;font-size:13px;font-weight:600;cursor:default;border:none;background:none;border-bottom:2px solid var(--teal);color:var(--teal);font-family:inherit;">Venta</button>
+        <button id="mv-tab-envio" onclick="_mvTab('envio')" style="padding:10px 18px;font-size:13px;font-weight:500;cursor:default;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">Envío Externo <span id="mv-envio-count-badge" style="display:none;font-size:10px;font-weight:700;background:var(--teal);color:#fff;padding:1px 6px;border-radius:10px;margin-left:3px;"></span></button>
       </div>
     </div>
     <div class="mc" id="mv-body-venta" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
@@ -1704,8 +1704,8 @@ async function _renderEnviosSkyPanel() {
         <div class="fg" id="v-wrap-telefono"><label class="fl2">Teléfono del cliente</label><input type="tel" id="v-tel" placeholder="3001234567"></div>
         <div class="fg" id="v-wrap-contraentrega" style="display:none;">
           <label class="fl2">Contraentrega</label>
-          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);">
-            <input type="checkbox" id="v-contraentrega" style="width:15px;height:15px;cursor:pointer;">
+          <label style="display:flex;align-items:center;gap:8px;cursor:default;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);">
+            <input type="checkbox" id="v-contraentrega" style="width:15px;height:15px;cursor:default;">
             <span style="font-size:13px;color:var(--text);">Esta venta es pago contra entrega</span>
           </label>
         </div>
@@ -1807,7 +1807,7 @@ async function _renderEnviosSkyPanel() {
     <div class="mh"><div class="mh-title" id="mt-title">Nueva Tienda</div><button class="mclose" onclick="closeModal('modal-tienda')">✕</button></div>
     <div class="mc">
       <div style="display:flex;flex-direction:column;align-items:center;gap:8px;margin-bottom:18px;">
-        <div id="t-foto-preview" onclick="document.getElementById('t-foto-input').click()" style="width:80px;height:80px;border-radius:50%;border:3px dashed var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'"><span style="font-size:28px;opacity:.4;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></div>
+        <div id="t-foto-preview" onclick="document.getElementById('t-foto-input').click()" style="width:80px;height:80px;border-radius:50%;border:3px dashed var(--border);background:var(--bg);display:flex;align-items:center;justify-content:center;cursor:default;overflow:hidden;transition:border-color .2s;" onmouseover="this.style.borderColor='var(--teal)'" onmouseout="this.style.borderColor='var(--border)'"><span style="font-size:28px;opacity:.4;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:.4"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg></span></div>
         <input type="file" id="t-foto-input" accept="image/*" style="display:none" onchange="previewFotoTienda(this)">
         <span style="font-size:10px;color:var(--text3);">Clic para subir foto de perfil</span>
         <input type="hidden" id="t-foto-data">
@@ -1915,7 +1915,7 @@ async function _renderEnviosSkyPanel() {
   <div class="modal" style="max-width:400px;">
     <div class="mh" style="background:linear-gradient(135deg,#0d4f4a 0%,#00897b 100%);color:#fff;">
       <div><div class="mh-title" id="modal-billetera-title" style="color:#fff;font-size:15px;">Nueva Billetera</div><div class="mh-sub" style="color:rgba(255,255,255,.55);">Cuenta o billetera personalizada</div></div>
-      <button class="mclose" onclick="closeModal('modal-billetera')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+      <button class="mclose" onclick="closeModal('modal-billetera')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button>
     </div>
     <div class="mc" style="display:flex;flex-direction:column;gap:14px;padding:20px 22px;">
       <div class="fg" style="margin:0;"><label class="fl2">Nombre de la billetera <span style="color:var(--red);">*</span></label><input type="text" id="bw-nombre" placeholder="Ej: Nu Diego, Davivienda Santi, Nequi..."></div>
@@ -1925,10 +1925,10 @@ async function _renderEnviosSkyPanel() {
         <input type="hidden" id="bw-tipo" value="Neobank">
         <input type="text" id="bw-tipo-custom" placeholder="Describe el tipo" style="display:none;margin-top:6px;">
       </div>
-      <div class="fg" style="margin:0;"><label class="fl2">Color identificador</label><div style="display:flex;gap:8px;flex-wrap:wrap;" id="bw-color-picker"><span data-color="#0ea5e9" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#0ea5e9;cursor:pointer;border:3px solid transparent;"></span><span data-color="#8b5cf6" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;cursor:pointer;border:3px solid transparent;"></span><span data-color="#ec4899" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ec4899;cursor:pointer;border:3px solid transparent;"></span><span data-color="#f59e0b" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:pointer;border:3px solid transparent;"></span><span data-color="#10b981" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#10b981;cursor:pointer;border:3px solid transparent;"></span><span data-color="#ef4444" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ef4444;cursor:pointer;border:3px solid transparent;"></span><span data-color="#6b7280" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#6b7280;cursor:pointer;border:3px solid transparent;"></span></div><input type="hidden" id="bw-color" value="#0ea5e9"></div>
+      <div class="fg" style="margin:0;"><label class="fl2">Color identificador</label><div style="display:flex;gap:8px;flex-wrap:wrap;" id="bw-color-picker"><span data-color="#0ea5e9" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#0ea5e9;cursor:default;border:3px solid transparent;"></span><span data-color="#8b5cf6" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;cursor:default;border:3px solid transparent;"></span><span data-color="#ec4899" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ec4899;cursor:default;border:3px solid transparent;"></span><span data-color="#f59e0b" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;cursor:default;border:3px solid transparent;"></span><span data-color="#10b981" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#10b981;cursor:default;border:3px solid transparent;"></span><span data-color="#ef4444" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#ef4444;cursor:default;border:3px solid transparent;"></span><span data-color="#6b7280" onclick="_bwPickColor(this)" style="width:28px;height:28px;border-radius:50%;background:#6b7280;cursor:default;border:3px solid transparent;"></span></div><input type="hidden" id="bw-color" value="#0ea5e9"></div>
       <div class="fg" style="margin:0;"><label class="fl2">Saldo actual (COP$)</label><input type="text" inputmode="numeric" id="bw-saldo" placeholder="0"><div style="font-size:10px;color:var(--text3);margin-top:4px;">Ingresa el saldo que tienes actualmente en esta cuenta.</div></div>
       <div class="fg" style="margin:0;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:12px 14px;">
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+        <label style="display:flex;align-items:flex-start;gap:10px;cursor:default;">
           <input type="checkbox" id="bw-es-banco" style="width:auto;margin:2px 0 0 0;flex-shrink:0;">
           <span><span style="font-size:13px;font-weight:600;color:var(--text);display:block;">Es una cuenta bancaria</span><span style="font-size:11px;color:var(--text3);">Las transferencias entre dos bancos quedan "Pendiente ingreso" hasta el siguiente día hábil.</span></span>
         </label>
@@ -1943,7 +1943,7 @@ async function _renderEnviosSkyPanel() {
   <div class="modal" style="max-width:360px;">
     <div class="mh" style="background:linear-gradient(135deg,#0d4f4a,#00897b);color:#fff;">
       <div><div class="mh-title" style="color:#fff;font-size:14px;" id="editar-saldo-nombre">Editar Saldo</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Saldo actual: <span id="editar-saldo-actual">—</span></div></div>
-      <button class="mclose" onclick="closeModal('modal-editar-saldo')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button>
+      <button class="mclose" onclick="closeModal('modal-editar-saldo')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button>
     </div>
     <div class="mc" style="padding:22px;"><div class="fg" style="margin:0;"><label class="fl2">Nuevo saldo (COP$)</label><input type="number" id="editar-saldo-input" placeholder="0" step="1" style="font-size:18px;font-weight:700;text-align:center;" onkeydown="if(event.key==='Enter')saveEditarSaldo()"><div id="editar-saldo-error" style="color:#dc2626;font-size:11px;margin-top:5px;min-height:14px;"></div></div></div>
     <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-editar-saldo')" style="flex:1;">Cancelar</button><button class="btn btn-primary" onclick="saveEditarSaldo()" style="flex:1;">Guardar saldo</button></div>
@@ -1953,25 +1953,25 @@ async function _renderEnviosSkyPanel() {
 <!-- ═══════ MODAL ELIMINAR BILLETERA (código) ═══════ -->
 <div class="overlay" id="modal-del-billetera">
   <div class="modal" style="max-width:370px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:14px;">Eliminar billetera</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="del-bw-nombre"></div></div><button class="mclose" onclick="closeModal('modal-del-billetera')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:14px;">Eliminar billetera</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="del-bw-nombre"></div></div><button class="mclose" onclick="closeModal('modal-del-billetera')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;"><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div><input type="password" id="del-bw-code-input" placeholder="Código de acceso" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')_confirmDeleteBilletera()"><div id="del-bw-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div></div>
-    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-del-billetera')" style="flex:1;">Cancelar</button><button id="del-bw-confirm-btn" onclick="_confirmDeleteBilletera()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button></div>
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-del-billetera')" style="flex:1;">Cancelar</button><button id="del-bw-confirm-btn" onclick="_confirmDeleteBilletera()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button></div>
   </div>
 </div>
 
 <!-- ═══════ MODAL ELIMINAR MOVIMIENTO (código) ═══════ -->
 <div class="overlay" id="modal-del-movimiento">
   <div class="modal" style="max-width:370px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:14px;">Eliminar movimiento</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div></div><button class="mclose" onclick="closeModal('modal-del-movimiento')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:14px;">Eliminar movimiento</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div></div><button class="mclose" onclick="closeModal('modal-del-movimiento')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;"><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div><input type="password" id="del-mov-code-input" placeholder="Código de acceso" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')_confirmDeleteMovimiento()"><div id="del-mov-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div></div>
-    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-del-movimiento')" style="flex:1;">Cancelar</button><button id="del-mov-confirm-btn" onclick="_confirmDeleteMovimiento()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button></div>
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-del-movimiento')" style="flex:1;">Cancelar</button><button id="del-mov-confirm-btn" onclick="_confirmDeleteMovimiento()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button></div>
   </div>
 </div>
 
 <!-- ═══════════════════ MODAL: GESTIONAR CATEGORÍAS DE PROBLEMA ═══════════════════ -->
 <div class="overlay" id="modal-categorias">
   <div class="modal" style="max-width:480px;">
-    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Categorías de Problema</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div></div><button class="mclose" onclick="closeModal('modal-categorias')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Categorías de Problema</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div></div><button class="mclose" onclick="closeModal('modal-categorias')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="padding:16px 20px;"><div id="cat-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div><div style="border-top:1px solid var(--border);padding-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:8px;">Nueva categoría</div><div style="display:flex;gap:8px;"><input type="text" id="cat-nueva-label" placeholder="Ej: Fraude, Garantía..." style="flex:1;border-radius:8px;" onkeydown="if(event.key==='Enter') agregarCat()"><button onclick="agregarCat()" class="btn btn-primary btn-sm" style="border-radius:8px;white-space:nowrap;">+ Agregar</button></div></div></div>
     <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-categorias')">Cerrar</button></div>
   </div>
@@ -1980,7 +1980,7 @@ async function _renderEnviosSkyPanel() {
 <!-- ═══════════════════ MODAL: GESTIONAR CATEGORÍAS DE TAREA ═══════════════════ -->
 <div class="overlay" id="modal-categorias-tareas">
   <div class="modal" style="max-width:480px;">
-    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Categorías de Tarea</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div></div><button class="mclose" onclick="closeModal('modal-categorias-tareas')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mh" style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Categorías de Tarea</div><div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Edita, agrega o elimina categorías</div></div><button class="mclose" onclick="closeModal('modal-categorias-tareas')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="padding:16px 20px;"><div id="cat-tareas-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:16px;"></div><div style="border-top:1px solid var(--border);padding-top:14px;"><div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);margin-bottom:8px;">Nueva categoría</div><div style="display:flex;gap:8px;"><input type="text" id="cat-tareas-nueva-label" placeholder="Ej: Garantía, Fraude..." style="flex:1;border-radius:8px;" onkeydown="if(event.key==='Enter') agregarTareaCat()"><button onclick="agregarTareaCat()" class="btn btn-primary btn-sm" style="border-radius:8px;white-space:nowrap;">+ Agregar</button></div></div></div>
     <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-categorias-tareas')">Cerrar</button></div>
   </div>
@@ -1989,16 +1989,16 @@ async function _renderEnviosSkyPanel() {
 <!-- ═══════════════════ MODAL: CONFIRMAR ELIMINAR AYUDA ═══════════════════ -->
 <div class="overlay" id="modal-delete-ayuda">
   <div class="modal" style="max-width:400px;">
-    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Eliminar ayuda</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Esta acción no se puede deshacer</div></div><button class="mclose" onclick="_cancelarEliminarAyuda()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d 0%,#b91c1c 100%);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:15px;">Eliminar ayuda</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Esta acción no se puede deshacer</div></div><button class="mclose" onclick="_cancelarEliminarAyuda()" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="text-align:center;padding:28px 24px 20px;"><div style="font-size:0.95rem;font-weight:700;color:var(--text);margin-bottom:8px;line-height:1.4;" id="mdel-ayuda-nombre"></div><div id="mdel-ayuda-cat" style="margin-bottom:16px;"></div><div style="font-size:0.82rem;color:var(--text2);background:var(--red-bg);border:1px solid #fecaca;border-radius:8px;padding:10px 14px;">¿Estás seguro que quieres eliminar esta ayuda?</div></div>
-    <div class="mf" style="gap:10px;"><button class="btn btn-ghost" onclick="_cancelarEliminarAyuda()" style="flex:1;">Cancelar</button><button onclick="_confirmarEliminarAyuda()" style="flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Sí, eliminar</button></div>
+    <div class="mf" style="gap:10px;"><button class="btn btn-ghost" onclick="_cancelarEliminarAyuda()" style="flex:1;">Cancelar</button><button onclick="_confirmarEliminarAyuda()" style="flex:1;padding:0.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:0.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Sí, eliminar</button></div>
   </div>
 </div>
 
 <!-- ═══════════════════ MODAL ENVÍO SKYDROPX ═══════════════════ -->
 <div class="overlay" id="modal-envio-sky">
   <div class="modal" style="max-width:480px;">
-    <div class="mh" style="background:linear-gradient(135deg,#1e3a5f,#243049);color:#fff;"><div><div class="mh-title" id="modal-envio-sky-title" style="color:#fff;font-size:15px;">Registrar Envío Skydropx</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Se descontará automáticamente del saldo origen</div></div><button class="mclose" onclick="closeModal('modal-envio-sky')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">✕</button></div>
+    <div class="mh" style="background:linear-gradient(135deg,#1e3a5f,#243049);color:#fff;"><div><div class="mh-title" id="modal-envio-sky-title" style="color:#fff;font-size:15px;">Registrar Envío Skydropx</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Se descontará automáticamente del saldo origen</div></div><button class="mclose" onclick="closeModal('modal-envio-sky')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Fecha</label><input type="date" id="sky-fecha"></div><div class="fg" style="margin:0;"><label class="fl2">N° Venta</label><input type="text" id="sky-num-venta" placeholder="Ej: 2000012345678"></div></div>
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">N° Guía</label><input type="text" id="sky-num-guia" placeholder="Código de guía"></div><div class="fg" style="margin:0;"><label class="fl2">Transportadora</label><input type="text" id="sky-transportadora" list="sky-trans-list" placeholder="Ej: Servientrega" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"><datalist id="sky-trans-list"><option value="Servientrega"><option value="Coordinadora"><option value="Envia"><option value="Interrapidisimo"><option value="TCC"><option value="Domina"></datalist></div></div>
@@ -2020,7 +2020,7 @@ async function _renderEnviosSkyPanel() {
         <div id="cm-subtitulo" style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Agrega gastos y divide la utilidad antes de cerrar</div>
       </div>
       <button onclick="closeModal('modal-cierre-mes')"
-        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
     </div>
 
     <!-- PASO 1: reservado para flujo de edición de existente -->
@@ -2121,7 +2121,7 @@ async function _renderEnviosSkyPanel() {
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="cm-reabrir-mes-label"></div>
       </div>
       <button class="mclose" onclick="closeModal('modal-reabrir-mes')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">&#x2715;</button>
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">&#x2715;</button>
     </div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;">
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
@@ -2135,7 +2135,7 @@ async function _renderEnviosSkyPanel() {
     </div>
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-reabrir-mes')" style="flex:1;">Cancelar</button>
-      <button onclick="_confirmarReabrirMes()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:Poppins,sans-serif;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Reabrir</button>
+      <button onclick="_confirmarReabrirMes()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:Poppins,sans-serif;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Reabrir</button>
     </div>
   </div>
 </div>
@@ -2150,7 +2150,7 @@ async function _renderEnviosSkyPanel() {
         <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Esta acción cerrará el mes de forma permanente</div>
       </div>
       <button onclick="closeModal('modal-confirmar-cierre')"
-        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
     </div>
     <div style="padding:22px 24px;display:flex;flex-direction:column;gap:14px;">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:14px 16px;">
@@ -2189,26 +2189,26 @@ async function _renderEnviosSkyPanel() {
       </div>
       <!-- Opciones -->
       <div style="display:flex;flex-direction:column;gap:8px;">
-        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:default;">
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--text);">Nombre del cliente</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">Campo para registrar el nombre completo del comprador</div>
           </div>
-          <input type="checkbox" id="vcfg-nombre" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-left:12px;" onchange="guardarConfigVentas()">
+          <input type="checkbox" id="vcfg-nombre" style="width:16px;height:16px;cursor:default;flex-shrink:0;margin-left:12px;" onchange="guardarConfigVentas()">
         </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:default;">
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--text);">Teléfono del cliente</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">Número de contacto del comprador</div>
           </div>
-          <input type="checkbox" id="vcfg-telefono" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-left:12px;" onchange="guardarConfigVentas()">
+          <input type="checkbox" id="vcfg-telefono" style="width:16px;height:16px;cursor:default;flex-shrink:0;margin-left:12px;" onchange="guardarConfigVentas()">
         </label>
-        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:pointer;">
+        <label style="display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;cursor:default;">
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--text);">Contraentrega</div>
             <div style="font-size:11px;color:var(--text3);margin-top:2px;">Indica si la venta es pago contra entrega</div>
           </div>
-          <input type="checkbox" id="vcfg-contraentrega" style="width:16px;height:16px;cursor:pointer;flex-shrink:0;margin-left:12px;" onchange="guardarConfigVentas()">
+          <input type="checkbox" id="vcfg-contraentrega" style="width:16px;height:16px;cursor:default;flex-shrink:0;margin-left:12px;" onchange="guardarConfigVentas()">
         </label>
       </div>
     </div>
@@ -2228,7 +2228,7 @@ async function _renderEnviosSkyPanel() {
         <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;" id="aplDif-mes-label">—</div>
       </div>
       <button onclick="closeModal('modal-aplicar-diferencia')"
-        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;line-height:1;">&#x2715;</button>
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
     </div>
     <div style="padding:20px 24px;display:flex;flex-direction:column;gap:12px;">
 
@@ -2275,7 +2275,7 @@ async function _renderEnviosSkyPanel() {
         <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;" id="revert-dif-mes-label">—</div>
       </div>
       <button class="mclose" onclick="closeModal('modal-revertir-diferencia')"
-        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:pointer;">&#x2715;</button>
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">&#x2715;</button>
     </div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;">
       <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
@@ -2289,7 +2289,7 @@ async function _renderEnviosSkyPanel() {
     </div>
     <div class="mf" style="gap:8px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-revertir-diferencia')" style="flex:1;">Cancelar</button>
-      <button id="revert-dif-btn" onclick="_confirmarRevertirDiferencia()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:pointer;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Revertir</button>
+      <button id="revert-dif-btn" onclick="_confirmarRevertirDiferencia()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Revertir</button>
     </div>
   </div>
 </div>

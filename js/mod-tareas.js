@@ -501,7 +501,7 @@ function _renderNoCumplidasCard(noCumplidas) {
       </div>`;
   }
   return `
-    <div class="card" style="flex-shrink:0;max-height:230px;display:flex;flex-direction:column;cursor:pointer;" onclick="_abrirModalNoCumplidas()" title="Ver todas">
+    <div class="card" style="flex-shrink:0;max-height:230px;display:flex;flex-direction:column;cursor:default;" onclick="_abrirModalNoCumplidas()" title="Ver todas">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;flex-shrink:0;">
         <div style="display:flex;align-items:center;gap:8px;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
@@ -610,7 +610,7 @@ function _renderProximas(tareas, hoyDia, fechaHoy) {
   if (!dias.length) return '';
   return `
     <div class="card" style="margin-top:16px;padding:0;overflow:hidden;">
-      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:pointer;" onclick="_toggleProximas(this)">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 16px;cursor:default;" onclick="_toggleProximas(this)">
         <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text3);">
           Tareas recurrentes — resto de la semana
         </div>

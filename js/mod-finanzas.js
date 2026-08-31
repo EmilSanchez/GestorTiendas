@@ -313,7 +313,7 @@ function _renderMovimientos(movMes, mesAct) {
         const isActive = activeTab===t;
         return `<button class="fin-mov-tab ${isActive?'active':''}" data-tab="${t}"
           onclick="document.querySelectorAll('.fin-mov-tab').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='var(--text2)';b.style.borderColor='var(--border)';});this.classList.add('active');this.style.background='var(--teal)';this.style.color='#fff';this.style.borderColor='var(--teal)';renderFinanzas();"
-          style="padding:5px 13px;border:1.5px solid ${isActive?'var(--teal)':'var(--border)'};border-radius:20px;font-size:11px;font-weight:700;cursor:pointer;font-family:Arial,sans-serif;background:${isActive?'var(--teal)':'var(--white)'};color:${isActive?'#fff':'var(--text2)'};transition:all .15s;">
+          style="padding:5px 13px;border:1.5px solid ${isActive?'var(--teal)':'var(--border)'};border-radius:20px;font-size:11px;font-weight:700;cursor:default;font-family:Arial,sans-serif;background:${isActive?'var(--teal)':'var(--white)'};color:${isActive?'#fff':'var(--text2)'};transition:all .15s;">
           ${labels[t]}
         </button>`;
       }).join('')}

@@ -182,7 +182,7 @@ async function renderAlertas() {
   document.getElementById('alertas-count').textContent = alerts.length;
   document.getElementById('alertas-container').innerHTML = alerts.length
     ? alerts.map(a=>`
-      <div class="alert-item" style="cursor:pointer" onclick="navigate('${a.page||'alertas'}')">
+      <div class="alert-item" style="cursor:default" onclick="navigate('${a.page||'alertas'}')">
         <div class="adot ${a.color}"></div>
         <div class="a-body">
           <div class="a-title">${a.title}</div>

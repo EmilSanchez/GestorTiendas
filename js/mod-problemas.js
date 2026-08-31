@@ -79,13 +79,13 @@ function _renderCatList() {
         onfocus="this.style.borderColor='var(--teal)'"
         onblur="this.style.borderColor='var(--border)'">
       <button onclick="guardarCat(${i})" title="Guardar" style="
-        width:28px;height:28px;border:none;border-radius:6px;cursor:pointer;
+        width:28px;height:28px;border:none;border-radius:6px;cursor:default;
         background:var(--teal-bg);color:var(--teal);font-size:14px;
         display:flex;align-items:center;justify-content:center;transition:all .15s;"
         onmouseover="this.style.background='var(--teal)';this.style.color='#fff'"
         onmouseout="this.style.background='var(--teal-bg)';this.style.color='var(--teal)'"></button>
       ${cats.length > 1 ? `<button onclick="_eliminarCat(${i})" title="Eliminar" style="
-        width:28px;height:28px;border:none;border-radius:6px;cursor:pointer;
+        width:28px;height:28px;border:none;border-radius:6px;cursor:default;
         background:transparent;color:var(--text3);font-size:14px;
         display:flex;align-items:center;justify-content:center;transition:all .15s;"
         onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)'"
@@ -220,7 +220,7 @@ async function buscarVentaProblema() {
     const t = tiendas.find(x => x.id === v.tienda_id);
     return `<div onclick="seleccionarVentaProblema(${JSON.stringify(v).replace(/"/g,'&quot;')})"
       style="padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);
-             margin-top:3px;cursor:pointer;font-size:12px;"
+             margin-top:3px;cursor:default;font-size:12px;"
       onmouseover="this.style.background='var(--teal-bg)'" onmouseout="this.style.background='var(--bg)'">
       <strong class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</strong>
       <span class="c-dim" style="margin:0 6px;">·</span>${v.producto}

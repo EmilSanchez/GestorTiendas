@@ -268,7 +268,7 @@ async function renderEnvios() {
 
     return `<tr>
       <td style="text-align:center;">
-        ${!pagado ? `<input type="checkbox" class="chk-envio" data-id="${v.id}" data-valor="${valorEnvio}" onchange="actualizarSeleccionEnvios()" style="cursor:pointer;">` : ''}
+        ${!pagado ? `<input type="checkbox" class="chk-envio" data-id="${v.id}" data-valor="${valorEnvio}" onchange="actualizarSeleccionEnvios()" style="cursor:default;">` : ''}
       </td>
       <td class="td-mono c-dim" style="text-align:center;">${i+1}</td>
       <td>

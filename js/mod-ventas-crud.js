@@ -51,7 +51,7 @@ function _renderExtrasList(tipo) {
         oninput="_updExtra('${tipo}','${item.id}','motivo',this.value)"
         style="flex:1;min-width:0;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
       <button type="button" onclick="_removeExtra('${tipo}','${item.id}')" title="Eliminar"
-        style="width:28px;height:28px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:none;cursor:pointer;color:var(--text3);font-size:13px;line-height:1;">✕</button>
+        style="width:28px;height:28px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:none;cursor:default;color:var(--text3);font-size:13px;line-height:1;">✕</button>
     </div>`).join('');
 }
 

@@ -32,7 +32,7 @@ async function renderConfiguracion() {
       return `
       <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;border-left:3px solid ${t.color||'var(--teal)'};background:var(--white);opacity:${isActive?1:.65};">
         <!-- Row header — always visible -->
-        <div onclick="_toggleTiendaRow('${tid}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;-webkit-tap-highlight-color:transparent;">
+        <div onclick="_toggleTiendaRow('${tid}')" style="display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:default;-webkit-tap-highlight-color:transparent;">
           ${logo}
           <div style="flex:1;min-width:0;">
             <div style="font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.nombre}</div>

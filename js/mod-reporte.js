@@ -48,7 +48,7 @@ async function _repCargarMesesDisponibles() {
       onclick="_repToggleMes(this)"
       style="padding:5px 12px;border-radius:20px;border:1.5px solid ${sel ? 'var(--teal)' : 'var(--border)'};
              background:${sel ? 'var(--teal-bg)' : 'var(--white)'};color:${sel ? 'var(--teal)' : 'var(--text2)'};
-             font-size:12px;font-weight:600;cursor:pointer;font-family:inherit;transition:all .15s;">
+             font-size:12px;font-weight:600;cursor:default;font-family:inherit;transition:all .15s;">
       ${_repFmtMes(m)}
     </button>`;
   }).join('');
@@ -317,7 +317,7 @@ async function generarReporteVentas() {
 <body>
   <!-- Botón de imprimir (solo en pantalla) -->
   <div class="no-print" style="text-align:right;margin-bottom:20px;">
-    <button onclick="window.print()" style="padding:10px 22px;background:#00897b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">
+    <button onclick="window.print()" style="padding:10px 22px;background:#00897b;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:700;cursor:default;font-family:inherit;">
       🖨️ Imprimir / Guardar como PDF
     </button>
   </div>
@@ -505,7 +505,7 @@ async function renderCierresMes_Fin() {
             <div style="font-size:16px;font-weight:800;color:${pendColor};">${pendSign}${_fmtCOP(diferenciaPend)}</div>
           </div>
           <button onclick="_aplicarDiferenciaCierre('${cl.mes}',${Math.round(diferenciaPend)})" title="${diferenciaPend>=0?'Sumar':'Descontar'} del mes en curso"
-            style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:none;border-radius:7px;cursor:pointer;font-size:11px;font-weight:700;font-family:inherit;background:${diferenciaPend>=0?'var(--teal)':'#dc2626'};color:#fff;white-space:nowrap;transition:opacity .15s;"
+            style="display:flex;align-items:center;gap:5px;padding:5px 10px;border:none;border-radius:7px;cursor:default;font-size:11px;font-weight:700;font-family:inherit;background:${diferenciaPend>=0?'var(--teal)':'#dc2626'};color:#fff;white-space:nowrap;transition:opacity .15s;"
             onmouseover="this.style.opacity='.8'" onmouseout="this.style.opacity='1'">
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
             ${tieneHistorial ? 'Aplicar diferencia nueva' : (diferenciaPend>=0?'Sumar':'Descontar')}
@@ -516,7 +516,7 @@ async function renderCierresMes_Fin() {
         <!-- Historial de diferencias aplicadas -->
         ${tieneHistorial ? `
         <div>
-          <button type="button" onclick="_toggleHistorialDif(this)" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:pointer;padding:2px 0;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-family:inherit;">
+          <button type="button" onclick="_toggleHistorialDif(this)" style="display:flex;align-items:center;gap:5px;background:none;border:none;cursor:default;padding:2px 0;font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;font-family:inherit;">
             <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .15s;"><polyline points="6 9 12 15 18 9"/></svg>
             Historial de diferencias aplicadas (${historial.length})
           </button>
@@ -532,7 +532,7 @@ async function renderCierresMes_Fin() {
                   <span class="c-dim"> · ${h.mes_destino ? _repFmtMes(h.mes_destino) : '—'}${h.fecha ? ' · '+h.fecha : ''}</span>
                 </div>
                 <button onclick="_pedirRevertirDiferencia('${cl.mes}','${h.id}')" title="Revertir esta diferencia aplicada"
-                  style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid var(--border);border-radius:6px;background:none;cursor:pointer;color:var(--text3);padding:0;flex-shrink:0;"
+                  style="display:inline-flex;align-items:center;justify-content:center;width:20px;height:20px;border:1px solid var(--border);border-radius:6px;background:none;cursor:default;color:var(--text3);padding:0;flex-shrink:0;"
                   onmouseover="this.style.color='var(--red)';this.style.borderColor='var(--red)'"
                   onmouseout="this.style.color='var(--text3)';this.style.borderColor='var(--border)'">
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.95"/></svg>
@@ -770,7 +770,7 @@ function _cmRenderGastos() {
   if (!_cmGastos.length) {
     listaEl.innerHTML = `<div style="display:flex;justify-content:flex-end;padding:4px 0;">
       <button onclick="_cmAgregarGasto()" title="Agregar gasto"
-        style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1.5px dashed var(--border);border-radius:8px;background:none;cursor:pointer;color:var(--text2);transition:all .15s;"
+        style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1.5px dashed var(--border);border-radius:8px;background:none;cursor:default;color:var(--text2);transition:all .15s;"
         onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'"
         onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
@@ -799,7 +799,7 @@ function _cmRenderGastos() {
         onkeydown="if(event.key==='Enter'){event.preventDefault();}"
         style="width:130px;font-size:13px;font-weight:600;text-align:right;font-family:Poppins,sans-serif;border:none;outline:none;background:transparent;color:var(--text);">
       <button onclick="_cmEliminarGasto('${g.id}')" title="Eliminar"
-        style="width:24px;height:24px;border:none;background:none;cursor:pointer;color:var(--text3);flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s;"
+        style="width:24px;height:24px;border:none;background:none;cursor:default;color:var(--text3);flex-shrink:0;border-radius:6px;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s;"
         onmouseover="this.style.color='var(--red)';this.style.background='var(--red-bg)'"
         onmouseout="this.style.color='var(--text3)';this.style.background='none'">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
@@ -810,7 +810,7 @@ function _cmRenderGastos() {
   // Botón + al final (solo icono)
   const addBtn = `<div style="display:flex;justify-content:flex-end;margin-top:4px;">
     <button onclick="_cmAgregarGasto()" title="Agregar gasto"
-      style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1.5px dashed var(--border);border-radius:8px;background:none;cursor:pointer;color:var(--text2);transition:all .15s;"
+      style="display:flex;align-items:center;justify-content:center;width:28px;height:28px;border:1.5px dashed var(--border);border-radius:8px;background:none;cursor:default;color:var(--text2);transition:all .15s;"
       onmouseover="this.style.borderColor='var(--teal)';this.style.color='var(--teal)'"
       onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text2)'">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>

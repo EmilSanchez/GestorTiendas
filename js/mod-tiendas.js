@@ -187,7 +187,7 @@ async function renderTiendas() {
 
       <!-- Saldo MP -->
       <div onclick="editarMPSaldo('${t.id}')" style="display:flex;align-items:center;justify-content:space-between;
-           padding:8px 12px;border-radius:8px;background:var(--teal-bg);cursor:pointer;margin-bottom:12px;"
+           padding:8px 12px;border-radius:8px;background:var(--teal-bg);cursor:default;margin-bottom:12px;"
            onmouseover="this.style.background='#c8e8e6'" onmouseout="this.style.background='var(--teal-bg)'">
         <span style="font-size:10px;font-weight:600;color:var(--teal-dark);"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg> Saldo Mercado Pago</span>
         <span style="font-size:13px;font-weight:800;color:var(--teal-dark);font-family:var(--font-mono);">${fmt(mpSaldo)}</span>
