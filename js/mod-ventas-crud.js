@@ -869,7 +869,13 @@ async function renderVentas() {
       <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
         ${fmt(gananciaDisplay)}
       </td>
-      <td>${_buildEstadoDrop(v.estado||'pendiente',['pendiente','en_camino','entregado','cancelado','problema','devuelto','error'],'_cambiarEstadoVenta',v.id)}</td>
+      <td style="text-align:center;">
+        ${_buildEstadoDrop(v.estado||'pendiente',['pendiente','en_camino','entregado','cancelado','problema','devuelto','error'],'_cambiarEstadoVenta',v.id)}
+        ${v.estado==='devuelto' ? `<label style="display:flex;align-items:center;justify-content:center;gap:4px;cursor:default;font-size:10.5px;color:#86198f;margin-top:3px;white-space:nowrap;">
+          <input type="checkbox" ${v.devuelto_en_inventario?'checked':''} onclick="event.stopPropagation();_toggleDevueltoInventario('${v.id}',this.checked)" style="width:12px;height:12px;cursor:default;flex-shrink:0;">
+          En inventario
+        </label>` : ''}
+      </td>
       <td>
         <div class="actions-cell">
             <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
@@ -884,15 +890,7 @@ async function renderVentas() {
           <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
-    </tr>${v.estado==='devuelto' ? `
-    <tr class="devuelto-subrow" data-vid-devrow="${v.id}">
-      <td colspan="${12 + (_vCfg.nombre?1:0) + (_vCfg.telefono?1:0) + (_vCfg.contraentrega?1:0)}" style="padding:3px 10px 8px 44px;background:#fdf4ff;border-bottom:1px solid var(--border);">
-        <label style="display:inline-flex;align-items:center;gap:7px;cursor:default;font-size:11.5px;color:#86198f;">
-          <input type="checkbox" ${v.devuelto_en_inventario?'checked':''} onclick="event.stopPropagation();_toggleDevueltoInventario('${v.id}',this.checked)" style="width:14px;height:14px;cursor:default;">
-          Ya está de vuelta en inventario
-        </label>
-      </td>
-    </tr>` : ''}`;
+    </tr>`;
   }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 
   if (typeof _restoreSelectedRow === 'function') _restoreSelectedRow();
