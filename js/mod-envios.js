@@ -111,6 +111,21 @@ async function openPagoEnvio(ventaId) {
   if(diffEl) diffEl.style.display = 'none';
 
   sv('mpe-nota', v.nota_envio_pago || '');
+
+  // Fuente de pago (billetera desde donde saldrá el dinero del envío)
+  const fuenteSel = document.getElementById('mpe-fuente');
+  if (fuenteSel) {
+    const [bws, tds, ajustes] = await Promise.all([DB.billeteras(), DB.tiendas(), DB.ajustes()]);
+    const activas = bws.filter(b => b.activa !== false);
+    fuenteSel.innerHTML = [
+      `<option value="">— Seleccionar —</option>`,
+      `<option value="skydropx">Skydropx</option>`,
+      ...tds.map(t => `<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`),
+      ...activas.map(b => `<option value="${b.id}">${b.nombre}</option>`),
+    ].join('');
+    fuenteSel.value = v.fuente_pago_envio || (ajustes && ajustes.billetera_default_envios) || '';
+  }
+
   _calcDiffPagoEnvio();
   openModal('modal-pago-envio');
 }
@@ -150,6 +165,14 @@ function _calcDiffPagoEnvio() {
 
 async function guardarPagoEnvio() {
   if(!_pagoEnvioVentaId) return;
+  const errEl = document.getElementById('mpe-err');
+  if (errEl) errEl.textContent = '';
+  const fuente = gv('mpe-fuente');
+  if (!fuente) {
+    if (errEl) errEl.textContent = 'Selecciona de dónde saldrá el pago.';
+    showToast('Selecciona de dónde saldrá el pago.', 'error', 2500);
+    return;
+  }
   const ventas = await DB.ventas();
   const v = ventas.find(x=>x.id===_pagoEnvioVentaId);
   if(!v) return;
@@ -170,10 +193,25 @@ async function guardarPagoEnvio() {
   v.envio_real_cop    = valorReal;
   v.envio_validado    = true;
   v.nota_envio_pago   = gv('mpe-nota').trim();
+  v.fuente_pago_envio = fuente;
   await DB.saveVentas(ventas);
+
+  // Descontar el saldo de la billetera elegida y registrar el movimiento (no afecta la ganancia del mes)
+  const saldos = await DB.saldos();
+  saldos[fuente] = (parseFloat(saldos[fuente])||0) - valorReal;
+  await DB.saveSaldos(saldos);
+  await DB.upsertMovimiento({
+    id: 'envpago_' + v.id, fecha: hoy(), tipo: 'egreso', fuente, valor: valorReal,
+    concepto: `Pago envío${esServientrega?' Servientrega':' Aguachica'} · ${v.id_ml||v.id}`,
+    notas: v.nota_envio_pago || '',
+    fecha_registro: new Date().toISOString(),
+    _envio_pago_venta: v.id,
+  });
+
   closeModal('modal-pago-envio');
   showConfirmAnim('pago', false);
   await renderEnvios();
+  if (typeof renderFinanzas === 'function') { try { await renderFinanzas(); } catch(e){} }
 }
 
 async function desmarcarPagoEnvio(ventaId) {
@@ -184,7 +222,19 @@ async function desmarcarPagoEnvio(ventaId) {
     v.envio_pagado   = false;
     v.envio_validado = false;
     await DB.saveVentas(ventas);
+
+    // Revertir el movimiento/saldo del pago si existe
+    const movs = await DB.movimientos();
+    const mov = movs.find(m => m._envio_pago_venta === ventaId);
+    if (mov) {
+      const saldos = await DB.saldos();
+      saldos[mov.fuente] = (parseFloat(saldos[mov.fuente])||0) + (parseFloat(mov.valor)||0);
+      await DB.saveSaldos(saldos);
+      await DB.deleteMovimiento(mov.id);
+    }
+
     await renderEnvios();
+    if (typeof renderFinanzas === 'function') { try { await renderFinanzas(); } catch(e){} }
   }
 }
 
@@ -366,6 +416,22 @@ async function openPagoMultiple() {
   document.getElementById('mpm-total').textContent = fmt(total);
   document.getElementById('mpm-nota').value = '';
   document.getElementById('modal-pago-multiple')._ids = ids;
+
+  const fuenteSel = document.getElementById('mpm-fuente');
+  if (fuenteSel) {
+    const [bws, tds, ajustes] = await Promise.all([DB.billeteras(), DB.tiendas(), DB.ajustes()]);
+    const activas = bws.filter(b => b.activa !== false);
+    fuenteSel.innerHTML = [
+      `<option value="">— Seleccionar —</option>`,
+      `<option value="skydropx">Skydropx</option>`,
+      ...tds.map(t => `<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`),
+      ...activas.map(b => `<option value="${b.id}">${b.nombre}</option>`),
+    ].join('');
+    fuenteSel.value = (ajustes && ajustes.billetera_default_envios) || '';
+  }
+  const errEl = document.getElementById('mpm-err');
+  if (errEl) errEl.textContent = '';
+
   openModal('modal-pago-multiple');
 }
 
@@ -374,17 +440,39 @@ async function confirmarPagoMultiple() {
   const nota = document.getElementById('mpm-nota').value.trim();
   if(!ids.length) return;
 
+  const fuente = gv('mpm-fuente');
+  const errEl = document.getElementById('mpm-err');
+  if (!fuente) {
+    if (errEl) errEl.textContent = 'Selecciona de dónde saldrá el pago.';
+    showToast('Selecciona de dónde saldrá el pago.', 'error', 2500);
+    return;
+  }
+  if (errEl) errEl.textContent = '';
+
   const ventas = await DB.ventas();
+  const saldos = await DB.saldos();
+  const movsNuevos = [];
+  const ts = new Date().toISOString();
   ids.forEach(id => {
     const v = ventas.find(x=>x.id===id);
     if(v) {
-      v.envio_pagado    = true;
-      v.envio_validado  = true;
-      v.envio_real_cop  = v.envio_real_cop || _envioValorCOP(v);
+      const valorReal = v.envio_real_cop || _envioValorCOP(v);
+      v.envio_pagado      = true;
+      v.envio_validado     = true;
+      v.envio_real_cop     = valorReal;
+      v.fuente_pago_envio  = fuente;
       if(nota) v.nota_envio_pago = nota;
+      saldos[fuente] = (parseFloat(saldos[fuente])||0) - valorReal;
+      movsNuevos.push({
+        id: 'envpago_' + v.id, fecha: hoy(), tipo: 'egreso', fuente, valor: valorReal,
+        concepto: `Pago envío${v.envio_tipo==='servientrega'?' Servientrega':' Aguachica'} · ${v.id_ml||v.id}`,
+        notas: nota || '', fecha_registro: ts, _envio_pago_venta: v.id,
+      });
     }
   });
   await DB.saveVentas(ventas);
+  await DB.saveSaldos(saldos);
+  for (const m of movsNuevos) await DB.upsertMovimiento(m);
 
   // Desmarcar checkboxes y ocultar botón
   document.querySelectorAll('.chk-envio').forEach(c => c.checked = false);
@@ -394,6 +482,7 @@ async function confirmarPagoMultiple() {
 
   closeModal('modal-pago-multiple');
   await renderEnvios();
+  if (typeof renderFinanzas === 'function') { try { await renderFinanzas(); } catch(e){} }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -476,7 +565,7 @@ async function _renderEnviosSkyPanel() {
       <td style="padding:8px 10px;">${e.num_guia  ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
-      <td style="padding:8px 10px;">${_buildEstadoDrop(e.estado||'Pendiente',['Pendiente','En camino','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
+      <td style="padding:8px 10px;">${_buildEstadoDrop(e.estado||'Pendiente',['Pendiente','En camino','Despachado','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
       <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;">${fmt(e.valor)}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${FUENTES_LABEL[e.fuente_pago]||e.fuente_pago||'Skydropx'}</td>
       <td style="padding:8px 6px;text-align:center;white-space:nowrap;">

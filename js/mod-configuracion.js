@@ -78,6 +78,9 @@ async function renderConfiguracion() {
 
   // Cargar el dólar fijo desde BD y mostrarlo en el campo
   await cargarDolarComprasEnConfig();
+
+  // Cargar la billetera predeterminada para envíos externos
+  if (typeof cargarBilleteraDefaultEnConfig === 'function') await cargarBilleteraDefaultEnConfig();
 }
 
 function _updateSessionInfo() {
@@ -150,27 +153,100 @@ async function guardarNuevoCodigo() {
 
 
 // ══════════════════════════════════════════════════════════
-// GESTIÓN DE USUARIOS (solo admin)
+// GESTIÓN DE USUARIOS (solo admin) — pestaña "Usuarios"
 // ══════════════════════════════════════════════════════════
-async function renderUsuarios() {
-  const card = document.getElementById('cfg-usuarios-card');
-  if (!card) return;
 
-  // Solo mostrar si es admin
+// Cambia entre la pestaña "General" y "Usuarios" dentro de Configuración
+function _cfgTab(tab) {
   const sesion = _getSession();
-  if (!sesion || sesion.rol !== 'admin') { card.style.display = 'none'; return; }
-  card.style.display = 'block';
+  if (tab === 'usuarios' && (!sesion || sesion.rol !== 'admin')) tab = 'general';
+
+  const bodyGeneral  = document.getElementById('cfg-tab-general');
+  const bodyUsuarios = document.getElementById('cfg-tab-usuarios');
+  const btnGeneral   = document.getElementById('cfg-tab-btn-general');
+  const btnUsuarios  = document.getElementById('cfg-tab-btn-usuarios');
+  if (!bodyGeneral || !bodyUsuarios) return;
+
+  const isGeneral = tab === 'general';
+  bodyGeneral.style.display  = isGeneral ? '' : 'none';
+  bodyUsuarios.style.display = isGeneral ? 'none' : '';
+  if (btnGeneral) {
+    btnGeneral.style.borderBottomColor = isGeneral ? 'var(--teal)' : 'transparent';
+    btnGeneral.style.color = isGeneral ? 'var(--teal)' : 'var(--text2)';
+  }
+  if (btnUsuarios) {
+    btnUsuarios.style.borderBottomColor = !isGeneral ? 'var(--teal)' : 'transparent';
+    btnUsuarios.style.color = !isGeneral ? 'var(--teal)' : 'var(--text2)';
+  }
+  if (!isGeneral) renderUsuarios();
+}
+
+// Formatea un timestamp (ms) como "Hace un momento / Hace X min / Hace X h / Hace X día(s)"
+function _tiempoRelativo(ts) {
+  if (!ts) return 'Nunca';
+  const diffMs = Date.now() - ts;
+  if (diffMs < 0) return 'Hace un momento';
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1)  return 'Hace un momento';
+  if (min < 60) return `Hace ${min} min`;
+  const horas = Math.floor(min / 60);
+  if (horas < 24) return `Hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias < 30) return `Hace ${dias} día${dias!==1?'s':''}`;
+  const meses = Math.floor(dias / 30);
+  if (meses < 12) return `Hace ${meses} mes${meses!==1?'es':''}`;
+  const anios = Math.floor(meses / 12);
+  return `Hace ${anios} año${anios!==1?'s':''}`;
+}
+
+// Formatea un timestamp (ms) como "19 de septiembre de 2026 · 10:44 a. m."
+function _fmtFechaHora(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  const fecha = d.toLocaleDateString('es-CO', {day:'numeric', month:'long', year:'numeric'});
+  const hora  = d.toLocaleTimeString('es-CO', {hour:'numeric', minute:'2-digit', hour12:true});
+  return `${fecha} · ${hora}`;
+}
+
+// Formatea una duración en ms como HH:MM:SS
+function _fmtDuracion(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+
+// Determina si un usuario está actualmente conectado, a partir de su último
+// evento en `accesos` (ingreso/salida). Usa el mismo TTL de 8h que las
+// sesiones, para que una sesión nunca cerrada explícitamente pero ya vencida
+// se muestre como desconectada.
+function _usrEstadoConexion(uid) {
+  const eventos = (typeof _cache !== 'undefined' && _cache.accesos) || [];
+  const ultimo = eventos.find(e => e.uid === uid);
+  if (!ultimo || ultimo.tipo === 'salida') return { conectado:false, desde:null };
+  const TTL = 8*60*60*1000;
+  if (Date.now() - ultimo.ts >= TTL) return { conectado:false, desde:null };
+  return { conectado:true, desde:ultimo.ts };
+}
+
+var _usrTablaData = [];
+
+async function renderUsuarios() {
+  const sesion = _getSession();
+  const tabBtn = document.getElementById('cfg-tab-btn-usuarios');
+  const esAdmin = !!sesion && sesion.rol === 'admin';
+  if (tabBtn) tabBtn.style.display = esAdmin ? '' : 'none';
+  if (!esAdmin) return;
+
+  // Cuenta principal (admin)
+  let adminPerfil = {};
+  try {
+    const snap = await _db.collection('config').doc('perfil').get();
+    if (snap.exists) adminPerfil = snap.data() || {};
+  } catch(e) {}
 
   const usuarios = await DB.getUsuarios();
-  const el = document.getElementById('cfg-usuarios-grid');
-  if (!el) return;
-
-  if (!usuarios.length) {
-    el.innerHTML = '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Aún no hay usuarios creados.</div>';
-    return;
-  }
-
-  const MODULOS_LABEL = {ventas:'Ventas',envios:'Envíos',problemas:'Pendientes',ayudas:'Ayudas',finanzas:'Finanzas',tareas:'Tareas'};
 
   // Cargar fotos de perfil de cada usuario
   const fotos = {};
@@ -181,39 +257,207 @@ async function renderUsuarios() {
     } catch(e) {}
   }));
 
-  el.innerHTML = usuarios.map(u => {
-    const activo = u.activo !== false;
-    const permisos = u.permisos || {ventas:true,envios:true,problemas:true,ayudas:true,tareas:true};
-    const permPills = Object.entries(MODULOS_LABEL).map(([key,label]) => {
-      const tiene = permisos[key] !== false;
-      return `<span style="font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;background:${tiene?'#dbeafe':'#f3f4f6'};color:${tiene?'#1e40af':'#9ca3af'};border:1px solid ${tiene?'#93c5fd':'#e5e7eb'};">${label}</span>`;
-    }).join('');
-    const avatarInner = fotos[u.uid]
-      ? `<img src="${fotos[u.uid]}" style="width:100%;height:100%;object-fit:cover;">`
-      : `<span style="font-size:14px;font-weight:700;">${(u.nombre||u.usuario||'?').charAt(0).toUpperCase()}</span>`;
-    return `
-    <div style="border:1px solid var(--border);border-radius:10px;background:var(--white);overflow:hidden;margin-bottom:6px;">
-      <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;">
-        <div style="width:38px;height:38px;border-radius:50%;background:${activo?'#1a4fa8':'#6b7280'};display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;overflow:hidden;border:2px solid var(--border);">
-          ${avatarInner}
-        </div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:13px;font-weight:700;color:var(--text);">${u.nombre||'—'}</div>
-          <div style="font-size:11px;color:var(--text3);margin-top:1px;">
-            @${u.usuario||u.uid} ·
-            <span style="font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;background:${u.rol==='colaborador'?'#fef3c7':'#dbeafe'};color:${u.rol==='colaborador'?'#92400e':'#1e40af'};">${u.rol==='colaborador'?'Colaborador':'Usuario'}</span> ·
-            ${activo?'<span style="color:#065f46;font-weight:600;">Activo</span>':'<span style="color:#7f1d1d;font-weight:600;">Inactivo</span>'}
+  const filaAdmin = {
+    uid: 'admin', esAdmin: true,
+    nombre: adminPerfil.nombre || sesion.nombre || 'Administrador',
+    usuario: 'admin', rol: 'admin', activo: true,
+    ultimo_ingreso: adminPerfil.ultimo_ingreso || sesion.ts || null,
+    foto: adminPerfil.foto || null,
+  };
+
+  const filasUsuarios = usuarios.map(u => ({
+    uid: u.uid, esAdmin: false,
+    nombre: u.nombre || u.usuario || '—',
+    usuario: u.usuario || u.uid,
+    rol: u.rol || 'usuario',
+    activo: u.activo !== false,
+    ultimo_ingreso: u.ultimo_ingreso || null,
+    foto: fotos[u.uid] || null,
+  }));
+
+  _usrTablaData = [filaAdmin, ...filasUsuarios];
+  _renderTablaUsuarios();
+}
+
+const _USR_AVATAR_COLORS = ['#1a4fa8','#00897b','#7c3aed','#dc2626','#d97706','#0891b2','#be185d','#4d7c0f'];
+function _usrAvatarColor(key) {
+  let h = 0;
+  for (let i = 0; i < key.length; i++) h = (h * 31 + key.charCodeAt(i)) >>> 0;
+  return _USR_AVATAR_COLORS[h % _USR_AVATAR_COLORS.length];
+}
+
+function _renderTablaUsuarios() {
+  const bodyEl  = document.getElementById('usr-tabla-body');
+  const vacioEl = document.getElementById('usr-tabla-vacio');
+  const countEl = document.getElementById('usr-tabla-count');
+  if (!bodyEl) return;
+
+  const q = (document.getElementById('usr-buscar')?.value || '').trim().toLowerCase();
+  const filtroEstado = document.getElementById('usr-filtro-estado')?.value || '';
+
+  let filas = _usrTablaData.filter(u => {
+    if (q && !(`${u.nombre} ${u.usuario}`.toLowerCase().includes(q))) return false;
+    if (filtroEstado === 'activo'   && !u.activo) return false;
+    if (filtroEstado === 'inactivo' && u.activo)  return false;
+    return true;
+  });
+
+  // Orden: cuenta principal primero, luego activos por último ingreso (más reciente primero),
+  // luego desactivados al final.
+  filas = filas.slice().sort((a, b) => {
+    if (a.esAdmin !== b.esAdmin) return a.esAdmin ? -1 : 1;
+    if (a.activo !== b.activo)   return a.activo ? -1 : 1;
+    return (b.ultimo_ingreso || 0) - (a.ultimo_ingreso || 0);
+  });
+
+  if (!filas.length) {
+    bodyEl.innerHTML = '';
+    if (vacioEl) vacioEl.style.display = '';
+  } else {
+    if (vacioEl) vacioEl.style.display = 'none';
+    bodyEl.innerHTML = filas.map(u => {
+      const avatarInner = u.foto
+        ? `<img src="${u.foto}" style="width:100%;height:100%;object-fit:cover;">`
+        : `<span style="font-size:13px;color:#fff;">${(u.nombre||'?').charAt(0).toUpperCase()}</span>`;
+      const rolLabel = u.esAdmin ? 'Administrador' : (u.rol === 'colaborador' ? 'Colaborador' : 'Usuario');
+      const rolBg    = u.esAdmin ? '#dbeafe' : (u.rol === 'colaborador' ? '#fef3c7' : '#f3f4f6');
+      const rolColor = u.esAdmin ? '#1e40af' : (u.rol === 'colaborador' ? '#92400e' : '#374151');
+      const dotColor = u.ultimo_ingreso && (Date.now() - u.ultimo_ingreso) < 5*60000 ? '#16a34a' : '#9ca3af';
+      const estadoBg    = u.activo ? '#d1fae5' : '#fee2e2';
+      const estadoColor = u.activo ? '#065f46' : '#991b1b';
+      const conexion = _usrEstadoConexion(u.uid);
+      const conexionHtml = conexion.conectado
+        ? `<span id="usr-conn-${u.uid}" data-since="${conexion.desde}" style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#16a34a;">
+             <span style="width:6px;height:6px;border-radius:50%;background:#16a34a;box-shadow:0 0 0 3px rgba(22,163,74,.15);flex-shrink:0;"></span>
+             <span class="usr-conn-txt">${_fmtDuracion(Date.now()-conexion.desde)}</span>
+           </span>`
+        : `<span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text3);">
+             <span style="width:6px;height:6px;border-radius:50%;background:#9ca3af;flex-shrink:0;"></span>
+             Desconectado
+           </span>`;
+      const acciones = u.esAdmin
+        ? `<span style="font-size:11px;color:var(--text3);">Cuenta principal</span>`
+        : `<button class="btn btn-ghost btn-sm" onclick="openModalCrearUsuario('${u.uid}')" style="font-size:11px;padding:5px 12px;margin-right:6px;">Editar</button>
+           <button class="btn btn-ghost btn-sm" onclick="_toggleUsuario('${u.uid}',${!u.activo})"
+             style="font-size:11px;padding:5px 12px;color:${u.activo?'var(--red)':'var(--green)'};border-color:${u.activo?'#fca5a5':'#86efac'};">
+             ${u.activo?'Desactivar':'Activar'}
+           </button>`;
+      return `
+      <tr style="border-bottom:1px solid var(--border);">
+        <td style="padding:11px 16px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="width:32px;height:32px;border-radius:50%;background:${_usrAvatarColor(u.uid)};display:flex;align-items:center;justify-content:center;flex-shrink:0;overflow:hidden;">${avatarInner}</div>
+            <span style="font-size:13px;color:var(--text);">${u.nombre}</span>
           </div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="openModalCrearUsuario('${u.uid}')" style="font-size:11px;padding:4px 9px;">Editar</button>
-        <button class="btn btn-ghost btn-sm" onclick="_toggleUsuario('${u.uid}',${!activo})"
-          style="color:${activo?'var(--red)':'var(--green)'};font-size:11px;padding:4px 9px;">
-          ${activo?'Desactivar':'Activar'}
-        </button>
+        </td>
+        <td style="padding:11px 16px;">
+          <span style="font-size:10.5px;padding:2px 9px;border-radius:20px;background:${rolBg};color:${rolColor};">${rolLabel}</span>
+        </td>
+        <td style="padding:11px 16px;">
+          <span style="display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);">
+            <span style="width:6px;height:6px;border-radius:50%;background:${dotColor};flex-shrink:0;"></span>
+            ${_tiempoRelativo(u.ultimo_ingreso)}
+          </span>
+        </td>
+        <td style="padding:11px 16px;font-size:12px;color:var(--text3);">${_fmtFechaHora(u.ultimo_ingreso)}</td>
+        <td style="padding:11px 16px;">${conexionHtml}</td>
+        <td style="padding:11px 16px;">
+          <span style="font-size:10.5px;padding:2px 9px;border-radius:20px;background:${estadoBg};color:${estadoColor};">${u.activo?'Activo':'Desactivado'}</span>
+        </td>
+        <td style="padding:11px 16px;text-align:right;white-space:nowrap;">${acciones}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  if (countEl) countEl.textContent = `Mostrando ${filas.length} de ${_usrTablaData.length} usuarios`;
+  _iniciarUsrUptimeTicker();
+}
+
+// Actualiza cada segundo el contador "tiempo activo" de los usuarios
+// conectados, sin tener que re-renderizar toda la tabla.
+function _iniciarUsrUptimeTicker() {
+  if (window._usrUptimeInterval) clearInterval(window._usrUptimeInterval);
+  window._usrUptimeInterval = setInterval(() => {
+    const body = document.getElementById('usr-tabla-body');
+    if (!body) { clearInterval(window._usrUptimeInterval); return; }
+    if ((location.hash.replace('#','')||'ventas') !== 'configuracion') return;
+    body.querySelectorAll('[data-since]').forEach(el => {
+      const since = parseInt(el.dataset.since, 10);
+      if (!since) return;
+      const txt = el.querySelector('.usr-conn-txt');
+      if (txt) txt.textContent = _fmtDuracion(Date.now() - since);
+    });
+  }, 1000);
+}
+
+// ══════════════════════════════════════════════════════════
+// HISTORIAL DE INGRESOS AL SISTEMA
+// ══════════════════════════════════════════════════════════
+function openModalHistorialIngresos() {
+  _renderHistorialIngresos();
+  openModal('modal-historial-ingresos');
+}
+
+function _renderHistorialIngresos() {
+  const listEl  = document.getElementById('historial-ingresos-list');
+  const vacioEl = document.getElementById('historial-ingresos-vacio');
+  if (!listEl) return;
+
+  const eventos = _cache.accesos || [];
+  if (!eventos.length) {
+    listEl.innerHTML = '';
+    if (vacioEl) vacioEl.style.display = '';
+    return;
+  }
+  if (vacioEl) vacioEl.style.display = 'none';
+
+  listEl.innerHTML = eventos.map(ev => {
+    const esIngreso = ev.tipo !== 'salida';
+    const nombre    = ev.nombre || ev.usuario || 'Usuario';
+    const color     = esIngreso ? '#16a34a' : '#dc2626';
+    const bg        = esIngreso ? '#dcfce7' : '#fee2e2';
+    const icono     = esIngreso
+      ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>'
+      : '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
+    return `
+    <div style="display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid var(--border);">
+      <div style="width:28px;height:28px;border-radius:50%;background:${bg};color:${color};display:flex;align-items:center;justify-content:center;flex-shrink:0;">${icono}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12.5px;color:var(--text);">${nombre} <span style="color:var(--text3);">${esIngreso?'entró al sistema':'salió del sistema'}</span></div>
+        <div style="font-size:11px;color:var(--text3);margin-top:1px;">${_fmtFechaHora(ev.ts)}</div>
       </div>
-      ${u.rol==='colaborador'?`<div style="padding:6px 14px 10px;border-top:1px solid var(--border);display:flex;gap:5px;flex-wrap:wrap;">${permPills}</div>`:''}
+      <div style="font-size:11px;color:var(--text3);white-space:nowrap;flex-shrink:0;">${_tiempoRelativo(ev.ts)}</div>
     </div>`;
   }).join('');
+}
+
+// Exporta la tabla de usuarios visible (filtrada) como CSV
+function _exportarUsuariosCSV() {
+  const q = (document.getElementById('usr-buscar')?.value || '').trim().toLowerCase();
+  const filtroEstado = document.getElementById('usr-filtro-estado')?.value || '';
+  const filas = _usrTablaData.filter(u => {
+    if (q && !(`${u.nombre} ${u.usuario}`.toLowerCase().includes(q))) return false;
+    if (filtroEstado === 'activo'   && !u.activo) return false;
+    if (filtroEstado === 'inactivo' && u.activo)  return false;
+    return true;
+  });
+  const encabezados = ['Usuario','Usuario (login)','Rol','Último ingreso','Estado'];
+  const csvEsc = (v) => `"${String(v).replace(/"/g,'""')}"`;
+  const filasCsv = filas.map(u => [
+    u.nombre,
+    u.usuario,
+    u.esAdmin ? 'Administrador' : (u.rol==='colaborador'?'Colaborador':'Usuario'),
+    _fmtFechaHora(u.ultimo_ingreso),
+    u.activo ? 'Activo' : 'Desactivado',
+  ].map(csvEsc).join(','));
+  const csv = [encabezados.map(csvEsc).join(','), ...filasCsv].join('\r\n');
+  const blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `usuarios_${hoy()}.csv`;
+  document.body.appendChild(a); a.click(); a.remove();
+  URL.revokeObjectURL(url);
 }
 
 function openModalCrearUsuario(uid = null) {

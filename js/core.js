@@ -248,10 +248,11 @@ async function recalcFuente() {
   if(!fuente) { el.innerHTML=''; return; }
   const saldo  = await getSaldoFuente(fuente);
   const icon   = FUENTES_ICON[fuente]||'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>';
-  const label  = FUENTES_LABEL[fuente]||fuente;
+  const selEl  = document.getElementById('v-fuente-pago');
+  const label  = selEl?.selectedOptions?.[0]?.textContent.trim() || FUENTES_LABEL[fuente] || fuente;
   const resto  = saldo - monto;
   el.innerHTML = `${icon} Saldo ${label}: <b>${fmt(saldo)}</b>`
-    + (monto > 0 ? ` → Quedarían: <b style="color:${resto<0?'var(--red)':'var(--green)'};">${fmt(resto)}</b>` : '');
+    + (monto > 0 ? ` → Se descontará el costo del producto (${fmt(monto)}) → Quedarían: <b style="color:${resto<0?'var(--red)':'var(--green)'};">${fmt(resto)}</b>` : '');
 }
 
 function recalcValidacionEnvio() {
@@ -390,8 +391,11 @@ const _ESTADO_COLORS = {
   // Skydropx keys (capitalized)
   Pendiente: { bg:'#ffc000', color:'#000', border:'#e0a800', label:'PENDIENTE' },
   'En camino':{ bg:'#70ad47', color:'#fff', border:'#5a9438', label:'EN CAMINO' },
+  Despachado:{ bg:'#0ea5e9', color:'#fff', border:'#0284c7', label:'DESPACHADO' },
   Entregado: { bg:'#002060', color:'#fff', border:'#001540', label:'ENTREGADO' },
   Novedad:   { bg:'#ff0000', color:'#fff', border:'#cc0000', label:'NOVEDAD'   },
+  Cancelado: { bg:'#ff0000', color:'#fff', border:'#cc0000', label:'CANCELADO' },
+  Devuelto:  { bg:'#ff00ff', color:'#fff', border:'#cc00cc', label:'DEVUELTO'  },
 };
 
 const _CHEVRON = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>`;

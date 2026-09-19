@@ -63,10 +63,11 @@ async function renderVentasGanancias() {
     .filter(e => (e.fecha||'').startsWith(mesPer) && !idsMlSet.has(e.num_venta))
     .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
 
-  // Include cierre adjustments applied to current period
-  const ajustesCierreBanner = movs
-    .filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesPer))
-    .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
+  // Include cierre adjustments + movimientos manuales marcados para afectar este mes
+  const ajustesCierreBanner = (typeof _cmAjusteCierreMes === 'function')
+    ? _cmAjusteCierreMes(movs, mesPer)
+    : movs.filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesPer))
+          .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
   const totalGan = ganVentas - egresosSky + ajustesCierreBanner;
   const marGen   = totalVenta > 0 ? (totalGan / totalVenta) * 100 : 0;
 

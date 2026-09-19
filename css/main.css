@@ -444,6 +444,24 @@ body.sb-collapsed .nav-item:hover::after{content:attr(data-label);position:absol
 body.sb-collapsed #sb-avatar-wrap{justify-content:center;padding:14px 0 20px 0;border-bottom:1px solid rgba(255,255,255,.06);}
 body.sb-collapsed #sb-avatar{margin:0 auto;}
 
+/* ── Desplegable "Cerrar sesión" junto a Configuración ── */
+/* Expandido: se abre hacia arriba, sobre el botón Configuración */
+#sb-logout-menu{position:absolute;left:0;right:0;bottom:100%;margin-bottom:3px;z-index:50;}
+
+/* Colapsado: la flecha queda arriba del ícono de Configuración y el menú
+   se despliega como un panel flotante a la derecha del sidebar */
+body.sb-collapsed #sb-config-row{flex-direction:column-reverse;gap:0;}
+body.sb-collapsed #sb-config-arrow-btn{width:100%;padding:4px 0 2px;}
+body.sb-collapsed #sb-logout-menu{
+  left:calc(var(--sidebar-w-col) - 4px);right:auto;bottom:0;margin-bottom:0;
+  width:172px;background:#1a3332;border-radius:8px;padding:6px;
+  box-shadow:0 4px 12px rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.1);
+}
+body.sb-collapsed #sb-logout-menu .nav-item{justify-content:flex-start;padding:8px 10px;}
+body.sb-collapsed #sb-logout-menu .nav-item .ni{width:20px;flex:none;}
+body.sb-collapsed #sb-logout-menu .nav-item:hover::after{content:none;}
+body.sb-collapsed #sb-logout-menu .nb-label{opacity:1;width:auto;overflow:visible;pointer-events:auto;}
+
 /* ── MOBILE ── */
 @media(max-width:600px){
   :root{ --sidebar-w:0px; --mobile-nav-h:60px; }
@@ -486,8 +504,7 @@ body.sb-collapsed #sb-avatar{margin:0 auto;}
   .drp-footer{ padding:10px 14px calc(10px + env(safe-area-inset-bottom)) !important; gap:8px !important; }
   .drp-footer .btn{ flex:1; justify-content:center; }
   #vg-por-tienda{ display:none !important; }
-  #fin-billeteras{ gap:8px !important; }
-  #fin-billeteras .fin-wallet-card{ flex:0 0 170px !important; min-width:170px !important; }
+  #fin-billeteras table{ min-width:480px; }
   #cfg-tiendas-grid{ gap:8px !important; }
   #fin-cierres-lista > div{ grid-template-columns:1fr !important; }
   #fin-fila2{ grid-template-columns:1fr !important; height:auto !important; }

@@ -51,7 +51,7 @@ function _cfg(docId) {
 const _cache = {
   tiendas:null, ventas:null, problemas:null, movimientos:null,
   membresias:null, billeteras:null, envios:null, envios_sky:null,
-  saldos:null, ajustes:null, ayudas:null,
+  saldos:null, ajustes:null, ayudas:null, accesos:null,
 };
 
 async function _fetchCol(nombre) {
@@ -173,11 +173,58 @@ function _iniciarListeners() {
     const unsub = _cfg(docId).onSnapshot({ includeMetadataChanges: false }, snap => {
       if (snap.metadata.fromCache) return;
       _cache[key] = snap.exists ? snap.data() : {};
+      // Los saldos alimentan el selector de "Fuente de pago" en tiempo real,
+      // sin importar en qué página esté el usuario ni si el cambio es propio
+      if (key === 'saldos' && typeof actualizarSelectsFuente === 'function') actualizarSelectsFuente();
+      if (key === 'saldos' && typeof _actualizarBancoTransfer === 'function') _actualizarBancoTransfer();
+      if (key === 'saldos' && typeof _refrescarMvsFuenteEnVivo === 'function') _refrescarMvsFuenteEnVivo();
       if (primero) { primero = false; return; }
       if (_esExterno()) _debouncedRender(page);
     }, err => console.warn(`Listener config/${docId}:`, err));
     _unsubscribers.push(unsub);
   });
+
+  // ── Usuarios y accesos (solo admin, siempre en la raíz) ──
+  if (_isAdmin()) {
+    // Refresca la pestaña "Usuarios" en tiempo real (último ingreso, altas/bajas, etc.)
+    let primeroUsr = true;
+    let _usrRenderTimer = null;
+    const unsubUsr = _db.collection('usuarios').onSnapshot({ includeMetadataChanges: false }, snap => {
+      if (snap.metadata.fromCache) return;
+      if (primeroUsr) { primeroUsr = false; return; }
+      if (!_esExterno()) return;
+      clearTimeout(_usrRenderTimer);
+      _usrRenderTimer = setTimeout(() => {
+        const activePage = location.hash.replace('#','') || 'ventas';
+        if (activePage === 'configuracion' && typeof renderUsuarios === 'function') renderUsuarios();
+      }, 400);
+    }, err => console.warn('Listener usuarios:', err));
+    _unsubscribers.push(unsubUsr);
+
+    // Historial de ingresos/salidas + alertas en vivo
+    let primeroAcc = true;
+    const unsubAcc = _db.collection('accesos').orderBy('ts','desc').limit(50)
+      .onSnapshot({ includeMetadataChanges: false }, snap => {
+        if (snap.metadata.fromCache) return;
+        _cache.accesos = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        if (typeof _renderHistorialIngresos === 'function') _renderHistorialIngresos();
+        // Refresca la columna "Conexión" de la tabla de usuarios si está visible
+        if ((location.hash.replace('#','')||'ventas') === 'configuracion' && typeof _renderTablaUsuarios === 'function') {
+          _renderTablaUsuarios();
+        }
+        if (primeroAcc) { primeroAcc = false; return; }
+        if (!_esExterno()) return;
+        snap.docChanges().forEach(ch => {
+          if (ch.type !== 'added') return;
+          const ev = ch.doc.data();
+          if (ev.uid === _currentUser?.uid) return; // no notificarse a sí mismo
+          const nombre = ev.nombre || ev.usuario || 'Alguien';
+          const accion = ev.tipo === 'salida' ? 'salió del sistema' : 'entró al sistema';
+          if (typeof showToast === 'function') showToast(`${nombre} ${accion}`, ev.tipo === 'salida' ? 'info' : 'success', 4000);
+        });
+      }, err => console.warn('Listener accesos:', err));
+    _unsubscribers.push(unsubAcc);
+  }
 }
 
 function _detenerListeners() {

@@ -312,6 +312,10 @@ async function doLogin(){
       if(!authSnap.exists){_showError('No hay cuenta admin configurada.');_setLoading(false);return;}
       if(authSnap.data().hash!==hash){_showError('Contraseña incorrecta.');_setLoading(false);return;}
       localStorage.setItem(_SK,JSON.stringify({uid:'admin',rol:'admin',usuario:'admin',ts:Date.now()}));
+      await Promise.all([
+        _db.collection('config').doc('perfil').set({ultimo_ingreso:Date.now()},{merge:true}),
+        _db.collection('accesos').add({uid:'admin',usuario:'admin',nombre:'Administrador',tipo:'ingreso',ts:Date.now()}),
+      ]).catch(e=>console.warn('No se pudo registrar el ingreso:',e));
       window.location.href='app.html';return;
     }
     const snap=await _db.collection('usuarios').where('usuario','==',usuario).limit(1).get();
@@ -323,6 +327,10 @@ async function doLogin(){
     const _sesionData = {uid:userDoc.id,rol:userData.rol||'usuario',usuario:userData.usuario,nombre:userData.nombre,ts:Date.now()};
       if(userData.rol!=='admin') _sesionData.permisos = userData.permisos||{};
       localStorage.setItem(_SK,JSON.stringify(_sesionData));
+      await Promise.all([
+        _db.collection('usuarios').doc(userDoc.id).update({ultimo_ingreso:Date.now()}),
+        _db.collection('accesos').add({uid:userDoc.id,usuario:userData.usuario,nombre:userData.nombre||userData.usuario,tipo:'ingreso',ts:Date.now()}),
+      ]).catch(e=>console.warn('No se pudo registrar el ingreso:',e));
     window.location.href='app.html';
   }catch(e){console.error(e);_showError('Error de conexión. Intenta de nuevo.');_setLoading(false);}
 }

@@ -553,10 +553,11 @@ async function renderCierresMes_Fin() {
   </div>`;
 }
 
-// ── Ajustes de cierre (pérdida/ganancia de meses cerrados) aplicados a un mes dado ──
+// ── Ajustes de cierre (pérdida/ganancia de meses cerrados) aplicados a un mes dado,
+//    + movimientos manuales marcados explícitamente para afectar la ganancia de ese mes ──
 function _cmAjusteCierreMes(movs, mesStr) {
   return (movs || [])
-    .filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesStr))
+    .filter(m => (m._ajuste_cierre && (m.fecha||'').startsWith(mesStr)) || (m.afecta_ganancia_mes === mesStr))
     .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
 }
 

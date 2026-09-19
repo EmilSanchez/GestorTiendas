@@ -25,6 +25,66 @@ function _guardSession() {
   if (!_getSession()) window.location.href = 'index.html';
 }
 
+// ── Cerrar sesión (desde el desplegable del sidebar) ──
+async function _cerrarSesionApp() {
+  if (window._cerrandoSesion) return; // evita doble clic mientras ya está cerrando
+  window._cerrandoSesion = true;
+
+  const btn   = document.getElementById('sb-logout-btn');
+  const icon  = document.getElementById('sb-logout-icon');
+  const label = document.getElementById('sb-logout-label');
+  if (btn) { btn.style.pointerEvents = 'none'; btn.style.opacity = '.75'; }
+  if (icon) {
+    icon.innerHTML = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="animation:_envSpinAnim .7s linear infinite;">
+      <circle cx="12" cy="12" r="9" stroke-opacity=".25"/>
+      <path d="M21 12a9 9 0 0 0-9-9"/>
+    </svg>`;
+  }
+  if (label) label.textContent = 'Cerrando sesión...';
+
+  try {
+    const s = _currentUser || _getSession();
+    if (s && typeof _db !== 'undefined') {
+      const nombre = s.nombre || (s.rol === 'admin' ? 'Administrador' : s.usuario);
+      await _db.collection('accesos').add({
+        uid: s.uid, usuario: s.usuario, nombre: nombre,
+        tipo: 'salida', ts: Date.now(),
+      });
+    }
+  } catch(e) { console.warn('No se pudo registrar la salida:', e); }
+  localStorage.removeItem(_SK);
+  if (typeof _detenerListeners === 'function') _detenerListeners();
+  window.location.href = 'index.html';
+}
+
+// ── Desplegable "Cerrar sesión" junto al botón Configuración ──
+function _toggleSbLogoutMenu() {
+  const menu = document.getElementById('sb-logout-menu');
+  const icon = document.getElementById('sb-config-arrow-icon');
+  if (!menu) return;
+  const abierto = menu.style.display !== 'none';
+  menu.style.display = abierto ? 'none' : 'block';
+  if (icon) icon.style.transform = abierto ? '' : 'rotate(180deg)';
+}
+// Cierra el desplegable sin animación (usado al hacer clic afuera o al
+// plegar/desplegar el sidebar, para que nunca quede un estado "roto")
+function _closeSbLogoutMenu() {
+  const menu = document.getElementById('sb-logout-menu');
+  const icon = document.getElementById('sb-config-arrow-icon');
+  if (menu) menu.style.display = 'none';
+  if (icon) icon.style.transform = '';
+}
+window._closeSbLogoutMenu = _closeSbLogoutMenu;
+document.addEventListener('click', (e) => {
+  const menu = document.getElementById('sb-logout-menu');
+  const btn  = document.getElementById('sb-config-arrow-btn');
+  if (!menu || menu.style.display === 'none') return;
+  if (menu.contains(e.target) || (btn && btn.contains(e.target))) return;
+  menu.style.display = 'none';
+  const icon = document.getElementById('sb-config-arrow-icon');
+  if (icon) icon.style.transform = '';
+});
+
 function _lockApp() {
   localStorage.removeItem(_SK);
   const overlay = document.createElement('div');

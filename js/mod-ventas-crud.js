@@ -101,6 +101,7 @@ async function openModalVenta(id) {
   document.getElementById('mv-title').textContent = id ? 'Editar Venta' : 'Nueva Venta';
   const tiendas = await DB.tiendas();
   document.getElementById('v-tienda').innerHTML = tiendas.filter(t=>t.estado!=='inactiva').map(t=>`<option value="${t.id}">${t.nombre}</option>`).join('');
+  if (typeof actualizarSelectsFuente === 'function') await actualizarSelectsFuente();
 
   if(id) {
     const v = (await DB.ventas()).find(x=>x.id===id);
@@ -134,7 +135,7 @@ async function openModalVenta(id) {
       };
     }
   } else {
-    ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota'].forEach(i=>sv(i,''));
+    ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota','v-fuente-pago'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-udes',1);
     sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
     sv('v-envio-validado','0');
@@ -254,11 +255,40 @@ function _mvTab(tab) {
 async function _populateMvsFuente(selected) {
   const sel = document.getElementById('mvs-fuente');
   if (!sel) return;
-  const billeteras = await DB.billeteras();
-  sel.innerHTML = billeteras.length
-    ? billeteras.map(b => `<option value="${b.id}">${b.nombre}</option>`).join('')
-    : '<option value="skydropx">Skydropx</option>';
-  if (selected && Array.from(sel.options).some(o => o.value === selected)) sel.value = selected;
+  const [billeteras, tiendas, ajustes, saldos] = await Promise.all([DB.billeteras(), DB.tiendas(), DB.ajustes(), DB.saldos()]);
+  const activas = billeteras.filter(b => b.activa !== false && !saldos['_oculta_'+b.id]);
+  const saldoTxt = key => fmt(parseFloat(saldos[key])||0);
+  let opts = [
+    ...(saldos['_oculta_skydropx'] ? [] : [`<option value="skydropx">Skydropx (saldo propio) — ${saldoTxt('skydropx')}</option>`]),
+    ...tiendas.filter(t => !saldos['_oculta_mercadopago_'+t.id]).map(t => `<option value="mercadopago_${t.id}">MP · ${t.nombre} — ${saldoTxt('mercadopago_'+t.id)}</option>`),
+    ...activas.map(b => `<option value="${b.id}">${b.nombre} — ${saldoTxt(b.id)}</option>`),
+  ];
+  // Si la fuente seleccionada (p.ej. al editar) es una billetera oculta o desactivada, mantenerla visible
+  if (selected && !opts.some(o => o.includes(`value="${selected}"`))) {
+    if (selected === 'skydropx') {
+      opts.push(`<option value="skydropx">Skydropx (oculta) — ${saldoTxt('skydropx')}</option>`);
+    } else if (selected.startsWith('mercadopago_')) {
+      const t = tiendas.find(x => 'mercadopago_'+x.id === selected);
+      if (t) opts.push(`<option value="${selected}">MP · ${t.nombre} (oculta) — ${saldoTxt(selected)}</option>`);
+    } else {
+      const bDesact = billeteras.find(b => b.id === selected);
+      if (bDesact) opts.push(`<option value="${bDesact.id}">${bDesact.nombre} (${bDesact.activa===false?'desactivada':'oculta'}) — ${saldoTxt(selected)}</option>`);
+    }
+  }
+  sel.innerHTML = opts.join('');
+  const defaultWallet = (ajustes && ajustes.billetera_default_envios) || '';
+  if (selected && Array.from(sel.options).some(o => o.value === selected)) {
+    sel.value = selected;
+  } else if (defaultWallet && Array.from(sel.options).some(o => o.value === defaultWallet)) {
+    sel.value = defaultWallet;
+  }
+}
+
+// Refresca en vivo el select de fuente de pago del envío externo (registro desde la venta)
+// cuando cambian los saldos, preservando la selección actual.
+function _refrescarMvsFuenteEnVivo() {
+  const sel = document.getElementById('mvs-fuente');
+  if (sel) _populateMvsFuente(sel.value);
 }
 
 function _mvNuevoEnvio() {
@@ -269,8 +299,7 @@ function _mvNuevoEnvio() {
   sv('mvs-valor', '');
   sv('mvs-estado', 'Pendiente');
   sv('mvs-producto', '');
-  const fuenteSel = document.getElementById('mvs-fuente');
-  if (fuenteSel && fuenteSel.options.length) fuenteSel.selectedIndex = 0;
+  _populateMvsFuente();
   const statusEl = document.getElementById('mv-envio-status');
   if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid #f0c040;">Nuevo envío externo — sin guardar</span>';
   const errEl = document.getElementById('mv-envio-err');
@@ -290,7 +319,7 @@ async function _editarEnvioDeVenta(id) {
   sv('mvs-valor', e.valor || '');
   sv('mvs-estado', e.estado || 'Pendiente');
   sv('mvs-producto', e.producto || '');
-  sv('mvs-fuente', e.fuente_pago || '');
+  await _populateMvsFuente(e.fuente_pago || '');
   const statusEl = document.getElementById('mv-envio-status');
   if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--teal-bg);color:var(--teal);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid rgba(0,137,123,.2);">Editando envío existente</span>';
 }
@@ -523,6 +552,12 @@ function recalcVenta() {
   // Sincronizar campos hidden
   const elEstimado = document.getElementById('v-envio-estimado');
   if(elEstimado) elEstimado.value = Math.round(envioIntCOP) || '';
+
+  // El monto a descontar de la fuente de pago es SOLO el costo del producto,
+  // nunca el envío (el envío se descuenta al pagarlo desde el módulo Envíos).
+  const elMontoPago = document.getElementById('v-monto-pago');
+  if(elMontoPago) elMontoPago.value = Math.round(costoCOP) || '';
+  if(typeof recalcFuente === 'function') recalcFuente();
 }
 
 function getDolarComprasConfigurado() {
@@ -849,7 +884,15 @@ async function renderVentas() {
           <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
-    </tr>`;
+    </tr>${v.estado==='devuelto' ? `
+    <tr class="devuelto-subrow" data-vid-devrow="${v.id}">
+      <td colspan="${12 + (_vCfg.nombre?1:0) + (_vCfg.telefono?1:0) + (_vCfg.contraentrega?1:0)}" style="padding:3px 10px 8px 44px;background:#fdf4ff;border-bottom:1px solid var(--border);">
+        <label style="display:inline-flex;align-items:center;gap:7px;cursor:default;font-size:11.5px;color:#86198f;">
+          <input type="checkbox" ${v.devuelto_en_inventario?'checked':''} onclick="event.stopPropagation();_toggleDevueltoInventario('${v.id}',this.checked)" style="width:14px;height:14px;cursor:default;">
+          Ya está de vuelta en inventario
+        </label>
+      </td>
+    </tr>` : ''}`;
   }).join('')||'<tr><td colspan="12" class="text-center c-dim" style="padding:40px;">Sin ventas registradas</td></tr>';
 
   if (typeof _restoreSelectedRow === 'function') _restoreSelectedRow();
@@ -877,6 +920,15 @@ function _cambiarEstadoVenta(id, estado) {
       }
     }
   }
+}
+
+async function _toggleDevueltoInventario(id, checked) {
+  const ventas = await DB.ventas();
+  const v = ventas.find(x=>x.id===id);
+  if(!v) return;
+  v.devuelto_en_inventario = !!checked;
+  await DB.upsertVenta(v);
+  showToast(checked ? 'Marcado como en inventario' : 'Desmarcado', 'success', 1500);
 }
 
 async function cambiarEstado(id, estado) {

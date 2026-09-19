@@ -7,6 +7,7 @@ const _FIN_ICON = {
   down:   `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`,
   trash:  `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
   edit:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  eyeOff: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.6 18.6 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
   truck:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
   mp:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
 };
@@ -38,9 +39,11 @@ async function renderFinanzas() {
     .filter(e => (e.fecha||'').startsWith(mesAct2) && !idsMlVentas.has(e.num_venta))
     .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
   // Sumar/restar ajustes de meses cerrados aplicados al mes en curso
-  const ajustesCierre = movs
-    .filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesAct2))
-    .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
+  // + movimientos manuales marcados para afectar la ganancia de este mes (ver +Movimiento)
+  const ajustesCierre = (typeof _cmAjusteCierreMes === 'function')
+    ? _cmAjusteCierreMes(movs, mesAct2)
+    : movs.filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesAct2))
+          .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
   const ganMes = ganVentasMes - egSkyMes + ajustesCierre;
   const ganEl  = document.getElementById('fin-ganancia-mes');
   if (ganEl) {
@@ -87,88 +90,190 @@ async function renderFinanzas() {
   _renderMovimientos(movMes, mesAct);
 }
 
-// ── BILLETERAS ──
+// ── BILLETERAS (tabla) ──
+function _walletRowHtml({ key, onClick, iconHtml, iconBg, nombre, esBanco, tipo, saldo, acciones }) {
+  return `
+    <tr class="fin-wallet-row" onclick="${onClick}">
+      <td style="padding:10px 12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="width:30px;height:30px;border-radius:50%;background:${iconBg};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">${iconHtml}</span>
+          <span style="font-size:13px;font-weight:700;color:var(--text);">${nombre}</span>
+          ${esBanco ? '<span style="font-size:8px;background:#e0e7ff;color:#4338ca;padding:2px 6px;border-radius:8px;font-weight:700;">BANCO</span>' : ''}
+        </div>
+      </td>
+      <td style="padding:10px 12px;font-size:12px;color:var(--text3);white-space:nowrap;">${tipo}</td>
+      <td style="padding:10px 12px;text-align:right;white-space:nowrap;">
+        <span class="fin-wallet-amount ${saldo<0?'neg':saldo===0?'zero':''}" data-saldo-anim="${saldo}">$ 0</span>
+      </td>
+      <td style="padding:10px 12px;text-align:right;white-space:nowrap;" onclick="event.stopPropagation();">${acciones}</td>
+    </tr>`;
+}
+
 function _renderBilleteras(saldos, billeteras, tiendas) {
   const el = document.getElementById('fin-billeteras');
   if (!el) return;
 
-  // Skydropx — siempre fija
-  const skySaldo = parseFloat(saldos['skydropx'])||0;
-  const skyEsBanco = !!saldos['_es_banco_skydropx'];
-  const skyCard = `
-    <div class="fin-wallet-card" onclick="openModalEditarSaldo('skydropx','Skydropx',${skySaldo})">
-      <div class="fin-wallet-top">
-        <span style="width:28px;height:28px;border-radius:50%;background:#6366f1;display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">${_FIN_ICON.truck}</span>
-        <div style="flex:1;min-width:0;">
-          <div class="fin-wallet-name">Skydropx ${skyEsBanco?'<span style="font-size:8px;background:#e0e7ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;">BANCO</span>':''}</div>
-          <div class="fin-wallet-sub">Envíos nacionales</div>
-        </div>
-        <button class="btn btn-ghost btn-icon btn-sm" title="${skyEsBanco?'Quitar marca de banco':'Marcar como banco'}"
-          onclick="event.stopPropagation();_toggleEsBancoFijo('skydropx')" style="opacity:.5;flex-shrink:0;">
+  const ocultasFijas = []; // {key,nombre,tipo,iconHtml,iconBg}
+  const filas = [];
+
+  // Skydropx — fija
+  if (!saldos['_oculta_skydropx']) {
+    const skySaldo   = parseFloat(saldos['skydropx'])||0;
+    const skyEsBanco = !!saldos['_es_banco_skydropx'];
+    filas.push(_walletRowHtml({
+      onClick: `openModalEditarSaldo('skydropx','Skydropx',${skySaldo})`,
+      iconHtml: _FIN_ICON.truck, iconBg:'#6366f1', nombre:'Skydropx', esBanco:skyEsBanco,
+      tipo:'Envíos nacionales', saldo:skySaldo,
+      acciones:`
+        <button class="btn btn-ghost btn-icon btn-sm" title="${skyEsBanco?'Quitar marca de banco':'Marcar como banco'}" onclick="_toggleEsBancoFijo('skydropx')" style="opacity:.5;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         </button>
-      </div>
-      <div class="fin-wallet-eyebrow">Saldo</div>
-      <div class="fin-wallet-amount ${skySaldo<0?'neg':skySaldo===0?'zero':''}" data-saldo-anim="${skySaldo}">$ 0</div>
-    </div>`;
+        <button class="btn btn-ghost btn-icon btn-sm" title="Ocultar billetera" onclick="_toggleOcultaFija('skydropx','Skydropx')" style="opacity:.5;">${_FIN_ICON.eyeOff}</button>`,
+    }));
+  } else {
+    ocultasFijas.push({key:'skydropx', nombre:'Skydropx', tipo:'Envíos nacionales', iconHtml:_FIN_ICON.truck, iconBg:'#6366f1'});
+  }
 
   // MP por tienda — fijas
-  const mpCards = tiendas.map(t => {
+  tiendas.forEach(t => {
     const key = 'mercadopago_'+t.id;
-    const s   = parseFloat(saldos[key])||0;
+    if (saldos['_oculta_'+key]) {
+      ocultasFijas.push({key, nombre:'MP · '+t.nombre, tipo:'Mercado Pago', iconHtml:_FIN_ICON.mp, iconBg:t.color||'#00897b'});
+      return;
+    }
+    const s = parseFloat(saldos[key])||0;
     const esBanco = !!saldos['_es_banco_'+key];
-    const dot = t.foto
-      ? `<img src="${t.foto}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid ${t.color||'#00897b'};flex-shrink:0;">`
-      : `<span style="width:28px;height:28px;border-radius:50%;background:${t.color||'#00897b'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">${_FIN_ICON.mp}</span>`;
-    return `
-    <div class="fin-wallet-card" onclick="openModalEditarSaldo('${key}','MP · ${t.nombre}',${s})">
-      <div class="fin-wallet-top">
-        ${dot}
-        <div style="flex:1;min-width:0;">
-          <div class="fin-wallet-name">MP · ${t.nombre} ${esBanco?'<span style="font-size:8px;background:#e0e7ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;">BANCO</span>':''}</div>
-          <div class="fin-wallet-sub">Mercado Pago</div>
-        </div>
-        <button class="btn btn-ghost btn-icon btn-sm" title="${esBanco?'Quitar marca de banco':'Marcar como banco'}"
-          onclick="event.stopPropagation();_toggleEsBancoFijo('${key}')" style="opacity:.5;flex-shrink:0;">
+    const iconHtml = t.foto
+      ? `<img src="${t.foto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
+      : _FIN_ICON.mp;
+    filas.push(_walletRowHtml({
+      onClick: `openModalEditarSaldo('${key}','MP · ${t.nombre}',${s})`,
+      iconHtml, iconBg:t.color||'#00897b', nombre:'MP · '+t.nombre, esBanco,
+      tipo:'Mercado Pago', saldo:s,
+      acciones:`
+        <button class="btn btn-ghost btn-icon btn-sm" title="${esBanco?'Quitar marca de banco':'Marcar como banco'}" onclick="_toggleEsBancoFijo('${key}')" style="opacity:.5;">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/></svg>
         </button>
-      </div>
-      <div class="fin-wallet-eyebrow">Saldo</div>
-      <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}" data-saldo-anim="${s}">$ 0</div>
-    </div>`;
+        <button class="btn btn-ghost btn-icon btn-sm" title="Ocultar billetera" onclick="_toggleOcultaFija('${key}','MP · ${t.nombre.replace(/'/g,"\\'")}')" style="opacity:.5;">${_FIN_ICON.eyeOff}</button>`,
+    }));
   });
 
-  // Billeteras personalizadas
-  const bwCards = billeteras.map(b => {
-    const s     = parseFloat(saldos[b.id])||0;
-    const color = b.color||'#6b7280';
-    return `
-    <div class="fin-wallet-card" onclick="openModalEditarSaldo('${b.id}','${b.nombre.replace(/'/g,"\\'")}',${s})">
-      <div class="fin-wallet-top">
-        <span style="width:28px;height:28px;border-radius:50%;background:${color};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;">${_FIN_ICON.wallet}</span>
-        <div style="flex:1;min-width:0;">
-          <div class="fin-wallet-name">${b.nombre} ${b.es_banco?'<span style="font-size:8px;background:#e0e7ff;color:#4338ca;padding:1px 5px;border-radius:8px;font-weight:700;vertical-align:middle;">BANCO</span>':''}</div>
-          <div class="fin-wallet-sub">${b.tipo||'Billetera'}</div>
-        </div>
-        <button class="btn btn-ghost btn-icon btn-sm" title="Editar billetera"
-          onclick="event.stopPropagation();openModalEditarBilletera('${b.id}')"
-          style="opacity:.5;flex-shrink:0;">${_FIN_ICON.edit}</button>
-        <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar billetera"
-          onclick="event.stopPropagation();_pedirCodigoEliminarBilletera('${b.id}','${b.nombre.replace(/'/g,"\\'")}')"
-          style="opacity:.4;flex-shrink:0;">${_FIN_ICON.trash}</button>
-      </div>
-      <div class="fin-wallet-eyebrow">Saldo</div>
-      <div class="fin-wallet-amount ${s<0?'neg':s===0?'zero':''}" data-saldo-anim="${s}">$ 0</div>
-    </div>`;
+  // Billeteras personalizadas — solo las activas se muestran en la tabla principal
+  const activas = billeteras.filter(b => b.activa !== false);
+  const desactivadas = billeteras.filter(b => b.activa === false);
+  _finBilleterasDesactivadas = desactivadas;
+
+  activas.forEach(b => {
+    const s = parseFloat(saldos[b.id])||0;
+    filas.push(_walletRowHtml({
+      onClick: `openModalEditarSaldo('${b.id}','${b.nombre.replace(/'/g,"\\'")}',${s})`,
+      iconHtml: _FIN_ICON.wallet, iconBg:b.color||'#6b7280', nombre:b.nombre, esBanco:!!b.es_banco,
+      tipo:b.tipo||'Billetera', saldo:s,
+      acciones:`
+        <button class="btn btn-ghost btn-icon btn-sm" title="Editar billetera" onclick="openModalEditarBilletera('${b.id}')" style="opacity:.5;">${_FIN_ICON.edit}</button>
+        <button class="btn btn-ghost btn-icon btn-sm" title="Ocultar billetera" onclick="_toggleBilleteraActiva('${b.id}')" style="opacity:.5;">${_FIN_ICON.eyeOff}</button>
+        <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar billetera" onclick="_pedirCodigoEliminarBilletera('${b.id}','${b.nombre.replace(/'/g,"\\'")}')" style="opacity:.4;">${_FIN_ICON.trash}</button>`,
+    }));
   });
 
-  el.innerHTML = [skyCard, ...mpCards, ...bwCards].join('');
+  el.innerHTML = filas.length ? `
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="border-bottom:1.5px solid var(--border);">
+          <th style="text-align:left;padding:6px 12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);">Billetera</th>
+          <th style="text-align:left;padding:6px 12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);">Tipo</th>
+          <th style="text-align:right;padding:6px 12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);">Saldo</th>
+          <th style="text-align:right;padding:6px 12px 8px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>${filas.join('')}</tbody>
+    </table>`
+    : '<div style="text-align:center;padding:28px;color:var(--text3);font-size:12px;">Sin billeteras visibles. Usa "Billeteras ocultas" para mostrarlas de nuevo.</div>';
 
   // Animar/mostrar el valor real de cada saldo (antes se quedaba siempre en "$ 0")
   el.querySelectorAll('[data-saldo-anim]').forEach(node => {
     const val = parseFloat(node.dataset.saldoAnim) || 0;
     _countUp(node, val);
   });
+
+  // Botón "Billeteras ocultas"
+  _finFijasOcultas = ocultasFijas;
+  const totalOcultas = desactivadas.length + ocultasFijas.length;
+  const btnDesactEl = document.getElementById('fin-billeteras-desact-btn');
+  if (btnDesactEl) {
+    if (totalOcultas) {
+      btnDesactEl.style.display = '';
+      btnDesactEl.textContent = `Billeteras ocultas (${totalOcultas})`;
+    } else {
+      btnDesactEl.style.display = 'none';
+    }
+  }
+}
+var _finBilleterasDesactivadas = [];
+var _finFijasOcultas = [];
+
+async function _toggleBilleteraActiva(id) {
+  const bws = await DB.billeteras();
+  const b = bws.find(x => x.id === id);
+  if (!b) return;
+  b.activa = false;
+  await DB.saveBilleteras(bws);
+  await renderFinanzas();
+  await actualizarSelectsFuente();
+  showToast(`Billetera "${b.nombre}" oculta`, 'success', 2000);
+}
+
+async function _reactivarBilletera(id) {
+  const bws = await DB.billeteras();
+  const b = bws.find(x => x.id === id);
+  if (!b) return;
+  b.activa = true;
+  await DB.saveBilleteras(bws);
+  await renderFinanzas();
+  await actualizarSelectsFuente();
+  await _abrirModalBilleterasDesactivadas();
+  showToast(`Billetera "${b.nombre}" visible de nuevo`, 'success', 2000);
+}
+
+// Oculta/muestra una billetera "fija" (Skydropx o MP · Tienda), que no vive
+// en la colección `billeteras` sino como claves sueltas dentro de `saldos`.
+async function _toggleOcultaFija(key, nombre) {
+  const saldos = await DB.saldos();
+  const campo = '_oculta_'+key;
+  const nuevoValor = !saldos[campo];
+  saldos[campo] = nuevoValor;
+  await DB.saveSaldos(saldos);
+  await renderFinanzas();
+  await actualizarSelectsFuente();
+  showToast(nuevoValor ? `"${nombre}" oculta` : `"${nombre}" visible de nuevo`, 'success', 2000);
+}
+
+function _abrirModalBilleterasDesactivadas() {
+  const listEl = document.getElementById('modal-billeteras-desact-list');
+  if (listEl) {
+    const filasCustom = _finBilleterasDesactivadas.map(b => `
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="width:26px;height:26px;border-radius:50%;background:${b.color||'#6b7280'};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;opacity:.6;">${_FIN_ICON.wallet}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--text2);">${b.nombre}</div>
+          <div style="font-size:11px;color:var(--text3);">${b.tipo||'Billetera'}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="_reactivarBilletera('${b.id}')">Mostrar</button>
+      </div>`);
+    const filasFijas = _finFijasOcultas.map(f => `
+      <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
+        <span style="width:26px;height:26px;border-radius:50%;background:${f.iconBg};display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;color:#fff;opacity:.6;">${f.iconHtml}</span>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:700;color:var(--text2);">${f.nombre}</div>
+          <div style="font-size:11px;color:var(--text3);">${f.tipo}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="font-size:11px;" onclick="_toggleOcultaFija('${f.key}','${f.nombre.replace(/'/g,"\\'")}');_abrirModalBilleterasDesactivadas();">Mostrar</button>
+      </div>`);
+    const filas = [...filasFijas, ...filasCustom];
+    listEl.innerHTML = filas.length ? filas.join('')
+      : '<div style="text-align:center;padding:20px;color:var(--text3);font-size:12px;">Sin billeteras ocultas</div>';
+  }
+  openModal('modal-billeteras-desactivadas');
 }
 
 async function _toggleEsBancoFijo(key) {
@@ -281,7 +386,7 @@ function _finMovRowHtml(m) {
     </div>
     <span style="font-size:15.5px;font-weight:800;color:${isTransfer?'#4338ca':(isIng?'#16a34a':'#dc2626')};white-space:nowrap;">${isTransfer?'⇄':(isIng?'+':'−')}${fmt(m.valor)}</span>
     ${isPendiente?`<button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>`:''}
-    ${!isSkyAuto && !isTransfer?`<button class="btn btn-ghost btn-icon btn-sm" onclick="openModalMovimiento('${m.id}')">${_FIN_ICON.edit}</button>`:''}
+    ${!isTransfer?`<button class="btn btn-ghost btn-icon btn-sm" title="${isSkyAuto?'Reasignar billetera':'Editar'}" onclick="openModalMovimiento('${m.id}')">${_FIN_ICON.edit}</button>`:''}
     <button class="btn btn-danger btn-icon btn-sm" onclick="_pedirCodigoEliminarMovimiento('${m.id}')">${_FIN_ICON.trash}</button>
   </div>`;
 }
@@ -439,7 +544,7 @@ function _renderEnviosSky(skyMes, mesAct) {
       </td>
       <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;font-weight:600;">${e.transportadora||'—'}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
-      <td style="padding:8px 10px;">${_buildEstadoDrop(estado,['Pendiente','En camino','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
+      <td style="padding:8px 10px;">${_buildEstadoDrop(estado,['Pendiente','En camino','Despachado','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
       <td style="padding:8px 10px;font-size:13px;color:var(--text);font-family:Arial,sans-serif;">${fmt(e.valor)}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fuenteLabel}</td>
       <td style="padding:8px 6px;text-align:center;white-space:nowrap;">
@@ -458,18 +563,26 @@ function _renderEnviosSky(skyMes, mesAct) {
 var _editEnvioSkyId = null;
 async function openModalEnvioSky(id) {
   _editEnvioSkyId = id||null;
-  const [billeteras,tiendas]=await Promise.all([DB.billeteras(),DB.tiendas()]);
+  const [billeteras,tiendas,ajustes]=await Promise.all([DB.billeteras(),DB.tiendas(),DB.ajustes()]);
+  const activas = billeteras.filter(b=>b.activa!==false);
+  let e = null;
+  if (id) e = (await DB.envios_sky()).find(x=>x.id===id);
   const opts=[
     `<option value="skydropx">Skydropx (saldo propio)</option>`,
     ...tiendas.map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`),
-    ...billeteras.map(b=>`<option value="${b.id}">${b.nombre}</option>`),
-  ].join('');
-  document.getElementById('sky-fuente').innerHTML=opts;
+    ...activas.map(b=>`<option value="${b.id}">${b.nombre}</option>`),
+  ];
+  // Si la fuente guardada del envío es una billetera desactivada, mantenerla visible al editar
+  if (e && e.fuente_pago && !opts.some(o=>o.includes(`value="${e.fuente_pago}"`))) {
+    const bDesact = billeteras.find(b=>b.id===e.fuente_pago);
+    if (bDesact) opts.push(`<option value="${bDesact.id}">${bDesact.nombre} (desactivada)</option>`);
+  }
+  document.getElementById('sky-fuente').innerHTML=opts.join('');
+  const defaultWallet = (ajustes && ajustes.billetera_default_envios) || 'skydropx';
   if(id){
-    const e=(await DB.envios_sky()).find(x=>x.id===id);
-    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'Servientrega');sv('sky-valor',e.valor||'');sv('sky-producto',e.producto||'');sv('sky-fuente',e.fuente_pago||'skydropx');sv('sky-estado',e.estado||'Pendiente');}
+    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'Servientrega');sv('sky-valor',e.valor||'');sv('sky-producto',e.producto||'');sv('sky-fuente',e.fuente_pago||defaultWallet);sv('sky-estado',e.estado||'Pendiente');}
   } else {
-    sv('sky-fecha',hoy());sv('sky-num-venta','');sv('sky-num-guia','');sv('sky-transportadora','Servientrega');sv('sky-valor','');sv('sky-producto','');sv('sky-fuente','skydropx');sv('sky-estado','Pendiente');
+    sv('sky-fecha',hoy());sv('sky-num-venta','');sv('sky-num-guia','');sv('sky-transportadora','Servientrega');sv('sky-valor','');sv('sky-producto','');sv('sky-fuente',defaultWallet);sv('sky-estado','Pendiente');
   }
   document.getElementById('modal-envio-sky-title').textContent=id?'Editar Envío':'Registrar Envío Skydropx';
   openModal('modal-envio-sky');
@@ -627,7 +740,7 @@ async function saveNuevaBilletera() {
     showToast(`Billetera "${nombre}" actualizada`,'success');
   } else {
     const id='bw_'+uid();
-    bws.push({id,nombre,tipo,color,es_banco:esBanco,fecha:hoy()});
+    bws.push({id,nombre,tipo,color,es_banco:esBanco,activa:true,fecha:hoy()});
     await DB.saveBilleteras(bws);
     saldos[id]=saldo; await DB.saveSaldos(saldos);
     FUENTES_LABEL[id]=nombre;
@@ -637,27 +750,97 @@ async function saveNuevaBilletera() {
   }
 }
 async function actualizarSelectsFuente() {
-  const [bws,tiendas]=await Promise.all([DB.billeteras(),DB.tiendas()]);
+  const [bws,tiendas,saldos]=await Promise.all([DB.billeteras(),DB.tiendas(),DB.saldos()]);
+  const activas = bws.filter(b=>b.activa!==false && !saldos['_oculta_'+b.id]);
+  const saldoTxt = key => fmt(parseFloat(saldos[key])||0);
   const opts=`<option value="">— Seleccionar —</option>`
-    +tiendas.map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`).join('')
-    +`<option value="skydropx">Skydropx</option>`
-    +bws.map(b=>`<option value="${b.id}">${b.nombre}</option>`).join('');
+    +tiendas.filter(t=>!saldos['_oculta_mercadopago_'+t.id]).map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre} — ${saldoTxt('mercadopago_'+t.id)}</option>`).join('')
+    +(saldos['_oculta_skydropx'] ? '' : `<option value="skydropx">Skydropx — ${saldoTxt('skydropx')}</option>`)
+    +activas.map(b=>`<option value="${b.id}">${b.nombre} — ${saldoTxt(b.id)}</option>`).join('');
   ['v-fuente-pago','mov-fuente'].forEach(id=>{const el=document.getElementById(id);if(el){const cur=el.value;el.innerHTML=opts;el.value=cur||'';}});
+}
+
+// ── BILLETERA PREDETERMINADA PARA ENVÍOS EXTERNOS (Configuración) ──
+async function cargarBilleteraDefaultEnConfig() {
+  const sel = document.getElementById('cfg-billetera-default');
+  if (!sel) return;
+  const [bws,tiendas,ajustes] = await Promise.all([DB.billeteras(),DB.tiendas(),DB.ajustes()]);
+  const activas = bws.filter(b=>b.activa!==false);
+  const opts=[
+    `<option value="">Sin predeterminada</option>`,
+    `<option value="skydropx">Skydropx (saldo propio)</option>`,
+    ...tiendas.map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`),
+    ...activas.map(b=>`<option value="${b.id}">${b.nombre}</option>`),
+  ].join('');
+  sel.innerHTML = opts;
+  sel.value = (ajustes && ajustes.billetera_default_envios) || '';
+}
+async function guardarBilleteraDefault() {
+  const sel = document.getElementById('cfg-billetera-default');
+  if (!sel) return;
+  const ajustes = await DB.ajustes();
+  ajustes.billetera_default_envios = sel.value || '';
+  await DB.saveAjustes(ajustes);
+  showToast('Billetera predeterminada guardada', 'success', 1800);
+}
+
+// ── Lista de meses abiertos (no cerrados) para el selector "Afecta la ganancia de" ──
+async function _mesesAbiertosParaSelect() {
+  const cierres = await _getCierres();
+  const cerrados = new Set(cierres.map(c=>c.mes));
+  const meses = Array.from({length:12},(_,i)=>{ const d=new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7); });
+  return meses.filter(m=>!cerrados.has(m));
 }
 
 // ── MOVIMIENTOS MANUALES ──
 async function openModalMovimiento(id) {
   const [movList,bws,tiendas]=await Promise.all([DB.movimientos(),DB.billeteras(),DB.tiendas()]);
   const mov=id?movList.find(x=>x.id===id):null;
-  const opts=tiendas.map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`).join('')
+  const isSkyAuto = !!(mov && mov._sky_id);
+  const activas = bws.filter(b=>b.activa!==false);
+  let opts=tiendas.map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`).join('')
     +`<option value="skydropx">Skydropx</option>`
-    +bws.map(b=>`<option value="${b.id}">${b.nombre}</option>`).join('');
+    +activas.map(b=>`<option value="${b.id}">${b.nombre}</option>`).join('');
+  if (mov && mov.fuente && !opts.includes(`value="${mov.fuente}"`)) {
+    const bDesact = bws.find(b=>b.id===mov.fuente);
+    if (bDesact) opts += `<option value="${bDesact.id}">${bDesact.nombre} (desactivada)</option>`;
+  }
   document.getElementById('mov-fuente').innerHTML=opts;
-  document.getElementById('mov-title').textContent=mov?'Editar Movimiento':'Nuevo Movimiento';
+  document.getElementById('mov-title').textContent=mov?(isSkyAuto?'Reasignar billetera · Envío externo':'Editar Movimiento'):'Nuevo Movimiento';
   sv('mov-fecha',mov?.fecha||hoy());sv('mov-tipo',mov?.tipo||'egreso');
   sv('mov-fuente',mov?.fuente||'');sv('mov-valor',mov?.valor||'');
   sv('mov-concepto',mov?.concepto||'');sv('mov-notas',mov?.notas||'');
   document.getElementById('modal-movimiento')._editId=id||null;
+
+  // En movimientos automáticos de envíos externos solo se puede reasignar la billetera (fuente).
+  // El monto se edita únicamente desde el apartado Envíos Externos.
+  ['mov-fecha','mov-tipo','mov-valor','mov-concepto','mov-notas'].forEach(fid=>{
+    const el=document.getElementById(fid);
+    if(el) el.disabled = isSkyAuto;
+  });
+  const avisoEl = document.getElementById('mov-sky-aviso');
+  if (avisoEl) avisoEl.style.display = isSkyAuto ? '' : 'none';
+
+  // Selector "Afecta la ganancia de" — solo para movimientos manuales
+  const afectaWrap = document.getElementById('mov-afecta-mes-wrap');
+  const afectaSel  = document.getElementById('mov-afecta-mes');
+  if (afectaWrap && afectaSel) {
+    if (isSkyAuto) {
+      afectaWrap.style.display = 'none';
+    } else {
+      afectaWrap.style.display = '';
+      const mesesAbiertosSet = new Set(await _mesesAbiertosParaSelect());
+      let mesesOpciones = Array.from(mesesAbiertosSet);
+      // Si el movimiento ya estaba etiquetado a un mes que ahora está cerrado, mantenerlo visible
+      if (mov?.afecta_ganancia_mes && !mesesAbiertosSet.has(mov.afecta_ganancia_mes)) {
+        mesesOpciones = [mov.afecta_ganancia_mes, ...mesesOpciones];
+      }
+      afectaSel.innerHTML = `<option value="">No afecta la ganancia de ningún mes</option>`
+        + mesesOpciones.map(m=>`<option value="${m}">${_mesLabel(m)}${!mesesAbiertosSet.has(m)?' (cerrado)':''}</option>`).join('');
+      afectaSel.value = mov?.afecta_ganancia_mes || '';
+    }
+  }
+
   openModal('modal-movimiento');
   setTimeout(_actualizarPreviewMovimiento, 50);
 }
@@ -689,15 +872,25 @@ async function saveMovimiento() {
   const errEl = document.getElementById('mov-err');
   if (errEl) errEl.textContent = '';
 
-  const valor=_parseNum(gv('mov-valor'))||0,concepto=gv('mov-concepto').trim();
-  const tipo = gv('mov-tipo'), fuente = gv('mov-fuente');
+  const id=document.getElementById('modal-movimiento')._editId||uid();
+  const movs = await DB.movimientos();
+  const movAnterior = movs.find(m => m.id === id);
+  const isSkyAuto = !!(movAnterior && movAnterior._sky_id);
+
+  // En movimientos automáticos de envíos externos solo se puede reasignar la fuente;
+  // el monto, tipo, fecha y concepto se mantienen tal cual estaban (se editan desde Envíos Externos).
+  const valor    = isSkyAuto ? (parseFloat(movAnterior.valor)||0) : (_parseNum(gv('mov-valor'))||0);
+  const concepto = isSkyAuto ? movAnterior.concepto : gv('mov-concepto').trim();
+  const notas    = isSkyAuto ? movAnterior.notas : gv('mov-notas');
+  const tipo     = isSkyAuto ? movAnterior.tipo : gv('mov-tipo');
+  const fecha    = isSkyAuto ? movAnterior.fecha : gv('mov-fecha');
+  const fuente   = gv('mov-fuente');
+  const afectaMes = isSkyAuto ? undefined : (gv('mov-afecta-mes') || undefined);
+
   if(!valor){ if(errEl) errEl.textContent='Ingresa el valor.'; showToast('Ingresa el valor.','error');return;}
   if(!concepto){ if(errEl) errEl.textContent='Ingresa un concepto.'; showToast('Ingresa un concepto.','error');return;}
   if(!fuente){ if(errEl) errEl.textContent='Selecciona una fuente.'; showToast('Selecciona una fuente.','error');return;}
 
-  const id=document.getElementById('modal-movimiento')._editId||uid();
-  const movs = await DB.movimientos();
-  const movAnterior = movs.find(m => m.id === id);
   const saldos = await DB.saldos();
 
   // Calcular el saldo disponible en la fuente, revirtiendo primero el efecto anterior si se está editando
@@ -733,9 +926,24 @@ async function saveMovimiento() {
   }
   await DB.saveSaldos(saldos);
 
-  await DB.upsertMovimiento({id,fecha:gv('mov-fecha'),tipo,fuente,valor,concepto,notas:gv('mov-notas'),fecha_registro:new Date().toISOString()});
+  const payload = {id,fecha,tipo,fuente,valor,concepto,notas,fecha_registro:movAnterior?.fecha_registro||new Date().toISOString()};
+  if (isSkyAuto) payload._sky_id = movAnterior._sky_id;
+  if (afectaMes) payload.afecta_ganancia_mes = afectaMes;
+  await DB.upsertMovimiento(payload);
+
+  // Si es un movimiento automático de envío externo y cambió la billetera, sincronizar envios_sky
+  if (isSkyAuto && movAnterior.fuente !== fuente) {
+    const envios = await DB.envios_sky();
+    const e = envios.find(x => x.id === movAnterior._sky_id);
+    if (e) { e.fuente_pago = fuente; await DB.upsertEnvioSky(e); }
+  }
+
   closeModal('modal-movimiento');
   await renderFinanzas();
+  if (typeof _renderEnviosSkyPanel === 'function') {
+    const panel = document.getElementById('panel-env-externos');
+    if (panel && panel.style.display !== 'none') await _renderEnviosSkyPanel();
+  }
   showToast(movAnterior ? 'Movimiento actualizado' : 'Movimiento registrado', 'success', 2000);
 }
 
@@ -772,7 +980,7 @@ async function _listaFuentesTransfer() {
 
 async function openModalTransferencia() {
   const fuentes = await _listaFuentesTransfer();
-  const opts = fuentes.map(f => `<option value="${f.key}" data-es-banco="${f.es_banco}">${f.nombre}${f.es_banco?' 🏦':''}</option>`).join('');
+  const opts = fuentes.map(f => `<option value="${f.key}" data-es-banco="${f.es_banco}">${f.nombre}</option>`).join('');
   document.getElementById('tr-origen').innerHTML  = opts;
   document.getElementById('tr-destino').innerHTML = opts;
   if (fuentes.length > 1) document.getElementById('tr-destino').selectedIndex = 1;
@@ -811,10 +1019,18 @@ async function _actualizarBancoTransfer() {
     avisoEl.style.display = 'none';
   }
 
-  // ── Previsualización de saldos ──
-  const previewEl = document.getElementById('tr-preview');
   const origenKey  = origenSel.value;
   const destinoKey = destinoSel.value;
+  const saldos = await DB.saldos();
+
+  // ── Saldo actual de cada billetera seleccionada, siempre visible y en vivo ──
+  const origenSaldoEl  = document.getElementById('tr-origen-saldo');
+  const destinoSaldoEl = document.getElementById('tr-destino-saldo');
+  if (origenSaldoEl)  origenSaldoEl.textContent  = origenKey  ? `Saldo actual: ${fmt(parseFloat(saldos[origenKey])||0)}`  : '';
+  if (destinoSaldoEl) destinoSaldoEl.textContent = destinoKey ? `Saldo actual: ${fmt(parseFloat(saldos[destinoKey])||0)}` : '';
+
+  // ── Previsualización de saldos (antes/después de la transferencia) ──
+  const previewEl = document.getElementById('tr-preview');
   const valor = _parseNum(document.getElementById('tr-valor').value) || 0;
 
   if (!origenKey || !destinoKey || origenKey === destinoKey) {
@@ -822,7 +1038,6 @@ async function _actualizarBancoTransfer() {
     return;
   }
 
-  const saldos = await DB.saldos();
   const saldoOrigenAntes  = parseFloat(saldos[origenKey])  || 0;
   const saldoDestinoAntes = parseFloat(saldos[destinoKey]) || 0;
   // Misma regla que guardarTransferencia: si ambos son banco, depende del día hábil/hora; si no, siempre inmediato
