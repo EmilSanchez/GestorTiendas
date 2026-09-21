@@ -394,8 +394,31 @@ function _iniciarUsrUptimeTicker() {
 // HISTORIAL DE INGRESOS AL SISTEMA
 // ══════════════════════════════════════════════════════════
 function openModalHistorialIngresos() {
+  _poblarFiltroUsuarioHistorial();
   _renderHistorialIngresos();
   openModal('modal-historial-ingresos');
+}
+
+// Llena el selector de usuario del historial con los usuarios registrados
+function _poblarFiltroUsuarioHistorial() {
+  const sel = document.getElementById('hist-filtro-usuario');
+  if (!sel) return;
+  const cur = sel.value;
+  const opts = [`<option value="">Todos los usuarios</option>`]
+    .concat((_usrTablaData||[]).map(u => `<option value="${u.uid}">${u.nombre}</option>`));
+  sel.innerHTML = opts.join('');
+  if (cur && Array.from(sel.options).some(o => o.value === cur)) sel.value = cur;
+}
+
+// Limpia los filtros del historial y vuelve a mostrarlo completo
+function _limpiarFiltroHistorial() {
+  const sel   = document.getElementById('hist-filtro-usuario');
+  const desde = document.getElementById('hist-filtro-desde');
+  const hasta = document.getElementById('hist-filtro-hasta');
+  if (sel)   sel.value   = '';
+  if (desde) desde.value = '';
+  if (hasta) hasta.value = '';
+  _renderHistorialIngresos();
 }
 
 function _renderHistorialIngresos() {
@@ -403,10 +426,24 @@ function _renderHistorialIngresos() {
   const vacioEl = document.getElementById('historial-ingresos-vacio');
   if (!listEl) return;
 
-  const eventos = _cache.accesos || [];
+  const filtroUsuario = document.getElementById('hist-filtro-usuario')?.value || '';
+  const filtroDesde   = document.getElementById('hist-filtro-desde')?.value   || '';
+  const filtroHasta   = document.getElementById('hist-filtro-hasta')?.value   || '';
+
+  let eventos = _cache.accesos || [];
+  if (filtroUsuario) eventos = eventos.filter(ev => ev.uid === filtroUsuario);
+  if (filtroDesde) {
+    const desdeTs = new Date(filtroDesde + 'T00:00:00').getTime();
+    eventos = eventos.filter(ev => ev.ts >= desdeTs);
+  }
+  if (filtroHasta) {
+    const hastaTs = new Date(filtroHasta + 'T23:59:59').getTime();
+    eventos = eventos.filter(ev => ev.ts <= hastaTs);
+  }
+
   if (!eventos.length) {
     listEl.innerHTML = '';
-    if (vacioEl) vacioEl.style.display = '';
+    if (vacioEl) { vacioEl.style.display = ''; vacioEl.textContent = (filtroUsuario||filtroDesde||filtroHasta) ? 'No hay eventos que coincidan con el filtro.' : 'Aún no hay eventos de ingreso registrados.'; }
     return;
   }
   if (vacioEl) vacioEl.style.display = 'none';

@@ -22,13 +22,20 @@ function _mesLabel(ym) {
 
 // ── RENDER PRINCIPAL ──
 async function renderFinanzas() {
-  await _procesarTransferenciasPendientes();
+  // El dinero de una transferencia pendiente NUNCA se acredita solo: el usuario debe
+  // presionar "Llegó" en la tarjeta de pendientes (ver _renderPendientesTransfer / marcarTransferenciaLlegada).
   await _renderPendientesTransfer();
   if (typeof renderCierresMes_Fin === 'function') await renderCierresMes_Fin();
   const [movs, saldos, billeteras, tiendas, ventas, enviosSky] = await Promise.all([
     DB.movimientos(), DB.saldos(), DB.billeteras(), DB.tiendas(), DB.ventas(), DB.envios_sky()
   ]);
   _finTiendas = tiendas;
+
+  // Transferencias pendientes cuyo destino sigue siendo una billetera visible — alimenta
+  // el "+ falta por llegar" que se muestra junto al saldo total de Billeteras.
+  const totalPendienteVisible = movs
+    .filter(m => m.tipo === 'transferencia' && m.pendiente && _esFuenteVisible(m.fuente_destino, saldos, billeteras, tiendas))
+    .reduce((s,m) => s + (parseFloat(m.valor)||0), 0);
 
   // Ganancia del mes actual (ventas - envíos sky - egresos externos)
   const mesAct2 = (document.getElementById('fin-filtro-mes')?.value) || mes();
@@ -74,17 +81,7 @@ async function renderFinanzas() {
   }
   const mesAct = mesEl?.value || mes();
 
-  // Saldo total
-  const saldoTotalEl = document.getElementById('fin-saldo-total');
-  if (saldoTotalEl) {
-    const totalSaldo = Object.entries(saldos)
-      .filter(([k]) => !k.startsWith('_'))
-      .reduce((s,[,v]) => s + (parseFloat(v)||0), 0);
-    _countUp(saldoTotalEl, totalSaldo);
-    saldoTotalEl.style.color = totalSaldo >= 0 ? 'var(--teal)' : 'var(--red)';
-  }
-
-  _renderBilleteras(saldos, billeteras, tiendas);
+  _renderBilleteras(saldos, billeteras, tiendas, totalPendienteVisible);
 
   const movMes = movs.filter(m=>m.fecha?.startsWith(mesAct)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
   _renderMovimientos(movMes, mesAct);
@@ -109,17 +106,28 @@ function _walletRowHtml({ key, onClick, iconHtml, iconBg, nombre, esBanco, tipo,
     </tr>`;
 }
 
-function _renderBilleteras(saldos, billeteras, tiendas) {
+// ¿Esta fuente/billetera está visible (no oculta ni desactivada) ahora mismo?
+function _esFuenteVisible(key, saldos, billeteras, tiendas) {
+  if (!key) return false;
+  if (key === 'skydropx') return !saldos['_oculta_skydropx'];
+  if (key.startsWith('mercadopago_')) return !saldos['_oculta_'+key];
+  const b = billeteras.find(x => x.id === key);
+  return !!b && b.activa !== false && !saldos['_oculta_'+key];
+}
+
+function _renderBilleteras(saldos, billeteras, tiendas, totalPendiente = 0) {
   const el = document.getElementById('fin-billeteras');
   if (!el) return;
 
   const ocultasFijas = []; // {key,nombre,tipo,iconHtml,iconBg}
   const filas = [];
+  let totalVisible = 0; // Suma de saldos, solo billeteras visibles (no ocultas/desactivadas)
 
   // Skydropx — fija
   if (!saldos['_oculta_skydropx']) {
     const skySaldo   = parseFloat(saldos['skydropx'])||0;
     const skyEsBanco = !!saldos['_es_banco_skydropx'];
+    totalVisible += skySaldo;
     filas.push(_walletRowHtml({
       onClick: `openModalEditarSaldo('skydropx','Skydropx',${skySaldo})`,
       iconHtml: _FIN_ICON.truck, iconBg:'#6366f1', nombre:'Skydropx', esBanco:skyEsBanco,
@@ -143,6 +151,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
     }
     const s = parseFloat(saldos[key])||0;
     const esBanco = !!saldos['_es_banco_'+key];
+    totalVisible += s;
     const iconHtml = t.foto
       ? `<img src="${t.foto}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;">`
       : _FIN_ICON.mp;
@@ -165,6 +174,7 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
 
   activas.forEach(b => {
     const s = parseFloat(saldos[b.id])||0;
+    totalVisible += s;
     filas.push(_walletRowHtml({
       onClick: `openModalEditarSaldo('${b.id}','${b.nombre.replace(/'/g,"\\'")}',${s})`,
       iconHtml: _FIN_ICON.wallet, iconBg:b.color||'#6b7280', nombre:b.nombre, esBanco:!!b.es_banco,
@@ -195,6 +205,22 @@ function _renderBilleteras(saldos, billeteras, tiendas) {
     const val = parseFloat(node.dataset.saldoAnim) || 0;
     _countUp(node, val);
   });
+
+  // Saldo total — solo billeteras visibles (excluye ocultas y desactivadas)
+  const totalEl = document.getElementById('fin-billeteras-total');
+  if (totalEl) {
+    totalEl.style.color = totalVisible >= 0 ? 'var(--teal)' : 'var(--red)';
+    _countUp(totalEl, totalVisible);
+  }
+  const pendEl = document.getElementById('fin-billeteras-pendiente');
+  if (pendEl) {
+    if (totalPendiente > 0) {
+      pendEl.style.display = '';
+      pendEl.textContent = `+ ${fmt(totalPendiente)} falta por llegar`;
+    } else {
+      pendEl.style.display = 'none';
+    }
+  }
 
   // Botón "Billeteras ocultas"
   _finFijasOcultas = ocultasFijas;
@@ -757,13 +783,18 @@ async function actualizarSelectsFuente() {
     +tiendas.filter(t=>!saldos['_oculta_mercadopago_'+t.id]).map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre} — ${saldoTxt('mercadopago_'+t.id)}</option>`).join('')
     +(saldos['_oculta_skydropx'] ? '' : `<option value="skydropx">Skydropx — ${saldoTxt('skydropx')}</option>`)
     +activas.map(b=>`<option value="${b.id}">${b.nombre} — ${saldoTxt(b.id)}</option>`).join('');
-  ['v-fuente-pago','mov-fuente'].forEach(id=>{const el=document.getElementById(id);if(el){const cur=el.value;el.innerHTML=opts;el.value=cur||'';}});
+  // mov-fuente se maneja aparte con _populateMovFuente (conserva la opción "oculta/desactivada" seleccionada)
+  ['v-fuente-pago'].forEach(id=>{const el=document.getElementById(id);if(el){const cur=el.value;el.innerHTML=opts;el.value=cur||'';}});
 }
 
-// ── BILLETERA PREDETERMINADA PARA ENVÍOS EXTERNOS (Configuración) ──
+// ── BILLETERAS PREDETERMINADAS PARA ENVÍOS (Configuración) ──
+// Son dos ajustes independientes: "Envíos externos" (Skydropx / registrados
+// desde una venta) y "Servientrega" (Validar Envío, Registrar pago de envío).
+// No comparten billetera porque en la práctica se pagan desde cuentas distintas.
 async function cargarBilleteraDefaultEnConfig() {
-  const sel = document.getElementById('cfg-billetera-default');
-  if (!sel) return;
+  const sel    = document.getElementById('cfg-billetera-default');
+  const selSt  = document.getElementById('cfg-billetera-default-servientrega');
+  if (!sel && !selSt) return;
   const [bws,tiendas,ajustes] = await Promise.all([DB.billeteras(),DB.tiendas(),DB.ajustes()]);
   const activas = bws.filter(b=>b.activa!==false);
   const opts=[
@@ -772,8 +803,8 @@ async function cargarBilleteraDefaultEnConfig() {
     ...tiendas.map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`),
     ...activas.map(b=>`<option value="${b.id}">${b.nombre}</option>`),
   ].join('');
-  sel.innerHTML = opts;
-  sel.value = (ajustes && ajustes.billetera_default_envios) || '';
+  if (sel)   { sel.innerHTML   = opts; sel.value   = (ajustes && ajustes.billetera_default_envios)        || ''; }
+  if (selSt) { selSt.innerHTML = opts; selSt.value = (ajustes && ajustes.billetera_default_servientrega)   || ''; }
 }
 async function guardarBilleteraDefault() {
   const sel = document.getElementById('cfg-billetera-default');
@@ -783,45 +814,94 @@ async function guardarBilleteraDefault() {
   await DB.saveAjustes(ajustes);
   showToast('Billetera predeterminada guardada', 'success', 1800);
 }
+async function guardarBilleteraDefaultServientrega() {
+  const sel = document.getElementById('cfg-billetera-default-servientrega');
+  if (!sel) return;
+  const ajustes = await DB.ajustes();
+  ajustes.billetera_default_servientrega = sel.value || '';
+  await DB.saveAjustes(ajustes);
+  showToast('Billetera predeterminada guardada', 'success', 1800);
+}
 
-// ── Lista de meses abiertos (no cerrados) para el selector "Afecta la ganancia de" ──
-async function _mesesAbiertosParaSelect() {
-  const cierres = await _getCierres();
+// ── Lista de meses que tienen ventas registradas, indicando si están cerrados,
+//    para el selector "Afecta la ganancia de" (más reciente primero) ──
+async function _mesesConVentasParaSelect() {
+  const [ventas, cierres] = await Promise.all([DB.ventas(), _getCierres()]);
   const cerrados = new Set(cierres.map(c=>c.mes));
-  const meses = Array.from({length:12},(_,i)=>{ const d=new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7); });
-  return meses.filter(m=>!cerrados.has(m));
+  const mesesSet = new Set();
+  ventas.forEach(v => { const m = (v.fecha_venta||'').slice(0,7); if (m) mesesSet.add(m); });
+  return Array.from(mesesSet)
+    .sort((a,b)=>b.localeCompare(a))
+    .map(mes => ({ mes, cerrado: cerrados.has(mes) }));
+}
+
+// Llena el selector de fuente/cuenta del movimiento manual, ocultando billeteras
+// marcadas como ocultas y mostrando el saldo real de cada una en vivo.
+async function _populateMovFuente(selected) {
+  const sel = document.getElementById('mov-fuente');
+  if (!sel) return;
+  const [billeteras, tiendas, saldos] = await Promise.all([DB.billeteras(), DB.tiendas(), DB.saldos()]);
+  const activas = billeteras.filter(b => b.activa !== false && !saldos['_oculta_'+b.id]);
+  const saldoTxt = key => fmt(parseFloat(saldos[key])||0);
+  let opts = [
+    `<option value="">— Seleccionar —</option>`,
+    ...tiendas.filter(t => !saldos['_oculta_mercadopago_'+t.id]).map(t => `<option value="mercadopago_${t.id}" data-nombre="MP · ${t.nombre}">MP · ${t.nombre} — ${saldoTxt('mercadopago_'+t.id)}</option>`),
+    ...(saldos['_oculta_skydropx'] ? [] : [`<option value="skydropx" data-nombre="Skydropx">Skydropx — ${saldoTxt('skydropx')}</option>`]),
+    ...activas.map(b => `<option value="${b.id}" data-nombre="${b.nombre}">${b.nombre} — ${saldoTxt(b.id)}</option>`),
+  ];
+  // Si la fuente seleccionada (p.ej. al editar) es una billetera oculta o desactivada, mantenerla visible
+  if (selected && !opts.some(o => o.includes(`value="${selected}"`))) {
+    if (selected === 'skydropx') {
+      opts.push(`<option value="skydropx" data-nombre="Skydropx">Skydropx (oculta) — ${saldoTxt('skydropx')}</option>`);
+    } else if (selected.startsWith('mercadopago_')) {
+      const t = tiendas.find(x => 'mercadopago_'+x.id === selected);
+      if (t) opts.push(`<option value="${selected}" data-nombre="MP · ${t.nombre}">MP · ${t.nombre} (oculta) — ${saldoTxt(selected)}</option>`);
+    } else {
+      const bDesact = billeteras.find(b => b.id === selected);
+      if (bDesact) opts.push(`<option value="${bDesact.id}" data-nombre="${bDesact.nombre}">${bDesact.nombre} (${bDesact.activa===false?'desactivada':'oculta'}) — ${saldoTxt(selected)}</option>`);
+    }
+  }
+  sel.innerHTML = opts.join('');
+  sel.value = selected && Array.from(sel.options).some(o => o.value === selected) ? selected : '';
+}
+
+// Refresca en vivo el select de fuente/cuenta del modal Movimiento cuando cambian los saldos
+function _refrescarMovFuenteEnVivo() {
+  const sel = document.getElementById('mov-fuente');
+  if (sel && document.getElementById('modal-movimiento')?.classList.contains('open')) _populateMovFuente(sel.value);
+}
+
+// Muestra el aviso si el mes seleccionado en "Afecta la ganancia de" ya está cerrado
+function _checkMesCerradoSeleccionado() {
+  const sel = document.getElementById('mov-afecta-mes');
+  if (!sel) return;
+  const opt = sel.selectedOptions[0];
+  if (opt && opt.dataset.cerrado === '1') openModal('modal-mes-cerrado-aviso');
 }
 
 // ── MOVIMIENTOS MANUALES ──
 async function openModalMovimiento(id) {
-  const [movList,bws,tiendas]=await Promise.all([DB.movimientos(),DB.billeteras(),DB.tiendas()]);
+  const movList = await DB.movimientos();
   const mov=id?movList.find(x=>x.id===id):null;
   const isSkyAuto = !!(mov && mov._sky_id);
-  const activas = bws.filter(b=>b.activa!==false);
-  let opts=tiendas.map(t=>`<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`).join('')
-    +`<option value="skydropx">Skydropx</option>`
-    +activas.map(b=>`<option value="${b.id}">${b.nombre}</option>`).join('');
-  if (mov && mov.fuente && !opts.includes(`value="${mov.fuente}"`)) {
-    const bDesact = bws.find(b=>b.id===mov.fuente);
-    if (bDesact) opts += `<option value="${bDesact.id}">${bDesact.nombre} (desactivada)</option>`;
-  }
-  document.getElementById('mov-fuente').innerHTML=opts;
+
+  await _populateMovFuente(mov?.fuente || '');
   document.getElementById('mov-title').textContent=mov?(isSkyAuto?'Reasignar billetera · Envío externo':'Editar Movimiento'):'Nuevo Movimiento';
   sv('mov-fecha',mov?.fecha||hoy());sv('mov-tipo',mov?.tipo||'egreso');
-  sv('mov-fuente',mov?.fuente||'');sv('mov-valor',mov?.valor||'');
-  sv('mov-concepto',mov?.concepto||'');sv('mov-notas',mov?.notas||'');
+  sv('mov-valor',mov?.valor||'');sv('mov-concepto',mov?.concepto||'');
   document.getElementById('modal-movimiento')._editId=id||null;
 
   // En movimientos automáticos de envíos externos solo se puede reasignar la billetera (fuente).
   // El monto se edita únicamente desde el apartado Envíos Externos.
-  ['mov-fecha','mov-tipo','mov-valor','mov-concepto','mov-notas'].forEach(fid=>{
+  ['mov-fecha','mov-tipo','mov-valor','mov-concepto'].forEach(fid=>{
     const el=document.getElementById(fid);
     if(el) el.disabled = isSkyAuto;
   });
   const avisoEl = document.getElementById('mov-sky-aviso');
   if (avisoEl) avisoEl.style.display = isSkyAuto ? '' : 'none';
 
-  // Selector "Afecta la ganancia de" — solo para movimientos manuales
+  // Selector "Afecta la ganancia de" — solo para movimientos manuales.
+  // Solo lista meses con ventas registradas, marcando si están cerrados o no.
   const afectaWrap = document.getElementById('mov-afecta-mes-wrap');
   const afectaSel  = document.getElementById('mov-afecta-mes');
   if (afectaWrap && afectaSel) {
@@ -829,14 +909,14 @@ async function openModalMovimiento(id) {
       afectaWrap.style.display = 'none';
     } else {
       afectaWrap.style.display = '';
-      const mesesAbiertosSet = new Set(await _mesesAbiertosParaSelect());
-      let mesesOpciones = Array.from(mesesAbiertosSet);
-      // Si el movimiento ya estaba etiquetado a un mes que ahora está cerrado, mantenerlo visible
-      if (mov?.afecta_ganancia_mes && !mesesAbiertosSet.has(mov.afecta_ganancia_mes)) {
-        mesesOpciones = [mov.afecta_ganancia_mes, ...mesesOpciones];
+      let mesesInfo = await _mesesConVentasParaSelect();
+      // Si el movimiento ya estaba etiquetado a un mes sin ventas registradas (caso legacy), mantenerlo visible
+      if (mov?.afecta_ganancia_mes && !mesesInfo.some(x=>x.mes===mov.afecta_ganancia_mes)) {
+        const cerrados = new Set((await _getCierres()).map(c=>c.mes));
+        mesesInfo = [{ mes: mov.afecta_ganancia_mes, cerrado: cerrados.has(mov.afecta_ganancia_mes) }, ...mesesInfo];
       }
       afectaSel.innerHTML = `<option value="">No afecta la ganancia de ningún mes</option>`
-        + mesesOpciones.map(m=>`<option value="${m}">${_mesLabel(m)}${!mesesAbiertosSet.has(m)?' (cerrado)':''}</option>`).join('');
+        + mesesInfo.map(({mes,cerrado})=>`<option value="${mes}" data-cerrado="${cerrado?'1':'0'}">${_mesLabel(mes)} · ${cerrado?'Cerrado':'Abierto'}</option>`).join('');
       afectaSel.value = mov?.afecta_ganancia_mes || '';
     }
   }
@@ -859,7 +939,7 @@ async function _actualizarPreviewMovimiento() {
   const esIngreso = tipo === 'ingreso';
   const saldoDespues = esIngreso ? saldoAntes + valor : saldoAntes - valor;
 
-  const nombreFuente = fuenteSel.selectedOptions[0]?.textContent.trim() || fuenteKey;
+  const nombreFuente = fuenteSel.selectedOptions[0]?.dataset.nombre || fuenteKey;
   document.getElementById('mov-preview-fuente-label').textContent = nombreFuente;
   document.getElementById('mov-preview-antes').textContent = fmt(saldoAntes);
   const despuesEl = document.getElementById('mov-preview-despues');
@@ -881,7 +961,7 @@ async function saveMovimiento() {
   // el monto, tipo, fecha y concepto se mantienen tal cual estaban (se editan desde Envíos Externos).
   const valor    = isSkyAuto ? (parseFloat(movAnterior.valor)||0) : (_parseNum(gv('mov-valor'))||0);
   const concepto = isSkyAuto ? movAnterior.concepto : gv('mov-concepto').trim();
-  const notas    = isSkyAuto ? movAnterior.notas : gv('mov-notas');
+  const notas    = movAnterior?.notas || ''; // El campo "Notas" ya no está en el formulario; se conserva el valor histórico si existía
   const tipo     = isSkyAuto ? movAnterior.tipo : gv('mov-tipo');
   const fecha    = isSkyAuto ? movAnterior.fecha : gv('mov-fecha');
   const fuente   = gv('mov-fuente');
@@ -903,7 +983,7 @@ async function saveMovimiento() {
   // Validar saldo suficiente si es egreso
   if (tipo === 'egreso' && valor > saldoDisponible) {
     const fuenteSel = document.getElementById('mov-fuente');
-    const nombreFuente = fuenteSel?.selectedOptions[0]?.textContent.trim() || fuente;
+    const nombreFuente = fuenteSel?.selectedOptions[0]?.dataset.nombre || fuente;
     const msg = `Saldo insuficiente en ${nombreFuente} (disponible: ${fmt(saldoDisponible)}).`;
     if (errEl) errEl.textContent = msg;
     showToast(msg, 'error', 3000);
@@ -1159,7 +1239,11 @@ async function _renderPendientesTransfer() {
   const fuentes = await _listaFuentesTransfer();
   const nombreFuente = (key) => fuentes.find(f => f.key === key)?.nombre || key;
 
-  listEl.innerHTML = pendientes.map(m => `
+  listEl.innerHTML = pendientes.map(m => {
+    // El botón "Llegó" solo aparece a partir del día hábil en que el dinero debe llegar —
+    // el dinero nunca se acredita solo, siempre requiere esta confirmación manual.
+    const yaDisponible = (m.fecha_disponible||'') <= hoy();
+    return `
     <div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);">
       <span style="width:24px;height:24px;border-radius:50%;background:var(--yellow-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -1169,26 +1253,25 @@ async function _renderPendientesTransfer() {
         <div style="font-size:10px;color:var(--text3);margin-top:1px;">${m.notas ? m.notas + ' · ' : ''}Disponible el <strong style="color:var(--yellow);">${fmtFecha(m.fecha_disponible)}</strong></div>
       </div>
       <span style="font-size:13px;font-weight:800;color:var(--yellow);white-space:nowrap;">${fmt(m.valor)}</span>
+      ${yaDisponible ? `<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 10px;" onclick="marcarTransferenciaLlegada('${m.id}')">Llegó</button>` : ''}
       <button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
-// Revisa transferencias pendientes y las acredita si ya llegó su fecha disponible
-async function _procesarTransferenciasPendientes() {
+// Acredita manualmente una transferencia pendiente — el dinero nunca se acredita solo,
+// esto solo se ejecuta cuando el usuario presiona el botón "Llegó".
+async function marcarTransferenciaLlegada(id) {
   const movs = await DB.movimientos();
-  const pendientes = movs.filter(m => m.tipo === 'transferencia' && m.pendiente && m.fecha_disponible <= hoy());
-  if (!pendientes.length) return;
+  const m = movs.find(x => x.id === id && x.tipo === 'transferencia' && x.pendiente);
+  if (!m) return;
   const saldos = await DB.saldos();
-  let cambios = false;
-  for (const m of pendientes) {
-    saldos[m.fuente_destino] = (parseFloat(saldos[m.fuente_destino]) || 0) + (parseFloat(m.valor) || 0);
-    m.pendiente = false;
-    cambios = true;
-  }
-  if (cambios) {
-    await DB.saveSaldos(saldos);
-    await DB.saveMovimientos(movs);
-  }
+  saldos[m.fuente_destino] = (parseFloat(saldos[m.fuente_destino]) || 0) + (parseFloat(m.valor) || 0);
+  m.pendiente = false;
+  await DB.saveSaldos(saldos);
+  await DB.saveMovimientos(movs);
+  await renderFinanzas();
+  showToast('Transferencia acreditada', 'success', 2000);
 }
 
 

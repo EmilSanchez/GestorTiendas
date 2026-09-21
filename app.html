@@ -100,9 +100,15 @@
 
       <!-- Input valor real -->
       <div style="margin-bottom:6px;">
-        <label id="ve-input-label" style="font-size:11px;font-weight:700;color:#476060;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">
-          Valor REAL confirmado en Centris (COP$)
-        </label>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;">
+          <label id="ve-input-label" style="font-size:11px;font-weight:700;color:#476060;text-transform:uppercase;letter-spacing:.6px;">
+            Valor REAL confirmado (COP$)
+          </label>
+          <div id="ve-moneda-toggle" style="display:none;background:#eef3f3;border-radius:8px;padding:2px;gap:2px;flex-shrink:0;">
+            <button type="button" id="ve-moneda-usd" onclick="_setMonedaValidarEnvio('usd')" style="border:none;background:transparent;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:700;cursor:default;color:#476060;transition:.15s;">USD</button>
+            <button type="button" id="ve-moneda-cop" onclick="_setMonedaValidarEnvio('cop')" style="border:none;background:transparent;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:700;cursor:default;color:#476060;transition:.15s;">COP</button>
+          </div>
+        </div>
         <input type="text" inputmode="numeric" id="ve-input" placeholder="Ej: 19.000"
           style="width:100%;padding:12px 14px;border:2px solid #d8e4e3;border-radius:10px;
                  font-size:18px;font-weight:700;outline:none;color:#0d2020;
@@ -116,6 +122,14 @@
       <!-- Diferencia en tiempo real -->
       <div id="ve-diff-box" style="display:none;border-radius:8px;padding:8px 12px;margin-top:8px;text-align:center;">
         <span id="ve-diff-text" style="font-size:12px;font-weight:700;"></span>
+      </div>
+
+      <!-- Fuente de pago (solo Servientrega) -->
+      <div id="ve-fuente-wrap" style="display:none;margin-top:14px;">
+        <label style="font-size:11px;font-weight:700;color:#476060;text-transform:uppercase;letter-spacing:.6px;display:block;margin-bottom:6px;">
+          ¿De dónde saldrá el pago? *
+        </label>
+        <select id="ve-fuente" style="width:100%;padding:10px 12px;border:2px solid #d8e4e3;border-radius:10px;font-size:13px;font-family:inherit;outline:none;color:#0d2020;background:#fff;"></select>
       </div>
     </div>
 
@@ -554,17 +568,28 @@
           <div id="cfg-dolar-origen" style="font-size:11px;color:var(--text3);">Cargando...</div>
         </div>
 
-        <!-- Billetera predeterminada envíos externos -->
+        <!-- Billeteras predeterminadas para envíos -->
         <div class="card" style="margin:0;">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--teal)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12V22H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"/><path d="M20 12a2 2 0 0 0-2-2H4"/><circle cx="18" cy="17" r="2"/></svg>
-            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);">Billetera predeterminada · Envíos externos</span>
+            <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);">Billeteras predeterminadas · Envíos</span>
           </div>
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
-            <select id="cfg-billetera-default" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select>
-            <button class="btn btn-primary btn-sm" onclick="guardarBilleteraDefault()">Guardar</button>
+
+          <div style="margin-bottom:12px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;">Envíos externos <span class="c-dim" style="font-weight:400;">(Skydropx)</span></div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <select id="cfg-billetera-default" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select>
+              <button class="btn btn-primary btn-sm" onclick="guardarBilleteraDefault()">Guardar</button>
+            </div>
           </div>
-          <div style="font-size:11px;color:var(--text3);">Se preseleccionará automáticamente al registrar un envío externo (Skydropx).</div>
+
+          <div style="border-top:1px solid var(--border);padding-top:12px;">
+            <div style="font-size:11px;font-weight:600;color:var(--text2);margin-bottom:5px;">Servientrega</div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <select id="cfg-billetera-default-servientrega" style="flex:1;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select>
+              <button class="btn btn-primary btn-sm" onclick="guardarBilleteraDefaultServientrega()">Guardar</button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -633,18 +658,6 @@
       <!-- ══════ TAB: USUARIOS ══════ -->
       <div id="cfg-tab-usuarios" style="display:none;font-family:'Poppins',var(--font);">
 
-        <!-- Header -->
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
-          <div>
-            <div style="font-size:18px;color:var(--text);letter-spacing:-.3px;">Usuarios</div>
-            <div style="font-size:13px;color:var(--text3);margin-top:2px;">Administra las cuentas registradas en la aplicación</div>
-          </div>
-          <button class="btn btn-primary" onclick="openModalCrearUsuario()" style="display:flex;align-items:center;gap:6px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-            Nuevo usuario
-          </button>
-        </div>
-
         <!-- Toolbar -->
         <div class="card" style="margin:0 0 14px;padding:14px 16px;">
           <div style="display:flex;gap:10px;flex-wrap:wrap;">
@@ -663,6 +676,10 @@
             <button class="btn btn-ghost" onclick="_exportarUsuariosCSV()" style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
               <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               Exportar
+            </button>
+            <button class="btn btn-primary" onclick="openModalCrearUsuario()" style="display:flex;align-items:center;gap:6px;white-space:nowrap;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              Nuevo usuario
             </button>
           </div>
         </div>
@@ -831,7 +848,14 @@
 
           <!-- Billeteras -->
           <div class="card" style="margin:0;min-height:170px;flex-shrink:0;">
-            <div style="display:flex;align-items:center;justify-content:flex-end;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px;flex-wrap:wrap;">
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:2px;">Saldo total · Billeteras visibles</div>
+                <div style="display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;">
+                  <div id="fin-billeteras-total" class="td-mono" style="font-size:18px;font-weight:800;color:var(--teal);">$ 0</div>
+                  <div id="fin-billeteras-pendiente" class="td-mono" style="display:none;font-size:12px;font-weight:700;color:var(--yellow);"></div>
+                </div>
+              </div>
               <button id="fin-billeteras-desact-btn" class="btn btn-ghost btn-sm" style="display:none;font-size:11px;" onclick="_abrirModalBilleterasDesactivadas()">Billeteras ocultas</button>
             </div>
             <div id="fin-billeteras" style="overflow-x:auto;"></div>
@@ -1383,7 +1407,6 @@
   <div class="modal" style="max-width:480px;">
     <div class="mh">
       <div class="mh-title">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
         Transferir entre billeteras
       </div>
       <button class="mclose" onclick="closeModal('modal-transferencia')">✕</button>
@@ -1394,10 +1417,12 @@
         <div class="fg" style="margin:0;">
           <label class="fl2">Desde</label>
           <select id="tr-origen" onchange="_actualizarBancoTransfer()"></select>
+          <div id="tr-origen-saldo" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
         <div class="fg" style="margin:0;">
           <label class="fl2">Hacia</label>
           <select id="tr-destino" onchange="_actualizarBancoTransfer()"></select>
+          <div id="tr-destino-saldo" style="font-size:11px;color:var(--text3);margin-top:4px;"></div>
         </div>
       </div>
 
@@ -1867,7 +1892,18 @@ async function _renderEnviosSkyPanel() {
     <div class="mh"><div class="mh-title">Registrar pago de envío</div><button class="mclose" onclick="closeModal('modal-pago-envio')">✕</button></div>
     <div class="mc">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
-      <div class="fg"><label class="fl2" id="mpe-valor-label">Valor real del envío pagado (COP$) *</label><input type="text" inputmode="numeric" id="mpe-valor" placeholder="Ej: 19000"><span id="mpe-valor-hint" style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span><div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;"><span id="mpe-diff-text"></span></div></div>
+      <div class="fg">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;">
+          <label class="fl2" id="mpe-valor-label">Valor real del envío pagado (COP$) *</label>
+          <div id="mpe-moneda-toggle" style="display:none;background:var(--bg);border-radius:8px;padding:2px;gap:2px;flex-shrink:0;">
+            <button type="button" id="mpe-moneda-usd" onclick="_setMonedaPagoEnvio('usd')" style="border:none;background:transparent;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:700;cursor:default;color:var(--text3);transition:.15s;">USD</button>
+            <button type="button" id="mpe-moneda-cop" onclick="_setMonedaPagoEnvio('cop')" style="border:none;background:transparent;padding:4px 10px;border-radius:6px;font-size:10.5px;font-weight:700;cursor:default;color:var(--text3);transition:.15s;">COP</button>
+          </div>
+        </div>
+        <input type="text" inputmode="numeric" id="mpe-valor" placeholder="Ej: 19000">
+        <span id="mpe-valor-hint" style="font-size:10px;color:var(--text3);margin-top:3px;">Deja en blanco para usar el valor estimado</span>
+        <div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;"><span id="mpe-diff-text"></span></div>
+      </div>
       <div class="fg"><label class="fl2">¿De dónde saldrá el pago? *</label><select id="mpe-fuente"></select></div>
       <div class="fg"><label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label><input type="text" id="mpe-nota" placeholder="Ej: pagado en efectivo, guía 12345..."></div>
       <div id="mpe-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
@@ -1938,7 +1974,7 @@ async function _renderEnviosSkyPanel() {
       <div class="grid2">
         <div class="fg"><label class="fl2">Fecha</label><input type="date" id="mov-fecha"></div>
         <div class="fg"><label class="fl2">Tipo *</label><select id="mov-tipo" onchange="_actualizarPreviewMovimiento()"><option value="ingreso">Ingreso</option><option value="egreso" selected>Egreso / Gasto</option></select></div>
-        <div class="fg"><label class="fl2">Fuente / Cuenta *</label><select id="mov-fuente" onchange="_actualizarPreviewMovimiento()"><option value="mercadopago">Mercado Pago</option><option value="bancolombia">Bancolombia</option><option value="nequi">Nequi</option><option value="daviplata">Daviplata</option><option value="efectivo">Efectivo</option><option value="otro">Otro</option></select></div>
+        <div class="fg"><label class="fl2">Fuente / Cuenta *</label><select id="mov-fuente" onchange="_actualizarPreviewMovimiento()"></select></div>
         <div class="fg"><label class="fl2">Valor (COP$) *</label><input type="text" inputmode="numeric" id="mov-valor" placeholder="0" oninput="_actualizarPreviewMovimiento()"></div>
         <div class="fg span2" id="mov-sky-aviso" style="display:none;margin:0;background:var(--yellow-bg);border:1px solid #f0c040;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--yellow);">
           Este movimiento fue generado automáticamente por un envío externo. Aquí solo puedes reasignar la billetera; el monto se edita desde <strong>Envíos Externos</strong>.
@@ -1948,12 +1984,28 @@ async function _renderEnviosSkyPanel() {
           <div style="font-size:12px;color:var(--text2);">Antes: <strong id="mov-preview-antes">$ 0</strong> &nbsp;→&nbsp; Después: <strong id="mov-preview-despues">$ 0</strong></div>
         </div>
         <div class="fg span2"><label class="fl2">Concepto *</label><input type="text" id="mov-concepto" placeholder="Ej: Pago Amazon, recarga MP, comisión ML..."></div>
-        <div class="fg span2"><label class="fl2">Notas</label><textarea id="mov-notas" rows="2" style="width:100%;resize:none;" placeholder="Observaciones adicionales..."></textarea></div>
-        <div class="fg span2" id="mov-afecta-mes-wrap"><label class="fl2">Afecta la ganancia de <small class="c-dim">(mes sin cerrar, opcional)</small></label><select id="mov-afecta-mes"></select></div>
+        <div class="fg span2" id="mov-afecta-mes-wrap"><label class="fl2">Afecta la ganancia de <small class="c-dim">(opcional)</small></label><select id="mov-afecta-mes" onchange="_checkMesCerradoSeleccionado()"></select></div>
         <div class="fg span2" id="mov-err" style="margin:0;color:var(--red);font-size:12px;min-height:14px;"></div>
       </div>
     </div>
     <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-movimiento')">Cancelar</button><button class="btn btn-primary" id="mov-save-btn" onclick="saveMovimiento()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- ═══════════════════ MODAL: AVISO MES CERRADO ═══════════════════ -->
+<div class="overlay" id="modal-mes-cerrado-aviso" style="z-index:100000;">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh" style="background:var(--yellow-bg);">
+      <div class="mh-title" style="color:#7d5c00;display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Has seleccionado un mes cerrado
+      </div>
+      <button class="mclose" onclick="closeModal('modal-mes-cerrado-aviso')" style="background:rgba(0,0,0,.08);">✕</button>
+    </div>
+    <div class="mc" style="font-size:13px;color:var(--text2);line-height:1.5;">
+      Esto puede generar diferencias que deberás aplicar posteriormente a un mes sin cerrar.
+    </div>
+    <div class="mf"><button class="btn btn-primary" onclick="closeModal('modal-mes-cerrado-aviso')">Entendido</button></div>
   </div>
 </div>
 
@@ -1990,9 +2042,26 @@ async function _renderEnviosSkyPanel() {
 
 <!-- ═══════════════════ MODAL: HISTORIAL DE INGRESOS ═══════════════════ -->
 <div class="overlay" id="modal-historial-ingresos">
-  <div class="modal" style="max-width:460px;">
+  <div class="modal" style="max-width:520px;">
     <div class="mh"><div class="mh-title">Historial de ingresos</div><button class="mclose" onclick="closeModal('modal-historial-ingresos')">✕</button></div>
-    <div class="mc" style="max-height:60vh;overflow-y:auto;">
+    <div style="padding:14px 24px 0;display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end;">
+      <div style="flex:1;min-width:150px;">
+        <label style="font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px;">Usuario</label>
+        <select id="hist-filtro-usuario" onchange="_renderHistorialIngresos()" style="width:100%;padding:7px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
+          <option value="">Todos los usuarios</option>
+        </select>
+      </div>
+      <div style="min-width:118px;">
+        <label style="font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px;">Desde</label>
+        <input type="date" id="hist-filtro-desde" onchange="_renderHistorialIngresos()" style="width:100%;padding:6.5px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
+      </div>
+      <div style="min-width:118px;">
+        <label style="font-size:10.5px;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:4px;">Hasta</label>
+        <input type="date" id="hist-filtro-hasta" onchange="_renderHistorialIngresos()" style="width:100%;padding:6.5px 8px;border:1.5px solid var(--border);border-radius:7px;font-size:12.5px;font-family:inherit;outline:none;background:var(--white);color:var(--text);">
+      </div>
+      <button class="btn btn-ghost btn-sm" style="padding:7px 10px;font-size:11.5px;white-space:nowrap;" onclick="_limpiarFiltroHistorial()">Limpiar</button>
+    </div>
+    <div class="mc" style="max-height:55vh;overflow-y:auto;">
       <div id="historial-ingresos-list"></div>
       <div id="historial-ingresos-vacio" style="text-align:center;padding:24px;color:var(--text3);font-size:13px;">
         Aún no hay eventos de ingreso registrados.

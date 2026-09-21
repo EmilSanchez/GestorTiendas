@@ -178,6 +178,8 @@ function _iniciarListeners() {
       if (key === 'saldos' && typeof actualizarSelectsFuente === 'function') actualizarSelectsFuente();
       if (key === 'saldos' && typeof _actualizarBancoTransfer === 'function') _actualizarBancoTransfer();
       if (key === 'saldos' && typeof _refrescarMvsFuenteEnVivo === 'function') _refrescarMvsFuenteEnVivo();
+      if (key === 'saldos' && typeof _refrescarVeFuenteEnVivo === 'function') _refrescarVeFuenteEnVivo();
+      if (key === 'saldos' && typeof _refrescarMovFuenteEnVivo === 'function') _refrescarMovFuenteEnVivo();
       if (primero) { primero = false; return; }
       if (_esExterno()) _debouncedRender(page);
     }, err => console.warn(`Listener config/${docId}:`, err));

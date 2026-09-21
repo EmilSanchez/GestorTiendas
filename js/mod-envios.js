@@ -51,6 +51,10 @@ function _envioValorCOP(v) {
 
 // Modal para registrar pago de envío
 var _pagoEnvioVentaId = null;
+var _pagoEnvioEsServientrega = false;
+var _pagoEnvioEstimadoCOP = 0;
+var _pagoEnvioTRM = 0;
+var _pagoEnvioMoneda = 'cop'; // 'usd' o 'cop' — solo elegible cuando es Servientrega
 async function openPagoEnvio(ventaId) {
   _pagoEnvioVentaId = ventaId;
   const v = (await DB.ventas()).find(x=>x.id===ventaId);
@@ -61,6 +65,11 @@ async function openPagoEnvio(ventaId) {
   const esServientrega = v.envio_tipo === 'servientrega';
   const empresa = esServientrega ? 'Servientrega' : 'Aguachica';
   const trm = parseFloat(v.trm) || getDolarComprasConfigurado() || TRM_ACTUAL;
+
+  _pagoEnvioEsServientrega = esServientrega;
+  _pagoEnvioEstimadoCOP    = estimadoCOP;
+  _pagoEnvioTRM            = trm;
+  _pagoEnvioMoneda         = esServientrega ? 'usd' : 'cop';
 
   // Para Servientrega: mostrar estimado en USD (igual que Gestor de Ventas)
   let estimadoMostrar, estimadoLabel;
@@ -82,32 +91,18 @@ async function openPagoEnvio(ventaId) {
       ${esServientrega ? `<div><span style="font-size:10px;color:var(--text3);">TRM usado</span><br><b>${fmt(trm)}</b></div>` : ''}
     </div>
     ${esServientrega ? `<div style="margin-top:8px;font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:6px 10px;border-radius:6px;border:1px solid #ffe08a;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Servientrega: ingresa el valor en <strong>USD</strong> tal como aparece en Centris (Gestor de Ventas). Se convertirá automáticamente a COP.
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Servientrega: puedes ingresar el valor tal como aparece en Centris en USD, o convertirlo tú mismo y digitarlo en COP. Elige la moneda arriba.
     </div>` : ''}`;
 
-  // Ajustar el label e input del valor según transportadora
-  const labelEl = document.getElementById('mpe-valor-label');
+  // El selector USD/COP solo aplica a Servientrega (Aguachica siempre es COP)
+  const toggleEl = document.getElementById('mpe-moneda-toggle');
+  if (toggleEl) toggleEl.style.display = esServientrega ? 'flex' : 'none';
+
   const inputEl = document.getElementById('mpe-valor');
-  const hintEl  = document.getElementById('mpe-valor-hint');
-  const diffEl  = document.getElementById('mpe-diff-box');
-  if(labelEl) labelEl.textContent = esServientrega
-    ? 'Valor real del envío pagado (USD$) *'
-    : 'Valor real del envío pagado (COP$) *';
-  if(inputEl) {
-    inputEl.placeholder = esServientrega ? 'Ej: 4.50' : 'Ej: 19000';
-    inputEl.step        = esServientrega ? '0.01' : '1';
-    // Pre-rellenar con estimado en la unidad correcta
-    inputEl.value       = esServientrega ? (estimadoCOP / trm).toFixed(2) : (estimadoCOP || '');
-    // Guardar contexto en el input para la conversión
-    inputEl.dataset.esServientrega = esServientrega ? '1' : '0';
-    inputEl.dataset.trm = trm;
-    inputEl.dataset.estimadoCOP = estimadoCOP;
-    // Listener para mostrar conversión en tiempo real
-    inputEl.oninput = () => _calcDiffPagoEnvio();
-  }
-  if(hintEl) hintEl.textContent = esServientrega
-    ? 'Valor en USD tal como aparece en Centris. Se convierte a COP automáticamente.'
-    : 'Deja en blanco para usar el valor estimado';
+  if (inputEl) inputEl.oninput = () => _calcDiffPagoEnvio();
+
+  _actualizarUIMonedaPagoEnvio();
+  const diffEl = document.getElementById('mpe-diff-box');
   if(diffEl) diffEl.style.display = 'none';
 
   sv('mpe-nota', v.nota_envio_pago || '');
@@ -123,11 +118,52 @@ async function openPagoEnvio(ventaId) {
       ...tds.map(t => `<option value="mercadopago_${t.id}">MP · ${t.nombre}</option>`),
       ...activas.map(b => `<option value="${b.id}">${b.nombre}</option>`),
     ].join('');
-    fuenteSel.value = v.fuente_pago_envio || (ajustes && ajustes.billetera_default_envios) || '';
+    // Servientrega tiene su propia billetera predeterminada, distinta de la de "envíos externos"
+    const defaultWallet = esServientrega
+      ? (ajustes && ajustes.billetera_default_servientrega) || ''
+      : (ajustes && ajustes.billetera_default_envios) || '';
+    fuenteSel.value = v.fuente_pago_envio || defaultWallet;
   }
 
   _calcDiffPagoEnvio();
   openModal('modal-pago-envio');
+}
+
+// Cambia la moneda en la que se ingresa el valor real del pago (solo Servientrega)
+function _setMonedaPagoEnvio(moneda) {
+  if (!_pagoEnvioEsServientrega || _pagoEnvioMoneda === moneda) return;
+  _pagoEnvioMoneda = moneda;
+  _actualizarUIMonedaPagoEnvio();
+  _calcDiffPagoEnvio();
+}
+
+// Refleja la moneda actual en el label, el input, el hint y el estado visual del selector
+function _actualizarUIMonedaPagoEnvio() {
+  const esUSD   = _pagoEnvioMoneda === 'usd';
+  const labelEl = document.getElementById('mpe-valor-label');
+  const inputEl = document.getElementById('mpe-valor');
+  const hintEl  = document.getElementById('mpe-valor-hint');
+  if (labelEl) labelEl.textContent = esUSD
+    ? 'Valor real del envío pagado (USD$) *'
+    : 'Valor real del envío pagado (COP$) *';
+  if (inputEl) {
+    inputEl.placeholder = esUSD ? 'Ej: 4.50' : 'Ej: 19000';
+    inputEl.step        = esUSD ? '0.01' : '1';
+    inputEl.value        = esUSD ? (_pagoEnvioEstimadoCOP / _pagoEnvioTRM).toFixed(2) : (_pagoEnvioEstimadoCOP || '');
+  }
+  if (hintEl) hintEl.textContent = esUSD
+    ? 'Valor en USD tal como aparece en Centris. Se convierte a COP automáticamente.'
+    : 'Deja en blanco para usar el valor estimado';
+  const usdBtn = document.getElementById('mpe-moneda-usd');
+  const copBtn = document.getElementById('mpe-moneda-cop');
+  if (usdBtn && copBtn) {
+    usdBtn.style.background = esUSD ? 'var(--white)' : 'transparent';
+    usdBtn.style.color      = esUSD ? 'var(--teal-dark)' : 'var(--text3)';
+    usdBtn.style.boxShadow  = esUSD ? '0 1px 3px rgba(0,0,0,.12)' : 'none';
+    copBtn.style.background = !esUSD ? 'var(--white)' : 'transparent';
+    copBtn.style.color      = !esUSD ? 'var(--teal-dark)' : 'var(--text3)';
+    copBtn.style.boxShadow  = !esUSD ? '0 1px 3px rgba(0,0,0,.12)' : 'none';
+  }
 }
 
 function _calcDiffPagoEnvio() {
@@ -137,13 +173,11 @@ function _calcDiffPagoEnvio() {
   if(!inputEl || !diffEl) return;
   const raw = parseFloat(inputEl.value);
   if(isNaN(raw)) { diffEl.style.display = 'none'; return; }
-  const esServientrega = inputEl.dataset.esServientrega === '1';
-  const trm = parseFloat(inputEl.dataset.trm) || TRM_ACTUAL;
-  const estimadoCOP = parseFloat(inputEl.dataset.estimadoCOP) || 0;
-  const realCOP = esServientrega ? Math.round(raw * trm) : raw;
-  const diff = realCOP - estimadoCOP;
+  const esUSD = _pagoEnvioMoneda === 'usd';
+  const realCOP = esUSD ? Math.round(raw * _pagoEnvioTRM) : raw;
+  const diff = realCOP - _pagoEnvioEstimadoCOP;
   diffEl.style.display = 'block';
-  if(esServientrega) {
+  if(esUSD) {
     diffEl.style.background = '#f0f9ff';
     diffTxt.style.color = 'var(--teal-dark)';
     diffTxt.textContent = `= ${fmt(realCOP)} COP`;
@@ -151,15 +185,15 @@ function _calcDiffPagoEnvio() {
   if(Math.abs(diff) < 1) {
     diffEl.style.background = '#e0f2f1';
     diffTxt.style.color = '#00695c';
-    diffTxt.textContent = esServientrega ? `= ${fmt(realCOP)} COP  Igual al estimado` : ' Igual al estimado';
+    diffTxt.textContent = esUSD ? `= ${fmt(realCOP)} COP  Igual al estimado` : ' Igual al estimado';
   } else if(diff > 0) {
     diffEl.style.background = '#fde8ea';
     diffTxt.style.color = '#b0202e';
-    diffTxt.textContent = (esServientrega ? `= ${fmt(realCOP)} COP — ` : '') + `▲ +${fmt(diff)} más caro que el estimado`;
+    diffTxt.textContent = (esUSD ? `= ${fmt(realCOP)} COP — ` : '') + `▲ +${fmt(diff)} más caro que el estimado`;
   } else {
     diffEl.style.background = '#d1f0e0';
     diffTxt.style.color = '#1b7e4a';
-    diffTxt.textContent = (esServientrega ? `= ${fmt(realCOP)} COP — ` : '') + `▼ ${fmt(Math.abs(diff))} más barato que el estimado`;
+    diffTxt.textContent = (esUSD ? `= ${fmt(realCOP)} COP — ` : '') + `▼ ${fmt(Math.abs(diff))} más barato que el estimado`;
   }
 }
 
@@ -179,11 +213,12 @@ async function guardarPagoEnvio() {
   const inputEl = document.getElementById('mpe-valor');
   const rawVal  = _parseNum(gv('mpe-valor'));
   const esServientrega = v.envio_tipo === 'servientrega';
+  const esUSD = _pagoEnvioMoneda === 'usd';
   const trm = parseFloat(v.trm) || getDolarComprasConfigurado() || TRM_ACTUAL;
   let valorReal;
   if(isNaN(rawVal)) {
     valorReal = _envioValorCOP(v);
-  } else if(esServientrega) {
+  } else if(esUSD) {
     // El usuario ingresó en USD → convertir a COP
     valorReal = Math.round(rawVal * trm);
   } else {
@@ -191,6 +226,7 @@ async function guardarPagoEnvio() {
   }
   v.envio_pagado      = true;
   v.envio_real_cop    = valorReal;
+  v.envio_real_usd    = (esUSD && !isNaN(rawVal)) ? rawVal : null;
   v.envio_validado    = true;
   v.nota_envio_pago   = gv('mpe-nota').trim();
   v.fuente_pago_envio = fuente;

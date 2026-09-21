@@ -1023,6 +1023,7 @@ var _validarEnvioId = null;
 var _validarEnvioEstimado = 0;
 var _validarEnvioEsServientrega = false;
 var _validarEnvioTRM = 0;
+var _validarEnvioMoneda = 'cop'; // 'usd' o 'cop' — solo elegible cuando es Servientrega
 
 async function openValidarEnvio(id) {
   const v = (await DB.ventas()).find(x=>x.id===id);
@@ -1036,25 +1037,22 @@ async function openValidarEnvio(id) {
   _validarEnvioEstimado      = estimado;
   _validarEnvioEsServientrega = esServientrega;
   _validarEnvioTRM           = trm;
+  _validarEnvioMoneda        = esServientrega ? 'usd' : 'cop';
 
   document.getElementById('ve-subtitulo').textContent =
     `${esServientrega ? 'Servientrega' : 'Aguachica'} · ${v.id_ml||v.id}`;
   document.getElementById('ve-estimado').textContent = fmt(estimado);
 
-  // Cambiar el label según transportadora
-  const labelEl = document.getElementById('ve-input-label');
-  if(labelEl) {
-    labelEl.textContent = esServientrega
-      ? 'Valor REAL confirmado en Centris (USD$)'
-      : 'Valor REAL confirmado en Centris (COP$)';
-  }
-  // Cambiar placeholder e input
-  const inputEl = document.getElementById('ve-input');
-  if(inputEl) {
-    inputEl.placeholder = esServientrega ? 'Ej: 4.50' : 'Ej: 19000';
-    inputEl.step        = esServientrega ? '0.01' : '1';
-    inputEl.value       = esServientrega ? (estimado / trm).toFixed(2) : (estimado || '');
-  }
+  // El selector USD/COP solo aplica a Servientrega (Aguachica siempre es COP)
+  const toggleEl = document.getElementById('ve-moneda-toggle');
+  if (toggleEl) toggleEl.style.display = esServientrega ? 'flex' : 'none';
+
+  // La fuente de pago (billetera) solo se pide para Servientrega
+  const fuenteWrap = document.getElementById('ve-fuente-wrap');
+  if (fuenteWrap) fuenteWrap.style.display = esServientrega ? 'block' : 'none';
+  if (esServientrega) await _populateVeFuente(v.fuente_pago_envio || '');
+
+  _actualizarUIMonedaValidarEnvio();
   document.getElementById('ve-diff-box').style.display = 'none';
 
   const modal = document.getElementById('modal-validar-envio');
@@ -1063,13 +1061,89 @@ async function openValidarEnvio(id) {
   _calcDiffEnvio();
 }
 
+// Llena el selector de fuente de pago del envío (solo Servientrega), ocultando
+// billeteras marcadas como ocultas y mostrando el saldo real de cada una.
+async function _populateVeFuente(selected) {
+  const sel = document.getElementById('ve-fuente');
+  if (!sel) return;
+  const [billeteras, tiendas, ajustes, saldos] = await Promise.all([DB.billeteras(), DB.tiendas(), DB.ajustes(), DB.saldos()]);
+  const activas = billeteras.filter(b => b.activa !== false && !saldos['_oculta_'+b.id]);
+  const saldoTxt = key => fmt(parseFloat(saldos[key])||0);
+  let opts = [
+    `<option value="">— Seleccionar —</option>`,
+    ...(saldos['_oculta_skydropx'] ? [] : [`<option value="skydropx">Skydropx — ${saldoTxt('skydropx')}</option>`]),
+    ...tiendas.filter(t => !saldos['_oculta_mercadopago_'+t.id]).map(t => `<option value="mercadopago_${t.id}">MP · ${t.nombre} — ${saldoTxt('mercadopago_'+t.id)}</option>`),
+    ...activas.map(b => `<option value="${b.id}">${b.nombre} — ${saldoTxt(b.id)}</option>`),
+  ];
+  // Si la fuente seleccionada (p.ej. al reintentar) es una billetera oculta o desactivada, mantenerla visible
+  if (selected && !opts.some(o => o.includes(`value="${selected}"`))) {
+    if (selected === 'skydropx') {
+      opts.push(`<option value="skydropx">Skydropx (oculta) — ${saldoTxt('skydropx')}</option>`);
+    } else if (selected.startsWith('mercadopago_')) {
+      const t = tiendas.find(x => 'mercadopago_'+x.id === selected);
+      if (t) opts.push(`<option value="${selected}">MP · ${t.nombre} (oculta) — ${saldoTxt(selected)}</option>`);
+    } else {
+      const bDesact = billeteras.find(b => b.id === selected);
+      if (bDesact) opts.push(`<option value="${bDesact.id}">${bDesact.nombre} (${bDesact.activa===false?'desactivada':'oculta'}) — ${saldoTxt(selected)}</option>`);
+    }
+  }
+  sel.innerHTML = opts.join('');
+  // Servientrega tiene su propia billetera predeterminada, distinta de la de "envíos externos"
+  const defaultWallet = (ajustes && ajustes.billetera_default_servientrega) || '';
+  if (selected && Array.from(sel.options).some(o => o.value === selected)) {
+    sel.value = selected;
+  } else if (defaultWallet && Array.from(sel.options).some(o => o.value === defaultWallet)) {
+    sel.value = defaultWallet;
+  }
+}
+
+// Refresca en vivo el select de fuente de pago del modal Validar Envío
+// cuando cambian los saldos, preservando la selección actual.
+function _refrescarVeFuenteEnVivo() {
+  const wrap = document.getElementById('ve-fuente-wrap');
+  const sel  = document.getElementById('ve-fuente');
+  if (sel && wrap && wrap.style.display !== 'none') _populateVeFuente(sel.value);
+}
+
+// Cambia la moneda en la que se ingresa el valor real (solo Servientrega)
+function _setMonedaValidarEnvio(moneda) {
+  if (!_validarEnvioEsServientrega || _validarEnvioMoneda === moneda) return;
+  _validarEnvioMoneda = moneda;
+  _actualizarUIMonedaValidarEnvio();
+  _calcDiffEnvio();
+}
+
+// Refleja la moneda actual en el label, el input y el estado visual del selector
+function _actualizarUIMonedaValidarEnvio() {
+  const esUSD = _validarEnvioMoneda === 'usd';
+  const labelEl = document.getElementById('ve-input-label');
+  if (labelEl) labelEl.textContent = `Valor REAL confirmado (${esUSD ? 'USD$' : 'COP$'})`;
+  const inputEl = document.getElementById('ve-input');
+  if (inputEl) {
+    inputEl.placeholder = esUSD ? 'Ej: 4.50' : 'Ej: 19.000';
+    inputEl.step        = esUSD ? '0.01' : '1';
+    inputEl.value        = esUSD ? (_validarEnvioEstimado / _validarEnvioTRM).toFixed(2) : (_validarEnvioEstimado || '');
+  }
+  const usdBtn = document.getElementById('ve-moneda-usd');
+  const copBtn = document.getElementById('ve-moneda-cop');
+  if (usdBtn && copBtn) {
+    usdBtn.style.background = esUSD ? '#fff' : 'transparent';
+    usdBtn.style.color      = esUSD ? '#00695c' : '#476060';
+    usdBtn.style.boxShadow  = esUSD ? '0 1px 3px rgba(0,0,0,.12)' : 'none';
+    copBtn.style.background = !esUSD ? '#fff' : 'transparent';
+    copBtn.style.color      = !esUSD ? '#00695c' : '#476060';
+    copBtn.style.boxShadow  = !esUSD ? '0 1px 3px rgba(0,0,0,.12)' : 'none';
+  }
+}
+
 function _calcDiffEnvio() {
   const raw  = _parseNum(document.getElementById('ve-input').value);
   const box  = document.getElementById('ve-diff-box');
   const txt  = document.getElementById('ve-diff-text');
   if(isNaN(raw)) { box.style.display='none'; return; }
-  // Convertir a COP si es Servientrega (el input es USD)
-  const val = _validarEnvioEsServientrega ? raw * _validarEnvioTRM : raw;
+  // Convertir a COP si el valor se está ingresando en USD
+  const esUSD = _validarEnvioMoneda === 'usd';
+  const val = esUSD ? raw * _validarEnvioTRM : raw;
   const diff = val - _validarEnvioEstimado;
   box.style.display = 'block';
   if(Math.abs(diff) < 1) {
@@ -1099,19 +1173,54 @@ async function _confirmarValidarEnvio() {
     setTimeout(()=>document.getElementById('ve-input').style.borderColor='#d8e4e3', 1200);
     return;
   }
-  // Si es Servientrega el input está en USD → convertir a COP
-  const realCOP = _validarEnvioEsServientrega ? Math.round(raw * _validarEnvioTRM) : raw;
+
+  // Para Servientrega, elegir de dónde sale el pago es obligatorio
+  let fuente = '';
+  if (_validarEnvioEsServientrega) {
+    const fuenteSel = document.getElementById('ve-fuente');
+    fuente = fuenteSel ? fuenteSel.value : '';
+    if (!fuente) {
+      if (fuenteSel) {
+        fuenteSel.style.borderColor = '#dc3545';
+        setTimeout(()=>fuenteSel.style.borderColor='#d8e4e3', 1200);
+      }
+      showToast('Selecciona de dónde saldrá el pago.', 'error', 2500);
+      return;
+    }
+  }
+
+  // Si el valor se ingresó en USD → convertir a COP
+  const esUSD = _validarEnvioMoneda === 'usd';
+  const realCOP = esUSD ? Math.round(raw * _validarEnvioTRM) : raw;
   const ventas = await DB.ventas();
   const vv = ventas.find(x=>x.id===_validarEnvioId);
   if(vv) {
     vv.envio_real_cop      = realCOP;
-    vv.envio_real_usd      = _validarEnvioEsServientrega ? raw : null;
+    vv.envio_real_usd      = esUSD ? raw : null;
     vv.envio_validado      = true;
     vv.envio_estimado_cop  = _validarEnvioEstimado;
     if (_validarEnvioEsServientrega) {
-      vv.envio_pagado = true;   // ← AGREGAR ESTA LÍNEA
+      vv.envio_pagado      = true;
+      vv.fuente_pago_envio = fuente;
     }
     await DB.upsertVenta(vv);  // Solo 1 escritura
+
+    if (_validarEnvioEsServientrega) {
+      // Descontar el saldo de la billetera elegida y registrar el movimiento
+      const saldos = await DB.saldos();
+      saldos[fuente] = (parseFloat(saldos[fuente])||0) - realCOP;
+      await DB.saveSaldos(saldos);
+      await DB.upsertMovimiento({
+        id: 'envpago_' + vv.id, fecha: hoy(), tipo: 'egreso', fuente, valor: realCOP,
+        concepto: `Pago envío Servientrega · ${vv.id_ml||vv.id}`,
+        notas: '',
+        fecha_registro: new Date().toISOString(),
+        _envio_pago_venta: vv.id,
+      });
+
+      if (typeof renderFinanzas === 'function') { try { await renderFinanzas(); } catch(e){} }
+    }
+
     showConfirmAnim('validado', false);
     await renderVentas();
   }
