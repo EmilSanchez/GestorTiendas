@@ -479,6 +479,7 @@ async function renderCierresMes_Fin() {
           <div>
             <div style="font-size:13px;font-weight:700;color:var(--text);line-height:1.2;">${_repFmtMes(cl.mes)}</div>
             <div style="font-size:10px;color:var(--text3);margin-top:2px;">${cl.num_ventas} ventas</div>
+            <div style="font-size:10px;color:var(--text3);margin-top:1px;">Cerrado: ${_fmtFechaHora(cl.fecha_cierre)}</div>
           </div>
           <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
             <span style="font-size:8px;background:#dbeafe;color:#1e40af;padding:2px 6px;border-radius:20px;font-weight:700;border:1px solid #93c5fd;white-space:nowrap;">CERRADO</span>
@@ -1026,16 +1027,12 @@ async function _aplicarDiferenciaCierre(mes, diferencia) {
 
   [_aplDifMovs, _aplDifVentas, _aplDifSky] = await Promise.all([DB.movimientos(), DB.ventas(), DB.envios_sky()]);
 
-  // Poblar selector con meses NO cerrados (los abiertos disponibles)
+  // Poblar selector solo con meses NO cerrados que tengan ventas registradas (ganancia real)
   const cierres = await _getCierres();
   const cerrados = new Set(cierres.map(c => c.mes));
-  // Generar últimos 6 meses que no estén cerrados
-  const mesesDisp = [];
-  for (let i = 0; i < 12; i++) {
-    const d = new Date(); d.setDate(1); d.setMonth(d.getMonth() - i);
-    const m = d.toISOString().slice(0,7);
-    if (!cerrados.has(m)) mesesDisp.push(m);
-  }
+  const mesesSet = new Set();
+  _aplDifVentas.forEach(v => { const m = (v.fecha_venta||'').slice(0,7); if (m && !cerrados.has(m)) mesesSet.add(m); });
+  const mesesDisp = Array.from(mesesSet).sort((a,b) => b.localeCompare(a));
 
   const sel = document.getElementById('aplDif-mes-destino');
   if (sel) {

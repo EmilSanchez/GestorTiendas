@@ -7,6 +7,7 @@ const _FIN_ICON = {
   down:   `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#dc2626" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg>`,
   trash:  `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>`,
   edit:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`,
+  undo:   `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>`,
   eyeOff: `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a18.6 18.6 0 0 1 5.06-5.94M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>`,
   truck:  `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>`,
   mp:     `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>`,
@@ -412,6 +413,7 @@ function _finMovRowHtml(m) {
     </div>
     <span style="font-size:15.5px;font-weight:800;color:${isTransfer?'#4338ca':(isIng?'#16a34a':'#dc2626')};white-space:nowrap;">${isTransfer?'⇄':(isIng?'+':'−')}${fmt(m.valor)}</span>
     ${isPendiente?`<button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>`:''}
+    ${isTransfer && !isPendiente?`<button class="btn btn-ghost btn-icon btn-sm" title="Revertir a pendiente (aún no ha llegado)" onclick="_pedirCodigoRevertirPendiente('${m.id}')">${_FIN_ICON.undo}</button>`:''}
     ${!isTransfer?`<button class="btn btn-ghost btn-icon btn-sm" title="${isSkyAuto?'Reasignar billetera':'Editar'}" onclick="openModalMovimiento('${m.id}')">${_FIN_ICON.edit}</button>`:''}
     <button class="btn btn-danger btn-icon btn-sm" onclick="_pedirCodigoEliminarMovimiento('${m.id}')">${_FIN_ICON.trash}</button>
   </div>`;
@@ -1253,14 +1255,38 @@ async function _renderPendientesTransfer() {
         <div style="font-size:10px;color:var(--text3);margin-top:1px;">${m.notas ? m.notas + ' · ' : ''}Disponible el <strong style="color:var(--yellow);">${fmtFecha(m.fecha_disponible)}</strong></div>
       </div>
       <span style="font-size:13px;font-weight:800;color:var(--yellow);white-space:nowrap;">${fmt(m.valor)}</span>
-      ${yaDisponible ? `<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 10px;" onclick="marcarTransferenciaLlegada('${m.id}')">Llegó</button>` : ''}
+      ${yaDisponible ? `<button class="btn btn-primary btn-sm" style="font-size:11px;padding:4px 10px;" onclick="_pedirConfirmarLlegoTransfer('${m.id}')">Llegó</button>` : ''}
       <button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>
     </div>`;
   }).join('');
 }
 
+// Pide confirmación antes de acreditar, para evitar clics accidentales en "Llegó"
+// (el dinero se acredita de inmediato y sin esto no había forma de deshacerlo).
+var _llegoTransferPendienteId = '';
+async function _pedirConfirmarLlegoTransfer(id) {
+  const movs = await DB.movimientos();
+  const m = movs.find(x => x.id === id && x.tipo === 'transferencia' && x.pendiente);
+  if (!m) return;
+  _llegoTransferPendienteId = id;
+  const fuentes = await _listaFuentesTransfer();
+  const nombreFuente = (key) => fuentes.find(f => f.key === key)?.nombre || key;
+  const infoEl = document.getElementById('confirmar-llego-info');
+  if (infoEl) {
+    infoEl.innerHTML = `Vas a acreditar <strong style="color:var(--teal);">${fmt(m.valor)}</strong> en <strong>${nombreFuente(m.fuente_destino)}</strong>, transferido desde <strong>${nombreFuente(m.fuente)}</strong>.<br><br>Esta acción no se puede deshacer.`;
+  }
+  openModal('modal-confirmar-llego-transfer');
+}
+
+async function _confirmarMarcarTransferenciaLlegada() {
+  closeModal('modal-confirmar-llego-transfer');
+  const id = _llegoTransferPendienteId;
+  _llegoTransferPendienteId = '';
+  if (id) await marcarTransferenciaLlegada(id);
+}
+
 // Acredita manualmente una transferencia pendiente — el dinero nunca se acredita solo,
-// esto solo se ejecuta cuando el usuario presiona el botón "Llegó".
+// esto solo se ejecuta cuando el usuario confirma en el modal de aviso.
 async function marcarTransferenciaLlegada(id) {
   const movs = await DB.movimientos();
   const m = movs.find(x => x.id === id && x.tipo === 'transferencia' && x.pendiente);
@@ -1272,6 +1298,43 @@ async function marcarTransferenciaLlegada(id) {
   await DB.saveMovimientos(movs);
   await renderFinanzas();
   showToast('Transferencia acreditada', 'success', 2000);
+}
+
+// ── REVERTIR TRANSFERENCIA YA ACREDITADA A "PENDIENTE" (por si "Llegó" se presionó sin querer) ──
+var _revertirPendienteId = '';
+function _pedirCodigoRevertirPendiente(id) {
+  _revertirPendienteId = id;
+  const inp = document.getElementById('revertir-pend-code-input');
+  const err = document.getElementById('revertir-pend-code-error');
+  if (inp) inp.value = '';
+  if (err) err.textContent = '';
+  openModal('modal-revertir-pendiente');
+  setTimeout(() => inp && inp.focus(), 150);
+}
+async function _confirmRevertirPendiente() {
+  const inp  = document.getElementById('revertir-pend-code-input');
+  const err  = document.getElementById('revertir-pend-code-error');
+  const btn  = document.getElementById('revertir-pend-confirm-btn');
+  const code = inp?.value.trim() || '';
+  if (!code) { if (err) err.textContent = 'Ingresa el código.'; return; }
+  if (btn) { btn.textContent = 'Verificando...'; btn.disabled = true; }
+  try {
+    const ok = await _verificarCodigoAcceso(code);
+    if (!ok) { if (err) err.textContent = 'Código incorrecto.'; if (inp) { inp.value=''; inp.focus(); } return; }
+    closeModal('modal-revertir-pendiente');
+
+    const movs = await DB.movimientos();
+    const m = movs.find(x => x.id === _revertirPendienteId && x.tipo === 'transferencia' && !x.pendiente);
+    if (!m) return;
+    const saldos = await DB.saldos();
+    saldos[m.fuente_destino] = (parseFloat(saldos[m.fuente_destino]) || 0) - (parseFloat(m.valor) || 0);
+    m.pendiente = true;
+    await DB.saveSaldos(saldos);
+    await DB.saveMovimientos(movs);
+    await renderFinanzas();
+    showToast('Transferencia devuelta a pendiente', 'success', 2000);
+  } catch (e) { if (err) err.textContent = 'Error al verificar.'; console.error(e); }
+  finally { if (btn) { btn.textContent = 'Revertir a pendiente'; btn.disabled = false; } }
 }
 
 

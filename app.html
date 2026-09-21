@@ -1100,6 +1100,28 @@
   </div>
 </div>
 
+<!-- ═══════ MODAL CONFIRMAR TRANSFERENCIA LLEGADA ═══════ -->
+<div class="overlay" id="modal-confirmar-llego-transfer">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh" style="background:linear-gradient(135deg,#0d7d5c,#0f9c73);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">¿Confirmar que llegó el dinero?</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;">Se acreditará de inmediato en la billetera destino</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-confirmar-llego-transfer')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:22px;">
+      <div id="confirmar-llego-info" style="font-size:13px;color:var(--text2);line-height:1.6;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirmar-llego-transfer')" style="flex:1;">Cancelar</button>
+      <button onclick="_confirmarMarcarTransferenciaLlegada()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#0d7d5c,#0f9c73);color:#fff;">Sí, acreditar</button>
+    </div>
+  </div>
+</div>
+
 <!-- ═══════ MODAL ELIMINAR ENVÍO SKYDROPX (código) ═══════ -->
 <div class="overlay" id="modal-del-envio-sky">
   <div class="modal" style="max-width:370px;">
@@ -2135,6 +2157,35 @@ async function _renderEnviosSkyPanel() {
     <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;"><div><div class="mh-title" style="color:#fff;font-size:14px;">Eliminar movimiento</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div></div><button class="mclose" onclick="closeModal('modal-del-movimiento')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="text-align:center;padding:24px 22px 16px;"><div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">Esta acción no se puede deshacer.<br>Ingresa tu código para continuar.</div><input type="password" id="del-mov-code-input" placeholder="Código de acceso" style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;" onfocus="this.style.borderColor='#dc2626'" onblur="this.style.borderColor='var(--border)'" onkeydown="if(event.key==='Enter')_confirmDeleteMovimiento()"><div id="del-mov-code-error" style="color:#dc2626;font-size:11px;margin-top:6px;min-height:14px;"></div></div>
     <div class="mf" style="gap:8px;"><button class="btn btn-ghost" onclick="closeModal('modal-del-movimiento')" style="flex:1;">Cancelar</button><button id="del-mov-confirm-btn" onclick="_confirmDeleteMovimiento()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button></div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL REVERTIR TRANSFERENCIA A PENDIENTE (código) ═══════ -->
+<div class="overlay" id="modal-revertir-pendiente">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7d5c00,#9c7300);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Revertir a pendiente</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Confirma con tu código de acceso</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-revertir-pendiente')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 16px;">
+      <div style="font-size:12px;color:var(--text2);margin-bottom:16px;line-height:1.5;">
+        Se quitará el dinero de la billetera destino y la transferencia volverá a "Pendiente por ingresar", para acreditarla de nuevo cuando realmente llegue.<br>Ingresa tu código para continuar.
+      </div>
+      <input type="password" id="revertir-pend-code-input" placeholder="Código de acceso"
+        style="width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:10px;font-size:14px;outline:none;text-align:center;letter-spacing:2px;font-family:inherit;transition:border-color .2s;"
+        onfocus="this.style.borderColor='#7d5c00'" onblur="this.style.borderColor='var(--border)'"
+        onkeydown="if(event.key==='Enter')_confirmRevertirPendiente()">
+      <div id="revertir-pend-code-error" style="color:var(--red);font-size:11px;margin-top:6px;min-height:14px;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-revertir-pendiente')" style="flex:1;">Cancelar</button>
+      <button id="revertir-pend-confirm-btn" onclick="_confirmRevertirPendiente()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#7d5c00,#9c7300);color:#fff;">Revertir a pendiente</button>
+    </div>
   </div>
 </div>
 
