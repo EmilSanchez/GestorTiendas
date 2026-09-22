@@ -1994,14 +1994,21 @@ async function _renderEnviosSkyPanel() {
       <div class="grid2">
         <div class="fg"><label class="fl2">Fecha</label><input type="date" id="mov-fecha"></div>
         <div class="fg"><label class="fl2">Tipo *</label><select id="mov-tipo" onchange="_actualizarPreviewMovimiento()"><option value="ingreso">Ingreso</option><option value="egreso" selected>Egreso / Gasto</option></select></div>
-        <div class="fg"><label class="fl2">Fuente / Cuenta *</label><select id="mov-fuente" onchange="_actualizarPreviewMovimiento()"></select></div>
+        <div class="fg"><label class="fl2">Fuente / Cuenta <small class="c-dim">(opcional)</small></label><select id="mov-fuente" onchange="_actualizarPreviewMovimiento()"></select></div>
         <div class="fg"><label class="fl2">Valor (COP$) *</label><input type="text" inputmode="numeric" id="mov-valor" placeholder="0" oninput="_actualizarPreviewMovimiento()"></div>
+        <div class="fg span2" id="mov-4x1000-wrap" style="margin:0;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:var(--text2);cursor:default;">
+            <input type="checkbox" id="mov-4x1000" onchange="_actualizarPreviewMovimiento()" style="width:15px;height:15px;cursor:default;flex-shrink:0;">
+            Aplicar 4x1000 (0.4%) sobre este egreso
+          </label>
+        </div>
         <div class="fg span2" id="mov-sky-aviso" style="display:none;margin:0;background:var(--yellow-bg);border:1px solid #f0c040;border-radius:8px;padding:8px 12px;font-size:11px;color:var(--yellow);">
           Este movimiento fue generado automáticamente por un envío externo. Aquí solo puedes reasignar la billetera; el monto se edita desde <strong>Envíos Externos</strong>.
         </div>
         <div class="fg span2" id="mov-preview" style="display:none;background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;margin:0;">
           <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:4px;" id="mov-preview-fuente-label">Fuente</div>
           <div style="font-size:12px;color:var(--text2);">Antes: <strong id="mov-preview-antes">$ 0</strong> &nbsp;→&nbsp; Después: <strong id="mov-preview-despues">$ 0</strong></div>
+          <div id="mov-preview-4x1000" style="display:none;font-size:11px;color:var(--yellow);margin-top:4px;"></div>
         </div>
         <div class="fg span2"><label class="fl2">Concepto *</label><input type="text" id="mov-concepto" placeholder="Ej: Pago Amazon, recarga MP, comisión ML..."></div>
         <div class="fg span2" id="mov-afecta-mes-wrap"><label class="fl2">Afecta la ganancia de <small class="c-dim">(opcional)</small></label><select id="mov-afecta-mes" onchange="_checkMesCerradoSeleccionado()"></select></div>
@@ -2026,6 +2033,26 @@ async function _renderEnviosSkyPanel() {
       Esto puede generar diferencias que deberás aplicar posteriormente a un mes sin cerrar.
     </div>
     <div class="mf"><button class="btn btn-primary" onclick="closeModal('modal-mes-cerrado-aviso')">Entendido</button></div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL MOVIMIENTO SIN FUENTE (aviso) ═══════ -->
+<div class="overlay" id="modal-mov-sin-fuente" style="z-index:100000;">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh" style="background:var(--yellow-bg);">
+      <div class="mh-title" style="color:#7d5c00;display:flex;align-items:center;gap:8px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        Fuente / Cuenta vacía
+      </div>
+      <button class="mclose" onclick="closeModal('modal-mov-sin-fuente')" style="background:rgba(0,0,0,.08);">✕</button>
+    </div>
+    <div class="mc" style="font-size:13px;color:var(--text2);line-height:1.5;">
+      No seleccionaste una billetera/cuenta para este movimiento. Se guardará sin afectar ningún saldo hasta que le asignes una fuente. ¿Deseas continuar de todas formas?
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-mov-sin-fuente')" style="flex:1;">Volver y elegir fuente</button>
+      <button class="btn btn-primary" onclick="_confirmGuardarMovSinFuente()" style="flex:1;">Continuar sin fuente</button>
+    </div>
   </div>
 </div>
 

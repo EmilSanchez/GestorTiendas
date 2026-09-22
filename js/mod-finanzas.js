@@ -84,7 +84,14 @@ async function renderFinanzas() {
 
   _renderBilleteras(saldos, billeteras, tiendas, totalPendienteVisible);
 
-  const movMes = movs.filter(m=>m.fecha?.startsWith(mesAct)).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  // Orden: más reciente primero. Si dos movimientos caen el mismo día, se desempata
+  // con fecha_registro (momento real en que se registró cada uno) para que el que
+  // se acaba de registrar siempre aparezca de primero.
+  const movMes = movs.filter(m=>m.fecha?.startsWith(mesAct)).sort((a,b)=>{
+    const df = b.fecha.localeCompare(a.fecha);
+    if (df !== 0) return df;
+    return (b.fecha_registro||'').localeCompare(a.fecha_registro||'');
+  });
   _renderMovimientos(movMes, mesAct);
 }
 
@@ -402,6 +409,8 @@ function _finMovRowHtml(m) {
   const iconEl = isTransfer
     ? '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#4338ca" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>'
     : (isIng?_FIN_ICON.up:_FIN_ICON.down);
+  // Hora en que se registró el movimiento (tomada de fecha_registro, la fecha del campo "Fecha" no tiene hora)
+  const horaReg = m.fecha_registro ? new Date(m.fecha_registro).toLocaleTimeString('es-CO',{hour:'numeric',minute:'2-digit',hour12:true}) : '';
   return `
   <div style="display:flex;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid var(--border);">
     <span style="width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:${iconBg};flex-shrink:0;">
@@ -409,7 +418,7 @@ function _finMovRowHtml(m) {
     </span>
     <div style="flex:1;min-width:0;">
       <div style="font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}${isSkyAuto?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AUTO</span>':''}${isPendiente?' <span style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;border:1px solid #f0c040;">PENDIENTE INGRESO</span>':''}</div>
-      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${m.fecha} <span style="opacity:.35;">·</span> <span style="color:var(--teal);font-weight:600;">${fl}</span>${isTransfer && m.notas ? ` <span style="opacity:.35;">·</span> ${m.notas}` : ''}${isPendiente?` <span style="opacity:.35;">·</span> <span style="color:var(--yellow);">Disponible ${fmtFecha(m.fecha_disponible)}</span>`:''}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px;">${m.fecha}${horaReg?` · ${horaReg}`:''} <span style="opacity:.35;">·</span> <span style="color:var(--teal);font-weight:600;">${fl}</span>${isTransfer && m.notas ? ` <span style="opacity:.35;">·</span> ${m.notas}` : ''}${isPendiente?` <span style="opacity:.35;">·</span> <span style="color:var(--yellow);">Disponible ${fmtFecha(m.fecha_disponible)}</span>`:''}</div>
     </div>
     <span style="font-size:15.5px;font-weight:800;color:${isTransfer?'#4338ca':(isIng?'#16a34a':'#dc2626')};white-space:nowrap;">${isTransfer?'⇄':(isIng?'+':'−')}${fmt(m.valor)}</span>
     ${isPendiente?`<button class="btn btn-ghost btn-sm" style="color:var(--red);font-size:11px;padding:4px 10px;" onclick="_pedirCodigoCancelarTransfer('${m.id}')">Cancelar</button>`:''}
@@ -902,6 +911,13 @@ async function openModalMovimiento(id) {
   const avisoEl = document.getElementById('mov-sky-aviso');
   if (avisoEl) avisoEl.style.display = isSkyAuto ? '' : 'none';
 
+  // Checkbox 4x1000 — solo tiene sentido al registrar un egreso nuevo (no en ediciones ni
+  // en movimientos automáticos), ya que se aplica una sola vez como movimiento aparte.
+  const chk4x1000 = document.getElementById('mov-4x1000');
+  if (chk4x1000) chk4x1000.checked = false;
+  _actualizarVisibilidad4x1000();
+  _movSinFuenteOk = false; // cada apertura del modal vuelve a pedir confirmación si se deja la fuente vacía
+
   // Selector "Afecta la ganancia de" — solo para movimientos manuales.
   // Solo lista meses con ventas registradas, marcando si están cerrados o no.
   const afectaWrap = document.getElementById('mov-afecta-mes-wrap');
@@ -927,19 +943,35 @@ async function openModalMovimiento(id) {
   setTimeout(_actualizarPreviewMovimiento, 50);
 }
 
+// Muestra/oculta el checkbox de 4x1000: solo aplica al registrar un egreso NUEVO
+// (no en ediciones ni en movimientos automáticos de envíos), ya que se acredita
+// una sola vez como un movimiento aparte junto al original.
+function _actualizarVisibilidad4x1000() {
+  const wrap = document.getElementById('mov-4x1000-wrap');
+  if (!wrap) return;
+  const esNuevo = !document.getElementById('modal-movimiento')?._editId;
+  const tipo = document.getElementById('mov-tipo')?.value || 'egreso';
+  const mostrar = esNuevo && tipo === 'egreso';
+  wrap.style.display = mostrar ? '' : 'none';
+  if (!mostrar) { const chk = document.getElementById('mov-4x1000'); if (chk) chk.checked = false; }
+}
+
 async function _actualizarPreviewMovimiento() {
+  _actualizarVisibilidad4x1000();
   const previewEl = document.getElementById('mov-preview');
   const fuenteSel = document.getElementById('mov-fuente');
   const fuenteKey = fuenteSel?.value || '';
   const tipo = document.getElementById('mov-tipo')?.value || 'egreso';
   const valor = _parseNum(document.getElementById('mov-valor')?.value) || 0;
+  const aplica4x1000 = tipo === 'egreso' && !!document.getElementById('mov-4x1000')?.checked;
+  const impuesto4x1000 = aplica4x1000 ? Math.round(valor * 0.004) : 0;
 
   if (!fuenteKey || !valor) { if (previewEl) previewEl.style.display = 'none'; return; }
 
   const saldos = await DB.saldos();
   const saldoAntes = parseFloat(saldos[fuenteKey]) || 0;
   const esIngreso = tipo === 'ingreso';
-  const saldoDespues = esIngreso ? saldoAntes + valor : saldoAntes - valor;
+  const saldoDespues = esIngreso ? saldoAntes + valor : saldoAntes - valor - impuesto4x1000;
 
   const nombreFuente = fuenteSel.selectedOptions[0]?.dataset.nombre || fuenteKey;
   document.getElementById('mov-preview-fuente-label').textContent = nombreFuente;
@@ -948,8 +980,30 @@ async function _actualizarPreviewMovimiento() {
   despuesEl.textContent = fmt(saldoDespues);
   despuesEl.style.color = saldoDespues < 0 ? 'var(--red)' : '';
 
+  const impEl = document.getElementById('mov-preview-4x1000');
+  if (impEl) {
+    if (impuesto4x1000 > 0) {
+      impEl.style.display = '';
+      impEl.textContent = `4x1000: ${fmt(impuesto4x1000)} · se registrará como un movimiento aparte`;
+    } else {
+      impEl.style.display = 'none';
+    }
+  }
+
   if (previewEl) previewEl.style.display = '';
 }
+// La fuente/cuenta no es obligatoria en "Nuevo Movimiento", pero si se deja vacía se
+// pide confirmación explícita antes de guardar (ver saveMovimiento).
+var _movSinFuenteOk = false;
+function _pedirConfirmarMovSinFuente() {
+  openModal('modal-mov-sin-fuente');
+}
+function _confirmGuardarMovSinFuente() {
+  closeModal('modal-mov-sin-fuente');
+  _movSinFuenteOk = true;
+  saveMovimiento();
+}
+
 async function saveMovimiento() {
   const errEl = document.getElementById('mov-err');
   if (errEl) errEl.textContent = '';
@@ -969,42 +1023,66 @@ async function saveMovimiento() {
   const fuente   = gv('mov-fuente');
   const afectaMes = isSkyAuto ? undefined : (gv('mov-afecta-mes') || undefined);
 
+  // 4x1000: solo aplica al registrar un egreso nuevo (no ediciones ni movimientos automáticos).
+  // Se descuenta de la misma fuente y se registra como un movimiento aparte para que quede
+  // trazable en el historial.
+  const esNuevo = !movAnterior;
+  const aplica4x1000 = esNuevo && !isSkyAuto && tipo === 'egreso' && !!document.getElementById('mov-4x1000')?.checked;
+  const impuesto4x1000 = aplica4x1000 ? Math.round(valor * 0.004) : 0;
+
   if(!valor){ if(errEl) errEl.textContent='Ingresa el valor.'; showToast('Ingresa el valor.','error');return;}
   if(!concepto){ if(errEl) errEl.textContent='Ingresa un concepto.'; showToast('Ingresa un concepto.','error');return;}
-  if(!fuente){ if(errEl) errEl.textContent='Selecciona una fuente.'; showToast('Selecciona una fuente.','error');return;}
+  // En movimientos automáticos de envíos externos la fuente sí sigue siendo obligatoria
+  // (es lo único que se puede editar: a qué billetera reasignar el gasto).
+  if(isSkyAuto && !fuente){ if(errEl) errEl.textContent='Selecciona una billetera.'; showToast('Selecciona una billetera.','error');return;}
+
+  // La fuente ya no es obligatoria, pero si se deja vacía se pide confirmación antes de guardar
+  // (el movimiento no afecta ningún saldo hasta que se le asigne una billetera).
+  if (!fuente && !isSkyAuto && !_movSinFuenteOk) {
+    _pedirConfirmarMovSinFuente();
+    return;
+  }
+  _movSinFuenteOk = false;
 
   const saldos = await DB.saldos();
 
   // Calcular el saldo disponible en la fuente, revirtiendo primero el efecto anterior si se está editando
-  let saldoDisponible = parseFloat(saldos[fuente]) || 0;
-  if (movAnterior && movAnterior.fuente === fuente) {
-    const signoAnt = movAnterior.tipo === 'ingreso' ? -1 : 1;
-    saldoDisponible += signoAnt * (parseFloat(movAnterior.valor) || 0);
+  let saldoDisponible = 0;
+  if (fuente) {
+    saldoDisponible = parseFloat(saldos[fuente]) || 0;
+    if (movAnterior && movAnterior.fuente === fuente) {
+      const signoAnt = movAnterior.tipo === 'ingreso' ? -1 : 1;
+      saldoDisponible += signoAnt * (parseFloat(movAnterior.valor) || 0);
+    }
   }
 
-  // Validar saldo suficiente si es egreso
-  if (tipo === 'egreso' && valor > saldoDisponible) {
+  // Validar saldo suficiente si es egreso con fuente asignada (incluyendo el 4x1000, si aplica)
+  if (fuente && tipo === 'egreso' && (valor + impuesto4x1000) > saldoDisponible) {
     const fuenteSel = document.getElementById('mov-fuente');
     const nombreFuente = fuenteSel?.selectedOptions[0]?.dataset.nombre || fuente;
-    const msg = `Saldo insuficiente en ${nombreFuente} (disponible: ${fmt(saldoDisponible)}).`;
+    const msg = impuesto4x1000 > 0
+      ? `Saldo insuficiente en ${nombreFuente} (disponible: ${fmt(saldoDisponible)}, se necesitan ${fmt(valor+impuesto4x1000)} con el 4x1000).`
+      : `Saldo insuficiente en ${nombreFuente} (disponible: ${fmt(saldoDisponible)}).`;
     if (errEl) errEl.textContent = msg;
     showToast(msg, 'error', 3000);
     return;
   }
 
-  // Si estamos editando y la fuente cambió, revertir en la fuente anterior también
-  if (movAnterior && movAnterior.fuente !== fuente) {
+  // Si el movimiento anterior tenía una fuente asignada y ahora es distinta (o se dejó vacía), revertir su efecto allí
+  if (movAnterior && movAnterior.fuente && movAnterior.fuente !== fuente) {
     const signoAnt = movAnterior.tipo === 'ingreso' ? -1 : 1;
     saldos[movAnterior.fuente] = (parseFloat(saldos[movAnterior.fuente]) || 0) + signoAnt * (parseFloat(movAnterior.valor) || 0);
   }
 
-  // Aplicar el efecto del movimiento nuevo/editado en la fuente actual
-  const signo = tipo === 'ingreso' ? 1 : -1;
-  if (movAnterior && movAnterior.fuente === fuente) {
-    // Misma fuente: usamos el saldo ya revertido (saldoDisponible) como base
-    saldos[fuente] = saldoDisponible + signo * valor;
-  } else {
-    saldos[fuente] = (parseFloat(saldos[fuente]) || 0) + signo * valor;
+  // Aplicar el efecto del movimiento nuevo/editado en la fuente actual (más el 4x1000, si aplica) — solo si hay fuente
+  if (fuente) {
+    const signo = tipo === 'ingreso' ? 1 : -1;
+    if (movAnterior && movAnterior.fuente === fuente) {
+      // Misma fuente: usamos el saldo ya revertido (saldoDisponible) como base
+      saldos[fuente] = saldoDisponible + signo * valor - impuesto4x1000;
+    } else {
+      saldos[fuente] = (parseFloat(saldos[fuente]) || 0) + signo * valor - impuesto4x1000;
+    }
   }
   await DB.saveSaldos(saldos);
 
@@ -1012,6 +1090,15 @@ async function saveMovimiento() {
   if (isSkyAuto) payload._sky_id = movAnterior._sky_id;
   if (afectaMes) payload.afecta_ganancia_mes = afectaMes;
   await DB.upsertMovimiento(payload);
+
+  // Registrar el 4x1000 como un movimiento aparte, trazable en el historial
+  if (impuesto4x1000 > 0) {
+    await DB.upsertMovimiento({
+      id: uid(), fecha, tipo: 'egreso', fuente, valor: impuesto4x1000,
+      concepto: `4x1000 · ${concepto}`, notas: '',
+      fecha_registro: new Date().toISOString(), _gmf_de: id,
+    });
+  }
 
   // Si es un movimiento automático de envío externo y cambió la billetera, sincronizar envios_sky
   if (isSkyAuto && movAnterior.fuente !== fuente) {
@@ -1026,7 +1113,8 @@ async function saveMovimiento() {
     const panel = document.getElementById('panel-env-externos');
     if (panel && panel.style.display !== 'none') await _renderEnviosSkyPanel();
   }
-  showToast(movAnterior ? 'Movimiento actualizado' : 'Movimiento registrado', 'success', 2000);
+  const msgOk = movAnterior ? 'Movimiento actualizado' : (impuesto4x1000 > 0 ? `Movimiento registrado (+ 4x1000: ${fmt(impuesto4x1000)})` : 'Movimiento registrado');
+  showToast(msgOk, 'success', 2000);
 }
 
 // ── MEMBRESÍA (compatibilidad) ──
