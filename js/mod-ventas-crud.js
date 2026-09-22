@@ -869,9 +869,9 @@ async function renderVentas() {
       <td class="td-mono" style="color:${isLoss?'#842029':'#198754'};">
         ${fmt(gananciaDisplay)}
       </td>
-      <td style="text-align:center;">
+      <td style="text-align:center;" data-vid-estado="${v.id}" data-envio-tipo="${v.envio_tipo||''}" data-inv="${v.devuelto_en_inventario?'1':'0'}">
         ${_buildEstadoDrop(v.estado||'pendiente',['pendiente','en_camino','entregado','cancelado','problema','devuelto','error'],'_cambiarEstadoVenta',v.id)}
-        ${v.estado==='devuelto' ? `<label style="display:flex;align-items:center;justify-content:center;gap:4px;cursor:default;font-size:10.5px;color:#86198f;margin-top:3px;white-space:nowrap;">
+        ${(v.estado==='devuelto' || (v.estado==='cancelado' && ['aguachica','servientrega','inventario'].includes(v.envio_tipo))) ? `<label style="display:flex;align-items:center;justify-content:center;gap:4px;cursor:default;font-size:10.5px;color:#86198f;margin-top:3px;white-space:nowrap;">
           <input type="checkbox" ${v.devuelto_en_inventario?'checked':''} onclick="event.stopPropagation();_toggleDevueltoInventario('${v.id}',this.checked)" style="width:12px;height:12px;cursor:default;flex-shrink:0;">
           En inventario
         </label>` : ''}
@@ -918,6 +918,32 @@ function _cambiarEstadoVenta(id, estado) {
       }
     }
   }
+  // Mostrar/ocultar de inmediato la casilla "En inventario", sin esperar a refrescar la página
+  _actualizarCheckboxInventarioLive(id, estado);
+}
+
+// Inserta, actualiza o quita la casilla "En inventario" de la fila en vivo, según el
+// nuevo estado (devuelto, o cancelado con transportadora Aguachica/Servientrega/Inventario).
+function _actualizarCheckboxInventarioLive(id, estado) {
+  const td = document.querySelector(`td[data-vid-estado="${id}"]`);
+  if (!td) return;
+  const envioTipo = td.dataset.envioTipo || '';
+  const marcado = td.dataset.inv === '1';
+  const mostrar = estado === 'devuelto' || (estado === 'cancelado' && ['aguachica','servientrega','inventario'].includes(envioTipo));
+
+  let label = td.querySelector('label');
+  if (mostrar) {
+    if (!label) {
+      label = document.createElement('label');
+      label.style.cssText = 'display:flex;align-items:center;justify-content:center;gap:4px;cursor:default;font-size:10.5px;color:#86198f;margin-top:3px;white-space:nowrap;';
+      label.innerHTML = `<input type="checkbox" style="width:12px;height:12px;cursor:default;flex-shrink:0;" onclick="event.stopPropagation();_toggleDevueltoInventario('${id}',this.checked)"> En inventario`;
+      td.appendChild(label);
+    }
+    const chk = label.querySelector('input');
+    if (chk) chk.checked = marcado;
+  } else if (label) {
+    label.remove();
+  }
 }
 
 async function _toggleDevueltoInventario(id, checked) {
@@ -926,6 +952,8 @@ async function _toggleDevueltoInventario(id, checked) {
   if(!v) return;
   v.devuelto_en_inventario = !!checked;
   await DB.upsertVenta(v);
+  const td = document.querySelector(`td[data-vid-estado="${id}"]`);
+  if (td) td.dataset.inv = checked ? '1' : '0';
   showToast(checked ? 'Marcado como en inventario' : 'Desmarcado', 'success', 1500);
 }
 
