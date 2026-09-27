@@ -376,7 +376,12 @@ async function renderEnvios() {
           <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span></td>
+      <td>
+        <span style="display:inline-flex;align-items:center;gap:4px;">
+          <span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span>
+          ${_btnVerEnML(v.id_ml, true)}
+        </span>
+      </td>
       <td class="td-dim">${fmtFecha(v.fecha_venta)}</td>
       <td>
         <span style="display:inline-flex;align-items:center;gap:4px;background:${bgCol};color:${txtCol};
@@ -410,7 +415,6 @@ async function renderEnvios() {
             ? `<button class="btn btn-ghost btn-sm" style="font-size:13px;" onclick="desmarcarPagoEnvio('${v.id}')">Desmarcar</button>`
             : `<button class="btn btn-primary btn-sm" style="font-size:13px;" onclick="openPagoEnvio('${v.id}')">Pagar</button>`
           }
-          ${_btnVerEnML(v.id_ml)}
         </div>
       </td>
     </tr>`;
@@ -637,7 +641,7 @@ async function _renderEnviosSkyPanel() {
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fmtFecha(e.fecha)}</td>
       <td style="padding:8px 10px;">${e.envio_aparte
           ? (e.num_venta ? `<span style="color:var(--text2);">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')
-          : (e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')}</td>
+          : (e.num_venta ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>${_btnVerEnML(e.num_venta, true)}</span>` : '<span style="color:var(--text3);">—</span>')}</td>
       <td style="padding:8px 10px;">${e.num_guia  ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
@@ -651,7 +655,6 @@ async function _renderEnviosSkyPanel() {
         <button class="btn btn-danger btn-icon btn-sm" onclick="deleteEnvioSky('${e.id}')" title="Eliminar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
-        ${!e.envio_aparte ? _btnVerEnML(e.num_venta) : ''}
       </td>
     </tr>`).join('');
 

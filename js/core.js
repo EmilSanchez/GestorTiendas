@@ -175,10 +175,17 @@ function _mlVentaUrl(numVenta) {
 // Botón/ícono "Ver en Mercado Libre" reutilizable en las tablas de Ventas y Envíos.
 // Solo se muestra si hay un número de venta (id_ml); detiene la propagación del clic
 // para no disparar la selección de fila u otros handlers del <tr>.
-function _btnVerEnML(numVenta) {
+// mini=true → versión chica pensada para ir pegada al número de venta (en vez del
+// tamaño normal de botón de acción usado en las celdas de acciones de las tablas).
+function _btnVerEnML(numVenta, mini) {
   if (!numVenta) return '';
-  return `<a class="btn btn-ghost btn-icon btn-sm" title="Ver en Mercado Libre" href="${_mlVentaUrl(numVenta)}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;">
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+  const px = mini ? 10 : 14;
+  const cls = mini ? 'btn btn-ghost btn-icon' : 'btn btn-ghost btn-icon btn-sm';
+  const st  = mini
+    ? 'display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;min-width:17px;padding:0;flex-shrink:0;'
+    : 'display:inline-flex;align-items:center;justify-content:center;';
+  return `<a class="${cls}" title="Ver en Mercado Libre" href="${_mlVentaUrl(numVenta)}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="${st}">
+    <svg width="${px}" height="${px}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
   </a>`;
 }
 

@@ -806,7 +806,13 @@ async function renderVentas() {
           <span style="font-size:13px;font-weight:600;">${t?.nombre||'?'}</span>
         </span>
       </td>
-      <td style="text-align:center;"><span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span><div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${fmtFecha(v.fecha_venta)}</div></td>
+      <td style="text-align:center;">
+        <span style="display:inline-flex;align-items:center;justify-content:center;gap:4px;">
+          <span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span>
+          ${_btnVerEnML(v.id_ml, true)}
+        </span>
+        <div style="font-size:12px;color:var(--text3);margin-top:3px;text-align:center;">${fmtFecha(v.fecha_venta)}</div>
+      </td>
       ${_vCfg.nombre ? `<td style="font-size:12px;">${v.nombre_cliente||'—'}</td>` : ''}
       ${_vCfg.telefono ? `<td class="td-mono c-dim">${v.telefono||'—'}</td>` : ''}
       ${_vCfg.contraentrega ? `<td style="text-align:center;" data-vid-ce="${v.id}">
@@ -851,9 +857,7 @@ async function renderVentas() {
       </td>
       <td>
         <div class="actions-cell">
-            <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
           <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="img/editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
-          ${_btnVerEnML(v.id_ml)}
           ${(()=>{ const prob = problemas.find(p=>p.venta_id===v.id); const hasProb = !!prob;
             const solved = hasProb && ['resuelto','solucionado','cerrado'].includes((prob.estado||'').toLowerCase());
             const onclick = hasProb ? `openModalProblema(null,'${prob.id}')` : `openModalProblema('${v.id}')`;

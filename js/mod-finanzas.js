@@ -576,7 +576,7 @@ function _renderEnviosSky(skyMes, mesAct) {
       <td style="padding:8px 10px;">
         ${e.envio_aparte
           ? (e.num_venta ? `<span style="color:var(--text2);">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')
-          : (e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)" title="Clic para copiar">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')}
+          : (e.num_venta ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)" title="Clic para copiar">${e.num_venta}</span>${_btnVerEnML(e.num_venta, true)}</span>` : '<span style="color:var(--text3);">—</span>')}
       </td>
       <td style="padding:8px 10px;">
         ${e.num_guia ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)" title="Clic para copiar">${e.num_guia}</span>` : '<span style="color:var(--text3);">—</span>'}
@@ -589,7 +589,6 @@ function _renderEnviosSky(skyMes, mesAct) {
       <td style="padding:8px 6px;text-align:center;white-space:nowrap;">
         <button class="btn btn-ghost btn-icon btn-sm" onclick="openModalEnvioSky('${e.id}')" title="Editar">${_FIN_ICON.edit}</button>
         <button class="btn btn-danger btn-icon btn-sm" onclick="deleteEnvioSky('${e.id}')" title="Eliminar">${_FIN_ICON.trash}</button>
-        ${!e.envio_aparte ? _btnVerEnML(e.num_venta) : ''}
       </td>
     </tr>`;
   }).join('');
