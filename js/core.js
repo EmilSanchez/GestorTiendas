@@ -189,6 +189,36 @@ function _btnVerEnML(numVenta, mini) {
   </a>`;
 }
 
+// ── Rastreo de envíos externos por transportadora ──
+// Páginas de rastreo generales de cada transportadora (el usuario debe pegar la guía ahí,
+// estas páginas no admiten pasar el número por URL).
+const _URLS_RASTREO_TRANSPORTADORA = {
+  servientrega:     'https://www.servientrega.com/wps/portal/rastreo-envio',
+  coordinadora:     'https://coordinadora.com/rastreo/rastreo-de-guia/',
+  envia:            'https://envia.co/',
+  interrapidisimo:  'https://www.skydropx.com.co/transportadoras/inter-rapidisimo/rastreo/',
+};
+
+// Normaliza el nombre de transportadora (campo de texto libre) para buscarlo en el mapa:
+// sin tildes, sin espacios, en minúsculas. Así "Envía", "envia", "Inter Rapidísimo",
+// "INTERRAPIDISIMO" etc. igual encuentran su URL.
+function _urlRastreoTransportadora(transportadora) {
+  const key = (transportadora || '').toLowerCase().trim()
+    .normalize('NFD').replace(/[̀-ͯ]/g, '')
+    .replace(/\s+/g, '');
+  return _URLS_RASTREO_TRANSPORTADORA[key] || '';
+}
+
+// Botón/ícono para ir a la página de rastreo de la transportadora de un envío externo.
+// Solo se muestra si la transportadora es una de las reconocidas (ver mapa arriba).
+function _btnRastreoGuia(transportadora) {
+  const url = _urlRastreoTransportadora(transportadora);
+  if (!url) return '';
+  return `<a class="btn btn-ghost btn-icon" title="Rastrear en ${transportadora}" href="${url}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;width:17px;height:17px;min-width:17px;padding:0;flex-shrink:0;">
+    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+  </a>`;
+}
+
 // ── NAVEGACIÓN ──
 const PAGES = {
   ventas:         { title:'Gestor de Ventas', icon:'' },

@@ -642,7 +642,7 @@ async function _renderEnviosSkyPanel() {
       <td style="padding:8px 10px;">${e.envio_aparte
           ? (e.num_venta ? `<span style="color:var(--text2);">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')
           : (e.num_venta ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>${_btnVerEnML(e.num_venta, true)}</span>` : '<span style="color:var(--text3);">—</span>')}</td>
-      <td style="padding:8px 10px;">${e.num_guia  ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
+      <td style="padding:8px 10px;">${e.num_guia  ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>${_btnRastreoGuia(e.transportadora)}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;">${_buildEstadoDrop(e.estado||'Pendiente',['Pendiente','En camino','Despachado','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>

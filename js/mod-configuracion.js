@@ -208,6 +208,15 @@ function _fmtFechaHora(ts) {
   return `${fecha} · ${hora}`;
 }
 
+// Formatea un timestamp (ms) con día de la semana, ej: "lunes 19 de marzo de 2026"
+function _fmtFechaConDia(ts) {
+  if (!ts) return '—';
+  const d = new Date(ts);
+  const txt = d.toLocaleDateString('es-CO', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+  // Capitaliza el día de la semana (toLocaleDateString lo devuelve en minúscula)
+  return txt.charAt(0).toUpperCase() + txt.slice(1);
+}
+
 // Formatea una duración en ms como HH:MM:SS
 function _fmtDuracion(ms) {
   const s = Math.max(0, Math.floor(ms / 1000));

@@ -760,6 +760,13 @@
           <span class="fl">Tienda</span>
           <select id="pf-tienda" onchange="renderProblemas()" style="min-width:110px;"><option value="">Todas</option></select>
         </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="fl">Orden</span>
+          <select id="pf-orden" onchange="renderProblemas()" style="min-width:150px;">
+            <option value="desc">Más reciente primero</option>
+            <option value="asc">Más antiguo primero</option>
+          </select>
+        </div>
       </div>
 
       <div id="problemas-container"></div>

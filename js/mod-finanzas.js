@@ -579,7 +579,7 @@ function _renderEnviosSky(skyMes, mesAct) {
           : (e.num_venta ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)" title="Clic para copiar">${e.num_venta}</span>${_btnVerEnML(e.num_venta, true)}</span>` : '<span style="color:var(--text3);">—</span>')}
       </td>
       <td style="padding:8px 10px;">
-        ${e.num_guia ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)" title="Clic para copiar">${e.num_guia}</span>` : '<span style="color:var(--text3);">—</span>'}
+        ${e.num_guia ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)" title="Clic para copiar">${e.num_guia}</span>${_btnRastreoGuia(e.transportadora)}</span>` : '<span style="color:var(--text3);">—</span>'}
       </td>
       <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;font-weight:600;">${e.transportadora||'—'}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>

@@ -334,7 +334,7 @@ async function init() {
     document.getElementById(id)?.addEventListener('input',  () => renderEnvios());
     document.getElementById(id)?.addEventListener('change', () => renderEnvios());
   });
-  ['pf-search','pf-estado','pf-tienda','pf-tipo'].forEach(id => {
+  ['pf-search','pf-estado','pf-tienda','pf-tipo','pf-orden'].forEach(id => {
     document.getElementById(id)?.addEventListener('input',  () => renderProblemas());
     document.getElementById(id)?.addEventListener('change', () => renderProblemas());
   });
