@@ -1808,7 +1808,6 @@ async function _renderEnviosSkyPanel() {
         <div class="fg"><label class="fl2">Costo producto Amazon (USD$) *</label><input type="text" inputmode="decimal" id="v-costo-usd" placeholder="0.00" oninput="recalcVenta()"></div>
         <div class="fg"><label class="fl2">Empresa de envío *</label><select id="v-envio-tipo" onchange="sv('v-envio-int-usd','');recalcVenta()"><option value="aguachica" selected>Aguachica</option><option value="servientrega">Servientrega</option><option value="inventario">Inventario</option><option value="otro">Pendiente</option></select></div>
         <div class="fg"><label class="fl2" id="lbl-envio-int">Precio envío internacional (COP$)</label><input type="text" inputmode="numeric" id="v-envio-int-usd" placeholder="0" oninput="recalcVenta()"></div>
-        <div class="fg"><label class="fl2">Gasto extra COP <small class="c-dim">(guía adicional)</small></label><input type="text" inputmode="numeric" id="v-envio-extra" placeholder="0" oninput="recalcVenta()"></div>
         <div class="fg"><label class="fl2">Validación de envío</label><select id="v-envio-validado" onchange="_toggleEnvioLock()"><option value="0">Sin validar</option><option value="1">Validado</option></select></div>
         <div class="fg" id="v-wrap-nombre" style="display:none;"><label class="fl2">Nombre del cliente</label><input type="text" id="v-nombre" placeholder="Ej: Juan Pérez"></div>
         <div class="fg" id="v-wrap-telefono"><label class="fl2">Teléfono del cliente</label><input type="tel" id="v-tel" placeholder="3001234567"></div>
@@ -1898,6 +1897,20 @@ async function _renderEnviosSkyPanel() {
         <span style="font-size:12px;font-weight:600;color:var(--teal-dark);">Total a pagar por los envíos seleccionados</span>
         <span id="mpm-total" style="font-size:20px;font-weight:700;color:var(--teal-dark);">$ 0</span>
       </div>
+      <div class="fg" style="margin-bottom:10px;">
+        <label class="fl2">Actualizar estado del producto <small class="c-dim">(opcional, puedes ajustar cada uno en la lista de abajo)</small></label>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <select id="mpm-estado-todos" style="flex:1;">
+            <option value="">— Elegir para marcar todos igual —</option>
+            <option value="error">Despachado</option>
+            <option value="en_camino">En camino</option>
+            <option value="entregado">Entregado</option>
+            <option value="devuelto">Devuelto</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+          <button type="button" class="btn btn-ghost btn-sm" onclick="_aplicarEstadoATodosPagoMultiple()">Aplicar a todos</button>
+        </div>
+      </div>
       <div style="max-height:300px;overflow-y:auto;margin-bottom:14px;" id="mpm-lista"></div>
       <div class="fg"><label class="fl2">¿De dónde saldrá el pago? *</label><select id="mpm-fuente"></select></div>
       <div class="fg"><label class="fl2">Nota del pago <small class="c-dim">(opcional, aplica a todos)</small></label><input type="text" id="mpm-nota" placeholder="Ej: pago en efectivo lote marzo..."></div>
@@ -1925,6 +1938,16 @@ async function _renderEnviosSkyPanel() {
         <div id="mpe-diff-box" style="display:none;margin-top:6px;padding:6px 10px;border-radius:6px;font-size:12px;font-weight:600;"><span id="mpe-diff-text"></span></div>
       </div>
       <div class="fg"><label class="fl2">¿De dónde saldrá el pago? *</label><select id="mpe-fuente"></select></div>
+      <div class="fg"><label class="fl2">Actualizar estado del producto <small class="c-dim">(opcional)</small></label>
+        <select id="mpe-estado">
+          <option value="">— No actualizar el estado —</option>
+          <option value="error">Despachado</option>
+          <option value="en_camino">En camino</option>
+          <option value="entregado">Entregado</option>
+          <option value="devuelto">Devuelto</option>
+          <option value="cancelado">Cancelado</option>
+        </select>
+      </div>
       <div class="fg"><label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label><input type="text" id="mpe-nota" placeholder="Ej: pagado en efectivo, guía 12345..."></div>
       <div id="mpe-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
     </div>
@@ -2249,6 +2272,12 @@ async function _renderEnviosSkyPanel() {
     <div class="mh" style="background:linear-gradient(135deg,#1e3a5f,#243049);color:#fff;"><div><div class="mh-title" id="modal-envio-sky-title" style="color:#fff;font-size:15px;">Registrar Envío Skydropx</div><div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Se descontará automáticamente del saldo origen</div></div><button class="mclose" onclick="closeModal('modal-envio-sky')" style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;">✕</button></div>
     <div class="mc" style="display:flex;flex-direction:column;gap:13px;padding:20px 22px;">
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Fecha</label><input type="date" id="sky-fecha"></div><div class="fg" style="margin:0;"><label class="fl2">N° Venta</label><input type="text" id="sky-num-venta" placeholder="Ej: 2000012345678"></div></div>
+      <div class="fg" style="margin:0;">
+        <label style="display:flex;align-items:center;gap:8px;cursor:default;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);">
+          <input type="checkbox" id="sky-envio-aparte" style="width:15px;height:15px;cursor:default;flex-shrink:0;">
+          <span style="font-size:12.5px;color:var(--text2);">Es un envío aparte (no corresponde a una venta de Mercado Libre)</span>
+        </label>
+      </div>
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">N° Guía</label><input type="text" id="sky-num-guia" placeholder="Código de guía"></div><div class="fg" style="margin:0;"><label class="fl2">Transportadora</label><input type="text" id="sky-transportadora" list="sky-trans-list" placeholder="Ej: Servientrega" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"><datalist id="sky-trans-list"><option value="Servientrega"><option value="Coordinadora"><option value="Envia"><option value="Interrapidisimo"><option value="TCC"><option value="Domina"></datalist></div></div>
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Estado del envío</label><select id="sky-estado" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"><option value="Pendiente">Pendiente</option><option value="En camino">En camino</option><option value="Despachado">Despachado</option><option value="Entregado">Entregado</option><option value="Novedad">Novedad</option></select></div><div class="fg" style="margin:0;"><label class="fl2">Valor (COP$)</label><input type="text" inputmode="numeric" id="sky-valor" placeholder="0"></div></div>
       <div class="g2"><div class="fg" style="margin:0;"><label class="fl2">Producto</label><input type="text" id="sky-producto" placeholder="Ej: Audífonos Bluetooth X200" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></div><div class="fg" style="margin:0;"><label class="fl2">Descontar de</label><select id="sky-fuente" style="width:100%;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;font-size:13px;font-family:inherit;outline:none;background:var(--white);color:var(--text);"></select></div></div>

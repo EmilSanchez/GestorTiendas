@@ -111,7 +111,7 @@ async function openModalVenta(id) {
       sv('v-tel', v.telefono||'');
       sv('v-udes', v.udes||1);
       sv('v-nota', v.nota||'');
-      sv('v-envio-tipo', v.envio_tipo||'aguachica'); sv('v-envio-extra', v.envio_extra||0);
+      sv('v-envio-tipo', v.envio_tipo||'aguachica');
       sv('v-envio-validado', v.envio_validado ? '1' : '0');
       const trm = v.trm || getDolarComprasConfigurado();
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
@@ -137,7 +137,7 @@ async function openModalVenta(id) {
   } else {
     ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota','v-fuente-pago'].forEach(i=>sv(i,''));
     sv('v-fecha', hoy()); sv('v-udes',1);
-    sv('v-envio-tipo','aguachica'); sv('v-envio-extra',0);
+    sv('v-envio-tipo','aguachica');
     sv('v-envio-validado','0');
     _mvExtras = { ingreso: [], gasto: [] };
     setTimeout(_toggleEnvioLock, 0);
@@ -441,48 +441,36 @@ async function _saveMvEnvio() {
   const ventas = await DB.ventas();
   const venta = ventas.find(v => v.id === _editVentaId || v.id_ml === num_venta);
   const mesCerrado = await _esMesCerrado(venta?.fecha_venta);
-  const motivoGasto = `Envío externo${num_guia ? ' · Guía ' + num_guia : ''}${producto ? ' · ' + producto : ''}`;
+  // Motivo del gasto extra: "número de guía -- producto"
+  const motivoGasto = `${num_guia || 'Sin guía'} -- ${producto || 'Sin producto'}`;
 
-  if (!mesCerrado) {
-    // Mes abierto: vincular el gasto al envio_extra de la venta para que afecte la ganancia del mes
-    if (venta) {
-      const extraAnterior = parseFloat(venta.envio_extra) || 0;
-      venta.envio_extra = esNuevo ? extraAnterior + valor : (extraAnterior - valorAnterior + valor);
-      await DB.upsertVenta(venta);
+  // El costo del envío externo ya no se escribe en ningún campo único de la venta:
+  // siempre se agrega/actualiza como una entrada de "Gastos extra" (valor + motivo),
+  // tanto si el mes está abierto como si ya está cerrado (en ese caso además queda
+  // como diferencia detectable del cierre).
+  if (venta) {
+    venta.gastos_extra = Array.isArray(venta.gastos_extra) ? venta.gastos_extra : [];
+    const idx = venta.gastos_extra.findIndex(g => g._sky_id === id);
+    if (idx >= 0) {
+      venta.gastos_extra[idx].valor  = valor;
+      venta.gastos_extra[idx].motivo = motivoGasto;
+    } else {
+      venta.gastos_extra.push({ id: uid(), valor, motivo: motivoGasto, fecha: ts, _sky_id: id });
     }
-    await DB.upsertMovimiento({
-      id: 'sky_' + id, fecha, tipo: 'egreso', fuente, valor,
-      concepto: `Envío Skydropx${num_venta ? ' · ' + num_venta : ''}${num_guia ? ' · ' + num_guia : ''}`,
-      notas: `Transportadora: ${transport}${producto ? '. Producto: ' + producto : ''}`,
-      fecha_registro: ts, _sky_id: id,
-    });
-  } else {
-    // Mes cerrado: el costo se suma automáticamente a los gastos extra de la venta,
-    // para que quede reflejado en su ganancia y se detecte como diferencia del cierre.
-    if (venta) {
-      venta.gastos_extra = Array.isArray(venta.gastos_extra) ? venta.gastos_extra : [];
-      const idx = venta.gastos_extra.findIndex(g => g._sky_id === id);
-      if (idx >= 0) {
-        venta.gastos_extra[idx].valor  = valor;
-        venta.gastos_extra[idx].motivo = motivoGasto;
-      } else {
-        venta.gastos_extra.push({ id: uid(), valor, motivo: motivoGasto, fecha: ts, _sky_id: id });
-      }
-      await DB.upsertVenta(venta);
-      // Mantener sincronizado el estado en memoria del tab "Venta" para que
-      // "Guardar Venta" no sobrescriba este gasto recién agregado.
-      _mvExtras.gasto = venta.gastos_extra.map(g => ({ ...g }));
-      _renderExtrasList('gasto');
-      recalcVenta();
-    }
-    await DB.upsertMovimiento({
-      id: 'sky_' + id, fecha: hoy(), tipo: 'egreso', fuente, valor,
-      concepto: `Envío externo (mes cerrado)${num_venta ? ' · ' + num_venta : ''}`,
-      notas: `Transportadora: ${transport}${producto ? '. Producto: ' + producto : ''}. Venta de un mes cerrado — el costo se sumó a gastos extra de la venta y quedará como diferencia en Finanzas.`,
-      fecha_registro: ts, _sky_id: id,
-    });
-    showToast('Mes cerrado — el costo se agregó a gastos extra de la venta', 'info', 4200);
+    await DB.upsertVenta(venta);
+    // Mantener sincronizado el estado en memoria del tab "Venta" para que
+    // "Guardar Venta" no sobrescriba este gasto recién agregado.
+    _mvExtras.gasto = venta.gastos_extra.map(g => ({ ...g }));
+    _renderExtrasList('gasto');
+    recalcVenta();
   }
+  await DB.upsertMovimiento({
+    id: 'sky_' + id, fecha: mesCerrado ? hoy() : fecha, tipo: 'egreso', fuente, valor,
+    concepto: `Envío externo${num_venta ? ' · ' + num_venta : ''}${num_guia ? ' · ' + num_guia : ''}`,
+    notas: `Transportadora: ${transport}${producto ? '. Producto: ' + producto : ''}${mesCerrado ? '. Venta de un mes cerrado — el costo se sumó a gastos extra de la venta y quedará como diferencia en Finanzas.' : ''}`,
+    fecha_registro: ts, _sky_id: id,
+  });
+  if (mesCerrado) showToast('Mes cerrado — el costo se agregó a gastos extra de la venta', 'info', 4200);
 
   window._mvEnvioId = id;
   showToast(esNuevo ? 'Envío registrado' : 'Envío actualizado', 'success', 2000);
@@ -494,7 +482,6 @@ async function _saveMvEnvio() {
   if (_ganEl) _ganEl.dataset.animFrom = _ganEl.textContent;
   if (_ingEl) _ingEl.dataset.animFrom = _ingEl.textContent;
   if (_cosEl) _cosEl.dataset.animFrom = _cosEl.textContent;
-  await renderVentas();
   await renderVentasGanancias();
   // Refrescar la lista/contador de envíos de esta venta y dejar el formulario listo para otro envío
   if (_editVentaId) await _loadLinkedEnvio(_editVentaId);
@@ -508,7 +495,6 @@ function recalcVenta() {
   const trm      = _parseNum(gv('v-trm')) || getDolarComprasConfigurado();
   const costoUsd = _parseNum(gv('v-costo-usd'))     || 0;
   const envioVal = _parseNum(gv('v-envio-int-usd')) || 0;
-  const envExtra = _parseNum(gv('v-envio-extra'))   || 0;
   const udes     = _parseNum(gv('v-udes'))           || 1;
   const envTipo  = gv('v-envio-tipo');
 
@@ -535,7 +521,7 @@ function recalcVenta() {
   const gastosExtraTotal   = _extrasTotal('gasto');
 
   const totalV = copVenta + ingresosExtraTotal;
-  const totalC = costoCOP + envioIntCOP + envExtra + gastosExtraTotal;
+  const totalC = costoCOP + envioIntCOP + gastosExtraTotal;
   const gan    = totalV - totalC;
   const mar    = totalV > 0 ? (gan / totalV) * 100 : 0;
 
@@ -653,7 +639,6 @@ async function saveVenta() {
     producto,
     udes:          _parseNum(gv('v-udes'))||1,
     envio_tipo:    envioTipo,
-    envio_extra:   _parseNum(gv('v-envio-extra'))||0,
     precio_cop:    copVenta,
     precio_usd:    trm > 0 ? copVenta / trm : 0,
     trm,
@@ -737,26 +722,14 @@ async function renderVentas() {
   let _mesesCerrados = new Set();
   try { const cierres = await _getCierres(); cierres.forEach(cl => _mesesCerrados.add(cl.mes)); } catch(e) {}
 
-  // ── Banner: usar el período activo (igual que renderVentasGanancias) ──
-  const periodo     = _getPeriodoActivo();
-  const ventasPer   = _filtrarPorPeriodo(ventas, periodo);
-  const labelPer    = _labelPeriodo(periodo);
-  const totalGan    = ventasPer.reduce((s,v) => s + calcVenta(v).ganancia,    0);
-  const totalVenta  = ventasPer.reduce((s,v) => s + calcVenta(v).totalVenta,  0);
-  const totalCostos = ventasPer.reduce((s,v) => s + calcVenta(v).totalCostos, 0);
-  const marGen      = totalVenta > 0 ? (totalGan / totalVenta) * 100 : 0;
-  const elGan = document.getElementById('vg-total-gan');
-  const elIng = document.getElementById('vg-total-ing');
-  const elCos = document.getElementById('vg-total-cos');
-  const elMar = document.getElementById('vg-total-mar');
-  const elCnt = document.getElementById('vg-total-cnt');
-  const elSub = document.getElementById('vg-total-sub');
-  if (elGan) elGan.textContent = fmt(totalGan);
-  if (elIng) elIng.textContent = fmt(totalVenta);
-  if (elCos) elCos.textContent = fmt(totalCostos);
-  if (elMar) elMar.textContent = fmtP(marGen);
-  if (elCnt) elCnt.textContent = ventasPer.length;
-  if (elSub) elSub.textContent = labelPer;
+  // NOTA: el total de "Ganancia" (tarjetas de arriba) lo calcula y escribe
+  // EXCLUSIVAMENTE renderVentasGanancias() (incluye ajustes de envíos externos
+  // no ligados a una venta y diferencias de meses cerrados). Antes este bloque
+  // volvía a calcularlo aquí con una fórmula incompleta (sin esos ajustes) y lo
+  // sobrescribía — como renderVentasGanancias() llama a renderVentas() sin
+  // esperarlo, ambos cálculos competían por el mismo elemento y el que
+  // terminaba último "ganaba", mostrando a veces un total inflado que sólo se
+  // corregía al actualizar la página. Ver renderVentasGanancias() en mod-ventas.js.
 
   // ── Filtros de tabla ──
   const s      = (document.getElementById('vf-search')?.value  || '').toLowerCase();
@@ -862,7 +835,7 @@ async function renderVentas() {
                </button>`
           : '<span class="c-dim">—</span>'
         }
-        ${v.envio_extra>0?`<div class="mono" style="font-size:10px;color:var(--text3);">+${fmt(v.envio_extra)}</div>`:''}
+        ${c.gastosExtra>0?`<div class="mono" style="font-size:10px;color:var(--text3);" title="Gastos extra">+${fmt(c.gastosExtra)}</div>`:''}
         </div>
       </td>
       <td class="td-mono c-dim">${fmt(c.totalCostos)}</td>
@@ -880,6 +853,7 @@ async function renderVentas() {
         <div class="actions-cell">
             <button class="btn btn-ghost btn-icon btn-sm" title="Ver detalle" onclick="verDetalleVenta('${v.id}')"><img src="img/ver.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
           <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="img/editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
+          ${_btnVerEnML(v.id_ml)}
           ${(()=>{ const prob = problemas.find(p=>p.venta_id===v.id); const hasProb = !!prob;
             const solved = hasProb && ['resuelto','solucionado','cerrado'].includes((prob.estado||'').toLowerCase());
             const onclick = hasProb ? `openModalProblema(null,'${prob.id}')` : `openModalProblema('${v.id}')`;
@@ -968,19 +942,7 @@ async function cambiarEstado(id, estado) {
       await DB.upsertVenta(v);  // Solo escribe 1 documento, no los 143
       await updateAlertaBadge();
       // Sincronizar estado con envío externo (sky) si existe
-      try {
-        const enviosSky = await DB.envios_sky();
-        const envio = enviosSky.find(e => e.num_venta === v.id_ml || e.num_venta === v.id);
-        if (envio) {
-          const mapaEstado = {
-            'pendiente': 'Pendiente', 'en_camino': 'En camino',
-            'entregado': 'Entregado', 'cancelado': 'Cancelado',
-            'devuelto':  'Devuelto',  'problema':  'Pendiente', 'error': 'En camino',
-          };
-          envio.estado = mapaEstado[estado] || 'Pendiente';
-          await DB.upsertEnvioSky(envio);
-        }
-      } catch(e) { console.warn('No se pudo sincronizar envío:', e); }
+      await _sincronizarEstadoEnvioSky(v);
     }
     _syncEnd(true);
   } catch(err) {
@@ -1031,7 +993,7 @@ async function _confirmDeleteVenta() {
     if(hashIngresado === hashGuardado) {
       await DB.deleteVenta(_pendingDeleteId);
       _cancelDeleteVenta();
-      await renderVentas();
+      await renderVentasGanancias();
       await updateAlertaBadge();
     } else {
       errEl.textContent = 'Código incorrecto. Intenta de nuevo.';
@@ -1250,7 +1212,7 @@ async function _confirmarValidarEnvio() {
     }
 
     showConfirmAnim('validado', false);
-    await renderVentas();
+    await renderVentasGanancias();
   }
   _cancelValidarEnvio();
 }
@@ -1656,6 +1618,33 @@ function _drpUpdateLabel() {
     if(lbl) lbl.textContent = 'Período: mes actual';
     if(clear) clear.style.display = 'none';
   }
+}
+
+// ══════════════════════════════════════════════════════════
+// MIGRACIÓN ÚNICA: mover el antiguo campo "envio_extra" (Gasto extra COP) de cada
+// venta a su lista de gastos_extra, ya que ese campo se eliminó del formulario.
+// Se ejecuta una sola vez en toda la app (queda marcada en ajustes) para no volver
+// a escanear todas las ventas en cada carga.
+// ══════════════════════════════════════════════════════════
+async function _migrarGastosExtraEnvio() {
+  try {
+    const ajustes = await DB.ajustes();
+    if (ajustes.migracion_envio_extra_v1) return;
+
+    const ventas = await DB.ventas();
+    const pendientes = ventas.filter(v => (parseFloat(v.envio_extra) || 0) > 0);
+    for (const v of pendientes) {
+      const valor = parseFloat(v.envio_extra) || 0;
+      v.gastos_extra = Array.isArray(v.gastos_extra) ? v.gastos_extra : [];
+      v.gastos_extra.push({ id: uid(), valor, motivo: 'Gasto extra (migrado)', fecha: v.fecha_registro || new Date().toISOString() });
+      v.envio_extra = 0;
+      await DB.upsertVenta(v);
+    }
+
+    ajustes.migracion_envio_extra_v1 = true;
+    await DB.saveAjustes(ajustes);
+    if (pendientes.length) console.info(`Migración: ${pendientes.length} venta(s) con "Gasto extra" movidas a Gastos extra.`);
+  } catch(e) { console.warn('Migración de gasto extra falló:', e); }
 }
 
 document.addEventListener('DOMContentLoaded', () => { _drpInit(); });

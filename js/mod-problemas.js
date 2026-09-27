@@ -270,7 +270,7 @@ async function saveProblema() {
     solucion:     gv('p-solucion').trim(),
     estado:       gv('p-estado'),
     valor_perdida: parseFloat(gv('p-perdida')) || 0,
-    fecha_registro: new Date().toISOString(),
+    fecha_registro: existingProb?.fecha_registro || new Date().toISOString(),
   });
   closeModal('modal-problema');
   // Renderizar módulo de problemas si está activo
@@ -297,7 +297,9 @@ async function renderProblemas() {
   if (fe)  problemas = problemas.filter(p => p.estado === fe);
   if (ft)  problemas = problemas.filter(p => p.tienda_id === ft);
   if (ftp) problemas = problemas.filter(p => p.tipo === ftp);
-  problemas.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+  // Orden: más reciente registrado primero (fecha_registro, momento real en que se creó),
+  // no la fecha manual del problema.
+  problemas.sort((a,b) => (b.fecha_registro||'').localeCompare(a.fecha_registro||''));
 
   if (!problemas.length) {
     document.getElementById('problemas-container').innerHTML = `
@@ -332,6 +334,7 @@ async function renderProblemas() {
         </div>
         <div style="text-align:right;flex-shrink:0;">
           <div style="font-size:11px;color:var(--text3);font-weight:500;">${fmtFecha(p.fecha)}</div>
+          ${p.fecha_registro ? `<div style="font-size:9.5px;color:var(--text3);opacity:.75;margin-top:1px;">Registrado: ${_fmtFechaHora(p.fecha_registro)}</div>` : ''}
           ${cv ? `<div style="font-size:11px;font-weight:700;color:var(--text2);margin-top:2px;">Venta: ${fmt(cv.totalVenta)}</div>` : ''}
         </div>
       </div>

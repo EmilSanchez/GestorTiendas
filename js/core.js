@@ -167,6 +167,21 @@ function calcVenta(v) {
            totalVenta, totalCostos, ganancia, margen };
 }
 
+// URL de la venta en el panel de vendedores de Mercado Libre Colombia
+function _mlVentaUrl(numVenta) {
+  return `https://vendedores.mercadolibre.com.co/ventas/${encodeURIComponent(numVenta)}/detalle`;
+}
+
+// Botón/ícono "Ver en Mercado Libre" reutilizable en las tablas de Ventas y Envíos.
+// Solo se muestra si hay un número de venta (id_ml); detiene la propagación del clic
+// para no disparar la selección de fila u otros handlers del <tr>.
+function _btnVerEnML(numVenta) {
+  if (!numVenta) return '';
+  return `<a class="btn btn-ghost btn-icon btn-sm" title="Ver en Mercado Libre" href="${_mlVentaUrl(numVenta)}" target="_blank" rel="noopener" onclick="event.stopPropagation();" style="display:inline-flex;align-items:center;justify-content:center;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+  </a>`;
+}
+
 // ── NAVEGACIÓN ──
 const PAGES = {
   ventas:         { title:'Gestor de Ventas', icon:'' },
@@ -478,3 +493,35 @@ document.addEventListener('click', function(e) {
     document.querySelectorAll('.estado-drop-menu.open').forEach(m => m.classList.remove('open'));
   }
 });
+
+// Mapa de estado de venta -> estado de envío externo (Skydropx), usado al sincronizar
+// el estado del envío externo cuando cambia el estado de la venta asociada.
+const _MAPA_ESTADO_VENTA_SKY = {
+  'pendiente': 'Pendiente', 'en_camino': 'En camino',
+  'entregado': 'Entregado', 'cancelado': 'Cancelado',
+  'devuelto':  'Devuelto',  'problema':  'Pendiente', 'error': 'En camino',
+};
+
+// Sincroniza el estado de un envío externo (envios_sky) con el estado actual de su venta.
+// Reutilizado por cambiarEstado() y por los flujos de pago de envíos (individual y múltiple).
+async function _sincronizarEstadoEnvioSky(v) {
+  try {
+    const enviosSky = await DB.envios_sky();
+    const envio = enviosSky.find(e => e.num_venta === v.id_ml || e.num_venta === v.id);
+    if (envio) {
+      envio.estado = _MAPA_ESTADO_VENTA_SKY[v.estado] || 'Pendiente';
+      await DB.upsertEnvioSky(envio);
+    }
+  } catch(e) { console.warn('No se pudo sincronizar envío:', e); }
+}
+
+// Opciones de estado que se pueden aplicar a una venta al pagar su envío (individual o múltiple).
+// "Despachado" corresponde internamente al estado 'error' (así se maneja en el resto de la app).
+const _ESTADOS_PAGO_ENVIO = [
+  { value: '',          label: '— No actualizar el estado —' },
+  { value: 'error',     label: 'Despachado' },
+  { value: 'en_camino', label: 'En camino' },
+  { value: 'entregado', label: 'Entregado' },
+  { value: 'devuelto',  label: 'Devuelto' },
+  { value: 'cancelado', label: 'Cancelado' },
+];

@@ -279,6 +279,9 @@ async function init() {
   }
   hideSpinner();
 
+  // Migración única: mover el antiguo campo "Gasto extra" de las ventas a su lista de gastos extra
+  if (typeof _migrarGastosExtraEnvio === 'function') await _migrarGastosExtraEnvio();
+
   const bws = await DB.billeteras();
   Object.keys(FUENTES_LABEL).forEach(k => delete FUENTES_LABEL[k]);
   Object.keys(FUENTES_ICON).forEach(k  => delete FUENTES_ICON[k]);

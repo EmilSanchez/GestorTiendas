@@ -574,7 +574,9 @@ function _renderEnviosSky(skyMes, mesAct) {
     <tr style="border-bottom:1px solid var(--border);">
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fmtFecha(e.fecha)}</td>
       <td style="padding:8px 10px;">
-        ${e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)" title="Clic para copiar">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>'}
+        ${e.envio_aparte
+          ? (e.num_venta ? `<span style="color:var(--text2);">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')
+          : (e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)" title="Clic para copiar">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')}
       </td>
       <td style="padding:8px 10px;">
         ${e.num_guia ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)" title="Clic para copiar">${e.num_guia}</span>` : '<span style="color:var(--text3);">—</span>'}
@@ -587,6 +589,7 @@ function _renderEnviosSky(skyMes, mesAct) {
       <td style="padding:8px 6px;text-align:center;white-space:nowrap;">
         <button class="btn btn-ghost btn-icon btn-sm" onclick="openModalEnvioSky('${e.id}')" title="Editar">${_FIN_ICON.edit}</button>
         <button class="btn btn-danger btn-icon btn-sm" onclick="deleteEnvioSky('${e.id}')" title="Eliminar">${_FIN_ICON.trash}</button>
+        ${!e.envio_aparte ? _btnVerEnML(e.num_venta) : ''}
       </td>
     </tr>`;
   }).join('');
@@ -616,10 +619,12 @@ async function openModalEnvioSky(id) {
   }
   document.getElementById('sky-fuente').innerHTML=opts.join('');
   const defaultWallet = (ajustes && ajustes.billetera_default_envios) || 'skydropx';
+  const chkAparte = document.getElementById('sky-envio-aparte');
   if(id){
-    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'Servientrega');sv('sky-valor',e.valor||'');sv('sky-producto',e.producto||'');sv('sky-fuente',e.fuente_pago||defaultWallet);sv('sky-estado',e.estado||'Pendiente');}
+    if(e){sv('sky-fecha',e.fecha||hoy());sv('sky-num-venta',e.num_venta||'');sv('sky-num-guia',e.num_guia||'');sv('sky-transportadora',e.transportadora||'Servientrega');sv('sky-valor',e.valor||'');sv('sky-producto',e.producto||'');sv('sky-fuente',e.fuente_pago||defaultWallet);sv('sky-estado',e.estado||'Pendiente');if(chkAparte) chkAparte.checked = !!e.envio_aparte;}
   } else {
     sv('sky-fecha',hoy());sv('sky-num-venta','');sv('sky-num-guia','');sv('sky-transportadora','Servientrega');sv('sky-valor','');sv('sky-producto','');sv('sky-fuente',defaultWallet);sv('sky-estado','Pendiente');
+    if(chkAparte) chkAparte.checked = false;
   }
   document.getElementById('modal-envio-sky-title').textContent=id?'Editar Envío':'Registrar Envío Skydropx';
   openModal('modal-envio-sky');
@@ -628,10 +633,11 @@ async function saveEnvioSky() {
   const valor=_parseNum(gv('sky-valor'))||0;
   // valor 0 es permitido
   const fecha=gv('sky-fecha')||hoy(),num_venta=gv('sky-num-venta').trim(),num_guia=gv('sky-num-guia').trim(),transport=gv('sky-transportadora')||'Servientrega',producto=(gv('sky-producto')||'').trim(),fuente_pago=gv('sky-fuente')||'skydropx',estado=gv('sky-estado')||'Pendiente';
+  const envioAparte = !!document.getElementById('sky-envio-aparte')?.checked;
   const id=_editEnvioSkyId||uid();
   const _tsNow = new Date().toISOString();
   const _esNuevo = !_editEnvioSkyId;
-  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,estado,valor,producto,fuente_pago,fecha_registro:_tsNow,...(_esNuevo?{creado:_tsNow}:{})});
+  await DB.upsertEnvioSky({id,fecha,num_venta,num_guia,transportadora:transport,estado,valor,producto,fuente_pago,envio_aparte:envioAparte,fecha_registro:_tsNow,...(_esNuevo?{creado:_tsNow}:{})});
   const saldos=await DB.saldos();
   saldos[fuente_pago]=(parseFloat(saldos[fuente_pago])||0)-valor;
   await DB.saveSaldos(saldos);

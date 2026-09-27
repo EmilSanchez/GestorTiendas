@@ -130,7 +130,7 @@ async function renderVentasGanancias() {
   }).join('');
 
   // Renderizar tabla de ventas
-  if (typeof renderVentas === 'function') renderVentas();
+  if (typeof renderVentas === 'function') await renderVentas();
 }
 
 // ── ALERTAS ──

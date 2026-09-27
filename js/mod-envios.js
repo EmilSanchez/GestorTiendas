@@ -125,6 +125,9 @@ async function openPagoEnvio(ventaId) {
     fuenteSel.value = v.fuente_pago_envio || defaultWallet;
   }
 
+  const estSel = document.getElementById('mpe-estado');
+  if (estSel) estSel.value = '';
+
   _calcDiffPagoEnvio();
   openModal('modal-pago-envio');
 }
@@ -230,7 +233,16 @@ async function guardarPagoEnvio() {
   v.envio_validado    = true;
   v.nota_envio_pago   = gv('mpe-nota').trim();
   v.fuente_pago_envio = fuente;
+
+  // Actualizar estado del producto al pagar, si se eligió uno
+  const nuevoEstado = gv('mpe-estado');
+  if (nuevoEstado) v.estado = nuevoEstado;
+
   await DB.saveVentas(ventas);
+  if (nuevoEstado) {
+    await updateAlertaBadge();
+    await _sincronizarEstadoEnvioSky(v);
+  }
 
   // Descontar el saldo de la billetera elegida y registrar el movimiento (no afecta la ganancia del mes)
   const saldos = await DB.saldos();
@@ -351,6 +363,7 @@ async function renderEnvios() {
     const borCol= esAg ? '#1e40af' : '#15803d';
     const valorEnvio = _envioValorCOP(v);
     const pagado = v.envio_pagado;
+    const gastosExtraV = calcVenta(v).gastosExtra;
 
     return `<tr>
       <td style="text-align:center;">
@@ -373,7 +386,7 @@ async function renderEnvios() {
       </td>
       <td class="td-mono">
         ${valorEnvio > 0 ? fmt(valorEnvio) : '<span class="c-dim">—</span>'}
-        ${v.envio_extra>0 ? `<div style="font-size:11px;color:var(--text3);">+extra ${fmt(v.envio_extra)}</div>` : ''}
+        ${gastosExtraV>0 ? `<div style="font-size:11px;color:var(--text3);" title="Gastos extra">+extra ${fmt(gastosExtraV)}</div>` : ''}
       </td>
       <td>
         <span class="badge badge-${v.estado||'pendiente'}">${v.estado||'pendiente'}</span>
@@ -397,6 +410,7 @@ async function renderEnvios() {
             ? `<button class="btn btn-ghost btn-sm" style="font-size:13px;" onclick="desmarcarPagoEnvio('${v.id}')">Desmarcar</button>`
             : `<button class="btn btn-primary btn-sm" style="font-size:13px;" onclick="openPagoEnvio('${v.id}')">Pagar</button>`
           }
+          ${_btnVerEnML(v.id_ml)}
         </div>
       </td>
     </tr>`;
@@ -431,12 +445,13 @@ async function openPagoMultiple() {
   const seleccionadas = ventas.filter(v => ids.includes(v.id));
 
   let total = 0;
+  const optsEstado = _ESTADOS_PAGO_ENVIO.map(o => `<option value="${o.value}">${o.label}</option>`).join('');
   const filas = seleccionadas.map(v => {
     const t = tiendas.find(x=>x.id===v.tienda_id);
     const val = _envioValorCOP(v);
     total += val;
     const empresa = v.envio_tipo === 'servientrega' ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg> Servientrega' : ' Aguachica';
-    return `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;">
+    return `<div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:7px 10px;border-bottom:1px solid var(--border);font-size:12px;flex-wrap:wrap;">
       <div>
         <span class="venta-id" onclick="copiarIdVenta('${v.id_ml||v.id}',this)" title="Clic para copiar ID">${v.id_ml||v.id}</span>
         <span class="c-dim" style="margin:0 6px;">·</span>
@@ -444,11 +459,16 @@ async function openPagoMultiple() {
         <span class="c-dim" style="margin:0 6px;">·</span>
         <span style="font-size:11px;">${empresa}</span>
       </div>
-      <span style="font-weight:600;color:var(--teal-dark);">${fmt(val)}</span>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-weight:600;color:var(--teal-dark);">${fmt(val)}</span>
+        <select class="mpm-estado-sel" data-id="${v.id}" style="font-size:11px;padding:3px 6px;">${optsEstado}</select>
+      </div>
     </div>`;
   }).join('');
 
   document.getElementById('mpm-lista').innerHTML = filas || '<div class="c-dim" style="padding:16px;text-align:center;font-size:12px;">Sin envíos seleccionados.</div>';
+  const estTodosSel = document.getElementById('mpm-estado-todos');
+  if (estTodosSel) estTodosSel.value = '';
   document.getElementById('mpm-total').textContent = fmt(total);
   document.getElementById('mpm-nota').value = '';
   document.getElementById('modal-pago-multiple')._ids = ids;
@@ -471,6 +491,12 @@ async function openPagoMultiple() {
   openModal('modal-pago-multiple');
 }
 
+// Aplica el estado elegido en "mpm-estado-todos" a cada select individual de la lista
+function _aplicarEstadoATodosPagoMultiple() {
+  const val = gv('mpm-estado-todos');
+  document.querySelectorAll('.mpm-estado-sel').forEach(sel => { sel.value = val; });
+}
+
 async function confirmarPagoMultiple() {
   const ids  = document.getElementById('modal-pago-multiple')._ids || [];
   const nota = document.getElementById('mpm-nota').value.trim();
@@ -485,9 +511,16 @@ async function confirmarPagoMultiple() {
   }
   if (errEl) errEl.textContent = '';
 
+  // Estado elegido para cada venta (select individual por fila; puede venir vacío = no cambiar)
+  const estadosPorVenta = {};
+  document.querySelectorAll('.mpm-estado-sel').forEach(sel => {
+    if (sel.value) estadosPorVenta[sel.dataset.id] = sel.value;
+  });
+
   const ventas = await DB.ventas();
   const saldos = await DB.saldos();
   const movsNuevos = [];
+  const ventasConEstadoNuevo = [];
   const ts = new Date().toISOString();
   ids.forEach(id => {
     const v = ventas.find(x=>x.id===id);
@@ -498,6 +531,7 @@ async function confirmarPagoMultiple() {
       v.envio_real_cop     = valorReal;
       v.fuente_pago_envio  = fuente;
       if(nota) v.nota_envio_pago = nota;
+      if (estadosPorVenta[id]) { v.estado = estadosPorVenta[id]; ventasConEstadoNuevo.push(v); }
       saldos[fuente] = (parseFloat(saldos[fuente])||0) - valorReal;
       movsNuevos.push({
         id: 'envpago_' + v.id, fecha: hoy(), tipo: 'egreso', fuente, valor: valorReal,
@@ -509,6 +543,10 @@ async function confirmarPagoMultiple() {
   await DB.saveVentas(ventas);
   await DB.saveSaldos(saldos);
   for (const m of movsNuevos) await DB.upsertMovimiento(m);
+  if (ventasConEstadoNuevo.length) {
+    await updateAlertaBadge();
+    for (const v of ventasConEstadoNuevo) await _sincronizarEstadoEnvioSky(v);
+  }
 
   // Desmarcar checkboxes y ocultar botón
   document.querySelectorAll('.chk-envio').forEach(c => c.checked = false);
@@ -597,7 +635,9 @@ async function _renderEnviosSkyPanel() {
   const rows = skyMes.map(e => `
     <tr style="border-bottom:1px solid var(--border);">
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fmtFecha(e.fecha)}</td>
-      <td style="padding:8px 10px;">${e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>'}</td>
+      <td style="padding:8px 10px;">${e.envio_aparte
+          ? (e.num_venta ? `<span style="color:var(--text2);">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')
+          : (e.num_venta ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')}</td>
       <td style="padding:8px 10px;">${e.num_guia  ? `<span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
@@ -611,6 +651,7 @@ async function _renderEnviosSkyPanel() {
         <button class="btn btn-danger btn-icon btn-sm" onclick="deleteEnvioSky('${e.id}')" title="Eliminar">
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
+        ${!e.envio_aparte ? _btnVerEnML(e.num_venta) : ''}
       </td>
     </tr>`).join('');
 
