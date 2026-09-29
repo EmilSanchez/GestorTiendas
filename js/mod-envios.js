@@ -129,7 +129,25 @@ async function openPagoEnvio(ventaId) {
   if (estSel) estSel.value = '';
 
   _calcDiffPagoEnvio();
+  _abrirPagoEnvioAnimado();
+}
+
+// Apertura/cierre suaves del modal de pago de envío. Usa las clases
+// compartidas .overlay/.modal (mismo mecanismo que openModal/closeModal),
+// y además una clase "show" propia de este modal para animar la entrada y
+// la salida con fade + escala, sin tocar el resto de modales de la app.
+function _abrirPagoEnvioAnimado() {
   openModal('modal-pago-envio');
+  const overlay = document.getElementById('modal-pago-envio');
+  if (!overlay) return;
+  overlay.classList.remove('show');
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('show')));
+}
+function _cerrarPagoEnvioAnimado() {
+  const overlay = document.getElementById('modal-pago-envio');
+  if (!overlay || !overlay.classList.contains('open')) { closeModal('modal-pago-envio'); return; }
+  overlay.classList.remove('show');
+  setTimeout(() => closeModal('modal-pago-envio'), 200);
 }
 
 // Cambia la moneda en la que se ingresa el valor real del pago (solo Servientrega)
@@ -256,7 +274,7 @@ async function guardarPagoEnvio() {
     _envio_pago_venta: v.id,
   });
 
-  closeModal('modal-pago-envio');
+  _cerrarPagoEnvioAnimado();
   showConfirmAnim('pago', false);
   await renderEnvios();
   if (typeof renderFinanzas === 'function') { try { await renderFinanzas(); } catch(e){} }

@@ -632,9 +632,9 @@ function recalcVenta() {
   const totEl = document.getElementById('c-rv-total');
   const cosEl = document.getElementById('c-total-costos');
   const marEl = document.getElementById('c-rv-margen');
-  if(ganEl) { _countUp(ganEl, gan, 450); ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'; }
-  if(totEl)  _countUp(totEl, totalV, 450);
-  if(cosEl)  _countUp(cosEl, totalC, 450);
+  if(ganEl) { _countUp(ganEl, gan); ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'; }
+  if(totEl)  _countUp(totEl, totalV);
+  if(cosEl)  _countUp(cosEl, totalC);
   if(marEl)  marEl.textContent  = fmtP(mar);
 
   // Sincronizar campos hidden
@@ -1153,7 +1153,10 @@ async function openValidarEnvio(id) {
   document.getElementById('ve-diff-box').style.display = 'none';
 
   const modal = document.getElementById('modal-validar-envio');
+  modal.classList.remove('show');
   modal.style.display = 'flex';
+  // Deja pintar el estado inicial (invisible) antes de animar la entrada
+  requestAnimationFrame(() => requestAnimationFrame(() => modal.classList.add('show')));
   setTimeout(()=>document.getElementById('ve-input').focus(), 80);
   _calcDiffEnvio();
 }
@@ -1259,8 +1262,11 @@ function _calcDiffEnvio() {
 }
 
 function _cancelValidarEnvio() {
-  document.getElementById('modal-validar-envio').style.display = 'none';
+  const modal = document.getElementById('modal-validar-envio');
   _validarEnvioId = null;
+  if (!modal || modal.style.display !== 'flex') { if (modal) modal.style.display = 'none'; return; }
+  modal.classList.remove('show');
+  setTimeout(() => { modal.style.display = 'none'; }, 200);
 }
 
 async function _confirmarValidarEnvio() {

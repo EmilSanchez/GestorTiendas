@@ -182,6 +182,19 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 .modal{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);width:100%;max-width:640px;max-height:92vh;overflow-y:auto;box-shadow:0 8px 30px rgba(0,0,0,.15);animation:mIn .15s ease;}
 .modal-lg{max-width:780px;}
 .modal-xl{max-width:920px;}
+
+/* ── Entrada/salida suave: modal "Validar Envío" (overlay propio, fuera de .overlay) ── */
+#modal-validar-envio{background:rgba(0,0,0,0);transition:background .2s ease;}
+#modal-validar-envio.show{background:rgba(0,0,0,.5);}
+#modal-validar-envio > div{opacity:0;transform:translateY(-10px) scale(.96);transition:opacity .2s ease,transform .22s cubic-bezier(.34,1.56,.64,1);}
+#modal-validar-envio.show > div{opacity:1;transform:translateY(0) scale(1);}
+
+/* ── Entrada/salida suave: modal "Registrar pago de envío" (usa .overlay/.modal compartidos,
+   así que se anima solo este modal por id para no afectar los demás) ── */
+#modal-pago-envio{background:rgba(0,0,0,0);transition:background .2s ease;}
+#modal-pago-envio.show{background:rgba(0,0,0,.4);}
+#modal-pago-envio .modal{animation:none;opacity:0;transform:translateY(-10px) scale(.96);transition:opacity .2s ease,transform .22s cubic-bezier(.34,1.56,.64,1);}
+#modal-pago-envio.show .modal{opacity:1;transform:translateY(0) scale(1);}
 @keyframes mIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
 .mh{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);background:#f7fafa;}
 .mh-title{font-size:0.95rem;font-weight:700;}

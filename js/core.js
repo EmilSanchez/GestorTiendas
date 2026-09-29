@@ -234,7 +234,11 @@ const PAGES = {
 
 
 // ── Animated counter ──
-function _countUp(el, targetVal, duration = 1400) {
+// Cuenta de forma progresiva y legible: al subir o bajar un valor, los
+// últimos dígitos se alcanzan a apreciar cambiando paso a paso (por ejemplo,
+// de 520.980 a 520.100 se ve bajar el 980 hasta el 100), en vez de un salto
+// o un parpadeo demasiado rápido para seguir con la vista.
+function _countUp(el, targetVal, duration) {
   if (!el) return;
 
   // Cancel any running animation on this element
@@ -245,26 +249,39 @@ function _countUp(el, targetVal, duration = 1400) {
   if (el.dataset.animFrom) delete el.dataset.animFrom; // consume it
   const curNum  = parseFloat(sourceText.replace(/[$.\s]/g, '').replace(/\./g, '').replace(',', '.')) || 0;
   const startVal = curNum;
+  const diff     = targetVal - startVal;
+  const absDiff  = Math.abs(diff);
 
-  // If difference is tiny, just set directly — no animation needed
-  if (Math.abs(targetVal - startVal) < 200) { el.textContent = fmt(targetVal); return; }
+  // Si el cambio es insignificante, no vale la pena animar
+  if (absDiff < 1) { el.textContent = fmt(targetVal); return; }
+
+  // Duración adaptativa: un cambio chico dura lo suficiente para leerse
+  // completo; uno grande no se alarga de más. Si el llamador pidió una
+  // duración puntual, se respeta un mínimo cómodo (nunca un parpadeo).
+  const adaptive = Math.min(1600, Math.max(600, 550 + Math.sqrt(absDiff) * 12));
+  duration = duration == null ? adaptive : Math.max(duration, 600);
 
   const startTime = performance.now();
-  const diff = targetVal - startVal;
+  const FRAME_MS  = 45; // ~22 pasos por segundo: se alcanza a leer cada cambio, sin parpadeo
+  let lastDraw    = 0;
 
   function step(now) {
-    const elapsed = now - startTime;
+    const elapsed  = now - startTime;
     const progress = Math.min(elapsed / duration, 1);
-    // Ease out cubic — fast start, gentle end
-    const ease = 1 - Math.pow(1 - progress, 3);
-    const current = startVal + diff * ease;
-    el.textContent = fmt(current);
-    if (progress < 1) {
-      el._countUpRaf = requestAnimationFrame(step);
-    } else {
+    if (progress >= 1) {
       el.textContent = fmt(targetVal);
       el._countUpRaf = null;
+      return;
     }
+    // Ease-in-out cúbico: arranca y termina con calma, sin saltos bruscos
+    const ease = progress < 0.5
+      ? 4 * progress * progress * progress
+      : 1 - Math.pow(-2 * progress + 2, 3) / 2;
+    if (now - lastDraw >= FRAME_MS) {
+      el.textContent = fmt(startVal + diff * ease);
+      lastDraw = now;
+    }
+    el._countUpRaf = requestAnimationFrame(step);
   }
   el._countUpRaf = requestAnimationFrame(step);
 }

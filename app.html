@@ -73,10 +73,10 @@
 <!-- ═══════════════════ MODAL VALIDAR ENVÍO ═══════════════════ -->
 <div id="modal-validar-envio" style="
   display:none;position:fixed;inset:0;z-index:99997;
-  background:rgba(0,0,0,.5);backdrop-filter:blur(3px);
+  backdrop-filter:blur(3px);
   align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:16px;width:420px;
-              box-shadow:0 24px 60px rgba(0,0,0,.3);animation:mIn .18s ease;overflow:hidden;">
+              box-shadow:0 24px 60px rgba(0,0,0,.3);overflow:hidden;">
 
     <!-- Header -->
     <div style="background:linear-gradient(135deg,#1a2332,#1e3a5f);padding:18px 22px;display:flex;align-items:center;justify-content:space-between;">
@@ -1955,7 +1955,7 @@ async function _renderEnviosSkyPanel() {
 
 <div class="overlay" id="modal-pago-envio">
   <div class="modal">
-    <div class="mh"><div class="mh-title">Registrar pago de envío</div><button class="mclose" onclick="closeModal('modal-pago-envio')">✕</button></div>
+    <div class="mh"><div class="mh-title">Registrar pago de envío</div><button class="mclose" onclick="_cerrarPagoEnvioAnimado()">✕</button></div>
     <div class="mc">
       <div style="background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);padding:12px;margin-bottom:14px;font-size:12px;" id="mpe-info"></div>
       <div class="fg">
@@ -1984,7 +1984,7 @@ async function _renderEnviosSkyPanel() {
       <div class="fg"><label class="fl2">Nota del pago <small class="c-dim">(opcional)</small></label><input type="text" id="mpe-nota" placeholder="Ej: pagado en efectivo, guía 12345..."></div>
       <div id="mpe-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
     </div>
-    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-pago-envio')">Cancelar</button><button class="btn btn-primary" onclick="guardarPagoEnvio()">Marcar como pagado</button></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="_cerrarPagoEnvioAnimado()">Cancelar</button><button class="btn btn-primary" onclick="guardarPagoEnvio()">Marcar como pagado</button></div>
   </div>
 </div>
 
