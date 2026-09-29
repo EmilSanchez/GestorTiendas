@@ -238,13 +238,15 @@ async function refreshModulo(page) {
 // ANIMACIÓN CONFIRMACIÓN
 // ══════════════════════════════════════════════════════════
 const _CA_MSGS = {
-  venta:    { reg:'Venta registrada',         edit:'Venta editada'          },
+  venta:    { reg:'Venta registrada', edit:'Venta editada'          },
   problema: { reg:'Problema registrado',      edit:'Problema editado'       },
   resuelto: { reg:'Problema resuelto',        edit:'Resolución actualizada' },
   validado: { reg:'Envío validado',           edit:'Envío actualizado'      },
-  pago:     { reg:'Pago de envío registrado', edit:'Pago actualizado'       },
+  pago:     { reg:'Envío pagado',             edit:'Pago actualizado'       },
   ayuda:    { reg:'Ayuda guardada',           edit:'Ayuda actualizada'      },
 };
+
+const _CA_CHECK_SVG = `<svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`;
 
 function showConfirmAnim(tipo, esEdicion) {
   const msgs     = _CA_MSGS[tipo] || _CA_MSGS.venta;
@@ -254,14 +256,14 @@ function showConfirmAnim(tipo, esEdicion) {
   const toastMsg = document.getElementById('_ca-toast-msg');
   const toastIcon= document.getElementById('_ca-toast-icon');
   if (!overlay || !toast) return;
-  toastIcon.textContent = esEdicion ? '' : '';
+  if (toastIcon) toastIcon.innerHTML = _CA_CHECK_SVG;
   toastMsg.textContent  = msg;
   overlay.classList.add('show');
   setTimeout(() => {
     overlay.classList.remove('show');
     toast.classList.add('show');
     setTimeout(() => toast.classList.remove('show'), 2400);
-  }, 500);
+  }, 420);
 }
 
 // ══════════════════════════════════════════════════════════
