@@ -479,6 +479,17 @@ function _buildEstadoDrop(estadoActual, opciones, onChangeFn, id) {
   </div>`;
 }
 
+// Cierra un menú de estado con una pequeña animación de salida antes de ocultarlo
+function _closeEstadoMenu(menu) {
+  if (!menu || !menu.classList.contains('open')) return;
+  const btn = menu.previousElementSibling;
+  if (btn && btn.classList) btn.classList.remove('abierto');
+  menu.classList.remove('show');
+  setTimeout(() => {
+    menu.classList.remove('open', 'flip-up');
+  }, 150);
+}
+
 // Single delegated listener on document for all dropdown interactions
 document.addEventListener('click', function(e) {
   const btn  = e.target.closest('.estado-drop-btn');
@@ -499,7 +510,11 @@ document.addEventListener('click', function(e) {
     dropBtn.style.color       = p.color;
     dropBtn.style.borderColor = p.border;
     dropBtn.innerHTML = p.label + ' ' + _CHEVRON;
-    parentDrop.querySelector('.estado-drop-menu').classList.remove('open');
+    // Animación "pop" suave al confirmar el cambio de estado
+    dropBtn.classList.remove('pop');
+    void dropBtn.offsetWidth;
+    dropBtn.classList.add('pop');
+    _closeEstadoMenu(parentDrop.querySelector('.estado-drop-menu'));
 
     window[reg.fn](reg.id, val);
     return;
@@ -510,24 +525,33 @@ document.addEventListener('click', function(e) {
     const menu = btn.nextElementSibling;
     const isOpen = menu.classList.contains('open');
     // Close all
-    document.querySelectorAll('.estado-drop-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.estado-drop-menu.open').forEach(m => { if (m !== menu) _closeEstadoMenu(m); });
     if (!isOpen) {
       // Position with fixed coords before showing
       const btnRect = btn.getBoundingClientRect();
       menu.style.left = btnRect.left + 'px';
       menu.style.top  = (btnRect.bottom + 4) + 'px';
+      menu.classList.remove('flip-up');
       menu.classList.add('open');
       // Flip up if not enough space below
       const menuH = menu.offsetHeight || 160;
       if (btnRect.bottom + menuH + 4 > window.innerHeight) {
         menu.style.top = (btnRect.top - menuH - 4) + 'px';
+        menu.classList.add('flip-up');
       }
+      btn.classList.add('abierto');
+      // Deja pintar la posición antes de animar la entrada (opacidad + escala)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => menu.classList.add('show'));
+      });
+    } else {
+      _closeEstadoMenu(menu);
     }
     return;
   }
 
   if (!drop) {
-    document.querySelectorAll('.estado-drop-menu.open').forEach(m => m.classList.remove('open'));
+    document.querySelectorAll('.estado-drop-menu.open').forEach(m => _closeEstadoMenu(m));
   }
 });
 

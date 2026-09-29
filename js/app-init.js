@@ -281,6 +281,14 @@ async function init() {
 
   // Migración única: mover el antiguo campo "Gasto extra" de las ventas a su lista de gastos extra
   if (typeof _migrarGastosExtraEnvio === 'function') await _migrarGastosExtraEnvio();
+  // Migración única (reparación): envíos externos registrados desde el módulo "Envíos
+  // Externos" que quedaron sin su costo en los gastos extra de la venta (bug ya corregido
+  // en saveEnvioSky(), esto repara lo que quedó guardado mientras existió)
+  if (typeof _migrarGastosExtraEnviosSky === 'function') await _migrarGastosExtraEnviosSky();
+  // Migración única (reparación): elimina gastos extra duplicados que quedaron cuando la
+  // migración anterior no reconoció una entrada "Gasto extra (migrado)" ya existente y
+  // agregó otra vez el mismo costo de envío (ver comentario junto a la función)
+  if (typeof _repararGastosExtraDuplicadosMigracion === 'function') await _repararGastosExtraDuplicadosMigracion();
 
   const bws = await DB.billeteras();
   Object.keys(FUENTES_LABEL).forEach(k => delete FUENTES_LABEL[k]);

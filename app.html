@@ -1788,7 +1788,7 @@ async function _renderEnviosSkyPanel() {
 </div>
 
 <!-- ═══════════════════ MODAL: NUEVA VENTA ═══════════════════ -->
-<div class="overlay" id="modal-venta">
+<div class="overlay" id="modal-venta" style="align-items:flex-start;padding-top:4vh;">
   <div class="modal modal-lg" style="border-radius:18px;overflow:hidden;border:none;max-height:95vh;">
     <div style="background:linear-gradient(135deg,#1a2332 0%,#243049 60%,#1e3a5f 100%);padding:20px 24px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;">
       <div>
@@ -1797,14 +1797,22 @@ async function _renderEnviosSkyPanel() {
       </div>
       <button class="mclose" onclick="closeModal('modal-venta')" style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:10px;font-size:16px;">✕</button>
     </div>
-    <div id="mv-tabs" style="display:none;border-bottom:1px solid var(--border);background:#fff;padding:0 24px;">
-      <div style="display:flex;gap:0;">
+    <div id="mv-tabs" style="border-bottom:1px solid var(--border);background:#fff;padding:0 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;">
+      <div id="mv-tabs-buttons" style="display:none;gap:0;">
         <button id="mv-tab-venta" onclick="_mvTab('venta')" style="padding:10px 18px;font-size:13px;font-weight:600;cursor:default;border:none;background:none;border-bottom:2px solid var(--teal);color:var(--teal);font-family:inherit;">Venta</button>
         <button id="mv-tab-envio" onclick="_mvTab('envio')" style="padding:10px 18px;font-size:13px;font-weight:500;cursor:default;border:none;background:none;border-bottom:2px solid transparent;color:var(--text2);font-family:inherit;">Envío Externo <span id="mv-envio-count-badge" style="display:none;font-size:10px;font-weight:700;background:var(--teal);color:#fff;padding:1px 6px;border-radius:10px;margin-left:3px;"></span></button>
       </div>
+      <!-- Resumen de ganancia compacto: siempre visible arriba, sin importar la pestaña activa -->
+      <div style="display:flex;align-items:center;gap:10px;padding:7px 0;margin-left:auto;">
+        <div id="c-rv-total" title="Ingresos" style="font-size:19px;font-weight:700;color:var(--text);line-height:1;">$ 0</div>
+        <div style="width:1px;height:16px;background:var(--border);"></div>
+        <div id="c-total-costos" title="Costos" style="font-size:19px;font-weight:700;color:var(--red);line-height:1;">$ 0</div>
+        <div style="width:1px;height:16px;background:var(--border);"></div>
+        <div id="c-rv-gan" title="Ganancia" style="font-size:19px;font-weight:700;color:var(--green);line-height:1;">$ 0</div>
+      </div>
     </div>
+    <div id="mv-body-wrap" style="position:relative;overflow:hidden;">
     <div class="mc" id="mv-body-venta" style="padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:10px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Información general</div>
       <div class="grid3" style="margin-bottom:16px;">
         <div class="fg"><label class="fl2">Tienda *</label><select id="v-tienda"></select></div>
         <div class="fg"><label class="fl2">ID Venta ML *</label><input type="text" id="v-id" placeholder="Ej: 2000015788963928"></div>
@@ -1818,17 +1826,17 @@ async function _renderEnviosSkyPanel() {
         <div class="fg"><label class="fl2">Validación de envío</label><select id="v-envio-validado" onchange="_toggleEnvioLock()"><option value="0">Sin validar</option><option value="1">Validado</option></select></div>
         <div class="fg" id="v-wrap-nombre" style="display:none;"><label class="fl2">Nombre del cliente</label><input type="text" id="v-nombre" placeholder="Ej: Juan Pérez"></div>
         <div class="fg" id="v-wrap-telefono"><label class="fl2">Teléfono del cliente</label><input type="tel" id="v-tel" placeholder="3001234567"></div>
+        <div class="fg">
+          <label class="fl2" title="Descuenta solo el costo del producto, sin el envío">Fuente de pago</label>
+          <select id="v-fuente-pago" onchange="recalcFuente()"></select>
+          <div id="v-fuente-saldo-info" style="font-size:10.5px;color:var(--text3);margin-top:4px;"></div>
+        </div>
         <div class="fg" id="v-wrap-contraentrega" style="display:none;">
           <label class="fl2">Contraentrega</label>
           <label style="display:flex;align-items:center;gap:8px;cursor:default;padding:9px 12px;border:1.5px solid var(--border);border-radius:8px;background:var(--bg);">
             <input type="checkbox" id="v-contraentrega" style="width:15px;height:15px;cursor:default;">
             <span style="font-size:13px;color:var(--text);">Esta venta es pago contra entrega</span>
           </label>
-        </div>
-        <div class="fg" style="grid-column:1/-1;">
-          <label class="fl2">Fuente de pago <small class="c-dim">(descuenta solo el costo del producto, sin el envío)</small></label>
-          <select id="v-fuente-pago" onchange="recalcFuente()"></select>
-          <div id="v-fuente-saldo-info" style="font-size:11px;color:var(--text3);margin-top:5px;"></div>
         </div>
         <div class="fg" style="grid-column:1/-1;"><label class="fl2">Nota <small class="c-dim">(opcional)</small></label><textarea id="v-nota" placeholder="Ej: empaque especial" rows="2" style="width:100%;resize:vertical;"></textarea></div>
       </div>
@@ -1851,11 +1859,6 @@ async function _renderEnviosSkyPanel() {
         </div>
       </div>
 
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;border-radius:14px;overflow:hidden;border:1.5px solid var(--border);background:var(--white);box-shadow:0 2px 12px rgba(0,137,123,.08);">
-        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#f0fdf9,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ingresos</div><div id="c-rv-total" style="font-size:20px;font-weight:800;color:var(--teal);">$ 0</div></div>
-        <div style="padding:14px 16px;border-right:1.5px solid var(--border);text-align:center;background:linear-gradient(135deg,#fff5f5,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Costos</div><div id="c-total-costos" style="font-size:20px;font-weight:800;color:var(--red);">$ 0</div></div>
-        <div style="padding:14px 16px;text-align:center;background:linear-gradient(135deg,#f0fdf4,#fff);"><div style="font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:.8px;margin-bottom:5px;font-weight:700;">Ganancia</div><div id="c-rv-gan" style="font-size:20px;font-weight:800;color:var(--green);">$ 0</div></div>
-      </div>
       <input type="hidden" id="v-envio-estimado"><input type="hidden" id="v-envio-real">
       <input type="hidden" id="v-monto-pago">
       <input type="hidden" id="v-ref-pago"><input type="hidden" id="v-costo-cop">
@@ -1869,7 +1872,6 @@ async function _renderEnviosSkyPanel() {
 
     </div>
     <div id="mv-body-envio" style="display:none;padding:20px 24px;overflow-y:auto;max-height:calc(95vh - 210px);">
-      <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--teal);margin-bottom:14px;padding-bottom:6px;border-bottom:2px solid var(--teal-bg);">Envío Externo — Skydropx</div>
       <div id="mv-envios-lista"></div>
       <div id="mv-envio-status" style="margin-bottom:16px;"></div>
       <div class="grid3" style="margin-bottom:14px;">
@@ -1886,11 +1888,35 @@ async function _renderEnviosSkyPanel() {
         <div class="fg"><label class="fl2">Producto</label><input type="text" id="mvs-producto" placeholder="Ej: Audífonos Bluetooth X200"></div>
         <div class="fg"><label class="fl2">Fuente de pago</label><select id="mvs-fuente"></select></div>
       </div>
+      <div id="mv-envio-aviso-cerrado"></div>
       <div id="mv-envio-err" style="color:var(--red);font-size:12px;min-height:14px;"></div>
+    </div>
     </div>
     <div style="padding:14px 24px;border-top:1px solid var(--border);background:#f7fafa;display:flex;gap:10px;justify-content:flex-end;flex-shrink:0;">
       <button class="btn btn-ghost" onclick="closeModal('modal-venta')" style="padding:10px 20px;font-size:13px;">Cancelar</button>
       <button class="btn btn-primary" id="mv-btn-guardar" onclick="saveVenta()" style="padding:10px 24px;font-size:13px;font-weight:700;box-shadow:0 4px 12px rgba(0,137,123,.3);">Guardar Venta</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ MODAL CONFIRMAR ELIMINAR INGRESO/GASTO EXTRA ═══════ -->
+<div class="overlay" id="modal-confirmar-borrar-extra">
+  <div class="modal" style="max-width:380px;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;">
+      <div>
+        <div class="mh-title" style="color:#fff;font-size:14px;">Eliminar registro</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Esta acción no se puede deshacer</div>
+      </div>
+      <button class="mclose" onclick="closeModal('modal-confirmar-borrar-extra')"
+        style="background:rgba(255,255,255,.15);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:16px;cursor:default;"
+        onmouseover="this.style.background='rgba(255,255,255,.28)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">✕</button>
+    </div>
+    <div class="mc" style="text-align:center;padding:24px 22px 6px;">
+      <div id="confirmar-borrar-extra-msg" style="font-size:13px;color:var(--text2);line-height:1.6;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-confirmar-borrar-extra')" style="flex:1;">Cancelar</button>
+      <button onclick="_confirmarRemoveExtra()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:inherit;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Sí, eliminar</button>
     </div>
   </div>
 </div>
@@ -2577,6 +2603,93 @@ async function _renderEnviosSkyPanel() {
     </div>
   </div>
 </div>
+
+<!-- ═══════════════════ MODAL DETALLE DE LA DIFERENCIA (cierre de mes) ═══════════════════ -->
+<div class="overlay" id="modal-detalle-diferencia">
+  <div class="modal" style="max-width:720px;">
+    <div class="mh" style="background:#0d1f2d;color:#fff;padding:18px 24px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Detalle de la diferencia</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;" id="dd-mes-label">—</div>
+      </div>
+      <button onclick="closeModal('modal-detalle-diferencia')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
+    </div>
+    <div class="mc" style="padding:20px 24px;max-height:70vh;overflow-y:auto;">
+
+      <!-- Resumen -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:18px;">
+        <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:4px;">Ganancia al cierre</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);" id="dd-gan-original">—</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+          <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:4px;">Ganancia actual</div>
+          <div style="font-size:14px;font-weight:700;color:var(--text);" id="dd-gan-actual">—</div>
+        </div>
+        <div style="padding:10px 12px;background:var(--teal-bg);border:1px solid rgba(0,137,123,.2);border-radius:10px;">
+          <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--teal);margin-bottom:4px;">Diferencia total</div>
+          <div style="font-size:16px;font-weight:800;" id="dd-diferencia-total">—</div>
+        </div>
+      </div>
+
+      <!-- Sección 1: origen de la diferencia -->
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;">1. ¿De dónde salió la diferencia?</div>
+      <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">
+        Cambios registrados <b>después</b> de que este mes se cerró: ventas editadas, canceladas o eliminadas, envíos externos sueltos, y ajustes manuales.
+      </div>
+
+      <!-- Tabla -->
+      <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;">
+        <table style="width:100%;border-collapse:collapse;">
+          <thead>
+            <tr style="background:var(--bg);">
+              <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Fecha</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Venta</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Tipo</th>
+              <th style="padding:7px 10px;text-align:left;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Motivo</th>
+              <th style="padding:7px 10px;text-align:right;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Valor</th>
+            </tr>
+          </thead>
+          <tbody id="dd-tabla-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Suma: identificado de X del total -->
+      <div style="display:flex;justify-content:flex-end;margin-top:10px;">
+        <div style="text-align:right;">
+          <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Identificado en la tabla</div>
+          <div style="font-size:14px;font-weight:700;" id="dd-suma-items">—</div>
+        </div>
+      </div>
+      <div id="dd-no-identificado-row" style="display:none;margin-top:8px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:11px;color:#9a3412;line-height:1.5;">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <b id="dd-no-identificado-valor">—</b> <span id="dd-no-identificado-texto"></span>
+      </div>
+
+      <!-- Sección 2: si ya se corrigió en otros meses -->
+      <div id="dd-apl-pend" style="display:none;margin-top:20px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">2. ¿Ya se corrigió?</div>
+        <div id="dd-apl-estado" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:10px;"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;">
+          <div>
+            <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Ya aplicado a otros meses</div>
+            <div style="font-size:14px;font-weight:700;" id="dd-total-aplicado">—</div>
+          </div>
+          <div>
+            <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Diferencia pendiente</div>
+            <div style="font-size:14px;font-weight:700;" id="dd-diferencia-pendiente">—</div>
+          </div>
+        </div>
+        <div id="dd-apl-detalle"></div>
+      </div>
+    </div>
+    <div class="mf">
+      <button class="btn btn-primary" onclick="closeModal('modal-detalle-diferencia')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <script>
 (function() {
   function toggleSidebar() {

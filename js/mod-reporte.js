@@ -397,7 +397,7 @@ var _cmIngresos     = 0;
 var _cmNumVentas    = 0;
 var _cmModoEdicion  = false; // true = ya cerrado, editando
 
-const _fmtCOP = n => '$' + Number(n||0).toLocaleString('es-CO');
+const _fmtCOP = n => '$' + Math.round(Number(n||0)).toLocaleString('es-CO');
 
 // ── helpers Firestore ──
 async function _saveCierres(arr) {
@@ -545,6 +545,7 @@ async function renderCierresMes_Fin() {
 
         <!-- Acciones secundarias -->
         <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:8px;margin-top:-2px;">
+          ${Math.abs(diferenciaTotal) >= 1 ? `<button class="btn btn-ghost btn-sm" onclick="_abrirDetalleDiferencia('${cl.mes}')" style="font-size:11px;padding:3px 9px;">Ver detalle de la diferencia</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="abrirCierreExistente('${cl.mes}')" style="font-size:11px;padding:3px 9px;">Ver / Editar</button>
           ${!tieneHistorial ? `<button class="btn btn-ghost btn-sm" onclick="_reabrirMes('${cl.mes}')" style="font-size:11px;padding:3px 9px;color:var(--red);">Reabrir</button>` : ''}
         </div>
@@ -560,6 +561,254 @@ function _cmAjusteCierreMes(movs, mesStr) {
   return (movs || [])
     .filter(m => (m._ajuste_cierre && (m.fecha||'').startsWith(mesStr)) || (m.afecta_ganancia_mes === mesStr))
     .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
+}
+
+// ══════════════════════════════════════════════════════════
+// Detalle de la diferencia de un mes cerrado: de dónde salió.
+//
+// MODO PRECISO (cierres nuevos, con snapshot_ventas guardado al cerrar):
+// compara, venta por venta, la ganancia que tenía al momento del cierre
+// contra la ganancia actual. Esto detecta con exactitud ventas editadas,
+// canceladas o eliminadas después del cierre — no solo lo que se agregó
+// a gastos/ingresos extra.
+//
+// MODO ESTIMADO (cierres antiguos, sin snapshot_ventas): no existe una
+// foto venta por venta, así que se reconstruye buscando lo registrado
+// DESPUÉS de la fecha de cierre en ingresos/gastos extra y envíos
+// sueltos. Una venta cancelada o con su precio cambiado en este modo NO
+// deja rastro (no hay dónde leer el valor anterior), así que puede
+// quedar como diferencia "no identificada".
+//
+// En ambos modos se listan también los ajustes manuales de cierre
+// (aplicar diferencia de otro mes, etc.) registrados después del cierre,
+// y se separa lo que el propio mes ya aplicó a otros meses (historial)
+// de lo que le queda pendiente.
+// ══════════════════════════════════════════════════════════
+async function _cmDetalleDiferencia(mes) {
+  const [cierres, ventas, enviosSky, movs] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky(), DB.movimientos()]);
+  const cl = cierres.find(c => c.mes === mes);
+  if (!cl) return null;
+
+  const idsMl      = new Set(ventas.map(v => v.id_ml).filter(Boolean));
+  const ventasMes  = ventas.filter(v => (v.fecha_venta||'').startsWith(mes));
+  const skySueltos = enviosSky.filter(e => (e.fecha||'').startsWith(mes) && !idsMl.has(e.num_venta));
+  const egSky      = skySueltos.reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
+  const ajusteCierre = _cmAjusteCierreMes(movs, mes);
+
+  const ganOriginal    = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
+  const ganActual      = ventasMes.reduce((s,v) => s + calcVenta(v).ganancia, 0) - egSky + ajusteCierre;
+  const diferenciaTotal = ganActual - ganOriginal;
+  const fechaCierre    = cl.fecha_cierre || '1970-01-01';
+
+  const items = [];
+  const tieneSnapshot = cl.snapshot_ventas && typeof cl.snapshot_ventas === 'object';
+
+  if (tieneSnapshot) {
+    // ── Modo preciso: comparar cada venta contra la foto guardada al cerrar ──
+    const snapV   = cl.snapshot_ventas || {};
+    const snapSky = cl.snapshot_sky_sueltos || {};
+
+    const vistasIds = new Set();
+    ventasMes.forEach(v => {
+      vistasIds.add(v.id);
+      const ganAhora = calcVenta(v).ganancia;
+      const tenia    = Object.prototype.hasOwnProperty.call(snapV, v.id);
+      const ganAntes = tenia ? (parseFloat(snapV[v.id])||0) : null;
+      if (!tenia) {
+        if (Math.abs(ganAhora) >= 1) {
+          items.push({ fecha: v.fecha_registro || fechaCierre, venta: v.id_ml||v.id, tipo: 'Venta nueva', motivo: 'Se agregó a este mes después del cierre', valor: ganAhora });
+        }
+      } else if (Math.abs(ganAhora - ganAntes) >= 1) {
+        items.push({
+          fecha: v.fecha_actualizacion || fechaCierre, venta: v.id_ml||v.id,
+          tipo: 'Venta editada',
+          motivo: `Ganancia cambió de ${_fmtCOP(ganAntes)} a ${_fmtCOP(ganAhora)}`,
+          valor: ganAhora - ganAntes,
+        });
+      }
+    });
+    // Ventas que estaban en la foto del cierre pero ya no existen (eliminadas)
+    Object.keys(snapV).forEach(id => {
+      if (vistasIds.has(id)) return;
+      const ganAntes = parseFloat(snapV[id]) || 0;
+      if (Math.abs(ganAntes) >= 1) {
+        items.push({ fecha: fechaCierre, venta: id, tipo: 'Venta eliminada', motivo: 'Ya no existe en el sistema', valor: -ganAntes });
+      }
+    });
+
+    // Envíos sueltos: mismo tratamiento
+    const vistosSky = new Set();
+    skySueltos.forEach(e => {
+      vistosSky.add(e.id);
+      const valAhora = parseFloat(e.valor) || 0;
+      const tenia    = Object.prototype.hasOwnProperty.call(snapSky, e.id);
+      const valAntes = tenia ? (parseFloat(snapSky[e.id])||0) : null;
+      const motivo   = `${e.num_guia||'Sin guía'} -- ${e.producto||'Sin producto'}`;
+      if (!tenia) {
+        if (Math.abs(valAhora) >= 1) items.push({ fecha: e.creado||e.fecha_registro||fechaCierre, venta: e.num_venta || '—', tipo: 'Envío suelto nuevo', motivo, valor: -valAhora });
+      } else if (Math.abs(valAhora - valAntes) >= 1) {
+        items.push({ fecha: e.creado||e.fecha_registro||fechaCierre, venta: e.num_venta || '—', tipo: 'Envío suelto editado', motivo, valor: -(valAhora - valAntes) });
+      }
+    });
+    Object.keys(snapSky).forEach(id => {
+      if (vistosSky.has(id)) return;
+      const valAntes = parseFloat(snapSky[id]) || 0;
+      if (Math.abs(valAntes) >= 1) items.push({ fecha: fechaCierre, venta: '—', tipo: 'Envío suelto eliminado', motivo: 'Ya no existe en el sistema', valor: valAntes });
+    });
+  } else {
+    // ── Modo estimado (cierres antiguos, sin foto guardada) ──
+    ventasMes.forEach(v => {
+      const ventaLabel = v.id_ml || v.id || '—';
+      (v.ingresos_extra || []).forEach(it => {
+        if (it.fecha && it.fecha >= fechaCierre) items.push({ fecha: it.fecha, venta: ventaLabel, tipo: 'Ingreso extra', motivo: it.motivo || '—', valor: parseFloat(it.valor)||0 });
+      });
+      (v.gastos_extra || []).forEach(it => {
+        if (it.fecha && it.fecha >= fechaCierre) items.push({ fecha: it.fecha, venta: ventaLabel, tipo: 'Gasto extra', motivo: it.motivo || '—', valor: -(parseFloat(it.valor)||0) });
+      });
+    });
+    skySueltos.forEach(e => {
+      const fechaE = e.creado || e.fecha_registro || '';
+      if (fechaE && fechaE >= fechaCierre) items.push({ fecha: fechaE, venta: e.num_venta || '—', tipo: 'Envío externo suelto', motivo: `${e.num_guia||'Sin guía'} -- ${e.producto||'Sin producto'}`, valor: -(parseFloat(e.valor)||0) });
+    });
+  }
+
+  // Ajustes manuales de cierre (aplicar diferencia de otro mes, etc.) — solo los
+  // registrados DESPUÉS de que este mes se cerró: si ya existían antes, su efecto
+  // ya estaba incluido en la ganancia congelada de este mes.
+  (movs || []).forEach(m => {
+    const esAjuste = (m._ajuste_cierre && (m.fecha||'').startsWith(mes)) || (m.afecta_ganancia_mes === mes);
+    if (!esAjuste) return;
+    // Ojo: m.fecha es la fecha "contable" del ajuste (ej: último día del mes al
+    // que se aplicó), no cuándo se aplicó realmente. Para saber si es POSTERIOR
+    // al cierre hay que usar fecha_registro.
+    const fechaM = m.fecha_registro || '';
+    if (!fechaM || fechaM < fechaCierre) return;
+    items.push({
+      fecha: fechaM, venta: '—',
+      tipo: m.tipo === 'ingreso' ? 'Ajuste (ingreso)' : 'Ajuste (egreso)',
+      motivo: m.concepto || m.notas || '—',
+      valor: m.tipo === 'ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0),
+    });
+  });
+
+  items.sort((a,b) => (a.fecha||'').localeCompare(b.fecha||''));
+  const sumaItems      = items.reduce((s,it) => s + it.valor, 0);
+  const noIdentificado = diferenciaTotal - sumaItems;
+
+  // ── Aplicado a otros meses / pendiente (lo que ESTE cierre ya movió a otro
+  // mes vía "Aplicar diferencia", y lo que aún le falta) ──
+  const historial      = _getHistorialDif(cl);
+  const totalAplicado  = historial.reduce((s,h) => s + (parseFloat(h.valor)||0), 0);
+  const diferenciaPend = diferenciaTotal - totalAplicado;
+
+  return { cl, ganOriginal, ganActual, diferenciaTotal, items, sumaItems, noIdentificado, tieneSnapshot, historial, totalAplicado, diferenciaPend };
+}
+
+async function _abrirDetalleDiferencia(mes) {
+  const data = await _cmDetalleDiferencia(mes);
+  if (!data) return;
+  const { ganOriginal, ganActual, diferenciaTotal, items, sumaItems, noIdentificado, tieneSnapshot, historial, totalAplicado, diferenciaPend } = data;
+
+  const mesLabelEl = document.getElementById('dd-mes-label');
+  if (mesLabelEl) mesLabelEl.textContent = _repFmtMes(mes);
+
+  const setVal = (id, val, signed) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (signed && val >= 0 ? '+' : '') + _fmtCOP(val);
+  };
+  setVal('dd-gan-original', ganOriginal, false);
+  setVal('dd-gan-actual', ganActual, false);
+  setVal('dd-diferencia-total', diferenciaTotal, true);
+  const difEl = document.getElementById('dd-diferencia-total');
+  if (difEl) difEl.style.color = diferenciaTotal >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // Sección 2: aplicado a otros meses / pendiente (solo si ya se aplicó algo)
+  const aplPendEl = document.getElementById('dd-apl-pend');
+  if (aplPendEl) {
+    if (Math.abs(totalAplicado) >= 1) {
+      aplPendEl.style.display = '';
+      document.getElementById('dd-total-aplicado').textContent = (totalAplicado>=0?'+':'') + _fmtCOP(totalAplicado);
+      document.getElementById('dd-total-aplicado').style.color = totalAplicado >= 0 ? 'var(--green)' : 'var(--red)';
+      const pendEl = document.getElementById('dd-diferencia-pendiente');
+      const pendRedondeada = Math.round(diferenciaPend);
+      pendEl.textContent = (pendRedondeada>=0?'+':'') + _fmtCOP(diferenciaPend);
+      pendEl.style.color = pendRedondeada >= 0 ? 'var(--green)' : 'var(--red)';
+
+      const estadoEl = document.getElementById('dd-apl-estado');
+      if (estadoEl) {
+        if (Math.abs(pendRedondeada) < 1) {
+          estadoEl.style.color = 'var(--green)';
+          estadoEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Ya se aplicó por completo a otros meses — no afecta tus totales actuales.`;
+        } else {
+          estadoEl.style.color = '#9a3412';
+          estadoEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Todavía falta aplicar ${_fmtCOP(Math.abs(diferenciaPend))} a otro mes.`;
+        }
+      }
+
+      document.getElementById('dd-apl-detalle').innerHTML = historial.map(h => {
+        const hVal = parseFloat(h.valor)||0;
+        return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;">
+          <span class="c-dim">${h.mes_destino ? 'Aplicada a ' + _repFmtMes(h.mes_destino) : 'Aplicada'}${h.fecha ? ' · '+h.fecha : ''}</span>
+          <span style="font-weight:600;color:${hVal>=0?'var(--green)':'var(--red)'};">${hVal>=0?'+':''}${_fmtCOP(hVal)}</span>
+        </div>`;
+      }).join('');
+    } else {
+      aplPendEl.style.display = 'none';
+    }
+  }
+
+  const tbody = document.getElementById('dd-tabla-body');
+  if (tbody) {
+    tbody.innerHTML = !items.length
+      ? `<tr><td colspan="5" style="text-align:center;padding:22px 10px;font-size:12px;color:var(--text3);">No se encontraron cambios posteriores al cierre que expliquen la diferencia.</td></tr>`
+      : items.map(it => `
+        <tr>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:11px;color:var(--text2);white-space:nowrap;">${_fmtFechaHora(it.fecha)}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);white-space:nowrap;">${it.venta}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:10.5px;white-space:nowrap;"><span style="background:var(--bg);padding:2px 8px;border-radius:20px;font-weight:600;color:var(--text2);">${it.tipo}</span></td>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;color:var(--text2);">${it.motivo}</td>
+          <td style="padding:8px 10px;border-bottom:1px solid var(--border);font-size:12px;font-weight:700;text-align:right;white-space:nowrap;color:${it.valor>=0?'var(--green)':'var(--red)'};">${it.valor>=0?'+':''}${_fmtCOP(it.valor)}</td>
+        </tr>`).join('');
+  }
+
+  // Suma: se muestra junto al total para que quede claro qué parte de la
+  // diferencia total logró identificarse en la tabla de arriba.
+  const sumaEl = document.getElementById('dd-suma-items');
+  if (sumaEl) {
+    const sSuma = Math.round(sumaItems);
+    sumaEl.innerHTML = `${sSuma>=0?'+':''}${_fmtCOP(sumaItems)} <span style="font-size:11px;font-weight:500;color:var(--text3);">de ${_fmtCOP(diferenciaTotal)}</span>`;
+    sumaEl.style.color = sSuma >= 0 ? 'var(--green)' : 'var(--red)';
+  }
+
+  // "Sin explicar": en modo preciso (con foto por venta guardada al cerrar)
+  // esto NO debería pasar nunca — si aparece, es señal de un error real en
+  // el cálculo. En modo estimado (cierres antiguos) es una limitación
+  // conocida de los datos de ese momento, no un error.
+  const noIdRow = document.getElementById('dd-no-identificado-row');
+  if (noIdRow) {
+    if (Math.abs(noIdentificado) >= 1) {
+      noIdRow.style.display = '';
+      const valorEl = document.getElementById('dd-no-identificado-valor');
+      const textoEl = document.getElementById('dd-no-identificado-texto');
+      if (valorEl) valorEl.textContent = (Math.round(noIdentificado)>=0?'+':'') + _fmtCOP(noIdentificado);
+      if (tieneSnapshot) {
+        noIdRow.style.background = '#fef2f2';
+        noIdRow.style.borderColor = '#fecaca';
+        noIdRow.style.color = '#7f1d1d';
+        if (textoEl) textoEl.textContent = 'de la diferencia no quedó explicado en la tabla de arriba — puede ser un error de cálculo, repórtalo para revisarlo.';
+      } else {
+        noIdRow.style.background = '#fff7ed';
+        noIdRow.style.borderColor = '#fed7aa';
+        noIdRow.style.color = '#9a3412';
+        if (textoEl) textoEl.textContent = 'de la diferencia no se pudo relacionar con ningún cambio identificado (dato de un cierre antiguo).';
+      }
+    } else {
+      noIdRow.style.display = 'none';
+    }
+  }
+
+  openModal('modal-detalle-diferencia');
 }
 
 // ── Abrir modal para NUEVO cierre ──
@@ -929,7 +1178,21 @@ async function _cmGuardarCambiosConfirmado() {
   const trabNum     = Math.max(1, parseInt(document.getElementById('cm-trabajadores')?.value)||1);
 
   if (idx < 0) {
-    // Nuevo cierre — guardar ganancia_original = ganancia al momento del cierre
+    // Nuevo cierre — guardar ganancia_original = ganancia al momento del cierre,
+    // + una "foto" venta por venta (snapshot_ventas) y de cada envío suelto
+    // (snapshot_sky_sueltos), para poder explicar con precisión — más adelante,
+    // en "Ver detalle de la diferencia" — exactamente qué venta cambió, se
+    // canceló o se eliminó después de cerrar, y por cuánto. Sin esta foto no
+    // hay forma de saber qué valía cada venta al momento del cierre.
+    const [ventasSnap, enviosSkySnap] = await Promise.all([DB.ventas(), DB.envios_sky()]);
+    const idsMlSnap      = new Set(ventasSnap.map(v => v.id_ml).filter(Boolean));
+    const ventasMesSnap  = ventasSnap.filter(v => (v.fecha_venta||'').startsWith(_cmMesActual));
+    const skySueltosSnap = enviosSkySnap.filter(e => (e.fecha||'').startsWith(_cmMesActual) && !idsMlSnap.has(e.num_venta));
+    const snapshotVentas = {};
+    ventasMesSnap.forEach(v => { snapshotVentas[v.id] = calcVenta(v).ganancia; });
+    const snapshotSkySueltos = {};
+    skySueltosSnap.forEach(e => { snapshotSkySueltos[e.id] = parseFloat(e.valor) || 0; });
+
     const nuevo = {
       mes: _cmMesActual,
       num_ventas:     _cmNumVentas,
@@ -938,6 +1201,8 @@ async function _cmGuardarCambiosConfirmado() {
       ganancia_fmt:   _fmtCOP(_cmGanBruta),
       ganancia_raw:   _cmGanBruta,
       ganancia_original: _cmGanBruta,  // CONGELADO al momento del cierre — nunca cambia
+      snapshot_ventas:      snapshotVentas,      // {ventaId: ganancia de esa venta al cierre}
+      snapshot_sky_sueltos: snapshotSkySueltos,  // {envioId: valor de ese envío suelto al cierre}
       utilidad_fmt:   _fmtCOP(utilidad),
       utilidad_raw:   utilidad,
       utilidad_original: utilidad,     // Utilidad congelada al cierre

@@ -370,11 +370,16 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 
 /* ── Estado Dropdown ── */
 .estado-drop{position:relative;display:inline-block;}
-.estado-drop-btn{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:default;border:1.5px solid transparent;font-family:inherit;white-space:nowrap;user-select:none;transition:opacity .12s;}
-.estado-drop-btn svg{flex-shrink:0;}
+.estado-drop-btn{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:500;cursor:default;border:1.5px solid transparent;font-family:inherit;white-space:nowrap;user-select:none;transition:opacity .12s,background-color .28s ease,color .28s ease,border-color .28s ease;}
+.estado-drop-btn svg{flex-shrink:0;transition:transform .2s cubic-bezier(.4,0,.2,1);}
 .estado-drop-btn:hover{opacity:.85;}
-.estado-drop-menu{position:fixed;z-index:9999;background:#fff;border:1px solid #d4d4d4;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);min-width:130px;overflow:hidden;display:none;flex-direction:column;}
+.estado-drop-btn.abierto svg{transform:rotate(180deg);}
+@keyframes estadoPop{0%{transform:scale(1);}45%{transform:scale(1.14);}100%{transform:scale(1);}}
+.estado-drop-btn.pop{animation:estadoPop .34s cubic-bezier(.34,1.56,.64,1);}
+.estado-drop-menu{position:fixed;z-index:9999;background:#fff;border:1px solid #d4d4d4;border-radius:10px;box-shadow:0 6px 24px rgba(0,0,0,.18);min-width:130px;overflow:hidden;display:none;flex-direction:column;opacity:0;transform:translateY(-6px) scale(.95);transform-origin:top left;transition:opacity .16s ease,transform .16s cubic-bezier(.34,1.56,.64,1);}
 .estado-drop-menu.open{display:flex;}
+.estado-drop-menu.open.show{opacity:1;transform:translateY(0) scale(1);}
+.estado-drop-menu.flip-up{transform-origin:bottom left;}
 .estado-drop-opt{padding:7px 14px;font-size:11px;font-weight:500;cursor:default;font-family:inherit;white-space:nowrap;transition:opacity .1s;border:none;text-align:left;background:transparent;}
 .estado-drop-opt:hover{opacity:.8;}
 

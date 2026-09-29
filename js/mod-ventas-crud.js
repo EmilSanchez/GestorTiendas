@@ -33,26 +33,38 @@ var _editVentaId = null;
 
 // ── Ingresos extra / Gastos extra (lista editable con motivo) ──
 var _mvExtras = { ingreso: [], gasto: [] };
+var _pendingRemoveExtra = null;
 
 function _renderExtrasList(tipo) {
   const arr  = _mvExtras[tipo] || [];
   const wrap = document.getElementById(tipo === 'ingreso' ? 'v-ingresos-extra-list' : 'v-gastos-extra-list');
   if (!wrap) return;
   if (!arr.length) {
-    wrap.innerHTML = `<div style="font-size:11px;color:var(--text3);padding:2px 0 6px;">Sin ${tipo === 'ingreso' ? 'ingresos' : 'gastos'} extra registrados.</div>`;
+    wrap.innerHTML = `<div style="border:1.5px dashed var(--border);border-radius:10px;padding:14px;text-align:center;font-size:11px;color:var(--text3);">Sin ${tipo === 'ingreso' ? 'ingresos' : 'gastos'} extra registrados.</div>`;
     return;
   }
-  wrap.innerHTML = arr.map(item => `
-    <div style="display:flex;gap:6px;margin-bottom:6px;align-items:center;" data-extra-row="${item.id}">
-      <input type="text" inputmode="numeric" placeholder="Monto" value="${item.valor !== undefined && item.valor !== null ? item.valor : ''}"
+  const rows = arr.map((item, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;${i < arr.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}" data-extra-row="${item.id}">
+      <input type="text" inputmode="numeric" placeholder="0" value="${item.valor !== undefined && item.valor !== null ? item.valor : ''}"
         oninput="_updExtra('${tipo}','${item.id}','valor',this.value)"
-        style="width:110px;flex-shrink:0;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
+        style="width:92px;flex-shrink:0;padding:5px 8px;border:none;border-radius:6px;background:var(--bg);text-align:right;font-size:12px;font-weight:600;color:var(--text);font-family:var(--font-mono,inherit);outline:none;">
       <input type="text" placeholder="Motivo (ej: reembolso del cliente)" value="${(item.motivo||'').replace(/"/g,'&quot;')}"
         oninput="_updExtra('${tipo}','${item.id}','motivo',this.value)"
-        style="flex:1;min-width:0;padding:7px 9px;border:1.5px solid var(--border);border-radius:8px;font-size:12px;font-family:inherit;outline:none;">
+        style="flex:1;min-width:0;padding:5px 8px;border:none;background:none;font-size:12px;font-family:inherit;color:var(--text2);outline:none;">
       <button type="button" onclick="_removeExtra('${tipo}','${item.id}')" title="Eliminar"
-        style="width:28px;height:28px;flex-shrink:0;border:1px solid var(--border);border-radius:8px;background:none;cursor:default;color:var(--text3);font-size:13px;line-height:1;">✕</button>
+        style="flex-shrink:0;border:none;background:none;cursor:default;color:var(--text3);padding:4px;display:flex;align-items:center;justify-content:center;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
+      </button>
     </div>`).join('');
+  wrap.innerHTML = `
+    <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--white);">
+      <div style="display:flex;gap:8px;padding:6px 10px 3px;">
+        <div style="width:92px;flex-shrink:0;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Monto</div>
+        <div style="flex:1;font-size:9px;font-weight:500;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);">Motivo</div>
+        <div style="width:21px;flex-shrink:0;"></div>
+      </div>
+      ${rows}
+    </div>`;
 }
 
 function _addExtra(tipo) {
@@ -70,9 +82,23 @@ function _updExtra(tipo, id, campo, valor) {
 }
 
 function _removeExtra(tipo, id) {
+  const item = (_mvExtras[tipo]||[]).find(x => x.id === id);
+  const etiqueta = tipo === 'ingreso' ? 'este ingreso extra' : 'este gasto extra';
+  const detalle  = item && (item.motivo||'').trim() ? ` ("${item.motivo.trim()}")` : '';
+  _pendingRemoveExtra = { tipo, id };
+  const msgEl = document.getElementById('confirmar-borrar-extra-msg');
+  if (msgEl) msgEl.textContent = `¿Seguro que quieres eliminar ${etiqueta}${detalle}?`;
+  openModal('modal-confirmar-borrar-extra');
+}
+
+function _confirmarRemoveExtra() {
+  if (!_pendingRemoveExtra) { closeModal('modal-confirmar-borrar-extra'); return; }
+  const { tipo, id } = _pendingRemoveExtra;
+  _pendingRemoveExtra = null;
   _mvExtras[tipo] = (_mvExtras[tipo]||[]).filter(x => x.id !== id);
   _renderExtrasList(tipo);
   recalcVenta();
+  closeModal('modal-confirmar-borrar-extra');
 }
 
 function _extrasTotal(tipo) {
@@ -80,9 +106,15 @@ function _extrasTotal(tipo) {
 }
 
 function _extrasLimpios(tipo) {
+  // Todo ingreso/gasto extra necesita una fecha de registro: sin ella, el
+  // detalle de la diferencia de un mes cerrado no puede saber si se agregó
+  // antes o después del cierre y lo excluye en silencio (el extra "desaparece"
+  // de la tabla). Si el item ya traía fecha (fue creado antes, o viene ligado
+  // a un envío) se respeta tal cual; solo se completa cuando falta.
+  const ahora = new Date().toISOString();
   return (_mvExtras[tipo]||[])
     .filter(i => (_parseNum(i.valor)||0) !== 0 || (i.motivo||'').trim())
-    .map(i => ({ id: i.id, valor: _parseNum(i.valor)||0, motivo: (i.motivo||'').trim(), ...(i._sky_id ? { _sky_id: i._sky_id } : {}) }));
+    .map(i => ({ id: i.id, valor: _parseNum(i.valor)||0, motivo: (i.motivo||'').trim(), fecha: i.fecha || ahora, ...(i._sky_id ? { _sky_id: i._sky_id } : {}) }));
 }
 
 function _toggleEnvioLock() {
@@ -157,10 +189,11 @@ async function openModalVenta(id) {
   recalcVenta();
   openModal('modal-venta');
 
-  // Show/hide tabs depending on edit mode
-  const tabsEl = document.getElementById('mv-tabs');
-  if (tabsEl) tabsEl.style.display = id ? 'block' : 'none';
-  _mvTab('venta');
+  // Show/hide tabs depending on edit mode (el resumen de ganancia junto a ellas
+  // siempre queda visible, tenga o no pestaña de "Envío Externo" disponible)
+  const tabsBtnsEl = document.getElementById('mv-tabs-buttons');
+  if (tabsBtnsEl) tabsBtnsEl.style.display = id ? 'flex' : 'none';
+  _mvTab('venta', true);
   if (id) _loadLinkedEnvio(id);
 
   // Show/hide optional fields based on config
@@ -228,16 +261,18 @@ function _aplicarConfigCamposVenta(v) {
   }
 }
 
-function _mvTab(tab) {
+function _mvTab(tab, skipAnim) {
   const bodyVenta  = document.getElementById('mv-body-venta');
   const bodyEnvio  = document.getElementById('mv-body-envio');
+  const wrap       = document.getElementById('mv-body-wrap');
   const btnVenta   = document.getElementById('mv-tab-venta');
   const btnEnvio   = document.getElementById('mv-tab-envio');
   const btnGuardar = document.getElementById('mv-btn-guardar');
   if (!bodyVenta) return;
   const isVenta = tab === 'venta';
-  bodyVenta.style.display = isVenta ? '' : 'none';
-  bodyEnvio.style.display = isVenta ? 'none' : '';
+  const showEl  = isVenta ? bodyVenta : bodyEnvio;
+  const hideEl  = isVenta ? bodyEnvio : bodyVenta;
+
   btnVenta.style.borderBottomColor = isVenta ? 'var(--teal)' : 'transparent';
   btnVenta.style.color  = isVenta ? 'var(--teal)' : 'var(--text2)';
   btnVenta.style.fontWeight = isVenta ? '600' : '500';
@@ -248,6 +283,71 @@ function _mvTab(tab) {
     btnGuardar.textContent = isVenta ? 'Guardar Venta' : 'Guardar Envío';
     btnGuardar.onclick = isVenta ? saveVenta : _saveMvEnvio;
   }
+
+  // skipAnim: al abrir el modal no hay nada que animar todavía (evita un
+  // salto raro mezclado con la animación de apertura del propio modal)
+  if (skipAnim || !wrap) {
+    showEl.style.display = '';
+    hideEl.style.display = 'none';
+    return;
+  }
+
+  _mvAnimarCambioTab(showEl, hideEl, wrap);
+}
+
+// Cambia de pestaña con una transición suave de alto (sin "seco"/brusco) y un
+// cross-fade del contenido, en vez de un display:none/'' instantáneo que hace
+// que el modal cambie de tamaño de golpe.
+function _mvAnimarCambioTab(showEl, hideEl, wrap) {
+  if (!showEl || !hideEl) return;
+  // Ya está mostrando el destino — nada que animar
+  if (getComputedStyle(showEl).display !== 'none') return;
+  if (!wrap) { showEl.style.display = ''; hideEl.style.display = 'none'; return; }
+
+  const startH = wrap.offsetHeight;
+
+  // Medir el alto natural del contenido destino sin mostrarlo todavía
+  showEl.style.visibility = 'hidden';
+  showEl.style.position   = 'absolute';
+  showEl.style.top = '0'; showEl.style.left = '0'; showEl.style.right = '0';
+  showEl.style.display = 'block';
+  const maxAllowed = window.innerHeight * 0.95 - 210;
+  const targetH = Math.max(60, Math.min(showEl.scrollHeight, maxAllowed));
+  showEl.style.position   = '';
+  showEl.style.visibility = '';
+  showEl.style.display    = 'none';
+
+  wrap.style.height = startH + 'px';
+  wrap.style.overflow = 'hidden';
+  void wrap.offsetHeight; // forzar reflow antes de animar
+
+  requestAnimationFrame(() => {
+    wrap.style.transition = 'height .28s cubic-bezier(.4,0,.2,1)';
+    wrap.style.height = targetH + 'px';
+
+    hideEl.style.transition = 'opacity .16s ease';
+    hideEl.style.opacity = '0';
+
+    setTimeout(() => {
+      hideEl.style.display = 'none';
+      hideEl.style.opacity = '';
+      hideEl.style.transition = '';
+
+      showEl.style.opacity = '0';
+      showEl.style.display = 'block';
+      void showEl.offsetHeight; // forzar reflow antes del fade-in
+      showEl.style.transition = 'opacity .22s ease';
+      showEl.style.opacity = '1';
+    }, 160);
+
+    setTimeout(() => {
+      wrap.style.transition = '';
+      wrap.style.height = '';
+      wrap.style.overflow = '';
+      showEl.style.transition = '';
+      showEl.style.opacity = '';
+    }, 300);
+  });
 }
 
 // Arma el select "Fuente de pago" del envío externo únicamente con las billeteras
@@ -353,7 +453,7 @@ async function _loadLinkedEnvio(ventaId) {
       const meses = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
       return meses[parseInt(m)-1] + ' ' + y;
     })() : '';
-    avisoHtml = `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:12px;color:#9a3412;margin-bottom:10px;">
+    avisoHtml = `<div style="background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;padding:10px 14px;font-size:12px;color:#9a3412;margin-top:4px;">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:5px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
       <strong>${mesNombre} está cerrado.</strong> El costo de este envío se sumará automáticamente a los gastos extra de la venta y aparecerá como diferencia en Finanzas.
     </div>`;
@@ -405,7 +505,8 @@ async function _loadLinkedEnvio(ventaId) {
     if (statusEl) statusEl.innerHTML = '<span style="font-size:11px;background:var(--yellow-bg);color:var(--yellow);padding:3px 10px;border-radius:20px;font-weight:600;border:1px solid #f0c040;">Sin envío externo registrado</span>';
   }
 
-  if (statusEl) statusEl.innerHTML = avisoHtml + (statusEl.innerHTML || '');
+  const avisoCerradoEl = document.getElementById('mv-envio-aviso-cerrado');
+  if (avisoCerradoEl) avisoCerradoEl.innerHTML = avisoHtml;
 }
 
 async function _saveMvEnvio() {
@@ -525,14 +626,15 @@ function recalcVenta() {
   const gan    = totalV - totalC;
   const mar    = totalV > 0 ? (gan / totalV) * 100 : 0;
 
-  // Resultado compacto
+  // Resultado compacto — animado: sube o baja desde el valor que ya se veía en pantalla,
+  // nunca desde cero ni "al azar" (ver _countUp en core.js).
   const ganEl = document.getElementById('c-rv-gan');
   const totEl = document.getElementById('c-rv-total');
   const cosEl = document.getElementById('c-total-costos');
   const marEl = document.getElementById('c-rv-margen');
-  if(ganEl) { ganEl.textContent = fmt(gan); ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'; }
-  if(totEl)  totEl.textContent  = fmt(totalV);
-  if(cosEl)  cosEl.textContent  = fmt(totalC);
+  if(ganEl) { _countUp(ganEl, gan, 450); ganEl.style.color = gan >= 0 ? 'var(--green)' : 'var(--red)'; }
+  if(totEl)  _countUp(totEl, totalV, 450);
+  if(cosEl)  _countUp(cosEl, totalC, 450);
   if(marEl)  marEl.textContent  = fmtP(mar);
 
   // Sincronizar campos hidden
@@ -660,6 +762,7 @@ async function saveVenta() {
     contraentrega:  _vCfg.contraentrega ? (document.getElementById('v-contraentrega')?.checked || false) : undefined,
     estado:        _editVentaId ? ((await DB.ventas()).find(x=>x.id===_editVentaId)?.estado || 'pendiente') : 'pendiente',
     fecha_registro: ventaExistente?.fecha_registro || new Date().toISOString(),
+    fecha_actualizacion: _editVentaId ? new Date().toISOString() : undefined,
     ingresos_extra: _extrasLimpios('ingreso'),
     gastos_extra:   _extrasLimpios('gasto'),
   });
@@ -1649,6 +1752,95 @@ async function _migrarGastosExtraEnvio() {
     await DB.saveAjustes(ajustes);
     if (pendientes.length) console.info(`Migración: ${pendientes.length} venta(s) con "Gasto extra" movidas a Gastos extra.`);
   } catch(e) { console.warn('Migración de gasto extra falló:', e); }
+}
+
+// ══════════════════════════════════════════════════════════
+// MIGRACIÓN ÚNICA (reparación): saveEnvioSky() (módulo "Envíos Externos" — botón
+// "+ Registrar envío") nunca sumaba el costo del envío a los gastos extra de la
+// venta ligada; solo lo hacía _saveMvEnvio() (pestaña "Envío externo" del modal de
+// venta). Ya se corrigió saveEnvioSky() para que también lo haga, pero esto repara
+// los envíos que quedaron sin su gasto extra mientras el bug existía.
+// Se ejecuta una sola vez en toda la app (queda marcada en ajustes).
+// ══════════════════════════════════════════════════════════
+async function _migrarGastosExtraEnviosSky() {
+  try {
+    const ajustes = await DB.ajustes();
+    if (ajustes.migracion_gastos_extra_sky_v1) return;
+
+    const [enviosSky, ventas] = await Promise.all([DB.envios_sky(), DB.ventas()]);
+    let cambios = 0;
+    for (const e of enviosSky) {
+      if (e.envio_aparte || !e.num_venta) continue;
+      const venta = ventas.find(v => v.id_ml === e.num_venta || v.id === e.num_venta);
+      if (!venta) continue;
+      venta.gastos_extra = Array.isArray(venta.gastos_extra) ? venta.gastos_extra : [];
+      if (venta.gastos_extra.some(g => g._sky_id === e.id)) continue; // ya tiene su gasto extra
+      const motivoGasto = `${e.num_guia || 'Sin guía'} -- ${e.producto || 'Sin producto'}`;
+      venta.gastos_extra.push({
+        id: uid(), valor: parseFloat(e.valor) || 0, motivo: motivoGasto,
+        fecha: e.fecha_registro || e.creado || new Date().toISOString(), _sky_id: e.id,
+      });
+      await DB.upsertVenta(venta);
+      cambios++;
+    }
+
+    ajustes.migracion_gastos_extra_sky_v1 = true;
+    await DB.saveAjustes(ajustes);
+    if (cambios) console.info(`Migración: ${cambios} envío(s) externo(s) sin gasto extra fueron corregidos.`);
+  } catch(e) { console.warn('Migración de gastos extra de envíos externos falló:', e); }
+}
+
+// ══════════════════════════════════════════════════════════
+// MIGRACIÓN ÚNICA (reparación): _migrarGastosExtraEnvio() (arriba) movió el
+// antiguo campo "envio_extra" de cada venta a gastos_extra con el motivo
+// genérico "Gasto extra (migrado)" y SIN _sky_id. Como ese valor era, en
+// realidad, el costo del mismo envío externo que ya existe como registro en
+// envios_sky, cuando _migrarGastosExtraEnviosSky() corrió después no reconoció
+// esa entrada migrada (no tiene _sky_id) y agregó OTRA entrada con el costo
+// del mismo envío — duplicando el gasto y descontando la ganancia dos veces.
+// Esta reparación busca, por cada entrada "Gasto extra (migrado)" sin
+// _sky_id, una entrada CON _sky_id del mismo valor (±1 peso) en la misma
+// venta; si encuentra exactamente una, es casi seguro el duplicado del mismo
+// envío y se elimina la entrada genérica "(migrado)" (se conserva la que sí
+// indica guía y producto). Si hay 0 o más de 1 candidato, no se toca nada y
+// queda registrado en consola para revisión manual — mejor dejar un caso sin
+// reparar que borrar el gasto equivocado.
+// Se ejecuta una sola vez en toda la app (queda marcada en ajustes).
+// ══════════════════════════════════════════════════════════
+async function _repararGastosExtraDuplicadosMigracion() {
+  try {
+    const ajustes = await DB.ajustes();
+    if (ajustes.reparacion_gastos_extra_duplicados_v1) return;
+
+    const ventas = await DB.ventas();
+    let cambios = 0, ambiguos = 0;
+    for (const v of ventas) {
+      if (!Array.isArray(v.gastos_extra) || v.gastos_extra.length < 2) continue;
+      const migrados = v.gastos_extra.filter(g => g.motivo === 'Gasto extra (migrado)' && !g._sky_id);
+      if (!migrados.length) continue;
+      const ligadosASky = v.gastos_extra.filter(g => g._sky_id);
+      let huboCambio = false;
+      for (const m of migrados) {
+        const valorM = parseFloat(m.valor) || 0;
+        const candidatos = ligadosASky.filter(g => Math.abs((parseFloat(g.valor)||0) - valorM) < 1);
+        if (candidatos.length === 1) {
+          v.gastos_extra = v.gastos_extra.filter(g => g.id !== m.id);
+          huboCambio = true;
+          cambios++;
+        } else if (candidatos.length > 1) {
+          ambiguos++;
+          console.warn(`Venta ${v.id_ml||v.id}: gasto "Gasto extra (migrado)" de ${valorM} tiene ${candidatos.length} posibles duplicados ligados a envío — se dejó sin tocar, revisar manualmente.`);
+        }
+        // candidatos.length === 0: no hay envío con ese valor exacto, se asume que es un gasto real y se conserva.
+      }
+      if (huboCambio) await DB.upsertVenta(v);
+    }
+
+    ajustes.reparacion_gastos_extra_duplicados_v1 = true;
+    await DB.saveAjustes(ajustes);
+    if (cambios) console.info(`Reparación: se eliminaron ${cambios} gasto(s) extra duplicados (migración antigua + envío ya registrado).`);
+    if (ambiguos) console.warn(`Reparación: ${ambiguos} caso(s) ambiguos no se repararon automáticamente, revisar manualmente.`);
+  } catch(e) { console.warn('Reparación de gastos extra duplicados falló:', e); }
 }
 
 document.addEventListener('DOMContentLoaded', () => { _drpInit(); });

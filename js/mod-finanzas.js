@@ -640,16 +640,42 @@ async function saveEnvioSky() {
   const saldos=await DB.saldos();
   saldos[fuente_pago]=(parseFloat(saldos[fuente_pago])||0)-valor;
   await DB.saveSaldos(saldos);
-  await DB.upsertMovimiento({id:'sky_'+id,fecha,tipo:'egreso',fuente:fuente_pago,valor,
+
+  // Si el envío corresponde a una venta (no es "envío aparte"), sumar/actualizar su costo
+  // en los Gastos extra de esa venta — igual que hace la pestaña "Envío externo" del modal
+  // de venta (_saveMvEnvio). Antes esto solo pasaba desde ese modal, no desde aquí.
+  let mesCerrado = false;
+  if (!envioAparte && num_venta) {
+    const ventas = await DB.ventas();
+    const venta = ventas.find(v => v.id_ml === num_venta || v.id === num_venta);
+    if (venta) {
+      mesCerrado = await _esMesCerrado(venta.fecha_venta);
+      const motivoGasto = `${num_guia || 'Sin guía'} -- ${producto || 'Sin producto'}`;
+      venta.gastos_extra = Array.isArray(venta.gastos_extra) ? venta.gastos_extra : [];
+      const idx = venta.gastos_extra.findIndex(g => g._sky_id === id);
+      if (idx >= 0) {
+        venta.gastos_extra[idx].valor  = valor;
+        venta.gastos_extra[idx].motivo = motivoGasto;
+      } else {
+        venta.gastos_extra.push({ id: uid(), valor, motivo: motivoGasto, fecha: _tsNow, _sky_id: id });
+      }
+      await DB.upsertVenta(venta);
+    }
+  }
+
+  await DB.upsertMovimiento({id:'sky_'+id,fecha: mesCerrado ? hoy() : fecha,tipo:'egreso',fuente:fuente_pago,valor,
     concepto:`Envío Skydropx${num_venta?' · '+num_venta:''}${num_guia?' · '+num_guia:''}`,
-    notas:`Transportadora: ${transport||'—'}`,fecha_registro:new Date().toISOString(),_sky_id:id});
+    notas:`Transportadora: ${transport||'—'}${mesCerrado ? '. Venta de un mes cerrado — el costo se sumó a gastos extra de la venta y quedará como diferencia en Finanzas.' : ''}`,fecha_registro:new Date().toISOString(),_sky_id:id});
   closeModal('modal-envio-sky');
   await renderFinanzas();
+  if (mesCerrado) showToast('Mes cerrado — el costo se agregó a gastos extra de la venta', 'info', 4200);
   // Refrescar panel de envíos externos si está visible
   if (typeof _renderEnviosSkyPanel === 'function') {
     const panel = document.getElementById('panel-env-externos');
     if (panel && panel.style.display !== 'none') await _renderEnviosSkyPanel();
   }
+  // Refrescar el total de ganancia de Gestor de Ventas si está montado
+  if (typeof renderVentasGanancias === 'function') { try { await renderVentasGanancias(); } catch(e){} }
   showToast(`Envío registrado · ${fmt(valor)} descontado`,'success');
 }
 var _deleteEnvioSkyId = null;
