@@ -795,9 +795,10 @@
               </div>
               <div style="display:flex;flex-direction:column;align-items:stretch;gap:6px;flex-shrink:0;">
                 <select id="fin-filtro-mes" style="font-size:12px;font-weight:600;padding:7px 10px;border:1px solid var(--border);border-radius:8px;outline:none;font-family:inherit;background:var(--white);" onchange="renderFinanzas()"></select>
-                <button class="btn btn-ghost btn-sm" onclick="abrirModalCierreMes()" style="display:flex;align-items:center;justify-content:center;gap:5px;">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                  Cerrar mes
+                <div id="fin-mes-estado" style="font-size:9.5px;font-weight:700;text-align:center;padding:3px 0;border-radius:6px;letter-spacing:.3px;text-transform:uppercase;"></div>
+                <button id="fin-btn-cerrar-mes" class="btn btn-ghost btn-sm" onclick="abrirModalCierreMes()" style="display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity .15s;">
+                  <svg id="fin-btn-cerrar-mes-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                  <span id="fin-btn-cerrar-mes-txt">Cerrar mes</span>
                 </button>
               </div>
             </div>
