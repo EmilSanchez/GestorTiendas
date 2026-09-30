@@ -82,6 +82,33 @@ async function renderFinanzas() {
   }
   const mesAct = mesEl?.value || mes();
 
+  // Estado del mes seleccionado (cerrado/abierto): controla el botón "Cerrar
+  // mes" (deshabilitado + "Mes cerrado" si ya está cerrado — de lo contrario
+  // el botón terminaba cerrando OTRO mes en silencio, ya que abrirModalCierreMes()
+  // ignora los meses ya cerrados) y un indicador junto al selector.
+  if (typeof _getCierres === 'function') {
+    const cierresFin = await _getCierres();
+    const cerrado = cierresFin.some(c => c.mes === mesAct);
+    const estadoEl = document.getElementById('fin-mes-estado');
+    if (estadoEl) {
+      estadoEl.textContent  = cerrado ? 'Mes cerrado' : 'Mes abierto';
+      estadoEl.style.color      = cerrado ? '#7f1d1d' : '#1b7e4a';
+      estadoEl.style.background = cerrado ? '#fef2f2' : '#e8f7ee';
+    }
+    const btnCerrar = document.getElementById('fin-btn-cerrar-mes');
+    const btnTxt    = document.getElementById('fin-btn-cerrar-mes-txt');
+    const btnIcon   = document.getElementById('fin-btn-cerrar-mes-icon');
+    if (btnCerrar) {
+      btnCerrar.disabled      = cerrado;
+      btnCerrar.style.opacity = cerrado ? '.5' : '1';
+      btnCerrar.title = cerrado ? 'Este mes ya está cerrado — ábrelo desde "Meses cerrados" para verlo o reabrirlo.' : '';
+    }
+    if (btnTxt)  btnTxt.textContent = cerrado ? 'Mes cerrado' : 'Cerrar mes';
+    if (btnIcon) btnIcon.innerHTML  = cerrado
+      ? '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/><line x1="12" y1="15" x2="12" y2="17"/>'
+      : '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>';
+  }
+
   _renderBilleteras(saldos, billeteras, tiendas, totalPendienteVisible);
 
   // Orden: más reciente primero. Si dos movimientos caen el mismo día, se desempata
