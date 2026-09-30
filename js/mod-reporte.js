@@ -605,26 +605,73 @@ async function _cmDetalleDiferencia(mes) {
 
   if (tieneSnapshot) {
     // ── Modo preciso: comparar cada venta contra la foto guardada al cerrar ──
-    const snapV   = cl.snapshot_ventas || {};
-    const snapSky = cl.snapshot_sky_sueltos || {};
+    const snapV     = cl.snapshot_ventas || {};
+    const snapVDet  = cl.snapshot_ventas_detalle || {}; // foto por campo (precio, costo, envío, extras)
+    const snapSky   = cl.snapshot_sky_sueltos || {};
 
     const vistasIds = new Set();
     ventasMes.forEach(v => {
       vistasIds.add(v.id);
-      const ganAhora = calcVenta(v).ganancia;
+      const ahora    = calcVenta(v);
+      const ganAhora = ahora.ganancia;
       const tenia    = Object.prototype.hasOwnProperty.call(snapV, v.id);
       const ganAntes = tenia ? (parseFloat(snapV[v.id])||0) : null;
+      const venLabel = v.id_ml || v.id;
+      const fechaEd  = v.fecha_actualizacion || fechaCierre;
+
       if (!tenia) {
         if (Math.abs(ganAhora) >= 1) {
-          items.push({ fecha: v.fecha_registro || fechaCierre, venta: v.id_ml||v.id, tipo: 'Venta nueva', motivo: 'Se agregó a este mes después del cierre', valor: ganAhora });
+          items.push({ fecha: v.fecha_registro || fechaCierre, venta: venLabel, tipo: 'Venta nueva', motivo: 'Se agregó a este mes después del cierre', valor: ganAhora });
         }
-      } else if (Math.abs(ganAhora - ganAntes) >= 1) {
+        return;
+      }
+      if (Math.abs(ganAhora - ganAntes) < 1) return;
+
+      const antes = snapVDet[v.id];
+      if (!antes) {
+        // No hay foto por campo para esta venta (cierre hecho antes de que se
+        // empezara a guardar el detalle) — se informa el cambio en bloque.
         items.push({
-          fecha: v.fecha_actualizacion || fechaCierre, venta: v.id_ml||v.id,
-          tipo: 'Venta editada',
+          fecha: fechaEd, venta: venLabel, tipo: 'Venta editada',
           motivo: `Ganancia cambió de ${_fmtCOP(ganAntes)} a ${_fmtCOP(ganAhora)}`,
           valor: ganAhora - ganAntes,
         });
+        return;
+      }
+
+      // ── Con foto por campo: se puede decir EXACTAMENTE qué cambió (precio
+      // de venta, costo del producto, envío o extras) y no solo el neto ──
+      const dPrecio = ahora.precioCOP - (parseFloat(antes.precioCOP)||0);
+      if (Math.abs(dPrecio) >= 1) {
+        items.push({ fecha: fechaEd, venta: venLabel, tipo: 'Valor de venta (Mercado Libre)',
+          motivo: `Pasó de ${_fmtCOP(antes.precioCOP)} a ${_fmtCOP(ahora.precioCOP)}`, valor: dPrecio });
+      }
+      const dCostoCOP = ahora.costoCOP - (parseFloat(antes.costoCOP)||0);
+      if (Math.abs(dCostoCOP) >= 1) {
+        const costoUsdAntes = parseFloat(antes.costoUsd)||0, costoUsdAhora = parseFloat(v.costo_usd)||0;
+        const trmCambio = Math.round(parseFloat(antes.trm)||0) !== Math.round(ahora.trm) ? ` (TRM pasó de ${_fmtCOP(antes.trm)} a ${_fmtCOP(ahora.trm)})` : '';
+        items.push({ fecha: fechaEd, venta: venLabel, tipo: 'Costo del producto (Amazon)',
+          motivo: `Pasó de USD$ ${costoUsdAntes.toFixed(2)} a USD$ ${costoUsdAhora.toFixed(2)}${trmCambio}`, valor: -dCostoCOP });
+      }
+      const dEnvio = ahora.envioIntCOP - (parseFloat(antes.envioIntCOP)||0);
+      if (Math.abs(dEnvio) >= 1) {
+        items.push({ fecha: fechaEd, venta: venLabel, tipo: 'Costo de envío',
+          motivo: `Pasó de ${_fmtCOP(antes.envioIntCOP)} a ${_fmtCOP(ahora.envioIntCOP)}`, valor: -dEnvio });
+      }
+      const dEnvioExtra = ahora.envioExtra - (parseFloat(antes.envioExtra)||0);
+      if (Math.abs(dEnvioExtra) >= 1) {
+        items.push({ fecha: fechaEd, venta: venLabel, tipo: 'Envío extra',
+          motivo: `Pasó de ${_fmtCOP(antes.envioExtra)} a ${_fmtCOP(ahora.envioExtra)}`, valor: -dEnvioExtra });
+      }
+      const dIngExtra = ahora.ingresosExtra - (parseFloat(antes.ingresosExtra)||0);
+      if (Math.abs(dIngExtra) >= 1) {
+        items.push({ fecha: fechaEd, venta: venLabel, tipo: 'Ingresos extra',
+          motivo: `Pasaron de ${_fmtCOP(antes.ingresosExtra)} a ${_fmtCOP(ahora.ingresosExtra)}`, valor: dIngExtra });
+      }
+      const dGasExtra = ahora.gastosExtra - (parseFloat(antes.gastosExtra)||0);
+      if (Math.abs(dGasExtra) >= 1) {
+        items.push({ fecha: fechaEd, venta: venLabel, tipo: 'Gastos extra',
+          motivo: `Pasaron de ${_fmtCOP(antes.gastosExtra)} a ${_fmtCOP(ahora.gastosExtra)}`, valor: -dGasExtra });
       }
     });
     // Ventas que estaban en la foto del cierre pero ya no existen (eliminadas)
@@ -643,11 +690,12 @@ async function _cmDetalleDiferencia(mes) {
       const valAhora = parseFloat(e.valor) || 0;
       const tenia    = Object.prototype.hasOwnProperty.call(snapSky, e.id);
       const valAntes = tenia ? (parseFloat(snapSky[e.id])||0) : null;
-      const motivo   = `${e.num_guia||'Sin guía'} -- ${e.producto||'Sin producto'}`;
+      const etiqueta = `${e.num_guia||'Sin guía'} -- ${e.producto||'Sin producto'}`;
       if (!tenia) {
-        if (Math.abs(valAhora) >= 1) items.push({ fecha: e.creado||e.fecha_registro||fechaCierre, venta: e.num_venta || '—', tipo: 'Envío suelto nuevo', motivo, valor: -valAhora });
+        if (Math.abs(valAhora) >= 1) items.push({ fecha: e.creado||e.fecha_registro||fechaCierre, venta: e.num_venta || '—', tipo: 'Envío suelto nuevo', motivo: etiqueta, valor: -valAhora });
       } else if (Math.abs(valAhora - valAntes) >= 1) {
-        items.push({ fecha: e.creado||e.fecha_registro||fechaCierre, venta: e.num_venta || '—', tipo: 'Envío suelto editado', motivo, valor: -(valAhora - valAntes) });
+        items.push({ fecha: e.creado||e.fecha_registro||fechaCierre, venta: e.num_venta || '—', tipo: 'Envío suelto editado',
+          motivo: `${etiqueta} · Pasó de ${_fmtCOP(valAntes)} a ${_fmtCOP(valAhora)}`, valor: -(valAhora - valAntes) });
       }
     });
     Object.keys(snapSky).forEach(id => {
@@ -1189,7 +1237,19 @@ async function _cmGuardarCambiosConfirmado() {
     const ventasMesSnap  = ventasSnap.filter(v => (v.fecha_venta||'').startsWith(_cmMesActual));
     const skySueltosSnap = enviosSkySnap.filter(e => (e.fecha||'').startsWith(_cmMesActual) && !idsMlSnap.has(e.num_venta));
     const snapshotVentas = {};
-    ventasMesSnap.forEach(v => { snapshotVentas[v.id] = calcVenta(v).ganancia; });
+    const snapshotVentasDetalle = {};
+    ventasMesSnap.forEach(v => {
+      const c = calcVenta(v);
+      snapshotVentas[v.id] = c.ganancia;
+      // Foto por campo: permite luego decir EXACTAMENTE qué cambió (el valor
+      // de venta de Mercado Libre, el costo en Amazon, el envío o los extras)
+      // y no solo "la ganancia cambió de X a Y" — ver _cmDetalleDiferencia().
+      snapshotVentasDetalle[v.id] = {
+        precioCOP: c.precioCOP, costoCOP: c.costoCOP, costoUsd: parseFloat(v.costo_usd)||0,
+        trm: c.trm, envioIntCOP: c.envioIntCOP, envioExtra: c.envioExtra,
+        ingresosExtra: c.ingresosExtra, gastosExtra: c.gastosExtra,
+      };
+    });
     const snapshotSkySueltos = {};
     skySueltosSnap.forEach(e => { snapshotSkySueltos[e.id] = parseFloat(e.valor) || 0; });
 
@@ -1202,6 +1262,7 @@ async function _cmGuardarCambiosConfirmado() {
       ganancia_raw:   _cmGanBruta,
       ganancia_original: _cmGanBruta,  // CONGELADO al momento del cierre — nunca cambia
       snapshot_ventas:      snapshotVentas,      // {ventaId: ganancia de esa venta al cierre}
+      snapshot_ventas_detalle: snapshotVentasDetalle, // {ventaId: {precioCOP, costoUsd, trm, envío, extras}}
       snapshot_sky_sueltos: snapshotSkySueltos,  // {envioId: valor de ese envío suelto al cierre}
       utilidad_fmt:   _fmtCOP(utilidad),
       utilidad_raw:   utilidad,
