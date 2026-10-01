@@ -455,18 +455,28 @@ async function renderCierresMes_Fin() {
       : '';
   }
 
-  listaEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr;gap:10px;">
-    ${cierres.sort((a,b)=> new Date(b.fecha_cierre||0) - new Date(a.fecha_cierre||0)).map(cl => {
-      const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(cl.mes));
-      const egSky = enviosSky.filter(e=>(e.fecha||'').startsWith(cl.mes)&&!idsMl.has(e.num_venta)).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
-      const ganActual   = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky + _cmAjusteCierreMes(movs, cl.mes);
-      const ganOriginal = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
-      const diferenciaTotal = ganActual - ganOriginal;
+  // Precalcular la diferencia pendiente de cada cierre ANTES de ordenar, para
+  // que los meses con diferencia pendiente por aplicar siempre queden primero
+  // (sin importar la fecha de cierre); dentro de cada grupo se mantiene el
+  // orden cronológico (cierre más reciente primero).
+  const cierresConDif = cierres.map(cl => {
+    const ventasMes = ventas.filter(v=>(v.fecha_venta||'').startsWith(cl.mes));
+    const egSky = enviosSky.filter(e=>(e.fecha||'').startsWith(cl.mes)&&!idsMl.has(e.num_venta)).reduce((s,e)=>s+(parseFloat(e.valor)||0),0);
+    const ganActual   = ventasMes.reduce((s,v)=>s+calcVenta(v).ganancia,0) - egSky + _cmAjusteCierreMes(movs, cl.mes);
+    const ganOriginal = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
+    const diferenciaTotal = ganActual - ganOriginal;
+    const historial      = _getHistorialDif(cl);
+    const totalAplicado  = historial.reduce((s,h) => s + (parseFloat(h.valor)||0), 0);
+    const diferenciaPend = diferenciaTotal - totalAplicado;
+    return { cl, ganActual, diferenciaTotal, historial, totalAplicado, diferenciaPend, hasPending: Math.abs(diferenciaPend) >= 1 };
+  });
 
-      const historial      = _getHistorialDif(cl);
-      const totalAplicado  = historial.reduce((s,h) => s + (parseFloat(h.valor)||0), 0);
-      const diferenciaPend = diferenciaTotal - totalAplicado;
-      const hasPending     = Math.abs(diferenciaPend) >= 1;
+  listaEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr;gap:10px;">
+    ${cierresConDif.sort((a,b)=> {
+        if (a.hasPending !== b.hasPending) return a.hasPending ? -1 : 1;
+        return new Date(b.cl.fecha_cierre||0) - new Date(a.cl.fecha_cierre||0);
+      }).map(({cl, ganActual, diferenciaTotal, historial, totalAplicado, diferenciaPend, hasPending}) => {
+      const ganOriginal = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
       const pendColor      = diferenciaPend >= 0 ? 'var(--green)' : 'var(--red)';
       const pendSign       = diferenciaPend >= 0 ? '+' : '';
       const tieneHistorial = historial.length > 0;
