@@ -76,7 +76,7 @@ async function renderFinanzas() {
 
   const mesEl = document.getElementById('fin-filtro-mes');
   if (mesEl && !mesEl.dataset.init) {
-    const meses = Array.from({length:8},(_,i)=>{ const d=new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7); });
+    const meses = Array.from({length:8},(_,i)=>{ const d=new Date(); d.setMonth(d.getMonth()-i); return _mesDeFecha(d); });
     mesEl.innerHTML = meses.map(m=>`<option value="${m}" ${m===mes()?'selected':''}>${_mesLabel(m)}</option>`).join('');
     mesEl.dataset.init = '1';
   }

@@ -97,7 +97,7 @@ async function _repGetMesesFiltrados() {
   const ventas = await DB.ventas();
   const mesesSet = new Set(ventas.map(v => (v.fecha_venta||'').slice(0,7)).filter(Boolean));
   const todos = [...mesesSet].sort().reverse();
-  const mesAct = new Date().toISOString().slice(0,7);
+  const mesAct = mes(); // fecha LOCAL — ver nota junto a mes() en core.js
 
   if (_repTipo === 'actual')       return [mesAct].filter(m => mesesSet.has(m));
   if (_repTipo === 'todos')        return todos;

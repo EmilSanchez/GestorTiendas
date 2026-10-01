@@ -458,7 +458,7 @@ async function confirmarResolver() {
 
   p.estado   = estado;
   p.solucion = solucion;
-  p.fecha_resolucion = new Date().toISOString().slice(0, 10);
+  p.fecha_resolucion = hoy(); // fecha LOCAL — ver nota junto a mes() en core.js
   p.fecha_actualizacion = new Date().toISOString();
   if (estado === 'perdida') p.valor_perdida = perdida;
 

@@ -14,7 +14,14 @@ const hoy  = () => {
   const day = String(d.getDate()).padStart(2,'0');
   return `${y}-${m}-${day}`;
 };
-const mes  = () => new Date().toISOString().slice(0,7);
+// IMPORTANTE: el mes/día "de hoy" SIEMPRE se calcula en hora LOCAL, nunca con
+// toISOString() — ese método convierte a UTC, y en Colombia (UTC-5) desde
+// aprox. las 7pm hora local ya es el día siguiente en UTC (y el mes
+// siguiente si es fin de mes), así que todo quedaba registrándose un día
+// (o un mes) adelantado por las noches. hoy() ya calculaba bien en local;
+// mes() y _mesDeFecha() ahora hacen lo mismo.
+const mes  = () => hoy().slice(0,7);
+const _mesDeFecha = (d) => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
 
 // Formatea YYYY-MM-DD → "10 - Mayo - 2026"
 // Parsea un valor numérico ignorando puntos como separador de miles

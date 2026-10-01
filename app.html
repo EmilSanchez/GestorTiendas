@@ -1671,7 +1671,7 @@ async function _initEnviosSkyPanel() {
   var sel = document.getElementById('sky-filtro-mes');
   if (sel && !sel.dataset.init) {
     var M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-    var meses = Array.from({length:12}, function(_,i){ var d = new Date(); d.setMonth(d.getMonth()-i); return d.toISOString().slice(0,7); });
+    var meses = Array.from({length:12}, function(_,i){ var d = new Date(); d.setMonth(d.getMonth()-i); return _mesDeFecha(d); });
     sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(function(m){ var parts = m.split('-'); return '<option value="'+m+'">'+M[parseInt(parts[1],10)-1]+' '+parts[0]+'</option>'; }).join('');
     sel.dataset.init = '1';
   }

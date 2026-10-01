@@ -600,7 +600,7 @@ async function _initEnviosSkyPanel() {
   if (!sel.dataset.init) {
     const meses = Array.from({length:12}, (_,i) => {
       const d = new Date(); d.setMonth(d.getMonth() - i);
-      return d.toISOString().slice(0,7);
+      return _mesDeFecha(d); // hora LOCAL — ver nota junto a mes() en core.js
     });
     const M = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
     sel.innerHTML = '<option value="">Todos los meses</option>' + meses.map(m => {

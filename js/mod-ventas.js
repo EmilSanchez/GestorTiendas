@@ -57,7 +57,7 @@ async function renderVentasGanancias() {
   const totalCostos = ventasPer.reduce((s,v) => s + calcVenta(v).totalCostos, 0);
 
   // Solo descontar envíos Skydropx que NO están ligados a una venta registrada
-  const mesPer = periodo.mes || new Date().toISOString().slice(0,7);
+  const mesPer = periodo.mes || mes(); // fecha LOCAL — ver nota junto a mes() en core.js
   const idsMlSet = new Set(ventas.map(v => v.id_ml).filter(Boolean));
   const egresosSky = enviosSky
     .filter(e => (e.fecha||'').startsWith(mesPer) && !idsMlSet.has(e.num_venta))
