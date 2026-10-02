@@ -575,41 +575,77 @@ async function renderCierresMes_Fin() {
 // ya cambiaron antes de tomar la foto, pero de aquí en adelante cualquier
 // cambio futuro sí quedará explicado campo por campo en "Ver detalle de la
 // diferencia". Solo aparece para meses que todavía no tienen esta foto.
-async function _tomarFotoCierre(mes) {
-  if (!confirm(`¿Guardar la foto de todas las ventas de ${_repFmtMes(mes)} con sus valores actuales?\n\nDesde ahora, si algo cambia, "Ver detalle de la diferencia" podrá explicar exactamente qué cambió.`)) return;
+var _tomarFotoMesPendiente = '';
+function _tomarFotoCierre(mes) {
+  _tomarFotoMesPendiente = mes;
+  const label = document.getElementById('tf-mes-label');
+  if (label) label.textContent = _repFmtMes(mes);
+  // Por si quedó a medias de un intento anterior, resetear a la vista normal.
+  const content = document.getElementById('tf-content');
+  const loading = document.getElementById('tf-loading');
+  const footer  = document.getElementById('tf-footer');
+  if (content) content.style.display = 'flex';
+  if (loading) loading.style.display = 'none';
+  if (footer)  footer.style.display  = 'flex';
+  openModal('modal-tomar-foto');
+}
 
-  const [cierres, ventas, enviosSky] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky()]);
-  const idx = cierres.findIndex(c => c.mes === mes);
-  if (idx < 0) return;
+async function _confirmarTomarFotoCierre() {
+  const mes = _tomarFotoMesPendiente;
+  if (!mes) return;
 
-  const idsMl      = new Set(ventas.map(v => v.id_ml).filter(Boolean));
-  const ventasMes  = ventas.filter(v => (v.fecha_venta||'').startsWith(mes));
-  const skySueltos = enviosSky.filter(e => (e.fecha||'').startsWith(mes) && !idsMl.has(e.num_venta));
+  // Cambiar el modal a la vista de "cargando" mientras se calcula y guarda.
+  const content = document.getElementById('tf-content');
+  const loading = document.getElementById('tf-loading');
+  const footer  = document.getElementById('tf-footer');
+  const btnX    = document.getElementById('tf-btn-x');
+  if (content) content.style.display = 'none';
+  if (loading) loading.style.display = 'flex';
+  if (footer)  footer.style.display  = 'none';
+  if (btnX)    btnX.style.visibility = 'hidden';
 
-  const snapshotVentas = {};
-  const snapshotVentasDetalle = {};
-  ventasMes.forEach(v => {
-    const c = calcVenta(v);
-    snapshotVentas[v.id] = c.ganancia;
-    snapshotVentasDetalle[v.id] = {
-      precioCOP: c.precioCOP, costoCOP: c.costoCOP, costoUsd: parseFloat(v.costo_usd)||0,
-      trm: c.trm, envioIntCOP: c.envioIntCOP, envioExtra: c.envioExtra,
-      ingresosExtra: c.ingresosExtra, gastosExtra: c.gastosExtra,
+  try {
+    const [cierres, ventas, enviosSky] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky()]);
+    const idx = cierres.findIndex(c => c.mes === mes);
+    if (idx < 0) { closeModal('modal-tomar-foto'); return; }
+
+    const idsMl      = new Set(ventas.map(v => v.id_ml).filter(Boolean));
+    const ventasMes  = ventas.filter(v => (v.fecha_venta||'').startsWith(mes));
+    const skySueltos = enviosSky.filter(e => (e.fecha||'').startsWith(mes) && !idsMl.has(e.num_venta));
+
+    const snapshotVentas = {};
+    const snapshotVentasDetalle = {};
+    ventasMes.forEach(v => {
+      const c = calcVenta(v);
+      snapshotVentas[v.id] = c.ganancia;
+      snapshotVentasDetalle[v.id] = {
+        precioCOP: c.precioCOP, costoCOP: c.costoCOP, costoUsd: parseFloat(v.costo_usd)||0,
+        trm: c.trm, envioIntCOP: c.envioIntCOP, envioExtra: c.envioExtra,
+        ingresosExtra: c.ingresosExtra, gastosExtra: c.gastosExtra,
+      };
+    });
+    const snapshotSkySueltos = {};
+    skySueltos.forEach(e => { snapshotSkySueltos[e.id] = parseFloat(e.valor) || 0; });
+
+    cierres[idx] = {
+      ...cierres[idx],
+      snapshot_ventas:         snapshotVentas,
+      snapshot_ventas_detalle: snapshotVentasDetalle,
+      snapshot_sky_sueltos:    snapshotSkySueltos,
+      fecha_foto: new Date().toISOString(),
     };
-  });
-  const snapshotSkySueltos = {};
-  skySueltos.forEach(e => { snapshotSkySueltos[e.id] = parseFloat(e.valor) || 0; });
-
-  cierres[idx] = {
-    ...cierres[idx],
-    snapshot_ventas:         snapshotVentas,
-    snapshot_ventas_detalle: snapshotVentasDetalle,
-    snapshot_sky_sueltos:    snapshotSkySueltos,
-    fecha_foto: new Date().toISOString(),
-  };
-  await _saveCierres(cierres);
-  await renderCierresMes();
-  showToast(`Foto de ${_repFmtMes(mes)} guardada`, 'success', 2500);
+    await _saveCierres(cierres);
+    await renderCierresMes();
+    closeModal('modal-tomar-foto');
+    showToast(`Foto de ${_repFmtMes(mes)} guardada`, 'success', 2500);
+  } catch (e) {
+    // Si algo falla, volver a la vista normal del modal para que pueda reintentar.
+    if (content) content.style.display = 'flex';
+    if (loading) loading.style.display = 'none';
+    if (footer)  footer.style.display  = 'flex';
+    if (btnX)    btnX.style.visibility = 'visible';
+    showToast('No se pudo guardar la foto. Intenta de nuevo.', 'error', 3000);
+  }
 }
 
 // ── Ajustes de cierre (pérdida/ganancia de meses cerrados) aplicados a un mes dado,
