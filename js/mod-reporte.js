@@ -468,14 +468,15 @@ async function renderCierresMes_Fin() {
     const historial      = _getHistorialDif(cl);
     const totalAplicado  = historial.reduce((s,h) => s + (parseFloat(h.valor)||0), 0);
     const diferenciaPend = diferenciaTotal - totalAplicado;
-    return { cl, ganActual, diferenciaTotal, historial, totalAplicado, diferenciaPend, hasPending: Math.abs(diferenciaPend) >= 1 };
+    const faltaFoto      = !cl.snapshot_ventas_detalle || !Object.keys(cl.snapshot_ventas_detalle).length;
+    return { cl, ganActual, diferenciaTotal, historial, totalAplicado, diferenciaPend, hasPending: Math.abs(diferenciaPend) >= 1, faltaFoto };
   });
 
   listaEl.innerHTML = `<div style="display:grid;grid-template-columns:1fr;gap:10px;">
     ${cierresConDif.sort((a,b)=> {
         if (a.hasPending !== b.hasPending) return a.hasPending ? -1 : 1;
         return new Date(b.cl.fecha_cierre||0) - new Date(a.cl.fecha_cierre||0);
-      }).map(({cl, ganActual, diferenciaTotal, historial, totalAplicado, diferenciaPend, hasPending}) => {
+      }).map(({cl, ganActual, diferenciaTotal, historial, totalAplicado, diferenciaPend, hasPending, faltaFoto}) => {
       const ganOriginal = parseFloat(cl.ganancia_original ?? cl.ganancia_raw) || 0;
       const pendColor      = diferenciaPend >= 0 ? 'var(--green)' : 'var(--red)';
       const pendSign       = diferenciaPend >= 0 ? '+' : '';
@@ -554,8 +555,9 @@ async function renderCierresMes_Fin() {
         </div>` : ''}
 
         <!-- Acciones secundarias -->
-        <div style="display:flex;gap:6px;justify-content:flex-end;border-top:1px solid var(--border);padding-top:8px;margin-top:-2px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;border-top:1px solid var(--border);padding-top:8px;margin-top:-2px;">
           ${Math.abs(diferenciaTotal) >= 1 ? `<button class="btn btn-ghost btn-sm" onclick="_abrirDetalleDiferencia('${cl.mes}')" style="font-size:11px;padding:3px 9px;">Ver detalle de la diferencia</button>` : ''}
+          ${faltaFoto ? `<button class="btn btn-ghost btn-sm" onclick="_tomarFotoCierre('${cl.mes}')" title="Guarda cómo están las ventas de este mes ahora mismo, para poder explicar campo por campo cualquier cambio futuro" style="font-size:11px;padding:3px 9px;color:var(--teal);">Tomar foto</button>` : ''}
           <button class="btn btn-ghost btn-sm" onclick="abrirCierreExistente('${cl.mes}')" style="font-size:11px;padding:3px 9px;">Ver / Editar</button>
           ${!tieneHistorial ? `<button class="btn btn-ghost btn-sm" onclick="_reabrirMes('${cl.mes}')" style="font-size:11px;padding:3px 9px;color:var(--red);">Reabrir</button>` : ''}
         </div>
@@ -563,6 +565,51 @@ async function renderCierresMes_Fin() {
       </div>`;
     }).join('')}
   </div>`;
+}
+
+// ── Tomar foto de un mes cerrado que no la tiene ──
+// Guarda, venta por venta, los valores ACTUALES (precio ML, costo Amazon,
+// envío, extras) dentro del cierre ya existente — sin tocar la ganancia
+// original congelada ni el historial de diferencias aplicadas. No puede
+// reconstruir cómo estaban esas ventas exactamente al momento del cierre si
+// ya cambiaron antes de tomar la foto, pero de aquí en adelante cualquier
+// cambio futuro sí quedará explicado campo por campo en "Ver detalle de la
+// diferencia". Solo aparece para meses que todavía no tienen esta foto.
+async function _tomarFotoCierre(mes) {
+  if (!confirm(`¿Guardar la foto de todas las ventas de ${_repFmtMes(mes)} con sus valores actuales?\n\nDesde ahora, si algo cambia, "Ver detalle de la diferencia" podrá explicar exactamente qué cambió.`)) return;
+
+  const [cierres, ventas, enviosSky] = await Promise.all([_getCierres(), DB.ventas(), DB.envios_sky()]);
+  const idx = cierres.findIndex(c => c.mes === mes);
+  if (idx < 0) return;
+
+  const idsMl      = new Set(ventas.map(v => v.id_ml).filter(Boolean));
+  const ventasMes  = ventas.filter(v => (v.fecha_venta||'').startsWith(mes));
+  const skySueltos = enviosSky.filter(e => (e.fecha||'').startsWith(mes) && !idsMl.has(e.num_venta));
+
+  const snapshotVentas = {};
+  const snapshotVentasDetalle = {};
+  ventasMes.forEach(v => {
+    const c = calcVenta(v);
+    snapshotVentas[v.id] = c.ganancia;
+    snapshotVentasDetalle[v.id] = {
+      precioCOP: c.precioCOP, costoCOP: c.costoCOP, costoUsd: parseFloat(v.costo_usd)||0,
+      trm: c.trm, envioIntCOP: c.envioIntCOP, envioExtra: c.envioExtra,
+      ingresosExtra: c.ingresosExtra, gastosExtra: c.gastosExtra,
+    };
+  });
+  const snapshotSkySueltos = {};
+  skySueltos.forEach(e => { snapshotSkySueltos[e.id] = parseFloat(e.valor) || 0; });
+
+  cierres[idx] = {
+    ...cierres[idx],
+    snapshot_ventas:         snapshotVentas,
+    snapshot_ventas_detalle: snapshotVentasDetalle,
+    snapshot_sky_sueltos:    snapshotSkySueltos,
+    fecha_foto: new Date().toISOString(),
+  };
+  await _saveCierres(cierres);
+  await renderCierresMes();
+  showToast(`Foto de ${_repFmtMes(mes)} guardada`, 'success', 2500);
 }
 
 // ── Ajustes de cierre (pérdida/ganancia de meses cerrados) aplicados a un mes dado,
@@ -769,6 +816,16 @@ async function _abrirDetalleDiferencia(mes) {
 
   const mesLabelEl = document.getElementById('dd-mes-label');
   if (mesLabelEl) mesLabelEl.textContent = _repFmtMes(mes);
+
+  const fechasEl = document.getElementById('dd-fechas');
+  if (fechasEl) {
+    const cl = data.cl;
+    const partes = [`Cerrado: ${_fmtFechaHora(cl.fecha_cierre)}`];
+    partes.push(cl.fecha_foto
+      ? `Foto de ventas guardada: ${_fmtFechaHora(cl.fecha_foto)}`
+      : 'Foto de ventas: no guardada (usa "Tomar foto" en Meses Cerrados)');
+    fechasEl.textContent = partes.join(' · ');
+  }
 
   const setVal = (id, val, signed) => {
     const el = document.getElementById(id);
@@ -1281,6 +1338,7 @@ async function _cmGuardarCambiosConfirmado() {
       trabajadores:   trabNum,
       diferencia_aplicada: false,      // flag: si ya se aplicó la diferencia al mes en curso
       fecha_cierre:   new Date().toISOString(),
+      fecha_foto:     new Date().toISOString(), // cuándo se guardó la foto por venta (al cerrar, o luego con "Tomar foto")
     };
     cierres.push(nuevo);
     await _saveCierres(cierres);
