@@ -2670,8 +2670,45 @@ async function _renderEnviosSkyPanel() {
         </div>
       </div>
 
-      <!-- Sección 1: origen de la diferencia -->
-      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;">1. ¿De dónde salió la diferencia?</div>
+      <!-- Sección 1: cuánto falta por aplicar (lo accionable) -->
+      <div id="dd-apl-pend" style="margin-bottom:20px;padding:14px 16px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:10px;">1. ¿Cuánto falta por aplicar?</div>
+        <div id="dd-apl-estado" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:12px;"></div>
+
+        <!-- Ecuación: total = ya aplicado + pendiente -->
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:10px 12px;background:var(--white);border:1px solid var(--border);border-radius:8px;margin-bottom:10px;">
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);">Diferencia total</div>
+            <div style="font-size:13px;font-weight:700;color:var(--text);" id="dd-eq-total">—</div>
+          </div>
+          <div style="font-size:14px;color:var(--text3);">=</div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);">Ya aplicado antes</div>
+            <div style="font-size:13px;font-weight:700;" id="dd-eq-aplicado">—</div>
+          </div>
+          <div style="font-size:14px;color:var(--text3);">+</div>
+          <div style="text-align:center;">
+            <div style="font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.3px;color:var(--text3);">Pendiente ahora</div>
+            <div style="font-size:13px;font-weight:700;" id="dd-eq-pendiente">—</div>
+          </div>
+        </div>
+
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:10px 12px;background:var(--white);border:1px solid var(--border);border-radius:8px;">
+          <div>
+            <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Pendiente por aplicar</div>
+            <div style="font-size:18px;font-weight:800;" id="dd-diferencia-pendiente">—</div>
+          </div>
+          <button id="dd-btn-aplicar" class="btn btn-primary" style="font-size:11px;padding:7px 12px;white-space:nowrap;display:none;"></button>
+        </div>
+
+        <div id="dd-apl-detalle-wrap" style="display:none;margin-top:10px;">
+          <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:5px;">Aplicaciones anteriores</div>
+          <div id="dd-apl-detalle" style="display:flex;flex-direction:column;gap:5px;"></div>
+        </div>
+      </div>
+
+      <!-- Sección 2: origen de la diferencia -->
+      <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:6px;">2. ¿Qué cambió exactamente?</div>
       <div style="font-size:11px;color:var(--text3);margin-bottom:8px;line-height:1.5;">
         Cambios registrados <b>después</b> de que este mes se cerró: ventas editadas, canceladas o eliminadas, envíos externos sueltos, y ajustes manuales.
       </div>
@@ -2702,23 +2739,6 @@ async function _renderEnviosSkyPanel() {
       <div id="dd-no-identificado-row" style="display:none;margin-top:8px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;font-size:11px;color:#9a3412;line-height:1.5;">
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <b id="dd-no-identificado-valor">—</b> <span id="dd-no-identificado-texto"></span>
-      </div>
-
-      <!-- Sección 2: si ya se corrigió en otros meses -->
-      <div id="dd-apl-pend" style="display:none;margin-top:20px;padding:12px 14px;background:var(--bg);border:1px solid var(--border);border-radius:10px;">
-        <div style="font-size:12px;font-weight:700;color:var(--text2);margin-bottom:8px;">2. ¿Ya se corrigió?</div>
-        <div id="dd-apl-estado" style="display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-bottom:10px;"></div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:6px;">
-          <div>
-            <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Ya aplicado a otros meses</div>
-            <div style="font-size:14px;font-weight:700;" id="dd-total-aplicado">—</div>
-          </div>
-          <div>
-            <div style="font-size:9.5px;font-weight:600;text-transform:uppercase;letter-spacing:.4px;color:var(--text3);margin-bottom:3px;">Diferencia pendiente</div>
-            <div style="font-size:14px;font-weight:700;" id="dd-diferencia-pendiente">—</div>
-          </div>
-        </div>
-        <div id="dd-apl-detalle"></div>
       </div>
     </div>
     <div class="mf">
