@@ -2453,6 +2453,39 @@ async function _renderEnviosSkyPanel() {
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL TOMAR FOTO DE CIERRE ═══════════════════ -->
+<div class="overlay" id="modal-tomar-foto">
+  <div class="modal" style="max-width:420px;font-family:Poppins,sans-serif;">
+    <div class="mh" style="background:#0d1f2d;color:#fff;padding:18px 24px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Tomar foto de las ventas</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;" id="tf-mes-label">—</div>
+      </div>
+      <button id="tf-btn-x" onclick="closeModal('modal-tomar-foto')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
+    </div>
+    <div id="tf-content" style="padding:22px 24px;display:flex;flex-direction:column;gap:12px;">
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;">
+        Esto guarda, venta por venta, los valores de ahora mismo (precio de Mercado Libre, costo de Amazon, envío y extras) dentro de este cierre.
+      </div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.6;">
+        Desde ese momento, si algo cambia más adelante, <b>"Ver detalle de la diferencia"</b> podrá explicar exactamente qué campo cambió y por cuánto.
+      </div>
+      <div style="display:flex;gap:8px;align-items:flex-start;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#9a3412" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <div style="font-size:11px;color:#9a3412;line-height:1.5;">No se puede saber cómo estaban las ventas exactamente al momento del cierre si ya cambiaron antes de tomar esta foto — solo queda constancia de lo que haya cambiado después.</div>
+      </div>
+    </div>
+    <div id="tf-loading" style="display:none;padding:40px 24px;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+      <div class="tf-spinner"></div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--text2);">Guardando la foto de las ventas...</div>
+    </div>
+    <div id="tf-footer" style="padding:14px 24px;border-top:1px solid var(--border);display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" id="tf-btn-cancelar" onclick="closeModal('modal-tomar-foto')" style="font-family:Poppins,sans-serif;">Cancelar</button>
+      <button class="btn btn-primary" id="tf-btn-guardar" onclick="_confirmarTomarFotoCierre()" style="background:var(--teal);font-family:Poppins,sans-serif;">Guardar foto</button>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════════════ MODAL CONFIRMAR CIERRE DE MES ═══════════════════ -->
 <div class="overlay" id="modal-confirmar-cierre">
