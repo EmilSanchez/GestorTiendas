@@ -874,39 +874,65 @@ async function _abrirDetalleDiferencia(mes) {
   const difEl = document.getElementById('dd-diferencia-total');
   if (difEl) difEl.style.color = diferenciaTotal >= 0 ? 'var(--green)' : 'var(--red)';
 
-  // Sección 2: aplicado a otros meses / pendiente (solo si ya se aplicó algo)
-  const aplPendEl = document.getElementById('dd-apl-pend');
-  if (aplPendEl) {
-    if (Math.abs(totalAplicado) >= 1) {
-      aplPendEl.style.display = '';
-      document.getElementById('dd-total-aplicado').textContent = (totalAplicado>=0?'+':'') + _fmtCOP(totalAplicado);
-      document.getElementById('dd-total-aplicado').style.color = totalAplicado >= 0 ? 'var(--green)' : 'var(--red)';
-      const pendEl = document.getElementById('dd-diferencia-pendiente');
-      const pendRedondeada = Math.round(diferenciaPend);
-      pendEl.textContent = (pendRedondeada>=0?'+':'') + _fmtCOP(diferenciaPend);
-      pendEl.style.color = pendRedondeada >= 0 ? 'var(--green)' : 'var(--red)';
+  // Sección 1: cuánto falta por aplicar. Se muestra SIEMPRE (no solo cuando
+  // ya se aplicó algo) con la ecuación completa, para que quede clarísimo
+  // por qué "diferencia total" y "diferencia pendiente" pueden ser números
+  // muy distintos: la diferencia total mezcla TODO lo que ha cambiado desde
+  // el cierre, incluyendo lo que ya se corrigió hace tiempo en otros meses;
+  // lo pendiente es solo la parte que todavía no se ha movido a ningún lado.
+  const pendRedondeada = Math.round(diferenciaPend);
+  const setEq = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.textContent = (val>=0?'+':'') + _fmtCOP(val);
+    el.style.color = Math.abs(Math.round(val)) < 1 ? 'var(--text)' : (val >= 0 ? 'var(--green)' : 'var(--red)');
+  };
+  setEq('dd-eq-total', diferenciaTotal);
+  setEq('dd-eq-aplicado', totalAplicado);
+  setEq('dd-eq-pendiente', diferenciaPend);
 
-      const estadoEl = document.getElementById('dd-apl-estado');
-      if (estadoEl) {
-        if (Math.abs(pendRedondeada) < 1) {
-          estadoEl.style.color = 'var(--green)';
-          estadoEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Ya se aplicó por completo a otros meses — no afecta tus totales actuales.`;
-        } else {
-          estadoEl.style.color = '#9a3412';
-          estadoEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Todavía falta aplicar ${_fmtCOP(Math.abs(diferenciaPend))} a otro mes.`;
-        }
-      }
+  const pendEl = document.getElementById('dd-diferencia-pendiente');
+  if (pendEl) {
+    pendEl.textContent = (pendRedondeada>=0?'+':'') + _fmtCOP(diferenciaPend);
+    pendEl.style.color = Math.abs(pendRedondeada) < 1 ? 'var(--text)' : (pendRedondeada >= 0 ? 'var(--green)' : 'var(--red)');
+  }
 
-      document.getElementById('dd-apl-detalle').innerHTML = historial.map(h => {
-        const hVal = parseFloat(h.valor)||0;
-        return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;">
-          <span class="c-dim">${h.mes_destino ? 'Aplicada a ' + _repFmtMes(h.mes_destino) : 'Aplicada'}${h.fecha ? ' · '+h.fecha : ''}</span>
-          <span style="font-weight:600;color:${hVal>=0?'var(--green)':'var(--red)'};">${hVal>=0?'+':''}${_fmtCOP(hVal)}</span>
-        </div>`;
-      }).join('');
+  const estadoEl = document.getElementById('dd-apl-estado');
+  if (estadoEl) {
+    if (Math.abs(pendRedondeada) < 1) {
+      estadoEl.style.color = 'var(--green)';
+      estadoEl.innerHTML = Math.abs(totalAplicado) >= 1
+        ? `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Ya se aplicó por completo a otros meses — no afecta tus totales actuales.`
+        : `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> No hay nada pendiente por aplicar.`;
     } else {
-      aplPendEl.style.display = 'none';
+      estadoEl.style.color = '#9a3412';
+      estadoEl.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg> Todavía falta aplicar ${_fmtCOP(Math.abs(diferenciaPend))} a otro mes.`;
     }
+  }
+
+  const btnAplicar = document.getElementById('dd-btn-aplicar');
+  if (btnAplicar) {
+    if (Math.abs(pendRedondeada) >= 1) {
+      btnAplicar.style.display = 'flex';
+      btnAplicar.style.background = pendRedondeada >= 0 ? 'var(--teal)' : '#dc2626';
+      btnAplicar.textContent = historial.length ? 'Aplicar diferencia nueva' : (pendRedondeada>=0 ? 'Sumar al mes en curso' : 'Descontar del mes en curso');
+      btnAplicar.onclick = () => { closeModal('modal-detalle-diferencia'); _aplicarDiferenciaCierre(mes, pendRedondeada); };
+    } else {
+      btnAplicar.style.display = 'none';
+      btnAplicar.onclick = null;
+    }
+  }
+
+  const detalleWrap = document.getElementById('dd-apl-detalle-wrap');
+  if (detalleWrap) {
+    detalleWrap.style.display = historial.length ? 'block' : 'none';
+    document.getElementById('dd-apl-detalle').innerHTML = historial.map(h => {
+      const hVal = parseFloat(h.valor)||0;
+      return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:11px;padding:3px 0;">
+        <span class="c-dim">${h.mes_destino ? 'Aplicada a ' + _repFmtMes(h.mes_destino) : 'Aplicada'}${h.fecha ? ' · '+h.fecha : ''}</span>
+        <span style="font-weight:600;color:${hVal>=0?'var(--green)':'var(--red)'};">${hVal>=0?'+':''}${_fmtCOP(hVal)}</span>
+      </div>`;
+    }).join('');
   }
 
   const tbody = document.getElementById('dd-tabla-body');
@@ -933,9 +959,12 @@ async function _abrirDetalleDiferencia(mes) {
   }
 
   // "Sin explicar": en modo preciso (con foto por venta guardada al cerrar)
-  // esto NO debería pasar nunca — si aparece, es señal de un error real en
-  // el cálculo. En modo estimado (cierres antiguos) es una limitación
-  // conocida de los datos de ese momento, no un error.
+  // esto normalmente no debería pasar. La excepción es cuando coincide casi
+  // exacto con "ya aplicado antes" (abajo): eso indica que ese monto viene
+  // de una diferencia MÁS ANTIGUA que ya se corrigió manualmente (ver
+  // historial), de una venta que ya no existe en el sistema — y por eso ya
+  // no se puede desglosar campo por campo — no de un error nuevo. Si no
+  // coincide con nada aplicado, sí puede ser un error real a revisar.
   const noIdRow = document.getElementById('dd-no-identificado-row');
   if (noIdRow) {
     if (Math.abs(noIdentificado) >= 1) {
@@ -943,7 +972,13 @@ async function _abrirDetalleDiferencia(mes) {
       const valorEl = document.getElementById('dd-no-identificado-valor');
       const textoEl = document.getElementById('dd-no-identificado-texto');
       if (valorEl) valorEl.textContent = (Math.round(noIdentificado)>=0?'+':'') + _fmtCOP(noIdentificado);
-      if (tieneSnapshot) {
+      const coincideConAplicado = Math.abs(noIdentificado - totalAplicado) < 1 && Math.abs(totalAplicado) >= 1;
+      if (coincideConAplicado) {
+        noIdRow.style.background = '#fff7ed';
+        noIdRow.style.borderColor = '#fed7aa';
+        noIdRow.style.color = '#9a3412';
+        if (textoEl) textoEl.textContent = 'de la diferencia no se puede desglosar campo por campo — coincide con lo que ya se aplicó antes (ver "Aplicaciones anteriores" arriba), probablemente de una venta que ya no existe en el sistema. Ya está corregido, no requiere ninguna acción nueva.';
+      } else if (tieneSnapshot) {
         noIdRow.style.background = '#fef2f2';
         noIdRow.style.borderColor = '#fecaca';
         noIdRow.style.color = '#7f1d1d';
