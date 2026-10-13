@@ -85,8 +85,10 @@ function _fillTipoSelects() {
   // (en el filtro eso volvía a "Todas" justo antes de filtrar).
   const _refill = (el, html) => {
     if (!el) return;
+    if (el.dataset.optsHtml === html) return; // sin cambios: no tocar la selección
     const prev = el.value;
     el.innerHTML = html;
+    el.dataset.optsHtml = html;
     if (prev && [...el.options].some(o => o.value === prev)) el.value = prev;
   };
   _refill(pf, optsFilter);
@@ -325,11 +327,17 @@ async function saveProblema() {
   else if (typeof renderVentas === 'function') await renderVentas();
 }
 
+// Un cambio de filtro dispara varias llamadas casi simultáneas (onchange + listeners
+// input/change). Solo la última en empezar puede pintar; las anteriores que terminen
+// después se descartan para no pisar el filtro con un resultado viejo.
+let _probRenderSeq = 0;
 async function renderProblemas() {
+  const seq = ++_probRenderSeq;
   await _syncCatsFromFirestore();
   const tiendas   = await DB.tiendas();
   const ventas    = await DB.ventas();
   let   problemas = await DB.problemas();
+  if (seq !== _probRenderSeq) return;
 
   const s   = gv('pf-search').toLowerCase();
   const fe  = gv('pf-estado');
