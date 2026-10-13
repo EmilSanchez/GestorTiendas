@@ -196,6 +196,14 @@ input[readonly]{background:#f3f7f7;color:var(--text2);}
 #modal-pago-envio .modal{animation:none;opacity:0;transform:translateY(-10px) scale(.96);transition:opacity .2s ease,transform .22s cubic-bezier(.34,1.56,.64,1);}
 #modal-pago-envio.show .modal{opacity:1;transform:translateY(0) scale(1);}
 @keyframes mIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+
+/* ── Entrada/salida suave genérica: modales de foto de perfil (foto actual,
+   centrar/recortar, confirmar eliminar) — misma mecánica que arriba, pero
+   compartida por los tres via la clase .anim-modal en vez de un id suelto ── */
+.anim-modal{background:rgba(0,0,0,0);transition:background .2s ease;}
+.anim-modal.show{background:rgba(0,0,0,.4);}
+.anim-modal .modal{animation:none;opacity:0;transform:translateY(-10px) scale(.96);transition:opacity .2s ease,transform .22s cubic-bezier(.34,1.56,.64,1);}
+.anim-modal.show .modal{opacity:1;transform:translateY(0) scale(1);}
 .mh{display:flex;align-items:center;justify-content:space-between;padding:0.9rem 1.25rem;border-bottom:1px solid var(--border);background:#f7fafa;}
 .mh-title{font-size:0.95rem;font-weight:700;}
 .mc{padding:1.25rem;}
