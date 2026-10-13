@@ -5,7 +5,11 @@ var _editProbId = null;
 var _ventaSelProblema = null;
 
 // ══════════════════════════════════════════════════════════
-// CATEGORÍAS DE PROBLEMA — editables, guardadas en localStorage
+// CATEGORÍAS DE PROBLEMA — editables, sincronizadas con Firestore
+// (localStorage se usa solo como caché local para poder leerlas
+// de forma síncrona; la fuente de verdad real es Firestore, en
+// config/categorias_problema, para que sean las mismas en todos
+// los navegadores y sesiones).
 // ══════════════════════════════════════════════════════════
 const _CATS_KEY = 'mm_prob_cats_v1';
 
@@ -30,8 +34,34 @@ function _getCats() {
   } catch { return [..._CATS_DEFAULT]; }
 }
 
-function _saveCats(cats) {
+async function _saveCats(cats) {
   localStorage.setItem(_CATS_KEY, JSON.stringify(cats));
+  try { await _cfg('categorias_problema').set({ cats }); }
+  catch(e) { console.warn('No se pudo sincronizar categorías con Firebase:', e); }
+}
+
+// Trae las categorías guardadas en Firestore y actualiza el caché local
+// (localStorage). Si en Firestore todavía no hay nada guardado (primera
+// vez que se usa esta función tras la actualización), sube las categorías
+// locales actuales para que queden disponibles para todos los navegadores.
+let _catsSyncing = false;
+async function _syncCatsFromFirestore() {
+  if (_catsSyncing) return;
+  _catsSyncing = true;
+  try {
+    const snap = await _cfg('categorias_problema').get();
+    const remoto = snap.exists ? snap.data().cats : null;
+    if (Array.isArray(remoto) && remoto.length) {
+      localStorage.setItem(_CATS_KEY, JSON.stringify(remoto));
+    } else {
+      await _cfg('categorias_problema').set({ cats: _getCats() });
+    }
+  } catch(e) { console.warn('No se pudo sincronizar categorías con Firebase:', e); }
+  finally {
+    _catsSyncing = false;
+    _fillTipoSelects();
+    if (document.getElementById('modal-categorias')?.classList.contains('open')) _renderCatList();
+  }
 }
 
 // Sincroniza TIPO_LABELS con las categorías actuales
@@ -56,9 +86,10 @@ function _fillTipoSelects() {
 }
 
 // ── MODAL GESTIONAR CATEGORÍAS ──
-function openModalCategorias() {
+async function openModalCategorias() {
   _renderCatList();
   document.getElementById('modal-categorias').classList.add('open');
+  await _syncCatsFromFirestore(); // refresca con lo último guardado por otros navegadores/usuarios
 }
 
 function _renderCatList() {
@@ -83,13 +114,15 @@ function _renderCatList() {
         background:var(--teal-bg);color:var(--teal);font-size:14px;
         display:flex;align-items:center;justify-content:center;transition:all .15s;"
         onmouseover="this.style.background='var(--teal)';this.style.color='#fff'"
-        onmouseout="this.style.background='var(--teal-bg)';this.style.color='var(--teal)'"></button>
+        onmouseout="this.style.background='var(--teal-bg)';this.style.color='var(--teal)'"
+        ><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></button>
       ${cats.length > 1 ? `<button onclick="_eliminarCat(${i})" title="Eliminar" style="
         width:28px;height:28px;border:none;border-radius:6px;cursor:default;
         background:transparent;color:var(--text3);font-size:14px;
         display:flex;align-items:center;justify-content:center;transition:all .15s;"
         onmouseover="this.style.background='var(--red-bg)';this.style.color='var(--red)'"
-        onmouseout="this.style.background='transparent';this.style.color='var(--text3)'"></button>` : ''}
+        onmouseout="this.style.background='transparent';this.style.color='var(--text3)'"
+        ><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>` : ''}
     </div>
   `).join('');
 }
@@ -108,7 +141,7 @@ async function guardarCat(i) {
   const oldId    = cats[i].id;
   const oldLabel = cats[i].label;
   cats[i].label  = newLabel;
-  _saveCats(cats);
+  await _saveCats(cats);
   _fillTipoSelects();
 
   // Actualizar tipo_label en todos los problemas de Firebase que usen este tipo
@@ -130,14 +163,14 @@ async function guardarCat(i) {
     row.style.borderColor = '#6cc490';
     setTimeout(() => { row.style.background = ''; row.style.borderColor = 'var(--border)'; }, 800);
   }
-  showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Categoría actualizada', 'success', 1800);
+  showToast('Categoría actualizada', 'success', 1800);
 }
 
 async function _eliminarCat(i) {
   const cats = _getCats();
   if (cats.length <= 1) return;
   cats.splice(i, 1);
-  _saveCats(cats);
+  await _saveCats(cats);
   _fillTipoSelects();
   _renderCatList();
   showToast('Categoría eliminada', 'info', 1800);
@@ -157,11 +190,11 @@ async function agregarCat() {
   const cats = _getCats();
   if (cats.find(c => c.id === id)) { showToast('Ya existe una categoría con ese nombre', 'error', 2000); return; }
   cats.push({ id, label });
-  _saveCats(cats);
+  await _saveCats(cats);
   _fillTipoSelects();
   input.value = '';
   _renderCatList();
-  showToast('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> Categoría agregada', 'success', 1800);
+  showToast('Categoría agregada', 'success', 1800);
 }
 
 function _esc2(s) {
@@ -248,7 +281,7 @@ async function saveProblema() {
   const solucion = gv('p-solucion').trim();
   if (!desc) { alert('La descripción es requerida.'); return; }
   if ((estado==='resuelto'||estado==='perdida') && !solucion) {
-    alert('<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Para marcar como resuelto o con pérdida, debes registrar la solución.');
+    alert('Para marcar como resuelto o con pérdida, debes registrar la solución.');
     document.getElementById('p-solucion').focus();
     return;
   }
@@ -285,7 +318,7 @@ async function saveProblema() {
 }
 
 async function renderProblemas() {
-  _fillTipoSelects();
+  await _syncCatsFromFirestore();
   const tiendas   = await DB.tiendas();
   const ventas    = await DB.ventas();
   let   problemas = await DB.problemas();
@@ -594,7 +627,7 @@ async function populateSelects() {
   ['vf-tienda','pf-tienda','ef-tienda'].forEach(id => {
     const el = document.getElementById(id); if (el) el.innerHTML = blank + opts;
   });
-  _fillTipoSelects();
+  await _syncCatsFromFirestore();
 }
 
 // ══════════════════════════════════════════════════════════
