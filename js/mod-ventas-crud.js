@@ -816,7 +816,7 @@ async function saveVenta() {
   }
 }
 async function renderVentas() {
-  _pintarFiltroTrans();
+  _pintarFiltrosVentas();
   await _cargarConfigVentas();
   _actualizarCabeceraVentas();
   const tiendas   = await DB.tiendas();

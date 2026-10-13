@@ -47,6 +47,7 @@ function _labelPeriodo(periodo) {
 // navegador pinte el indicador antes del trabajo pesado (armar ~1000 filas).
 let _vfTimer = null, _vfSeq = 0;
 function filtrarVentasFluido(delay = 0) {
+  _pintarFiltrosVentas();
   _mostrarCargaVentas(true);
   clearTimeout(_vfTimer);
   _vfTimer = setTimeout(async () => {
@@ -57,36 +58,60 @@ function filtrarVentasFluido(delay = 0) {
   }, delay);
 }
 
+// Capa opaca sobre la tabla: mientras carga solo se ven los 3 puntos, y al
+// terminar se desvanece dejando ver la tabla ya filtrada.
 function _mostrarCargaVentas(on) {
   const wrap = document.getElementById('ventas-table-wrap');
   let ov = document.getElementById('ventas-loading');
-  if (!on) { if (ov) ov.style.opacity = '0'; return; }
+  if (!on) {
+    if (ov) { ov.style.opacity = '0'; ov.style.visibility = 'hidden'; }
+    return;
+  }
   if (!wrap) return;
   if (!ov) {
     ov = document.createElement('div');
     ov.id = 'ventas-loading';
     ov.innerHTML = '<div class="app-load-dots"><span></span><span></span><span></span></div>';
     ov.style.cssText = 'position:fixed;z-index:50;display:flex;align-items:center;justify-content:center;' +
-      'background:rgba(255,255,255,.55);border-radius:12px;pointer-events:none;opacity:0;transition:opacity .15s;';
+      'background:var(--card,#fff);border-radius:12px;pointer-events:none;opacity:0;visibility:hidden;' +
+      'transition:opacity .2s ease,visibility 0s linear .2s;';
     document.body.appendChild(ov);
   }
   const r = wrap.getBoundingClientRect();
   Object.assign(ov.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px' });
+  ov.style.transition = 'opacity .12s ease';
+  ov.style.visibility = 'visible';
   ov.style.opacity = '1';
+  // al ocultar: desvanecer y luego quitar visibilidad
+  requestAnimationFrame(() => { ov.style.transition = 'opacity .25s ease,visibility 0s linear .25s'; });
 }
 
-// Colorea el filtro de transportadora igual que su etiqueta en la tabla
+// Colorea los filtros de Transportadora y Estado igual que sus etiquetas en la
+// tabla. Solo el campo cerrado toma el color: las opciones de la lista
+// desplegable se mantienen neutras.
 const _TRANS_COLORS = {
-  servientrega: { background:'var(--green-bg)', color:'var(--blue)',  borderColor:'var(--green-bg)' },
-  aguachica:    { background:'#cfe2ff',         color:'#084298',      borderColor:'#cfe2ff' },
-  inventario:   { background:'#002060',         color:'#fff',         borderColor:'#001540' },
-  otro:         { background:'#f0f0f0',         color:'#555',         borderColor:'#ccc' },
+  servientrega: { bg:'var(--green-bg)', color:'var(--blue)', border:'var(--green-bg)' },
+  aguachica:    { bg:'#cfe2ff',         color:'#084298',     border:'#cfe2ff' },
+  inventario:   { bg:'#002060',         color:'#fff',        border:'#001540' },
+  otro:         { bg:'#f0f0f0',         color:'#555',        border:'#ccc' },
 };
-function _pintarFiltroTrans() {
-  const el = document.getElementById('vf-trans');
+function _pintarSelect(el, c) {
   if (!el) return;
-  const c = _TRANS_COLORS[el.value] || { background:'', color:'', borderColor:'' };
-  Object.assign(el.style, c, { fontWeight: _TRANS_COLORS[el.value] ? '600' : '' });
+  if (!el.dataset.optsNeutras) {
+    [...el.options].forEach(o => { o.style.background = '#fff'; o.style.color = '#1f2937'; o.style.fontWeight = '400'; });
+    el.style.transition = 'background-color .2s ease,color .2s ease,border-color .2s ease';
+    el.dataset.optsNeutras = '1';
+  }
+  el.style.background  = c ? c.bg : '';
+  el.style.color       = c ? c.color : '';
+  el.style.borderColor = c ? c.border : '';
+  el.style.fontWeight  = c ? '600' : '';
+}
+function _pintarFiltrosVentas() {
+  const t = document.getElementById('vf-trans');
+  const e = document.getElementById('vf-estado');
+  _pintarSelect(t, t && _TRANS_COLORS[t.value]);
+  _pintarSelect(e, e && e.value && typeof _ESTADO_COLORS !== 'undefined' ? _ESTADO_COLORS[e.value] : null);
 }
 
 // ── VENTAS & GANANCIAS (FUSIONADO) ──
