@@ -485,7 +485,7 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
       <div class="pc-cell" style="color:${ganColor};">${gan != null && gan < 0 ? _PI.down : _PI.trend}<div><div class="pc-lbl">${gan != null && gan < 0 ? 'Pérdida' : 'Ganancia'}</div><div class="pc-val strong" style="color:${ganColor};">${gan != null ? fmt(gan) : '—'}</div></div></div>
     </div></div></div>
     <div class="pc-box" style="background:rgba(100,116,139,.08);">
-      <div class="pc-box-ico" style="background:#111827;font-weight:800;font-size:15px;">!</div>
+      <div class="pc-box-ico" style="background:#6b7280;font-weight:800;font-size:15px;">!</div>
       <div style="min-width:0;"><div class="pc-box-t" style="color:#111827;">Problema</div><div class="pc-box-d">${esc(p.descripcion)}</div></div>
     </div>
     <div class="pc-box" style="background:${p.solucion ? '#ecfdf5' : 'var(--bg)'};">
