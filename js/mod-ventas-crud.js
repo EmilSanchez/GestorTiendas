@@ -849,7 +849,10 @@ async function renderVentas() {
 
   // Búsqueda por texto: ignora TODOS los filtros de fecha si hay texto
   if (s) {
-    ventas = ventas.filter(v => (v.id_ml + (v.telefono||'') + (v.nota||'')).toLowerCase().includes(s));
+    // Incluye el cliente (usuario y nombre); sin distinguir tildes ni mayúsculas
+    const _norm = t => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const q = _norm(s);
+    ventas = ventas.filter(v => _norm([v.id_ml, v.telefono, v.nota, v.cliente, v.nombre_cliente].join(' ')).includes(q));
   } else {
     // Sin búsqueda: aplicar filtros de período normalmente
     if (fDesde || fHasta) {
