@@ -88,6 +88,8 @@ body.sb-collapsed .nav-count{position:absolute;top:3px;left:32px;margin:0;min-wi
 /* Mini-loader de 3 puntos dentro del sub-ítem seleccionado */
 /* Loader grande centrado en el área de contenido (al entrar a cualquier módulo) */
 #app-content-loader{display:none;position:fixed;top:0;left:var(--sidebar-w);right:0;bottom:0;background:var(--bg);z-index:400;align-items:center;justify-content:center;}
+/* Con el menú lateral plegado el loader empieza donde termina el menú angosto */
+body.sb-collapsed #app-content-loader{left:var(--sidebar-w-col);}
 .app-load-dots{display:flex;align-items:flex-end;gap:7px;}
 .app-load-dots span{width:9px;height:9px;border-radius:50%;background:#1a4fa8;animation:appDotBounce 1s ease-in-out infinite;}
 .app-load-dots span:nth-child(1){animation-delay:0s;}
