@@ -104,8 +104,11 @@ function _pintarSelect(el, c) {
   }
   el.style.background  = c ? c.bg : '';
   el.style.color       = c ? c.color : '';
-  el.style.borderColor = c ? c.border : '';
+  // Borde del mismo tono que el fondo y sin el halo de foco: que se vea como la
+  // etiqueta de la tabla, no como un campo resaltado
+  el.style.borderColor = c ? c.bg : '';
   el.style.fontWeight  = c ? '600' : '';
+  el.classList.toggle('vf-coloreado', !!c);
 }
 function _pintarFiltrosVentas() {
   const t = document.getElementById('vf-trans');

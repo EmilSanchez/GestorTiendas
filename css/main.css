@@ -175,6 +175,7 @@ tbody td{padding:0.6rem 0.75rem;font-size:0.85rem;color:var(--text);background:v
 .fl{font-size:0.78rem;color:var(--text2);font-weight:500;white-space:nowrap;}
 input,select,textarea{background:var(--white);border:1px solid var(--border);color:var(--text);border-radius:var(--radius);padding:0.4rem 0.65rem;font-size:0.85rem;font-family:var(--font);outline:none;transition:border-color .15s,box-shadow .15s;}
 input:focus,select:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 3px rgba(0,137,123,.12);}
+select.vf-coloreado,select.vf-coloreado:focus{box-shadow:none;outline:none;}
 input::placeholder{color:var(--text3);}
 input[readonly]{background:#f3f7f7;color:var(--text2);}
 
