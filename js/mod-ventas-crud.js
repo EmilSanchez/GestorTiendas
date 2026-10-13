@@ -965,12 +965,12 @@ async function renderVentas() {
       <td>
         <div class="actions-cell">
           <button class="btn btn-ghost btn-icon btn-sm" title="Editar" onclick="openModalVenta('${v.id}')"><img src="img/editar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
-          ${(()=>{ const prob = problemas.find(p=>p.venta_id===v.id); const hasProb = !!prob;
-            const solved = hasProb && ['resuelto','solucionado','cerrado'].includes((prob.estado||'').toLowerCase());
-            const onclick = hasProb ? `openModalProblema(null,'${prob.id}')` : `openModalProblema('${v.id}')`;
+          ${(()=>{ const probsV = problemas.filter(p=>p.venta_id===v.id); const hasProb = probsV.length > 0;
+            const solved = hasProb && !probsV.some(p => p.estado === 'abierto');
+            const onclick = `openModalProblema('${v.id}')`;
             const btnStyle = !hasProb ? '' : solved ? 'background:#d1f0e0;border-color:#6cc490;' : 'background:#fee2e2;border-color:#fca5a5;';
             const imgFilter = !hasProb ? '' : solved ? 'filter:sepia(1) saturate(4) hue-rotate(80deg);' : 'filter:sepia(1) saturate(5) hue-rotate(-30deg);';
-            const btnTitle = !hasProb ? 'Registrar problema' : solved ? 'Problema resuelto ✓' : 'Ver problema activo';
+            const btnTitle = !hasProb ? 'Registrar problema' : solved ? `${probsV.length} problema(s) resuelto(s) ✓ — registrar otro` : 'Ver problema activo';
             return `<button class="btn btn-ghost btn-icon btn-sm btn-prob" data-venta-id="${v.id}" title="${btnTitle}" onclick="${onclick}" style="${btnStyle}"><img src="img/advertencia.png" alt="Problema" style="width:1rem;height:1rem;object-fit:contain;${imgFilter}"></button>`; })()}
           <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>

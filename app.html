@@ -2291,23 +2291,35 @@ async function _renderEnviosSkyPanel() {
 
 <!-- ═══════════════════ MODAL: PROBLEMA ═══════════════════ -->
 <div class="overlay" id="modal-problema">
-  <div class="modal modal-lg">
-    <div class="mh"><div class="mh-title" id="mp-title">Registrar Problema</div><button class="mclose" onclick="closeModal('modal-problema')">✕</button></div>
-    <div class="mc">
-      <div class="fsec">Buscar venta relacionada</div>
-      <div class="fg"><label class="fl2">ID de la venta o nombre del producto</label><div class="frow" style="gap:6px;"><input type="text" id="p-buscar" placeholder="Ej: 2000015788963928 o 'Teclado'" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="buscarVentaProblema()">Buscar</button></div><div id="p-buscar-resultado" style="margin-top:6px;"></div></div>
-      <div class="fg"><label class="fl2">Número de venta <small class="c-dim">(opcional)</small></label><input type="text" id="p-num-venta-manual" placeholder="Ej: 2000015788963928 o referencia propia"></div>
-      <div class="fsec">Datos del problema</div>
+  <div class="modal modal-lg" style="max-width:640px;">
+    <div class="mh" style="background:#fff;border-bottom:none;padding-bottom:.35rem;"><div class="mh-title" id="mp-title" style="font-size:1.05rem;">Registrar problema</div><button class="mclose" onclick="closeModal('modal-problema')">✕</button></div>
+    <div class="mp-tabs">
+      <button type="button" class="mp-tab active" id="mp-tab-form" onclick="_mpTab('form')">Registrar</button>
+      <button type="button" class="mp-tab" id="mp-tab-prev" onclick="_mpTab('prev')" style="display:none;">Problemas anteriores <span class="mp-tab-count" id="mp-prev-count">0</span></button>
+    </div>
+    <div class="mc mp-body" id="mp-pane-form">
+      <div class="fg"><label class="fl2 mp-lbl">Buscar venta relacionada</label><div class="frow" style="gap:8px;"><input type="text" id="p-buscar" placeholder="ID de la venta, producto o cliente" style="flex:1;" onkeydown="if(event.key==='Enter')buscarVentaProblema()"><button class="btn btn-ghost" onclick="buscarVentaProblema()">Buscar</button></div><div id="p-buscar-resultado" style="margin-top:8px;"></div></div>
+      <div class="fg"><label class="fl2 mp-lbl">Número de venta <small class="c-dim">(opcional)</small></label><input type="text" id="p-num-venta-manual" placeholder="Ej: 2000015788963928 o referencia propia"></div>
       <div class="grid2">
-        <div class="fg"><label class="fl2">Fecha del problema</label><input type="date" id="p-fecha"></div>
-        <div class="fg"><label class="fl2">Tipo de problema *</label><select id="p-tipo"></select></div>
-        <div class="fg span2"><label class="fl2">¿Qué sucedió? *</label><textarea id="p-descripcion" rows="3" style="width:100%;resize:none;" placeholder="Describe con detalle el problema..."></textarea></div>
-        <div class="fg span2"><label class="fl2">Solución planteada</label><textarea id="p-solucion" rows="2" style="width:100%;resize:none;" placeholder="¿Qué se hará o qué se hizo?"></textarea></div>
-        <div class="fg"><label class="fl2">Estado</label><select id="p-estado"><option value="abierto">Abierto — sin resolver</option><option value="resuelto">Resuelto</option><option value="perdida">Resuelto con pérdida</option></select></div>
-        <div class="fg"><label class="fl2">Valor de la pérdida (COP) <small class="c-dim">si aplica</small></label><input type="number" id="p-perdida" placeholder="0"></div>
+        <div class="fg"><label class="fl2 mp-lbl">Fecha del problema</label><input type="date" id="p-fecha"></div>
+        <div class="fg"><label class="fl2 mp-lbl">Tipo de problema *</label><select id="p-tipo"></select></div>
+        <div class="fg"><label class="fl2 mp-lbl">¿Qué sucedió? *</label><textarea id="p-descripcion" rows="3" style="width:100%;resize:none;" placeholder="Describe con detalle el problema..."></textarea></div>
+        <div class="fg"><label class="fl2 mp-lbl">Solución planteada</label><textarea id="p-solucion" rows="3" style="width:100%;resize:none;" placeholder="¿Qué se hará o qué se hizo?"></textarea></div>
+        <div class="fg"><label class="fl2 mp-lbl">Estado</label><select id="p-estado" onchange="_mpTogglePerdida()"><option value="abierto">Abierto — sin resolver</option><option value="resuelto">Resuelto</option><option value="perdida">Resuelto con pérdida</option></select></div>
+        <div class="fg" id="p-perdida-wrap" style="display:none;"><label class="fl2 mp-lbl">Valor de la pérdida (COP)</label><input type="number" id="p-perdida" placeholder="0"></div>
       </div>
     </div>
-    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button><button class="btn btn-primary" onclick="saveProblema()">Guardar Problema</button></div>
+    <div class="mc mp-body" id="mp-pane-prev" style="display:none;"></div>
+    <div class="mf" id="mp-footer"><button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button><button class="btn btn-success" onclick="saveProblema()">Guardar problema</button></div>
+  </div>
+</div>
+
+<!-- MODAL: HISTORIAL DE UN PROBLEMA -->
+<div class="overlay" id="modal-historial-problema">
+  <div class="modal" style="max-width:520px;">
+    <div class="mh" style="background:#fff;"><div><div class="mh-title">Historial de cambios</div><div id="mhp-sub" style="font-size:11px;color:var(--text3);margin-top:2px;"></div></div><button class="mclose" onclick="closeModal('modal-historial-problema')">✕</button></div>
+    <div class="mc" id="mhp-body" style="max-height:65vh;overflow-y:auto;"></div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-historial-problema')">Cerrar</button></div>
   </div>
 </div>
 
