@@ -1884,9 +1884,48 @@ function _enviosMenuOpen(open) {
   if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 function toggleEnviosMenu() {
+  // Con el menú lateral plegado el submenú no cabe: se abre un panel flotante a la derecha
+  if (document.body.classList.contains('sb-collapsed')) { _enviosFlyout(); return; }
   const sub = document.getElementById('envios-submenu');
   if (!sub) return;
   _enviosMenuOpen(!sub.classList.contains('open'));
+}
+
+// Panel flotante de "Envíos" para el menú lateral plegado
+function _enviosFlyout(forzarCerrar) {
+  const item = document.getElementById('nav-envios-toggle');
+  let fly = document.getElementById('envios-flyout');
+  const cerrar = () => {
+    if (!fly || !fly.classList.contains('open')) return;
+    fly.classList.remove('open');
+    item?.classList.remove('flyout-open');
+    document.removeEventListener('click', fly._fuera, true);
+  };
+  if (forzarCerrar || fly?.classList.contains('open')) { cerrar(); return; }
+  if (!fly) {
+    fly = document.createElement('div');
+    fly.id = 'envios-flyout';
+    fly.innerHTML = `
+      <div class="ef-title">Envíos</div>
+      <button type="button" data-tab="internacionales"><span class="nav-subdot"></span>Envíos Internacionales</button>
+      <button type="button" data-tab="externos"><span class="nav-subdot"></span>Envíos Externos</button>`;
+    fly.querySelectorAll('button').forEach(b => b.onclick = () => {
+      _enviosFlyout(true);
+      b.dataset.tab === 'internacionales' ? goEnviosInternos() : goEnviosExternos();
+    });
+    document.body.appendChild(fly);
+  }
+  const activo = document.querySelector('#nav-envios-internos.active') ? 'internacionales'
+               : document.querySelector('#nav-envios-externos.active') ? 'externos' : '';
+  fly.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === activo));
+  const r = item.getBoundingClientRect();
+  fly.style.left = (r.right + 8) + 'px';
+  fly.style.top  = r.top + 'px';
+  void fly.offsetWidth; // para que la transición arranque desde el estado cerrado
+  fly.classList.add('open');
+  item.classList.add('flyout-open');
+  fly._fuera = e => { if (!fly.contains(e.target) && !item.contains(e.target)) cerrar(); };
+  setTimeout(() => document.addEventListener('click', fly._fuera, true), 0);
 }
 
 // Marca el sub-ítem activo con el mismo fondo azul que los demás módulos.

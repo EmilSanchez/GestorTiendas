@@ -611,3 +611,16 @@ body.sb-collapsed #sb-logout-menu .nb-label{opacity:1;width:auto;overflow:visibl
 .pc.open .pc-collapse{grid-template-rows:1fr;opacity:1;margin-top:0;}
 .pc-toggle svg{transition:transform .3s ease;}
 .pc.open .pc-toggle svg{transform:rotate(180deg);}
+
+/* Panel flotante de Envíos con el menú lateral plegado */
+#envios-flyout{position:fixed;z-index:9999;min-width:210px;background:var(--sidebar-bg,#0f1c3f);border:1px solid rgba(255,255,255,.1);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.35);padding:6px;
+  opacity:0;visibility:hidden;transform:translateX(-8px) scale(.97);transform-origin:left top;
+  transition:opacity .2s ease,transform .2s ease,visibility 0s linear .2s;}
+#envios-flyout.open{opacity:1;visibility:visible;transform:none;transition:opacity .2s ease,transform .2s ease,visibility 0s;}
+#envios-flyout .ef-title{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(255,255,255,.4);padding:6px 10px 4px;}
+#envios-flyout button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-radius:7px;padding:9px 10px;color:rgba(255,255,255,.75);font-size:.82rem;font-weight:500;font-family:inherit;text-align:left;cursor:default;transition:background .15s,color .15s;}
+#envios-flyout button:hover{background:rgba(255,255,255,.08);color:#fff;}
+#envios-flyout button.active{background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;font-weight:600;}
+body.sb-collapsed .nav-item.flyout-open::after{display:none;}
+/* Con el menú plegado, el ícono de Envíos se ve activo si uno de sus submódulos lo está */
+body.sb-collapsed #nav-envios-toggle:has(+ .nav-submenu .nav-item.active){background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;box-shadow:0 2px 8px rgba(26,79,168,.4);}
