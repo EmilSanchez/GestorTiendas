@@ -756,19 +756,22 @@ function copiarIdVenta(id, el) {
     document.querySelectorAll('.venta-id.copied').forEach(b => { if(b!==el) b.classList.remove('copied'); });
     el.classList.add('copied');
 
-    // Tooltip "Copiado"
-    let tip = el._tip;
+    // Tooltip "Copiado": va en <body> con posición fija para que no lo recorte
+    // un contenedor con overflow (p. ej. los detalles plegables de las tarjetas).
+    let tip = document.getElementById('copiado-tip');
     if (!tip) {
       tip = document.createElement('span');
+      tip.id = 'copiado-tip';
       tip.textContent = 'Copiado';
-      tip.style.cssText = 'position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:#00897b;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;pointer-events:none;z-index:999;animation:toastIn .2s ease;';
-      el.style.position = 'relative';
-      el.appendChild(tip);
-      el._tip = tip;
+      tip.style.cssText = 'position:fixed;transform:translateX(-50%);background:#00897b;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;pointer-events:none;z-index:9999;animation:toastIn .2s ease;';
+      document.body.appendChild(tip);
     }
+    const r = el.getBoundingClientRect();
+    tip.style.left = (r.left + r.width / 2) + 'px';
+    tip.style.top  = (r.top - 24) + 'px';
     tip.style.display = 'block';
-    clearTimeout(el._tipTimer);
-    el._tipTimer = setTimeout(() => { tip.style.display = 'none'; }, 1500);
+    clearTimeout(tip._timer);
+    tip._timer = setTimeout(() => { tip.style.display = 'none'; }, 1500);
   };
 
   navigator.clipboard.writeText(id).then(_apply).catch(() => {
