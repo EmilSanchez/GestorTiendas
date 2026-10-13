@@ -61,29 +61,26 @@ function filtrarVentasFluido(delay = 0) {
 // Capa opaca sobre la tabla: mientras carga solo se ven los 3 puntos, y al
 // terminar se desvanece dejando ver la tabla ya filtrada.
 function _mostrarCargaVentas(on) {
-  const wrap = document.getElementById('ventas-table-wrap');
+  // La capa vive dentro del contenedor de la tabla (posición absoluta), así
+  // siempre cubre exactamente la tabla aunque cambie el menú lateral o el módulo.
+  const box = document.getElementById('ventas-table-box');
   let ov = document.getElementById('ventas-loading');
   if (!on) {
-    if (ov) { ov.style.opacity = '0'; ov.style.visibility = 'hidden'; }
+    if (ov) { ov.style.transition = 'opacity .25s ease,visibility 0s linear .25s'; ov.style.opacity = '0'; ov.style.visibility = 'hidden'; }
     return;
   }
-  if (!wrap) return;
+  if (!box) return;
   if (!ov) {
     ov = document.createElement('div');
     ov.id = 'ventas-loading';
     ov.innerHTML = '<div class="app-load-dots"><span></span><span></span><span></span></div>';
-    ov.style.cssText = 'position:fixed;z-index:50;display:flex;align-items:center;justify-content:center;' +
-      'background:var(--card,#fff);border-radius:12px;pointer-events:none;opacity:0;visibility:hidden;' +
-      'transition:opacity .2s ease,visibility 0s linear .2s;';
-    document.body.appendChild(ov);
+    ov.style.cssText = 'position:absolute;inset:0;z-index:5;display:flex;align-items:center;justify-content:center;' +
+      'background:var(--card,#fff);border-radius:var(--radius-lg,12px);pointer-events:none;opacity:0;visibility:hidden;';
+    box.appendChild(ov);
   }
-  const r = wrap.getBoundingClientRect();
-  Object.assign(ov.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px' });
   ov.style.transition = 'opacity .12s ease';
   ov.style.visibility = 'visible';
   ov.style.opacity = '1';
-  // al ocultar: desvanecer y luego quitar visibilidad
-  requestAnimationFrame(() => { ov.style.transition = 'opacity .25s ease,visibility 0s linear .25s'; });
 }
 
 // Colorea los filtros de Transportadora y Estado igual que sus etiquetas en la
