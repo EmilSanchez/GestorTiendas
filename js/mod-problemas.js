@@ -423,7 +423,7 @@ async function renderProblemas() {
 
   const cards = problemas.map(p => _probCardHTML(p, tiendas, ventas));
   document.getElementById('problemas-container').innerHTML =
-    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:16px;">${cards.join('')}</div>`;
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:16px;align-items:start;">${cards.join('')}</div>`;
 }
 
 // ══════════════════════════════════════════════════════════
@@ -463,7 +463,7 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
   const actualizado = p.fecha_actualizacion && p.fecha_actualizacion !== p.fecha_registro;
 
   return `
-  <div class="pc">
+  <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}">
     <div class="pc-head">
       <span class="pc-estado" style="background:${ec.bg};color:${ec.color};">${p.estado === 'abierto' ? _PI.clock : _PI.check}${ec.label}</span>
       <div class="pc-sep"></div>
@@ -471,9 +471,10 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
         <div class="pc-title">${esc(tipoLabel)}</div>
         <div class="pc-sub">${t ? esc(t.nombre) : '—'}</div>
       </div>
-      <button class="pc-menu-btn" title="Más opciones" onclick="event.stopPropagation();_probMenu(this,'${p.id}')">${_PI.dots}</button>
+      <button class="pc-menu-btn pc-toggle" title="Ver detalles" onclick="_probToggle(this,'${p.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
+      <button class="pc-menu-btn" style="margin-left:0;" title="Más opciones" onclick="event.stopPropagation();_probMenu(this,'${p.id}')">${_PI.dots}</button>
     </div>
-    <div class="pc-grid">
+    <div class="pc-collapse"><div><div class="pc-grid">
       <div class="pc-cell">${_PI.doc}<div style="min-width:0;"><div class="pc-lbl">ID de venta</div>
         <div class="pc-val strong" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${idVenta ? `<span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar">${esc(idVenta)}</span>${_btnVerEnML(p.id_ml_venta, true)}` : '—'}</div></div></div>
       <div class="pc-cell">${_PI.store}<div><div class="pc-lbl">Tienda</div><div class="pc-val">${t ? esc(t.nombre) : '—'}</div></div></div>
@@ -482,7 +483,7 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
       <div class="pc-cell">${_PI.sync}<div><div class="pc-lbl">Última actualización</div><div class="pc-val">${actualizado ? _fmtFechaConDia(p.fecha_actualizacion) : '—'}</div></div></div>`}
       <div class="pc-cell">${_PI.tag}<div><div class="pc-lbl">Venta</div><div class="pc-val strong">${cv ? fmt(cv.totalVenta) : '—'}</div></div></div>
       <div class="pc-cell" style="color:${ganColor};">${gan != null && gan < 0 ? _PI.down : _PI.trend}<div><div class="pc-lbl">${gan != null && gan < 0 ? 'Pérdida' : 'Ganancia'}</div><div class="pc-val strong" style="color:${ganColor};">${gan != null ? fmt(gan) : '—'}</div></div></div>
-    </div>
+    </div></div></div>
     <div class="pc-box" style="background:#fef2f2;">
       <div class="pc-box-ico" style="background:#dc2626;font-weight:800;font-size:15px;">!</div>
       <div style="min-width:0;"><div class="pc-box-t" style="color:#b91c1c;">Problema</div><div class="pc-box-d">${esc(p.descripcion)}</div></div>
@@ -501,6 +502,17 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
       ${p.estado === 'abierto' ? `<button class="btn btn-success" onclick="openResolverProblema('${p.id}','resuelto')">${_PI.ok} Resolver</button>` : ''}
     </div>
   </div>`;
+}
+
+// Detalles de la tarjeta (venta, tienda, fechas, ganancia): plegados por defecto.
+// Se recuerda cuáles abrió el usuario para que sigan abiertos al refiltrar.
+const _probAbiertas = new Set();
+function _probToggle(btn, id) {
+  const card = btn.closest('.pc');
+  const open = !card.classList.contains('open');
+  card.classList.toggle('open', open);
+  btn.title = open ? 'Ocultar detalles' : 'Ver detalles';
+  open ? _probAbiertas.add(id) : _probAbiertas.delete(id);
 }
 
 // Menú de los 3 puntos de la tarjeta

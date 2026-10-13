@@ -604,3 +604,10 @@ body.sb-collapsed #sb-logout-menu .nb-label{opacity:1;width:auto;overflow:visibl
 .hp-diff{font-size:12px;color:var(--text2);line-height:1.5;}
 .hp-diff s{color:var(--text3);}
 @media (max-width:600px){ .pc-grid{grid-template-columns:1fr;} .pc-grid .pc-cell:nth-child(even){border-left:none;padding-left:0;} }
+
+/* Detalles plegables de la tarjeta de problema */
+.pc-collapse{display:grid;grid-template-rows:0fr;opacity:0;margin-top:-14px;transition:grid-template-rows .3s ease,opacity .25s ease,margin-top .3s ease;}
+.pc-collapse>div{overflow:hidden;min-height:0;}
+.pc.open .pc-collapse{grid-template-rows:1fr;opacity:1;margin-top:0;}
+.pc-toggle svg{transition:transform .3s ease;}
+.pc.open .pc-toggle svg{transform:rotate(180deg);}
