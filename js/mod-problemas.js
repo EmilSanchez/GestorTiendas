@@ -239,7 +239,8 @@ function _esc2(s) {
 async function openModalProblema(ventaId, probId) {
   _editProbId = probId || null;
   _ventaSelProblema = null;
-  document.getElementById('mp-title').textContent = probId ? 'Editar Problema' : 'Registrar Problema';
+  document.getElementById('mp-title').textContent = probId ? 'Editar problema' : 'Registrar problema';
+  document.getElementById('mp-tab-form').textContent = probId ? 'Editar' : 'Registrar';
   document.getElementById('p-buscar').value = '';
   document.getElementById('p-buscar-resultado').innerHTML = '';
   document.getElementById('p-num-venta-manual').value = '';
@@ -248,22 +249,53 @@ async function openModalProblema(ventaId, probId) {
 
   _fillTipoSelects();
 
-  if (ventaId) {
-    const v = (await DB.ventas()).find(x => x.id === ventaId);
-    if (v) { document.getElementById('p-buscar').value = v.id_ml || v.id; seleccionarVentaProblema(v); }
+  let p = null;
+  if (probId) p = (await DB.problemas()).find(x => x.id === probId) || null;
+  const vid = ventaId || p?.venta_id;
+  if (vid) {
+    const v = (await DB.ventas()).find(x => x.id === vid);
+    if (v) { document.getElementById('p-buscar').value = v.id_ml || v.id; await seleccionarVentaProblema(v); }
   }
-  if (probId) {
-    const p = (await DB.problemas()).find(x => x.id === probId);
-    if (p) {
-      sv('p-fecha', p.fecha); sv('p-tipo', p.tipo);
-      sv('p-descripcion', p.descripcion); sv('p-solucion', p.solucion || '');
-      sv('p-estado', p.estado); sv('p-perdida', p.valor_perdida || '');
-      sv('p-num-venta-manual', p.id_ml_venta || '');
-    }
+  if (p) {
+    sv('p-fecha', p.fecha); sv('p-tipo', p.tipo);
+    sv('p-descripcion', p.descripcion); sv('p-solucion', p.solucion || '');
+    sv('p-estado', p.estado); sv('p-perdida', p.valor_perdida || '');
+    sv('p-num-venta-manual', p.id_ml_venta || '');
   }
+  _mpTogglePerdida();
+
+  // Otros problemas de la misma venta → pestaña "Problemas anteriores".
+  // Desde el gestor de ventas, si la venta tiene alguno abierto, se abre en esa pestaña.
+  const previos = vid ? (await DB.problemas()).filter(x => x.venta_id === vid && x.id !== probId) : [];
+  await _mpRenderPrevios(previos);
+  _mpTab(!probId && previos.some(x => x.estado === 'abierto') ? 'prev' : 'form');
   openModal('modal-problema');
 }
 
+function _mpTab(tab) {
+  const prev = tab === 'prev';
+  document.getElementById('mp-tab-form').classList.toggle('active', !prev);
+  document.getElementById('mp-tab-prev').classList.toggle('active', prev);
+  document.getElementById('mp-pane-form').style.display = prev ? 'none' : '';
+  document.getElementById('mp-pane-prev').style.display = prev ? '' : 'none';
+  document.getElementById('mp-footer').style.display = prev ? 'none' : '';
+}
+
+function _mpTogglePerdida() {
+  const w = document.getElementById('p-perdida-wrap');
+  if (w) w.style.display = gv('p-estado') === 'perdida' ? '' : 'none';
+}
+
+async function _mpRenderPrevios(previos) {
+  const tab = document.getElementById('mp-tab-prev');
+  const pane = document.getElementById('mp-pane-prev');
+  tab.style.display = previos.length ? '' : 'none';
+  document.getElementById('mp-prev-count').textContent = previos.length;
+  if (!previos.length) { pane.innerHTML = ''; return; }
+  const [tiendas, ventas] = await Promise.all([DB.tiendas(), DB.ventas()]);
+  previos.sort((a,b) => (b.fecha_registro||'').localeCompare(a.fecha_registro||''));
+  pane.innerHTML = `<div style="display:flex;flex-direction:column;gap:12px;">${previos.map(p => _probCardHTML(p, tiendas, ventas, true)).join('')}</div>`;
+}
 async function buscarVentaProblema() {
   const query = gv('p-buscar').toLowerCase().trim();
   if (!query) return;
@@ -300,10 +332,10 @@ async function seleccionarVentaProblema(v) {
   _ventaSelProblema = typeof v === 'string' ? JSON.parse(v) : v;
   const t = (await DB.tiendas()).find(x => x.id === _ventaSelProblema.tienda_id);
   document.getElementById('p-buscar-resultado').innerHTML = `
-    <div style="padding:8px 10px;background:var(--teal-bg);border:1px solid #b8d8d8;
-         border-radius:var(--radius);font-size:12px;margin-top:4px;">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg> <strong>${_ventaSelProblema.id_ml||_ventaSelProblema.id}</strong> — ${_ventaSelProblema.producto}
-      <span class="c-dim" style="margin-left:6px;">${t?.nombre||'?'} · ${_ventaSelProblema.fecha_venta||''}</span>
+    <div class="mp-sel-venta">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="#16a34a" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="11" stroke="none"/><polyline points="17 8.5 10.5 15 7 11.5"/></svg>
+      <strong>${_ventaSelProblema.id_ml||_ventaSelProblema.id}</strong>
+      <span class="c-dim">— ${t?.nombre||'?'} — ${_ventaSelProblema.fecha_venta||''}</span>
     </div>`;
 }
 
@@ -322,7 +354,7 @@ async function saveProblema() {
   const numVentaManual = gv('p-num-venta-manual').trim();
   const existingProb = _editProbId ? (await DB.problemas()).find(x => x.id === _editProbId) : null;
 
-  await DB.upsertProblema({
+  const nuevo = {
     id:           _editProbId || uid(),
     venta_id:     _ventaSelProblema?.id || existingProb?.venta_id || '',
     id_ml_venta:  _ventaSelProblema?.id_ml || numVentaManual || existingProb?.id_ml_venta || '',
@@ -338,7 +370,9 @@ async function saveProblema() {
     fecha_registro: existingProb?.fecha_registro || new Date().toISOString(),
     // Fecha/hora de la última edición — nunca toca fecha_registro (la fecha original de creación)
     fecha_actualizacion: new Date().toISOString(),
-  });
+  };
+  nuevo.historial = _probHistorialCon(existingProb, nuevo);
+  await DB.upsertProblema(nuevo);
   closeModal('modal-problema');
   // Renderizar módulo de problemas si está activo
   try { await renderProblemas(); } catch(e) {}
@@ -387,80 +421,177 @@ async function renderProblemas() {
     return;
   }
 
-  // Estado badge config
-  const ESTADO_CFG = {
-    abierto:  { bg:'#fef3c7', color:'#92400e', label:'ABIERTO'  },
-    resuelto: { bg:'#d1fae5', color:'#065f46', label:'RESUELTO' },
-    perdida:  { bg:'#fee2e2', color:'#991b1b', label:'PÉRDIDA'  },
-  };
-
-  const cards = problemas.map(p => {
-    const t  = tiendas.find(x => x.id === p.tienda_id);
-    const v  = ventas.find(x => x.id === p.venta_id);
-    const cv = v ? calcVenta(v) : null;
-    const ec = ESTADO_CFG[p.estado] || { bg:'#f3f4f6', color:'#374151', label: p.estado };
-    const tipoLabel = TIPO_LABELS[p.tipo] || p.tipo_label || p.tipo || '';
-
-    return `
-    <div style="background:var(--white);border:1px solid var(--border);border-radius:12px;padding:18px 20px;box-shadow:var(--shadow);display:flex;flex-direction:column;gap:12px;transition:box-shadow .15s;height:100%;box-sizing:border-box;"
-      onmouseover="this.style.boxShadow='var(--shadow-md)'" onmouseout="this.style.boxShadow='var(--shadow)'">
-      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;">
-        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">
-          <span style="font-size:10px;font-weight:700;padding:3px 9px;border-radius:20px;background:${ec.bg};color:${ec.color};letter-spacing:.4px;">${ec.label}</span>
-          <span style="font-size:12px;font-weight:600;color:var(--teal);">${tipoLabel}</span>
-          ${p.valor_perdida > 0 ? `<span style="font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;background:#fee2e2;color:#991b1b;">Pérdida: ${fmt(p.valor_perdida)}</span>` : ''}
-        </div>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:11px;color:var(--text3);font-weight:500;">${fmtFecha(p.fecha)}</div>
-          ${p.fecha_registro ? `<div style="font-size:9.5px;color:var(--text3);opacity:.75;margin-top:1px;">Registrado: ${_fmtFechaHora(p.fecha_registro)}</div>` : ''}
-          ${(p.fecha_actualizacion && p.fecha_actualizacion !== p.fecha_registro) ? `<div style="font-size:9.5px;color:var(--teal-dark);opacity:.85;margin-top:1px;">Última actualización: ${_fmtFechaConDia(p.fecha_actualizacion)}</div>` : ''}
-          ${cv ? `<div style="font-size:11px;font-weight:700;color:var(--text2);margin-top:2px;">Venta: ${fmt(cv.totalVenta)}</div>` : ''}
-        </div>
-      </div>
-      <div style="font-size:12px;color:var(--text2);display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
-        <span style="font-weight:600;">Venta:</span>
-        <span class="venta-id" onclick="copiarIdVenta('${p.id_ml_venta||p.venta_id||''}',this)">${p.id_ml_venta||p.venta_id||'—'}</span>
-        ${_btnVerEnML(p.id_ml_venta, true)}
-        ${t ? `<span style="color:var(--text3);">· ${t.nombre}</span>` : ''}
-      </div>
-      <div style="font-size:13px;color:var(--text2);line-height:1.5;">
-        <strong style="color:var(--text);">Problema:</strong>
-        <span style="margin-left:4px;">${p.descripcion}</span>
-      </div>
-      <div style="${p.solucion ? 'background:var(--teal-bg);border-left:3px solid var(--teal);color:var(--text2);' : 'background:var(--bg);border-left:3px solid var(--border);color:var(--text3);'}border-radius:0 8px 8px 0;padding:9px 13px;font-size:12px;line-height:1.5;">
-        <strong style="${p.solucion ? 'color:var(--teal-dark);' : 'color:var(--text3);'}display:flex;align-items:center;gap:5px;margin-bottom:3px;">
-          ${p.solucion
-            ? `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>`
-            : `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`}
-          Solución:
-        </strong>
-        ${p.solucion || '<span style="font-style:italic;">Sin solución planteada</span>'}
-        ${p.fecha_resolucion ? `<div style="font-size:10px;color:var(--text3);margin-top:4px;">Resuelta el ${p.fecha_resolucion}</div>` : ''}
-      </div>
-      <div style="flex:1;"></div>
-      <div style="display:flex;align-items:center;gap:7px;padding-top:6px;border-top:1px solid var(--border);">
-        <button class="btn btn-ghost btn-sm" onclick="openModalProblema(null,'${p.id}')">Editar</button>
-        ${p.estado === 'abierto' ? `
-          <button class="btn btn-success btn-sm" onclick="openResolverProblema('${p.id}','resuelto')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>Resolver
-          </button>` : ''}
-        <div style="flex:1;"></div>
-        <button class="btn btn-ghost btn-icon btn-sm" onclick="deleteProb('${p.id}')" style="color:var(--red);border-color:transparent;"
-          onmouseover="this.style.background='var(--red-bg)'" onmouseout="this.style.background=''">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
-        </button>
-      </div>
-    </div>`;
-  });
-
+  const cards = problemas.map(p => _probCardHTML(p, tiendas, ventas));
   document.getElementById('problemas-container').innerHTML =
-    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:14px;">${cards.join('')}</div>`;
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:16px;">${cards.join('')}</div>`;
 }
+
+// ══════════════════════════════════════════════════════════
+// TARJETA DE PROBLEMA
+// ══════════════════════════════════════════════════════════
+const _PROB_ESTADO_CFG = {
+  abierto:  { bg:'#fef3c7', color:'#b45309', label:'ABIERTO',  dot:'#f59e0b' },
+  resuelto: { bg:'#d1fae5', color:'#047857', label:'RESUELTO', dot:'#10b981' },
+  perdida:  { bg:'#fee2e2', color:'#b91c1c', label:'PÉRDIDA',  dot:'#ef4444' },
+};
+const _PI = {
+  clock:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 7 12 12 15 14"/></svg>',
+  check:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16.5 9 10.5 15 7.5 12"/></svg>',
+  doc:    '<svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>',
+  store:  '<svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l1.5-5h15L21 9"/><path d="M3 9h18v2a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v8h14v-8"/><path d="M10 21v-5h4v5"/></svg>',
+  cal:    '<svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01"/></svg>',
+  sync:   '<svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>',
+  tag:    '<svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>',
+  trend:  '<svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>',
+  down:   '<svg class="pc-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></svg>',
+  copy:   '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>',
+  dots:   '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>',
+  pencil: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+  ok:     '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+};
+
+function _probCardHTML(p, tiendas, ventas, compacto) {
+  const t  = tiendas.find(x => x.id === p.tienda_id);
+  const v  = ventas.find(x => x.id === p.venta_id);
+  const cv = v ? calcVenta(v) : null;
+  const ec = _PROB_ESTADO_CFG[p.estado] || { bg:'#f3f4f6', color:'#374151', label: String(p.estado||'').toUpperCase() };
+  const tipoLabel = TIPO_LABELS[p.tipo] || p.tipo_label || p.tipo || '';
+  const idVenta = p.id_ml_venta || p.venta_id || '';
+  const esc = s => _esc2(s == null ? '' : s);
+  const gan = cv ? cv.ganancia : null;
+  const ganColor = gan == null ? 'var(--text3)' : gan >= 0 ? '#047857' : '#b91c1c';
+  const actualizado = p.fecha_actualizacion && p.fecha_actualizacion !== p.fecha_registro;
+
+  return `
+  <div class="pc">
+    <div class="pc-head">
+      <span class="pc-estado" style="background:${ec.bg};color:${ec.color};">${p.estado === 'abierto' ? _PI.clock : _PI.check}${ec.label}</span>
+      <div class="pc-sep"></div>
+      <div style="min-width:0;">
+        <div class="pc-title">${esc(tipoLabel)}</div>
+        <div class="pc-sub">${t ? esc(t.nombre) : '—'}</div>
+      </div>
+      <button class="pc-menu-btn" title="Más opciones" onclick="event.stopPropagation();_probMenu(this,'${p.id}')">${_PI.dots}</button>
+    </div>
+    <div class="pc-grid">
+      <div class="pc-cell">${_PI.doc}<div style="min-width:0;"><div class="pc-lbl">ID de venta</div>
+        <div class="pc-val strong" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${idVenta ? `<span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar">${esc(idVenta)}</span>${_btnVerEnML(p.id_ml_venta, true)}` : '—'}</div></div></div>
+      <div class="pc-cell">${_PI.store}<div><div class="pc-lbl">Tienda</div><div class="pc-val">${t ? esc(t.nombre) : '—'}</div></div></div>
+      ${compacto ? '' : `
+      <div class="pc-cell">${_PI.cal}<div><div class="pc-lbl">Registrado</div><div class="pc-val">${p.fecha_registro ? _fmtFechaHora(p.fecha_registro) : fmtFecha(p.fecha)}</div></div></div>
+      <div class="pc-cell">${_PI.sync}<div><div class="pc-lbl">Última actualización</div><div class="pc-val">${actualizado ? _fmtFechaConDia(p.fecha_actualizacion) : '—'}</div></div></div>`}
+      <div class="pc-cell">${_PI.tag}<div><div class="pc-lbl">Venta</div><div class="pc-val strong">${cv ? fmt(cv.totalVenta) : '—'}</div></div></div>
+      <div class="pc-cell" style="color:${ganColor};">${gan != null && gan < 0 ? _PI.down : _PI.trend}<div><div class="pc-lbl">${gan != null && gan < 0 ? 'Pérdida' : 'Ganancia'}</div><div class="pc-val strong" style="color:${ganColor};">${gan != null ? fmt(gan) : '—'}</div></div></div>
+    </div>
+    <div class="pc-box" style="background:#fef2f2;">
+      <div class="pc-box-ico" style="background:#dc2626;font-weight:800;font-size:15px;">!</div>
+      <div style="min-width:0;"><div class="pc-box-t" style="color:#b91c1c;">Problema</div><div class="pc-box-d">${esc(p.descripcion)}</div></div>
+    </div>
+    <div class="pc-box" style="background:${p.solucion ? '#ecfdf5' : 'var(--bg)'};">
+      <div class="pc-box-ico" style="background:${p.solucion ? '#059669' : '#9ca3af'};">${_PI.ok}</div>
+      <div style="min-width:0;"><div class="pc-box-t" style="color:${p.solucion ? '#047857' : 'var(--text3)'};">Solución</div>
+        <div class="pc-box-d" style="${p.solucion ? '' : 'color:var(--text3);font-style:italic;'}">${p.solucion ? esc(p.solucion) : 'Sin solución planteada'}</div>
+        ${p.valor_perdida > 0 ? `<div style="font-size:11px;font-weight:700;color:#b91c1c;margin-top:4px;">Pérdida registrada: ${fmt(p.valor_perdida)}</div>` : ''}
+        ${p.fecha_resolucion ? `<div style="font-size:10.5px;color:var(--text3);margin-top:4px;">Resuelta el ${p.fecha_resolucion}</div>` : ''}
+      </div>
+    </div>
+    <div class="pc-foot">
+      <button class="btn btn-ghost" onclick="openModalProblema(null,'${p.id}')">${_PI.pencil} Editar</button>
+      <div style="flex:1;"></div>
+      ${p.estado === 'abierto' ? `<button class="btn btn-success" onclick="openResolverProblema('${p.id}','resuelto')">${_PI.ok} Resolver</button>` : ''}
+    </div>
+  </div>`;
+}
+
+// Menú de los 3 puntos de la tarjeta
+function _probMenu(btn, id) {
+  document.querySelectorAll('.pc-menu').forEach(m => m.remove());
+  const m = document.createElement('div');
+  m.className = 'pc-menu';
+  m.innerHTML = `
+    <button onclick="verHistorialProblema('${id}')">${_PI.sync.replace('class="pc-ico"','width="15" height="15"')} Ver historial de cambios</button>
+    <button class="danger" onclick="deleteProb('${id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Eliminar</button>`;
+  document.body.appendChild(m);
+  const r = btn.getBoundingClientRect();
+  m.style.top  = (r.bottom + 4) + 'px';
+  m.style.left = Math.max(8, r.right - m.offsetWidth) + 'px';
+  const cerrar = () => { m.remove(); document.removeEventListener('click', cerrar, true); };
+  setTimeout(() => document.addEventListener('click', cerrar, true), 0);
+}
+
+// ══════════════════════════════════════════════════════════
+// HISTORIAL DE CAMBIOS
+// ══════════════════════════════════════════════════════════
+const _HIST_CAMPOS = {
+  estado: 'Estado', tipo: 'Tipo', descripcion: 'Qué sucedió', solucion: 'Solución',
+  fecha: 'Fecha del problema', valor_perdida: 'Pérdida', id_ml_venta: 'Venta',
+};
+function _histValor(campo, v) {
+  if (v == null || v === '') return '—';
+  if (campo === 'estado') return (_PROB_ESTADO_CFG[v]?.label || v);
+  if (campo === 'tipo') return TIPO_LABELS[v] || v;
+  if (campo === 'valor_perdida') return v ? fmt(v) : '—';
+  return String(v);
+}
+// Devuelve el historial de `nuevo` agregando la entrada de este guardado
+function _probHistorialCon(antes, nuevo, accion) {
+  const hist = Array.isArray(antes?.historial) ? antes.historial.slice() : [];
+  const usuario = (typeof _currentUser !== 'undefined' && _currentUser?.usuario) || '';
+  const ahora = new Date().toISOString();
+  if (!antes) {
+    hist.push({ fecha: ahora, accion: 'creado', usuario, cambios: [] });
+    return hist;
+  }
+  const cambios = Object.keys(_HIST_CAMPOS)
+    .filter(k => String(antes[k] ?? '') !== String(nuevo[k] ?? '') && !(k === 'valor_perdida' && !antes[k] && !nuevo[k]))
+    .map(k => ({ campo: k, antes: antes[k] ?? '', despues: nuevo[k] ?? '' }));
+  if (!cambios.length) return hist;
+  if (!accion) accion = (antes.estado === 'abierto' && nuevo.estado !== 'abierto') ? nuevo.estado
+                      : (antes.estado !== 'abierto' && nuevo.estado === 'abierto') ? 'reabierto' : 'editado';
+  hist.push({ fecha: ahora, accion, usuario, cambios });
+  return hist;
+}
+
+async function verHistorialProblema(id) {
+  document.querySelectorAll('.pc-menu').forEach(m => m.remove());
+  const p = (await DB.problemas()).find(x => x.id === id);
+  if (!p) return;
+  const ACC = {
+    creado:    { t:'Problema registrado', c:'#3b82f6' },
+    editado:   { t:'Problema editado',    c:'#64748b' },
+    resuelto:  { t:'Marcado como resuelto', c:'#10b981' },
+    perdida:   { t:'Resuelto con pérdida', c:'#ef4444' },
+    reabierto: { t:'Problema reabierto',  c:'#f59e0b' },
+  };
+  let hist = Array.isArray(p.historial) ? p.historial.slice() : [];
+  // Problemas creados antes del historial: reconstruir lo que se sabe
+  if (!hist.some(h => h.accion === 'creado') && p.fecha_registro)
+    hist.unshift({ fecha: p.fecha_registro, accion: 'creado', cambios: [] });
+  if (!p.historial?.length && p.fecha_actualizacion && p.fecha_actualizacion !== p.fecha_registro)
+    hist.push({ fecha: p.fecha_actualizacion, accion: 'editado', cambios: [], sinDetalle: true });
+  hist.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
+
+  const esc = s => _esc2(s == null ? '' : s);
+  document.getElementById('mhp-sub').textContent =
+    `${TIPO_LABELS[p.tipo] || p.tipo_label || p.tipo || ''}${p.id_ml_venta ? ' · Venta ' + p.id_ml_venta : ''}`;
+  document.getElementById('mhp-body').innerHTML = hist.length ? hist.map(h => {
+    const a = ACC[h.accion] || { t: h.accion, c:'#64748b' };
+    const det = h.sinDetalle
+      ? '<div class="hp-diff" style="font-style:italic;">Cambio anterior al historial: no hay detalle.</div>'
+      : (h.cambios || []).map(c => `<div class="hp-diff"><strong>${_HIST_CAMPOS[c.campo] || c.campo}:</strong> <s>${esc(_histValor(c.campo, c.antes))}</s> → ${esc(_histValor(c.campo, c.despues))}</div>`).join('');
+    return `<div class="hp-item"><span class="hp-dot" style="background:${a.c};"></span>
+      <div class="hp-when">${_fmtFechaHora(h.fecha)}${h.usuario ? ' · ' + esc(h.usuario) : ''}</div>
+      <div class="hp-what">${a.t}</div>${det}</div>`;
+  }).join('') : '<div class="c-dim" style="font-size:12px;">Sin cambios registrados.</div>';
+  openModal('modal-historial-problema');
+}
+
 async function resolverProblema(id, estado) {
   await openResolverProblema(id, estado);
 }
 
 async function openResolverProblema(id, estado) {
+  closeModal('modal-problema'); // puede venir de la pestaña "Problemas anteriores"
   const probs = await DB.problemas();
   const p = probs.find(x => x.id === id);
   if (!p) return;
@@ -529,22 +660,26 @@ async function confirmarResolver() {
   const p = probs.find(x => x.id === id);
   if (!p) return;
 
+  const antes = { ...p };
   p.estado   = estado;
   p.solucion = solucion;
   p.fecha_resolucion = hoy(); // fecha LOCAL — ver nota junto a mes() en core.js
   p.fecha_actualizacion = new Date().toISOString();
   if (estado === 'perdida') p.valor_perdida = perdida;
+  p.historial = _probHistorialCon(antes, p, estado);
 
   await DB.saveProblemas(probs);
   closeModal('modal-resolver-problema');
   showConfirmAnim('resuelto', false);
   await renderProblemas();
   await updateAlertaBadge();
+  try { await _actualizarBotonesProblema(); } catch(e) {}
 }
 
 var _deleteProbId = null;
 
 function deleteProb(id) {
+  closeModal('modal-problema');
   _deleteProbId = id;
   const inp = document.getElementById('del-prob-code-input');
   const err = document.getElementById('del-prob-code-error');
@@ -581,6 +716,7 @@ async function _confirmDeleteProb() {
     _deleteProbId = null;
     await renderProblemas();
     await updateAlertaBadge();
+    try { await _actualizarBotonesProblema(); } catch(e) {}
     if (typeof showToast === 'function') showToast('Problema eliminado', 'success');
   } catch(e) {
     if (err) err.textContent = 'Error al verificar. Intenta de nuevo.';
@@ -635,23 +771,30 @@ function copiarIdVenta(id, el) {
 async function _actualizarBotonesProblema() {
   const problemas = await DB.problemas();
   // Build a map: venta_id → problema
+  // venta_id → lista de problemas (una venta puede tener varios)
   const mapaProb = {};
   problemas.forEach(p => {
-    if (p.venta_id) mapaProb[p.venta_id] = p;
+    if (p.venta_id) (mapaProb[p.venta_id] = mapaProb[p.venta_id] || []).push(p);
   });
 
   document.querySelectorAll('button.btn-prob[data-venta-id]').forEach(btn => {
     const vid  = btn.dataset.ventaId;
-    const prob = mapaProb[vid];
-    if (!prob) return;
-    const solved = ['resuelto','solucionado','cerrado'].includes((prob.estado||'').toLowerCase());
+    const lista = mapaProb[vid];
+    if (!lista) {
+      btn.style.background = ''; btn.style.borderColor = '';
+      const im = btn.querySelector('img'); if (im) im.style.filter = '';
+      btn.title = 'Registrar problema';
+      return;
+    }
+    btn.setAttribute('onclick', `openModalProblema('${vid}')`);
+    const solved = !lista.some(p => p.estado === 'abierto');
     btn.style.background  = solved ? '#d1f0e0' : '#fee2e2';
     btn.style.borderColor = solved ? '#6cc490' : '#fca5a5';
     const img = btn.querySelector('img');
     if (img) img.style.filter = solved
       ? 'sepia(1) saturate(4) hue-rotate(80deg)'
       : 'sepia(1) saturate(5) hue-rotate(-30deg)';
-    btn.title = solved ? 'Problema resuelto ✓' : 'Ver problema activo';
+    btn.title = solved ? `${lista.length} problema(s) resuelto(s) ✓ — registrar otro` : 'Ver problema activo';
   });
 }
 

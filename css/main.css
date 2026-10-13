@@ -559,3 +559,48 @@ body.sb-collapsed #sb-logout-menu .nb-label{opacity:1;width:auto;overflow:visibl
 @media (max-width: 900px) {
   #fin-fila2 { grid-template-columns: 1fr !important; }
 }
+
+/* ── Tarjetas de problemas ── */
+.pc{background:var(--white);border:1px solid var(--border);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;display:flex;flex-direction:column;gap:14px;box-sizing:border-box;height:100%;transition:box-shadow .15s;}
+.pc:hover{box-shadow:var(--shadow-md);}
+.pc-head{display:flex;align-items:center;gap:14px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.pc-estado{display:inline-flex;align-items:center;gap:6px;font-size:11px;font-weight:700;letter-spacing:.3px;padding:6px 12px;border-radius:20px;flex-shrink:0;}
+.pc-sep{width:1px;align-self:stretch;background:var(--border);}
+.pc-title{font-size:15px;font-weight:800;color:var(--text);text-transform:uppercase;letter-spacing:.2px;line-height:1.2;}
+.pc-sub{font-size:12px;color:var(--text3);margin-top:2px;}
+.pc-menu-btn{margin-left:auto;align-self:flex-start;background:none;border:none;border-radius:8px;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;color:var(--text2);cursor:default;}
+.pc-menu-btn:hover{background:var(--bg);}
+.pc-menu{position:fixed;z-index:400;background:#fff;border:1px solid var(--border);border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);padding:5px;min-width:170px;animation:mIn .12s ease;}
+.pc-menu button{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;padding:8px 10px;border-radius:7px;font-size:12.5px;color:var(--text);text-align:left;cursor:default;font-family:inherit;}
+.pc-menu button:hover{background:var(--bg);}
+.pc-menu button.danger{color:var(--red);}
+.pc-menu button.danger:hover{background:var(--red-bg);}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;row-gap:14px;padding-bottom:14px;border-bottom:1px solid var(--border);}
+.pc-cell{display:flex;gap:12px;align-items:flex-start;padding-right:12px;min-width:0;}
+.pc-grid .pc-cell:nth-child(even){border-left:1px solid var(--border);padding-left:16px;padding-right:0;}
+.pc-ico{width:22px;height:22px;flex-shrink:0;color:var(--text2);margin-top:2px;}
+.pc-lbl{font-size:11px;color:var(--text3);}
+.pc-val{font-size:13px;color:var(--text);margin-top:2px;word-break:break-word;}
+.pc-val.strong{font-weight:700;}
+.pc-box{display:flex;gap:12px;align-items:flex-start;border-radius:10px;padding:12px 14px;}
+.pc-box-ico{width:26px;height:26px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;}
+.pc-box-t{font-size:12.5px;font-weight:700;margin-bottom:2px;}
+.pc-box-d{font-size:12.5px;color:var(--text);line-height:1.45;white-space:pre-wrap;word-break:break-word;}
+.pc-foot{display:flex;align-items:center;gap:10px;padding-top:14px;border-top:1px solid var(--border);margin-top:auto;}
+.pc-foot .btn{min-width:110px;justify-content:center;}
+/* ── Modal problema: pestañas ── */
+.mp-tabs{display:flex;gap:4px;padding:0 1.25rem;border-bottom:1px solid var(--border);}
+.mp-tab{background:none;border:none;border-bottom:2px solid transparent;padding:9px 12px;font-size:12.5px;font-weight:600;color:var(--text2);cursor:default;font-family:inherit;display:inline-flex;align-items:center;gap:6px;}
+.mp-tab.active{color:var(--teal-dark,#00695c);border-bottom-color:var(--teal);}
+.mp-tab-count{font-size:10.5px;font-weight:700;background:var(--bg);color:var(--text2);border-radius:10px;padding:1px 7px;}
+.mp-lbl{font-weight:600;color:var(--text);}
+.mp-sel-venta{display:flex;align-items:center;gap:8px;padding:9px 12px;background:var(--teal-bg);border:1px solid #b8d8d8;border-radius:8px;font-size:12px;}
+/* ── Historial ── */
+.hp-item{position:relative;padding:0 0 16px 22px;border-left:2px solid var(--border);margin-left:6px;}
+.hp-item:last-child{border-left-color:transparent;}
+.hp-dot{position:absolute;left:-7px;top:1px;width:12px;height:12px;border-radius:50%;border:2px solid #fff;}
+.hp-when{font-size:11px;color:var(--text3);}
+.hp-what{font-size:13px;font-weight:700;color:var(--text);margin:1px 0 4px;}
+.hp-diff{font-size:12px;color:var(--text2);line-height:1.5;}
+.hp-diff s{color:var(--text3);}
+@media (max-width:600px){ .pc-grid{grid-template-columns:1fr;} .pc-grid .pc-cell:nth-child(even){border-left:none;padding-left:0;} }
