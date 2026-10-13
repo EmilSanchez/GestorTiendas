@@ -41,6 +41,54 @@ function _labelPeriodo(periodo) {
   return `${nombreMes} ${y}`;
 }
 
+// ── FILTROS DE VENTAS CON INDICADOR DE CARGA ──
+// Al cambiar un filtro se muestran los 3 puntos animados sobre la tabla, se
+// agrupan las llamadas casi simultáneas en un solo render y se deja que el
+// navegador pinte el indicador antes del trabajo pesado (armar ~1000 filas).
+let _vfTimer = null, _vfSeq = 0;
+function filtrarVentasFluido(delay = 0) {
+  _mostrarCargaVentas(true);
+  clearTimeout(_vfTimer);
+  _vfTimer = setTimeout(async () => {
+    const seq = ++_vfSeq;
+    await new Promise(r => requestAnimationFrame(() => setTimeout(r, 0)));
+    try { await renderVentasGanancias(); }
+    finally { if (seq === _vfSeq) _mostrarCargaVentas(false); }
+  }, delay);
+}
+
+function _mostrarCargaVentas(on) {
+  const wrap = document.getElementById('ventas-table-wrap');
+  let ov = document.getElementById('ventas-loading');
+  if (!on) { if (ov) ov.style.opacity = '0'; return; }
+  if (!wrap) return;
+  if (!ov) {
+    ov = document.createElement('div');
+    ov.id = 'ventas-loading';
+    ov.innerHTML = '<div class="app-load-dots"><span></span><span></span><span></span></div>';
+    ov.style.cssText = 'position:fixed;z-index:50;display:flex;align-items:center;justify-content:center;' +
+      'background:rgba(255,255,255,.55);border-radius:12px;pointer-events:none;opacity:0;transition:opacity .15s;';
+    document.body.appendChild(ov);
+  }
+  const r = wrap.getBoundingClientRect();
+  Object.assign(ov.style, { top: r.top + 'px', left: r.left + 'px', width: r.width + 'px', height: r.height + 'px' });
+  ov.style.opacity = '1';
+}
+
+// Colorea el filtro de transportadora igual que su etiqueta en la tabla
+const _TRANS_COLORS = {
+  servientrega: { background:'var(--green-bg)', color:'var(--blue)',  borderColor:'var(--green-bg)' },
+  aguachica:    { background:'#cfe2ff',         color:'#084298',      borderColor:'#cfe2ff' },
+  inventario:   { background:'#002060',         color:'#fff',         borderColor:'#001540' },
+  otro:         { background:'#f0f0f0',         color:'#555',         borderColor:'#ccc' },
+};
+function _pintarFiltroTrans() {
+  const el = document.getElementById('vf-trans');
+  if (!el) return;
+  const c = _TRANS_COLORS[el.value] || { background:'', color:'', borderColor:'' };
+  Object.assign(el.style, c, { fontWeight: _TRANS_COLORS[el.value] ? '600' : '' });
+}
+
 // ── VENTAS & GANANCIAS (FUSIONADO) ──
 async function renderVentasGanancias() {
   const [ventas, tiendas, enviosSky, movs] = await Promise.all([

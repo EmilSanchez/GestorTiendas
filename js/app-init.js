@@ -336,9 +336,11 @@ async function init() {
   const vfMes = document.getElementById('vf-mes');
   if (vfMes && !vfMes.value) vfMes.value = _mesActual;
 
-  ['vf-search','vf-tienda','vf-estado','vf-mes','vf-desde','vf-hasta'].forEach(id => {
-    document.getElementById(id)?.addEventListener('input',  () => renderVentasGanancias());
-    document.getElementById(id)?.addEventListener('change', () => renderVentasGanancias());
+  // Filtros de ventas: un solo render por cambio, con indicador de carga.
+  // La búsqueda espera a que se deje de escribir un momento.
+  document.getElementById('vf-search')?.addEventListener('input', () => filtrarVentasFluido(250));
+  ['vf-tienda','vf-estado','vf-trans','vf-mes','vf-desde','vf-hasta'].forEach(id => {
+    document.getElementById(id)?.addEventListener('change', () => filtrarVentasFluido());
   });
   ['ef-search','ef-empresa','ef-tienda','ef-pago','ef-mes'].forEach(id => {
     document.getElementById(id)?.addEventListener('input',  () => renderEnvios());
