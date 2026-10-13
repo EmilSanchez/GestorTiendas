@@ -816,6 +816,7 @@ async function saveVenta() {
   }
 }
 async function renderVentas() {
+  _pintarFiltroTrans();
   await _cargarConfigVentas();
   _actualizarCabeceraVentas();
   const tiendas   = await DB.tiendas();
@@ -1346,7 +1347,7 @@ function clearVentaFilters() {
   }
   if (typeof _drpUpdateLabel === 'function') _drpUpdateLabel();
   if (typeof _clearSelectedRow === 'function') _clearSelectedRow();
-  renderVentasGanancias();
+  filtrarVentasFluido();
 }
 
 async function verDetalleVenta(id) {
@@ -1705,7 +1706,7 @@ function _drpApply() {
   if (elMes)   elMes.value   = '';
   _drpUpdateLabel();
   _drpClose();
-  renderVentasGanancias();
+  filtrarVentasFluido();
 }
 
 function _drpClear() {
@@ -1716,7 +1717,7 @@ function _drpClear() {
   const elMes = document.getElementById('vf-mes');
   if (elMes) elMes.value = (typeof mes === 'function' ? mes() : '');
   _drpUpdateLabel();
-  renderVentasGanancias();
+  filtrarVentasFluido();
 }
 
 function _drpUpdateLabel() {
