@@ -463,7 +463,7 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
   const actualizado = p.fecha_actualizacion && p.fecha_actualizacion !== p.fecha_registro;
 
   return `
-  <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}">
+  <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}" data-prob-id="${p.id}">
     <div class="pc-head">
       <span class="pc-estado" style="background:${ec.bg};color:${ec.color};">${p.estado === 'abierto' ? _PI.clock : _PI.check}${ec.label}</span>
       <div class="pc-sep"></div>
@@ -507,12 +507,19 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
 // Detalles de la tarjeta (venta, tienda, fechas, ganancia): plegados por defecto.
 // Se recuerda cuáles abrió el usuario para que sigan abiertos al refiltrar.
 const _probAbiertas = new Set();
+// Al desplegar o plegar una tarjeta, las de su misma fila de la cuadrícula hacen lo mismo.
 function _probToggle(btn, id) {
   const card = btn.closest('.pc');
   const open = !card.classList.contains('open');
-  card.classList.toggle('open', open);
-  btn.title = open ? 'Ocultar detalles' : 'Ver detalles';
-  open ? _probAbiertas.add(id) : _probAbiertas.delete(id);
+  const top  = card.offsetTop;
+  const fila = [...card.parentElement.children].filter(c => c.classList.contains('pc') && c.offsetTop === top);
+  fila.forEach(c => {
+    c.classList.toggle('open', open);
+    const b = c.querySelector('.pc-toggle');
+    if (b) b.title = open ? 'Ocultar detalles' : 'Ver detalles';
+    const cid = c.dataset.probId;
+    if (cid) open ? _probAbiertas.add(cid) : _probAbiertas.delete(cid);
+  });
 }
 
 // Menú de los 3 puntos de la tarjeta
@@ -756,19 +763,22 @@ function copiarIdVenta(id, el) {
     document.querySelectorAll('.venta-id.copied').forEach(b => { if(b!==el) b.classList.remove('copied'); });
     el.classList.add('copied');
 
-    // Tooltip "Copiado"
-    let tip = el._tip;
+    // Tooltip "Copiado": va en <body> con posición fija para que no lo recorte
+    // un contenedor con overflow (p. ej. los detalles plegables de las tarjetas).
+    let tip = document.getElementById('copiado-tip');
     if (!tip) {
       tip = document.createElement('span');
+      tip.id = 'copiado-tip';
       tip.textContent = 'Copiado';
-      tip.style.cssText = 'position:absolute;top:-26px;left:50%;transform:translateX(-50%);background:#00897b;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;pointer-events:none;z-index:999;animation:toastIn .2s ease;';
-      el.style.position = 'relative';
-      el.appendChild(tip);
-      el._tip = tip;
+      tip.style.cssText = 'position:fixed;transform:translateX(-50%);background:#00897b;color:#fff;font-size:10px;font-weight:700;padding:2px 8px;border-radius:20px;white-space:nowrap;pointer-events:none;z-index:9999;animation:toastIn .2s ease;';
+      document.body.appendChild(tip);
     }
+    const r = el.getBoundingClientRect();
+    tip.style.left = (r.left + r.width / 2) + 'px';
+    tip.style.top  = (r.top - 24) + 'px';
     tip.style.display = 'block';
-    clearTimeout(el._tipTimer);
-    el._tipTimer = setTimeout(() => { tip.style.display = 'none'; }, 1500);
+    clearTimeout(tip._timer);
+    tip._timer = setTimeout(() => { tip.style.display = 'none'; }, 1500);
   };
 
   navigator.clipboard.writeText(id).then(_apply).catch(() => {
