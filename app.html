@@ -1582,6 +1582,26 @@
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL AVISO (reemplazo genérico de alert() de éxito) ═══════════════════ -->
+<div class="overlay anim-modal" id="modal-aviso-ok">
+  <div class="modal" style="max-width:360px;font-family:Poppins,sans-serif;">
+    <div class="mh" style="background:linear-gradient(135deg,#065f46,#16a34a);color:#fff;padding:18px 24px;">
+      <div><div id="aviso-ok-titulo" style="font-size:15px;font-weight:700;color:#fff;">Listo</div></div>
+      <button onclick="_animModalClose('modal-aviso-ok')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:26px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;text-align:center;">
+      <div style="width:52px;height:52px;border-radius:50%;background:var(--green-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div id="aviso-ok-msg" style="font-size:13px;color:var(--text2);line-height:1.5;"></div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-primary" onclick="_animModalClose('modal-aviso-ok')" style="flex:1;background:var(--teal);font-family:Poppins,sans-serif;">Entendido</button>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -1646,6 +1666,18 @@ function _animModalClose(id) {
   if (!overlay || !overlay.classList.contains('open')) { closeModal(id); return; }
   overlay.classList.remove('show');
   setTimeout(() => closeModal(id), 200);
+}
+
+// Modal "aviso" genérico: reemplaza al alert() nativo del navegador (que no
+// puede mostrar nada más que texto plano, por lo que un ícono SVG metido en
+// el mensaje aparecía como código visible) por una ventana propia de la app,
+// animada igual que los demás modales (.anim-modal).
+function _showAvisoOk(msg, titulo) {
+  const msgEl = document.getElementById('aviso-ok-msg');
+  if (msgEl) msgEl.textContent = msg;
+  const tituloEl = document.getElementById('aviso-ok-titulo');
+  if (tituloEl) tituloEl.textContent = titulo || 'Listo';
+  _animModalOpen('modal-aviso-ok');
 }
 
 function _clickSubirFoto() {
