@@ -529,12 +529,12 @@
             <div style="flex:1;">
               <div style="font-size:12px;color:var(--text2);margin-bottom:8px;">Se muestra en el panel lateral</div>
               <div style="display:flex;gap:6px;">
-                <label class="btn btn-ghost btn-sm" style="cursor:default;display:inline-flex;align-items:center;gap:5px;">
+                <button class="btn btn-ghost btn-sm" onclick="_clickSubirFoto()" style="display:inline-flex;align-items:center;gap:5px;">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
                   Subir foto
-                  <input type="file" accept="image/*" style="display:none;" onchange="_uploadAvatar(this)">
-                </label>
-                <button class="btn btn-ghost btn-sm" onclick="_removeAvatar()" id="cfg-avatar-remove" style="display:none;color:var(--red);">
+                </button>
+                <input type="file" accept="image/*" id="cfg-avatar-file-input" style="display:none;" onchange="_onAvatarFileSelected(this)">
+                <button class="btn btn-ghost btn-sm" onclick="_askRemoveAvatar()" id="cfg-avatar-remove" style="display:none;color:var(--red);">
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
                   Eliminar
                 </button>
@@ -1506,8 +1506,81 @@
   </div>
 </div>
 
+<!-- ═══════════════════ MODAL FOTO ACTUAL (antes de reemplazar) ═══════════════════ -->
+<div class="overlay anim-modal" id="modal-avatar-actual">
+  <div class="modal" style="max-width:340px;font-family:Poppins,sans-serif;">
+    <div class="mh" style="background:#0d1f2d;color:#fff;padding:18px 24px;">
+      <div><div style="font-size:15px;font-weight:700;color:#fff;">Foto de perfil</div></div>
+      <button onclick="_animModalClose('modal-avatar-actual')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:26px 24px;display:flex;flex-direction:column;align-items:center;gap:16px;">
+      <img id="avatar-actual-img" src="" alt="Foto de perfil actual"
+        style="width:160px;height:160px;border-radius:50%;object-fit:cover;border:3px solid var(--border);box-shadow:0 4px 16px rgba(0,0,0,.1);">
+      <button class="btn btn-primary" onclick="_clickReemplazarFoto()" style="display:flex;align-items:center;gap:7px;background:var(--teal);font-family:Poppins,sans-serif;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+        Reemplazar
+      </button>
+    </div>
+  </div>
+</div>
 
+<!-- ═══════════════════ MODAL CENTRAR FOTO (recorte circular con zoom) ═══════════════════ -->
+<div class="overlay anim-modal" id="modal-avatar-crop">
+  <div class="modal" style="max-width:360px;font-family:Poppins,sans-serif;">
+    <div class="mh" style="background:#0d1f2d;color:#fff;padding:18px 24px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Centrar foto</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.45);margin-top:2px;">Arrastra para mover, usa el control para acercar</div>
+      </div>
+      <button onclick="_avCropCancelar()"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
+    </div>
+    <div id="avcrop-content" style="padding:24px;display:flex;flex-direction:column;align-items:center;gap:18px;">
+      <div id="avcrop-viewport"
+        onpointerdown="_avCropPointerDown(event)" onpointermove="_avCropPointerMove(event)"
+        onpointerup="_avCropPointerUp(event)" onpointercancel="_avCropPointerUp(event)"
+        style="position:relative;width:280px;height:280px;border-radius:50%;overflow:hidden;background:#0d1f2d;cursor:grab;touch-action:none;box-shadow:0 0 0 3px var(--teal),0 8px 24px rgba(0,0,0,.18);">
+        <img id="avcrop-img" src="" draggable="false" style="position:absolute;user-select:none;-webkit-user-drag:none;">
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;width:100%;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="range" id="avcrop-zoom" min="100" max="300" value="100" oninput="_avCropZoomChange(this.value)" style="flex:1;accent-color:var(--teal);">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text3)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+      </div>
+    </div>
+    <div id="avcrop-loading" style="display:none;padding:50px 24px;flex-direction:column;align-items:center;justify-content:center;gap:14px;">
+      <div class="tf-spinner"></div>
+      <div style="font-size:12.5px;font-weight:600;color:var(--text2);">Guardando la foto...</div>
+    </div>
+    <div id="avcrop-footer" class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="_avCropCancelar()" style="flex:1;">Cancelar</button>
+      <button class="btn btn-primary" onclick="_avCropConfirmar()" style="flex:1;background:var(--teal);font-family:Poppins,sans-serif;">Guardar</button>
+    </div>
+  </div>
+</div>
 
+<!-- ═══════════════════ MODAL ELIMINAR FOTO DE PERFIL (confirmación) ═══════════════════ -->
+<div class="overlay anim-modal" id="modal-avatar-delete">
+  <div class="modal" style="max-width:360px;font-family:Poppins,sans-serif;">
+    <div class="mh" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c);color:#fff;padding:18px 24px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:#fff;">Eliminar foto de perfil</div>
+        <div style="font-size:11px;color:rgba(255,255,255,.5);margin-top:2px;">Esta acción no se puede deshacer</div>
+      </div>
+      <button onclick="_animModalClose('modal-avatar-delete')"
+        style="background:rgba(255,255,255,.1);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:default;line-height:1;">&#x2715;</button>
+    </div>
+    <div style="padding:22px 24px;display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <img id="avatar-delete-preview" src="" alt="" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:2px solid var(--border);">
+      <div style="font-size:12.5px;color:var(--text2);text-align:center;line-height:1.5;">¿Seguro que quieres eliminar tu foto de perfil? Volverá a mostrarse el ícono por defecto.</div>
+    </div>
+    <div class="mf" style="gap:8px;">
+      <button class="btn btn-ghost" onclick="_animModalClose('modal-avatar-delete')" style="flex:1;">Cancelar</button>
+      <button onclick="_confirmRemoveAvatar()" style="flex:1;padding:.5rem 1rem;border:none;border-radius:8px;cursor:default;font-size:.85rem;font-weight:700;font-family:Poppins,sans-serif;background:linear-gradient(135deg,#dc2626,#b91c1c);color:#fff;">Eliminar</button>
+    </div>
+  </div>
+</div>
 
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -1531,16 +1604,6 @@ function _applyAvatar(data) {
   const icon = document.getElementById('sb-avatar-icon');
   if (img && icon) { img.src = data; img.style.display = 'block'; icon.style.display = 'none'; }
 }
-function _uploadAvatar(input) {
-  const file = input.files[0]; if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async function(e) {
-    const data = e.target.result; _applyAvatar(data);
-    try { await _cfgPerfil().set({ foto: data }, { merge: true }); showToast('Foto guardada', 'success', 2000); }
-    catch(err) { showToast('Error al guardar foto', 'error', 2500); }
-  };
-  reader.readAsDataURL(file);
-}
 async function _removeAvatar() {
   const _avKey = 'sm_avatar_' + (_currentUser?.uid || 'anon');
   localStorage.removeItem(_avKey);
@@ -1553,6 +1616,186 @@ async function _removeAvatar() {
   if (img && icon) { img.style.display = 'none'; icon.style.display = ''; }
   try { await _cfgPerfil().set({ foto: '' }, { merge: true }); showToast('Foto eliminada', 'success', 2000); }
   catch(err) { showToast('Error al eliminar foto', 'error', 2500); }
+}
+
+// ══════════════════════════════════════════════════════════
+// FOTO DE PERFIL — flujo completo:
+// 1) Si ya hay foto, "Subir foto" muestra primero la actual con un botón
+//    "Reemplazar" (en vez de ir directo al explorador de archivos).
+// 2) Al elegir una imagen, se abre un recorte circular con arrastre + zoom
+//    para centrarla ("Centrar foto") antes de guardar nada.
+// 3) Al confirmar, se exporta a una resolución fija alta (480x480, muy por
+//    encima de los ~64px en que se muestra) para que siempre se vea nítida
+//    sin importar la resolución original de la foto subida — y además evita
+//    que fotos enormes (varios MB en base64) fallen al guardarse en
+//    Firestore por el límite de tamaño de documento.
+// 4) "Eliminar" pide confirmación en un modal antes de borrar.
+// Las tres usan _animModalOpen/_animModalClose: mismo mecanismo que
+// openModal/closeModal pero con una clase "show" propia para animar la
+// entrada/salida con fade + escala (ver .anim-modal en main.css).
+// ══════════════════════════════════════════════════════════
+function _animModalOpen(id) {
+  openModal(id);
+  const overlay = document.getElementById(id);
+  if (!overlay) return;
+  overlay.classList.remove('show');
+  requestAnimationFrame(() => requestAnimationFrame(() => overlay.classList.add('show')));
+}
+function _animModalClose(id) {
+  const overlay = document.getElementById(id);
+  if (!overlay || !overlay.classList.contains('open')) { closeModal(id); return; }
+  overlay.classList.remove('show');
+  setTimeout(() => closeModal(id), 200);
+}
+
+function _clickSubirFoto() {
+  const curImg = document.querySelector('#cfg-avatar-preview img');
+  if (curImg) {
+    const prevEl = document.getElementById('avatar-actual-img');
+    if (prevEl) prevEl.src = curImg.src;
+    _animModalOpen('modal-avatar-actual');
+  } else {
+    document.getElementById('cfg-avatar-file-input').click();
+  }
+}
+function _clickReemplazarFoto() {
+  _animModalClose('modal-avatar-actual');
+  document.getElementById('cfg-avatar-file-input').click();
+}
+function _onAvatarFileSelected(input) {
+  const file = input.files[0];
+  input.value = ''; // permite volver a elegir el mismo archivo más adelante
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => _openAvatarCrop(e.target.result);
+  reader.readAsDataURL(file);
+}
+
+function _askRemoveAvatar() {
+  const curImg = document.querySelector('#cfg-avatar-preview img');
+  const prevEl = document.getElementById('avatar-delete-preview');
+  if (prevEl) prevEl.src = curImg ? curImg.src : '';
+  _animModalOpen('modal-avatar-delete');
+}
+async function _confirmRemoveAvatar() {
+  _animModalClose('modal-avatar-delete');
+  await _removeAvatar();
+}
+
+// ── Recorte circular con arrastre + zoom ──
+const AV_CROP_SIZE   = 280; // tamaño del visor circular en px (debe calzar con el CSS del modal)
+const AV_OUTPUT_SIZE = 480; // resolución de salida guardada — nítida en cualquier tamaño de muestra
+let _avCropNaturalW = 0, _avCropNaturalH = 0, _avCropBaseScale = 1;
+let _avCropScale = 1, _avCropOffsetX = 0, _avCropOffsetY = 0;
+let _avCropDragging = false;
+let _avCropDragStartX = 0, _avCropDragStartY = 0, _avCropStartOffsetX = 0, _avCropStartOffsetY = 0;
+
+function _openAvatarCrop(dataUrl) {
+  const img = new Image();
+  img.onload = () => {
+    _avCropNaturalW  = img.naturalWidth;
+    _avCropNaturalH  = img.naturalHeight;
+    _avCropBaseScale = AV_CROP_SIZE / Math.min(img.naturalWidth, img.naturalHeight);
+    _avCropScale     = 1;
+    _avCropOffsetX   = 0;
+    _avCropOffsetY   = 0;
+
+    const content = document.getElementById('avcrop-content');
+    const loading = document.getElementById('avcrop-loading');
+    const footer  = document.getElementById('avcrop-footer');
+    if (content) content.style.display = 'flex';
+    if (loading) loading.style.display = 'none';
+    if (footer)  footer.style.display  = 'flex';
+
+    const el = document.getElementById('avcrop-img');
+    if (el) { el.src = dataUrl; el.dataset.src = dataUrl; }
+    const zoom = document.getElementById('avcrop-zoom');
+    if (zoom) zoom.value = 100;
+    _avCropApplyTransform();
+    _animModalOpen('modal-avatar-crop');
+  };
+  img.src = dataUrl;
+}
+function _avCropApplyTransform() {
+  const el = document.getElementById('avcrop-img');
+  if (!el) return;
+  const totalScale = _avCropBaseScale * _avCropScale;
+  const w = _avCropNaturalW * totalScale, h = _avCropNaturalH * totalScale;
+  el.style.width  = w + 'px';
+  el.style.height = h + 'px';
+  el.style.left = (AV_CROP_SIZE/2 - w/2 + _avCropOffsetX) + 'px';
+  el.style.top  = (AV_CROP_SIZE/2 - h/2 + _avCropOffsetY) + 'px';
+}
+function _avCropClampAndSet(nx, ny) {
+  const totalScale = _avCropBaseScale * _avCropScale;
+  const w = _avCropNaturalW * totalScale, h = _avCropNaturalH * totalScale;
+  const maxX = Math.max(0, (w - AV_CROP_SIZE) / 2);
+  const maxY = Math.max(0, (h - AV_CROP_SIZE) / 2);
+  _avCropOffsetX = Math.max(-maxX, Math.min(maxX, nx));
+  _avCropOffsetY = Math.max(-maxY, Math.min(maxY, ny));
+  _avCropApplyTransform();
+}
+function _avCropZoomChange(val) {
+  _avCropScale = (parseFloat(val)||100) / 100;
+  _avCropClampAndSet(_avCropOffsetX, _avCropOffsetY);
+}
+function _avCropPointerDown(e) {
+  _avCropDragging = true;
+  _avCropDragStartX = e.clientX; _avCropDragStartY = e.clientY;
+  _avCropStartOffsetX = _avCropOffsetX; _avCropStartOffsetY = _avCropOffsetY;
+  if (e.currentTarget) { e.currentTarget.style.cursor = 'grabbing'; try { e.currentTarget.setPointerCapture(e.pointerId); } catch(err) {} }
+}
+function _avCropPointerMove(e) {
+  if (!_avCropDragging) return;
+  _avCropClampAndSet(_avCropStartOffsetX + (e.clientX - _avCropDragStartX), _avCropStartOffsetY + (e.clientY - _avCropDragStartY));
+}
+function _avCropPointerUp(e) {
+  _avCropDragging = false;
+  if (e.currentTarget) e.currentTarget.style.cursor = 'grab';
+}
+function _avCropCancelar() {
+  _animModalClose('modal-avatar-crop');
+}
+function _avCropConfirmar() {
+  const el = document.getElementById('avcrop-img');
+  const srcDataUrl = el?.dataset.src;
+  if (!srcDataUrl) return;
+
+  const content = document.getElementById('avcrop-content');
+  const loading = document.getElementById('avcrop-loading');
+  const footer  = document.getElementById('avcrop-footer');
+  if (content) content.style.display = 'none';
+  if (loading) loading.style.display = 'flex';
+  if (footer)  footer.style.display  = 'none';
+
+  const img = new Image();
+  img.onload = async () => {
+    const totalScale = _avCropBaseScale * _avCropScale;
+    const dispW = _avCropNaturalW * totalScale, dispH = _avCropNaturalH * totalScale;
+    const dispLeft = AV_CROP_SIZE/2 - dispW/2 + _avCropOffsetX;
+    const dispTop  = AV_CROP_SIZE/2 - dispH/2 + _avCropOffsetY;
+    const srcX = (0 - dispLeft) / totalScale;
+    const srcY = (0 - dispTop)  / totalScale;
+    const srcSize = AV_CROP_SIZE / totalScale;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = AV_OUTPUT_SIZE; canvas.height = AV_OUTPUT_SIZE;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, srcX, srcY, srcSize, srcSize, 0, 0, AV_OUTPUT_SIZE, AV_OUTPUT_SIZE);
+    const outData = canvas.toDataURL('image/jpeg', 0.92);
+
+    _applyAvatar(outData);
+    try { await _cfgPerfil().set({ foto: outData }, { merge: true }); showToast('Foto guardada', 'success', 2000); }
+    catch(err) { showToast('Error al guardar foto', 'error', 2500); }
+
+    if (content) content.style.display = 'flex';
+    if (loading) loading.style.display = 'none';
+    if (footer)  footer.style.display  = 'flex';
+    _animModalClose('modal-avatar-crop');
+  };
+  img.src = srcDataUrl;
 }
 async function _loadCfgAvatar() {
   const cached = localStorage.getItem('sm_avatar_' + (_currentUser?.uid || 'anon'));
