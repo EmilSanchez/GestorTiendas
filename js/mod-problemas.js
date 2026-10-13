@@ -463,7 +463,7 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
   const actualizado = p.fecha_actualizacion && p.fecha_actualizacion !== p.fecha_registro;
 
   return `
-  <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}">
+  <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}" data-prob-id="${p.id}">
     <div class="pc-head">
       <span class="pc-estado" style="background:${ec.bg};color:${ec.color};">${p.estado === 'abierto' ? _PI.clock : _PI.check}${ec.label}</span>
       <div class="pc-sep"></div>
@@ -507,12 +507,19 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
 // Detalles de la tarjeta (venta, tienda, fechas, ganancia): plegados por defecto.
 // Se recuerda cuáles abrió el usuario para que sigan abiertos al refiltrar.
 const _probAbiertas = new Set();
+// Al desplegar o plegar una tarjeta, las de su misma fila de la cuadrícula hacen lo mismo.
 function _probToggle(btn, id) {
   const card = btn.closest('.pc');
   const open = !card.classList.contains('open');
-  card.classList.toggle('open', open);
-  btn.title = open ? 'Ocultar detalles' : 'Ver detalles';
-  open ? _probAbiertas.add(id) : _probAbiertas.delete(id);
+  const top  = card.offsetTop;
+  const fila = [...card.parentElement.children].filter(c => c.classList.contains('pc') && c.offsetTop === top);
+  fila.forEach(c => {
+    c.classList.toggle('open', open);
+    const b = c.querySelector('.pc-toggle');
+    if (b) b.title = open ? 'Ocultar detalles' : 'Ver detalles';
+    const cid = c.dataset.probId;
+    if (cid) open ? _probAbiertas.add(cid) : _probAbiertas.delete(cid);
+  });
 }
 
 // Menú de los 3 puntos de la tarjeta
