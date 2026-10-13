@@ -72,12 +72,34 @@ function _buildTipoLabels() {
 }
 let TIPO_LABELS = _buildTipoLabels();
 
+// Conteo de problemas sin cerrar (estado 'abierto'), total y por categoría.
+// Alimenta el número del menú lateral y los del filtro de categoría.
+let _probAbiertosPorTipo = null;
+let _probAbiertosTotal = 0;
+async function updatePendientesCount(problemas) {
+  problemas = problemas || await DB.problemas();
+  const porTipo = {};
+  let total = 0;
+  problemas.forEach(p => {
+    if (p.estado !== 'abierto') return;
+    total++;
+    porTipo[p.tipo] = (porTipo[p.tipo] || 0) + 1;
+  });
+  _probAbiertosPorTipo = porTipo;
+  _probAbiertosTotal = total;
+  const b = document.getElementById('nav-prob-count');
+  if (b) { b.textContent = total; b.style.display = total ? '' : 'none'; }
+  _fillTipoSelects();
+}
+
 // Llena cualquier <select> de tipos con las categorías actuales
 function _fillTipoSelects() {
   TIPO_LABELS = _buildTipoLabels();
   const cats = _getCats();
-  const optsFilter = '<option value="">Todas</option>' +
-    cats.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
+  // En el filtro, cada categoría muestra cuántos pendientes sin cerrar tiene
+  const cnt = n => _probAbiertosPorTipo ? ` (${n || 0})` : '';
+  const optsFilter = `<option value="">Todas${cnt(_probAbiertosTotal)}</option>` +
+    cats.map(c => `<option value="${c.id}">${c.label}${cnt(_probAbiertosPorTipo?.[c.id])}</option>`).join('');
   const optsForm = cats.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
   const pf = document.getElementById('pf-tipo');
   const pt = document.getElementById('p-tipo');
@@ -337,6 +359,8 @@ async function renderProblemas() {
   const tiendas   = await DB.tiendas();
   const ventas    = await DB.ventas();
   let   problemas = await DB.problemas();
+  if (seq !== _probRenderSeq) return;
+  await updatePendientesCount(problemas);
   if (seq !== _probRenderSeq) return;
 
   const s   = gv('pf-search').toLowerCase();
@@ -634,6 +658,7 @@ async function _actualizarBotonesProblema() {
 async function updateAlertaBadge() {
   const el = document.getElementById('alertas-count');
   if (el) el.textContent = (await getAlertas()).length;
+  try { await updatePendientesCount(); } catch(e) {}
 }
 
 async function populateSelects() {

@@ -145,6 +145,7 @@ function _iniciarListeners() {
       }
       if (!cambios) return;
       console.log(`[live] cambio detectado en "${nombre}" (${cambios}) · externo=${_esExterno()}`);
+      if (key === 'problemas' && typeof updatePendientesCount === 'function') updatePendientesCount();
       if (_esExterno()) pages.forEach(p => _debouncedRender(p));
     }, err => console.warn(`Listener ${nombre}:`, err));
     _unsubscribers.push(unsub);
