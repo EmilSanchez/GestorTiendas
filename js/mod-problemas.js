@@ -81,8 +81,16 @@ function _fillTipoSelects() {
   const optsForm = cats.map(c => `<option value="${c.id}">${c.label}</option>`).join('');
   const pf = document.getElementById('pf-tipo');
   const pt = document.getElementById('p-tipo');
-  if (pf) pf.innerHTML = optsFilter;
-  if (pt) pt.innerHTML = optsForm;
+  // Conservar la opción elegida: reconstruir el innerHTML la resetea a la primera
+  // (en el filtro eso volvía a "Todas" justo antes de filtrar).
+  const _refill = (el, html) => {
+    if (!el) return;
+    const prev = el.value;
+    el.innerHTML = html;
+    if (prev && [...el.options].some(o => o.value === prev)) el.value = prev;
+  };
+  _refill(pf, optsFilter);
+  _refill(pt, optsForm);
 }
 
 // ── MODAL GESTIONAR CATEGORÍAS ──
