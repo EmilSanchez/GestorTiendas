@@ -414,6 +414,7 @@ async function renderProblemas() {
     : (b.fecha_registro||'').localeCompare(a.fecha_registro||''));
 
   if (!problemas.length) {
+    document.getElementById('problemas-container')._probCards = null;
     document.getElementById('problemas-container').innerHTML = `
       <div class="empty-state"><div class="empty-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="empty-title">Sin problemas registrados</div>
@@ -421,9 +422,41 @@ async function renderProblemas() {
     return;
   }
 
-  const cards = problemas.map(p => _probCardHTML(p, tiendas, ventas));
-  document.getElementById('problemas-container').innerHTML =
-    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(440px,1fr));gap:16px;align-items:start;">${cards.join('')}</div>`;
+  const cont = document.getElementById('problemas-container');
+  const tmp = document.createElement('div');
+  tmp.innerHTML = problemas.map(p => _probCardHTML(p, tiendas, ventas)).join('');
+  cont._probCards = [...tmp.children];
+  cont._probCols = 0;
+  _probLayout(true);
+}
+
+// Las tarjetas se reparten en columnas independientes (en orden: 1ª a la
+// izquierda, 2ª a su derecha…). Así, al desplegar una tarjeta solo se empujan
+// hacia abajo las de su misma columna y las de los lados no se mueven.
+const _PROB_COL_MIN = 440, _PROB_GAP = 16;
+function _probLayout(forzar) {
+  const cont = document.getElementById('problemas-container');
+  const cards = cont?._probCards;
+  if (!cards || !cards.length) return;
+  const w = cont.clientWidth;
+  if (!w && !forzar) return;  // módulo oculto: se acomoda al mostrarse
+  const n = Math.max(1, Math.floor((w + _PROB_GAP) / (_PROB_COL_MIN + _PROB_GAP)));
+  if (!forzar && n === cont._probCols) return;
+  cont._probCols = n;
+  const wrap = document.createElement('div');
+  wrap.className = 'pc-cols';
+  const cols = Array.from({ length: n }, () => {
+    const c = document.createElement('div');
+    c.className = 'pc-col';
+    wrap.appendChild(c);
+    return c;
+  });
+  cards.forEach((card, i) => cols[i % n].appendChild(card));
+  cont.replaceChildren(wrap);
+  if (!cont._probRO && typeof ResizeObserver !== 'undefined') {
+    cont._probRO = new ResizeObserver(() => _probLayout());
+    cont._probRO.observe(cont);
+  }
 }
 
 // ══════════════════════════════════════════════════════════
@@ -507,19 +540,12 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
 // Detalles de la tarjeta (venta, tienda, fechas, ganancia): plegados por defecto.
 // Se recuerda cuáles abrió el usuario para que sigan abiertos al refiltrar.
 const _probAbiertas = new Set();
-// Al desplegar o plegar una tarjeta, las de su misma fila de la cuadrícula hacen lo mismo.
 function _probToggle(btn, id) {
   const card = btn.closest('.pc');
   const open = !card.classList.contains('open');
-  const top  = card.offsetTop;
-  const fila = [...card.parentElement.children].filter(c => c.classList.contains('pc') && c.offsetTop === top);
-  fila.forEach(c => {
-    c.classList.toggle('open', open);
-    const b = c.querySelector('.pc-toggle');
-    if (b) b.title = open ? 'Ocultar detalles' : 'Ver detalles';
-    const cid = c.dataset.probId;
-    if (cid) open ? _probAbiertas.add(cid) : _probAbiertas.delete(cid);
-  });
+  card.classList.toggle('open', open);
+  btn.title = open ? 'Ocultar detalles' : 'Ver detalles';
+  open ? _probAbiertas.add(id) : _probAbiertas.delete(id);
 }
 
 // Menú de los 3 puntos de la tarjeta

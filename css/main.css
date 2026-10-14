@@ -626,3 +626,8 @@ body.sb-collapsed #sb-logout-menu .nb-label{opacity:1;width:auto;overflow:visibl
 body.sb-collapsed .nav-item.flyout-open::after{display:none;}
 /* Con el menú plegado, el ícono de Envíos se ve activo si uno de sus submódulos lo está */
 body.sb-collapsed #nav-envios-toggle:has(+ .nav-submenu .nav-item.active){background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;box-shadow:0 2px 8px rgba(26,79,168,.4);}
+
+/* Columnas independientes de tarjetas de problemas */
+.pc-cols{display:flex;gap:16px;align-items:flex-start;}
+.pc-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px;}
+.pc-col .pc{height:auto;}
