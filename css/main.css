@@ -103,7 +103,7 @@ body.sb-collapsed .nav-submenu{display:none;}
 .sb-ver{font-size:0.6rem;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-mono);}
 
 /* ── MAIN ── */
-#main{margin-left:var(--sidebar-w);flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+#main{margin-left:var(--sidebar-w);flex:1;height:100vh;overflow-y:auto;display:flex;flex-direction:column;scrollbar-gutter:stable;}
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
 #page-content{padding:1.3rem 1.6rem;flex:1;}
 
