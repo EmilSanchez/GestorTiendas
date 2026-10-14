@@ -88,9 +88,11 @@ async function updatePendientesCount(problemas) {
   _probAbiertosPorTipo = porTipo;
   _probAbiertosTotal = total;
   const b = document.getElementById('nav-prob-count');
-  if (b) { b.textContent = total; b.style.display = total ? '' : 'none'; }
+  // Mientras un problema "vuela" hacia el menú, el número espera a que llegue
+  if (b && !_probBadgeHold) { b.textContent = total; b.style.display = total ? '' : 'none'; }
   _fillTipoSelects();
 }
+var _probBadgeHold = false;
 
 // Llena cualquier <select> de tipos con las categorías actuales
 function _fillTipoSelects() {
@@ -382,15 +384,149 @@ async function saveProblema() {
     fecha_actualizacion: new Date().toISOString(),
   };
   nuevo.historial = _probHistorialCon(existingProb, nuevo);
-  await DB.upsertProblema(nuevo);
-  closeModal('modal-problema');
-  // Renderizar módulo de problemas si está activo
-  try { await renderProblemas(); } catch(e) {}
-  try { await updateAlertaBadge(); } catch(e) {}
-  try { await _actualizarBotonesProblema(); } catch(e) {}
-  // Actualizar gestor de ventas siempre
-  if (typeof renderVentasGanancias === 'function') await renderVentasGanancias();
-  else if (typeof renderVentas === 'function') await renderVentas();
+
+  // 1) Guardar primero. Si falla, el modal sigue abierto con el error.
+  const btn = document.getElementById('mp-btn-guardar');
+  if (btn?.disabled) return;                  // evita doble guardado (y doble conteo)
+  const btnTxt = btn?.textContent;
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+  const esNuevo = !existingProb;
+  const conteoAntes = _probAbiertosTotal;
+  _probBadgeHold = esNuevo;
+  try {
+    await DB.upsertProblema(nuevo);
+  } catch (e) {
+    _probBadgeHold = false;
+    if (btn) { btn.disabled = false; btn.textContent = btnTxt; }
+    console.error('No se pudo guardar el problema:', e);
+    const msg = 'No se pudo guardar el problema. Revisa tu conexión e intenta de nuevo.';
+    if (typeof showToast === 'function') showToast(msg, 'error', 3500); else alert(msg);
+    return;
+  }
+
+  // 2) Guardado: el modal "viaja" al módulo Pendientes del menú (solo al registrar uno nuevo)
+  const viaje = esNuevo ? _probAnimarHaciaModulo() : (closeModal('modal-problema'), Promise.resolve(false));
+
+  // Refrescos en paralelo con la animación (el contador del menú espera a que llegue)
+  const refrescos = (async () => {
+    try { await renderProblemas(); } catch(e) {}
+    try { await updateAlertaBadge(); } catch(e) {}
+    try { await _actualizarBotonesProblema(); } catch(e) {}
+    // Actualizar gestor de ventas siempre
+    if (typeof renderVentasGanancias === 'function') await renderVentasGanancias();
+    else if (typeof renderVentas === 'function') await renderVentas();
+  })();
+
+  const llego = await viaje;
+  try { await updatePendientesCount(); } catch(e) {}   // valor real del sistema
+  _probBadgeHold = false;
+  _probContadorAnimar(conteoAntes, _probAbiertosTotal, llego);
+  if (btn) { btn.disabled = false; btn.textContent = btnTxt; }
+  await refrescos;
+}
+
+// ══════════════════════════════════════════════════════════
+// ANIMACIÓN "EL PROBLEMA ENTRA AL MÓDULO PENDIENTES"
+// El modal se minimiza mientras viaja hacia el ítem Pendientes del menú lateral,
+// entra en él (el ítem reacciona con un leve pulso de luz) y luego el contador
+// sube con una transición numérica. Si no hay movimiento permitido o el ítem no
+// está visible, se cierra de forma sencilla. Devuelve true si llegó al menú.
+// ══════════════════════════════════════════════════════════
+function _probAnimarHaciaModulo() {
+  const ov    = document.getElementById('modal-problema');
+  const modal = ov?.querySelector('.modal');
+  const nav   = document.querySelector('.nav-item[data-page="problemas"]');
+  const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  const cerrar  = () => { closeModal('modal-problema'); };
+
+  if (!modal || !modal.animate || reducir) { cerrar(); return Promise.resolve(false); }
+
+  const ico = nav?.querySelector('.ni') || nav;
+  const ir  = ico?.getBoundingClientRect();
+  const navVisible = !!ir && ir.width > 0 && ir.height > 0 &&
+    ir.right > 0 && ir.left < innerWidth && ir.bottom > 0 && ir.top < innerHeight &&
+    getComputedStyle(nav).visibility !== 'hidden';
+
+  // Sin destino visible (p. ej. menú oculto en móvil): cierre sencillo
+  if (!navVisible) {
+    return modal.animate([{ opacity: 1, transform: 'none' }, { opacity: 0, transform: 'scale(.96)' }],
+      { duration: 180, easing: 'ease-in', fill: 'forwards' })
+      .finished.then(() => { cerrar(); modal.getAnimations().forEach(a => a.cancel()); return false; }, () => { cerrar(); return false; });
+  }
+
+  const mr = modal.getBoundingClientRect();
+  const dx = (ir.left + ir.width / 2) - (mr.left + mr.width / 2);
+  const dy = (ir.top + ir.height / 2) - (mr.top + mr.height / 2);
+  const sFin = Math.max(0.02, Math.min(ir.width / mr.width, ir.height / mr.height));
+  const DUR = 720;
+
+  ov.style.pointerEvents = 'none';
+  modal.style.transformOrigin = 'center center';
+  modal.style.willChange = 'transform, opacity';
+
+  // El fondo oscuro se aclara mientras el modal se va
+  const fondo = ov.animate([{ backgroundColor: getComputedStyle(ov).backgroundColor }, { backgroundColor: 'rgba(0,0,0,0)' }],
+    { duration: DUR * 0.7, easing: 'ease-out', fill: 'forwards' });
+
+  // Minimizar + viajar (ease-in-out) y "entrar" al ícono al final
+  const viaje = modal.animate([
+    { offset: 0,    transform: 'translate(0,0) scale(1)', opacity: 1, borderRadius: '14px' },
+    { offset: 0.28, transform: `translate(${dx * 0.06}px,${dy * 0.06}px) scale(.62)`, opacity: 1, borderRadius: '18px' },
+    { offset: 0.86, transform: `translate(${dx}px,${dy}px) scale(${sFin * 1.8})`, opacity: .85, borderRadius: '40px' },
+    { offset: 1,    transform: `translate(${dx}px,${dy}px) scale(${sFin * 0.4})`, opacity: 0, borderRadius: '50%' },
+  ], { duration: DUR, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+
+  // El módulo reacciona justo cuando el modal entra
+  setTimeout(() => {
+    nav.animate([
+      { transform: 'scale(1)',    boxShadow: '0 0 0 0 rgba(96,165,250,0)',  backgroundColor: 'rgba(255,255,255,0)' },
+      { transform: 'scale(1.05)', boxShadow: '0 0 18px 2px rgba(96,165,250,.45)', backgroundColor: 'rgba(255,255,255,.12)', offset: .4 },
+      { transform: 'scale(1)',    boxShadow: '0 0 0 0 rgba(96,165,250,0)',  backgroundColor: 'rgba(255,255,255,0)' },
+    ], { duration: 520, easing: 'cubic-bezier(.4,0,.2,1)' });
+  }, DUR * 0.84);
+
+  const limpiar = () => {
+    cerrar();
+    viaje.cancel(); fondo.cancel();
+    ov.style.pointerEvents = ''; modal.style.transformOrigin = ''; modal.style.willChange = '';
+  };
+  return viaje.finished.then(() => { limpiar(); return true; }, () => { limpiar(); return false; });
+}
+
+// Contador del menú: cambia con un pequeño "giro" del número y un destello sutil.
+// Siempre termina mostrando el valor real (hasta).
+function _probContadorAnimar(desde, hasta, destacar) {
+  const b = document.getElementById('nav-prob-count');
+  if (!b) return;
+  const fin = () => { b.textContent = hasta; b.style.display = hasta ? '' : 'none'; };
+  const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (!destacar || desde === hasta || reducir || !b.animate) { fin(); return; }
+
+  const aparece = !desde || b.style.display === 'none';
+  b.style.display = '';
+  b.style.overflow = 'hidden';
+  b.innerHTML = `<span style="display:inline-block;">${aparece ? hasta : desde}</span>`;
+  const num = b.firstChild;
+  const sube = hasta > desde ? -1 : 1;
+
+  if (aparece) {
+    b.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1.18)', opacity: 1, offset: .65 }, { transform: 'scale(1)', opacity: 1 }],
+      { duration: 360, easing: 'cubic-bezier(.2,.8,.3,1)' }).finished.then(() => { b.style.overflow = ''; fin(); }, fin);
+    return;
+  }
+  // Pulso + halo del badge
+  b.animate([
+    { transform: 'scale(1)',    boxShadow: '0 0 0 0 rgba(239,68,68,.55)' },
+    { transform: 'scale(1.22)', boxShadow: '0 0 0 5px rgba(239,68,68,.25)', offset: .45 },
+    { transform: 'scale(1)',    boxShadow: '0 0 0 8px rgba(239,68,68,0)' },
+  ], { duration: 460, easing: 'cubic-bezier(.4,0,.2,1)' });
+  // El número viejo sale y entra el nuevo
+  num.animate([{ transform: 'translateY(0)', opacity: 1 }, { transform: `translateY(${sube * 9}px)`, opacity: 0 }],
+    { duration: 150, easing: 'ease-in', fill: 'forwards' }).finished.then(() => {
+      num.textContent = hasta;
+      return num.animate([{ transform: `translateY(${-sube * 9}px)`, opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
+        { duration: 220, easing: 'cubic-bezier(.2,.8,.3,1)' }).finished;
+    }).then(() => { b.style.overflow = ''; fin(); }, () => { b.style.overflow = ''; fin(); });
 }
 
 // Un cambio de filtro dispara varias llamadas casi simultáneas (onchange + listeners
