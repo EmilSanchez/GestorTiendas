@@ -29,6 +29,8 @@ function _guardSession() {
 async function _cerrarSesionApp() {
   if (window._cerrandoSesion) return; // evita doble clic mientras ya está cerrando
   window._cerrandoSesion = true;
+  Sonido.play('salir');
+  const _tSalir = Date.now();
 
   const btn   = document.getElementById('sb-logout-btn');
   const icon  = document.getElementById('sb-logout-icon');
@@ -54,6 +56,9 @@ async function _cerrarSesionApp() {
   } catch(e) { console.warn('No se pudo registrar la salida:', e); }
   localStorage.removeItem(_SK);
   if (typeof _detenerListeners === 'function') _detenerListeners();
+  // Dejar que termine el sonido de despedida antes de cambiar de página
+  const _resta = 650 - (Date.now() - _tSalir);
+  if (_resta > 0) await new Promise(r => setTimeout(r, _resta));
   window.location.href = 'index.html';
 }
 
@@ -348,7 +353,11 @@ async function init() {
   });
   ['pf-search','pf-estado','pf-tienda','pf-tipo','pf-orden'].forEach(id => {
     document.getElementById(id)?.addEventListener('input',  () => renderProblemas());
-    document.getElementById(id)?.addEventListener('change', () => renderProblemas());
+    document.getElementById(id)?.addEventListener('change', () => {
+      if (id !== 'pf-search') Sonido.play('filtro');
+      window._probFiltroTs = Date.now();
+      renderProblemas();
+    });
   });
   document.getElementById('p-buscar')?.addEventListener('keydown', e => {
     if (e.key === 'Enter') buscarVentaProblema();

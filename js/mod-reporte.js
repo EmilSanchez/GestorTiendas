@@ -1163,6 +1163,7 @@ async function confirmarCierreMes() {
   };
   cierres.push(nuevo);
   await _saveCierres(cierres);
+  Sonido.play('cerrarMes');
   await renderCierresMes();
 
   // Cambiar a panel principal
@@ -1584,6 +1585,7 @@ async function _confirmarAplicarDiferencia() {
   if (typeof renderFinanzas === 'function') await renderFinanzas();
   if (typeof renderVentasGanancias === 'function') renderVentasGanancias();
 
+  Sonido.play('transferir');
   showToast(
     `${esIngreso ? '+' : '−'}${_fmtCOP(valor)} aplicado al mes en curso`,
     'success', 3000

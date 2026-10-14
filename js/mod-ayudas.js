@@ -318,6 +318,7 @@ async function guardarAyuda() {
   closeModal('modal-ayuda');
 
   // Confirmación elegante
+  Sonido.play(id ? 'guardar' : 'ayuda');
   showConfirmAnim(id ? 'edit' : 'venta', !!id);
   showToast(id ? 'Ayuda actualizada' : 'Ayuda guardada', 'success', 2200);
 
