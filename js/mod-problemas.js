@@ -719,6 +719,7 @@ function _probAnimar(cont, antes) {
 
   // 1) Las que siguen: de donde se veían a su nuevo sitio
   const entrantes = [];
+  let durMovMax = 0;
   vivas.forEach(el => {
     const a = antes.get(el.dataset.probId);
     if (!a) { entrantes.push(el); return; }
@@ -729,6 +730,7 @@ function _probAnimar(cont, antes) {
     if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(1 - s) < 0.005 && a.op > 0.99) return;
     const dist = Math.hypot(dx, dy);
     const dur = Math.max(_PA.mover.min, Math.min(_PA.mover.max, _PA.mover.min + dist * _PA.mover.porPx));
+    if (dist > 4) durMovMax = Math.max(durMovMax, dur);
     el.animate(
       [{ transform: `translate(${dx}px,${dy}px) scale(${s})`, opacity: a.op }, { transform: 'none', opacity: 1 }],
       { duration: dur, delay: delayMover, easing: _PA.mover.ease, fill: 'backwards' });
@@ -765,10 +767,14 @@ function _probAnimar(cont, antes) {
     an.onfinish = () => el.remove();
   });
 
-  // Roce suave cuando las tarjetas se mueven por un cambio de filtro
-  if ((Date.now() - (window._probFiltroTs || 0)) < 1500 && (haySalida || entrantes.length)) {
+  // Sonido acoplado a cada fase, solo cuando el cambio viene de un filtro:
+  // encoger (salen) → deslizar (se agrupan, misma duración) → pop por cada nueva
+  if ((Date.now() - (window._probFiltroTs || 0)) < 1500) {
     window._probFiltroTs = 0;
-    setTimeout(() => Sonido.play('barajar'), haySalida ? 60 : 0);
+    if (haySalida && !antes.vacio) Sonido.play('encoger', { dur: _PA.salir.dur / 1000 });
+    if (durMovMax > 0) Sonido.play('deslizar', { retraso: delayMover, dur: durMovMax / 1000 });
+    entrantes.slice(0, 8).forEach((el, i) =>
+      Sonido.play('aparecer', { i, retraso: delayEntrada + Math.min(i, _PA.entrar.maxPasos) * _PA.entrar.paso + 40 }));
   }
 
   // 4) Alto del contenedor: del anterior al nuevo, suave (después de la salida)
