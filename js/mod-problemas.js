@@ -268,17 +268,27 @@ async function openModalProblema(ventaId, probId) {
   // Desde el gestor de ventas, si la venta tiene alguno abierto, se abre en esa pestaña.
   const previos = vid ? (await DB.problemas()).filter(x => x.venta_id === vid && x.id !== probId) : [];
   await _mpRenderPrevios(previos);
-  _mpTab(!probId && previos.some(x => x.estado === 'abierto') ? 'prev' : 'form');
+  _mpTab(!probId && previos.some(x => x.estado === 'abierto') ? 'prev' : 'form', true);
   openModal('modal-problema');
 }
 
-function _mpTab(tab) {
+// Cambia de pestaña con la misma transición suave de alto + fundido que el
+// modal de ventas (Venta ↔ Envío externo). skipAnim: al abrir el modal.
+function _mpTab(tab, skipAnim) {
   const prev = tab === 'prev';
+  const formEl = document.getElementById('mp-pane-form');
+  const prevEl = document.getElementById('mp-pane-prev');
   document.getElementById('mp-tab-form').classList.toggle('active', !prev);
   document.getElementById('mp-tab-prev').classList.toggle('active', prev);
-  document.getElementById('mp-pane-form').style.display = prev ? 'none' : '';
-  document.getElementById('mp-pane-prev').style.display = prev ? '' : 'none';
-  document.getElementById('mp-footer').style.display = prev ? 'none' : '';
+  // El pie no desaparece (así el modal no salta): en "anteriores" ofrece registrar uno nuevo
+  document.getElementById('mp-btn-guardar').style.display = prev ? 'none' : '';
+  document.getElementById('mp-btn-nuevo').style.display   = prev ? '' : 'none';
+  const showEl = prev ? prevEl : formEl, hideEl = prev ? formEl : prevEl;
+  if (skipAnim || typeof _mvAnimarCambioTab !== 'function') {
+    showEl.style.display = ''; hideEl.style.display = 'none';
+    return;
+  }
+  _mvAnimarCambioTab(showEl, hideEl, document.getElementById('mp-body-wrap'));
 }
 
 function _mpTogglePerdida() {
@@ -414,11 +424,14 @@ async function renderProblemas() {
     : (b.fecha_registro||'').localeCompare(a.fecha_registro||''));
 
   if (!problemas.length) {
-    document.getElementById('problemas-container')._probCards = null;
-    document.getElementById('problemas-container').innerHTML = `
+    const c0 = document.getElementById('problemas-container');
+    const antes0 = _probCapturar(c0);
+    c0._probCards = null;
+    c0.innerHTML = `
       <div class="empty-state"><div class="empty-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="empty-title">Sin problemas registrados</div>
       <div class="c-dim" style="font-size:12px;">Puedes registrar novedades desde aquí o desde el detalle de cada venta</div></div>`;
+    _probAnimar(c0, antes0);
     return;
   }
 
@@ -443,6 +456,7 @@ function _probLayout(forzar) {
   const n = Math.max(1, Math.floor((w + _PROB_GAP) / (_PROB_COL_MIN + _PROB_GAP)));
   if (!forzar && n === cont._probCols) return;
   cont._probCols = n;
+  const antes = _probCapturar(cont);  // antes de mover las tarjetas
   const wrap = document.createElement('div');
   wrap.className = 'pc-cols';
   const cols = Array.from({ length: n }, () => {
@@ -452,11 +466,65 @@ function _probLayout(forzar) {
     return c;
   });
   cards.forEach((card, i) => cols[i % n].appendChild(card));
-  cont.replaceChildren(wrap);
+  // Reemplazar el contenido sin quitar las tarjetas que aún se están desvaneciendo
+  [...cont.children].forEach(c => { if (!c.classList.contains('pc-ghost')) c.remove(); });
+  cont.prepend(wrap);
+  _probAnimar(cont, antes);
   if (!cont._probRO && typeof ResizeObserver !== 'undefined') {
     cont._probRO = new ResizeObserver(() => _probLayout());
     cont._probRO.observe(cont);
   }
+}
+
+// ── Animación al filtrar / reacomodar (técnica FLIP) ──
+// Antes de cambiar el contenido se guarda dónde está cada tarjeta; después:
+//  · las que siguen se deslizan desde su posición anterior a la nueva,
+//  · las que salen se encogen y desvanecen en su sitio,
+//  · las que entran aparecen creciendo suavemente.
+function _probCapturar(cont) {
+  const m = new Map();
+  if (!cont || !cont.clientWidth) return m;
+  cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)').forEach(el =>
+    m.set(el.dataset.probId, { el, r: el.getBoundingClientRect() }));
+  return m;
+}
+
+function _probAnimar(cont, antes) {
+  if (!antes || !antes.size || !cont.clientWidth || !Element.prototype.animate) return;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+  const EASE = 'cubic-bezier(.22,.8,.26,1)';
+  if (getComputedStyle(cont).position === 'static') cont.style.position = 'relative';
+  const cr = cont.getBoundingClientRect();
+  const siguen = new Set();
+  let entra = 0;
+  cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)').forEach(el => {
+    const id = el.dataset.probId;
+    siguen.add(id);
+    const a = antes.get(id);
+    const r = el.getBoundingClientRect();
+    if (a) {
+      const dx = a.r.left - r.left, dy = a.r.top - r.top;
+      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
+      el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }],
+                 { duration: 450, easing: EASE });
+    } else {
+      el.animate([{ opacity: 0, transform: 'scale(.94) translateY(8px)' }, { opacity: 1, transform: 'none' }],
+                 { duration: 380, delay: 140 + Math.min(entra++, 8) * 35, easing: EASE, fill: 'backwards' });
+    }
+  });
+  antes.forEach(({ el, r }, id) => {
+    if (siguen.has(id)) return;
+    el.classList.add('pc-ghost');
+    Object.assign(el.style, {
+      position: 'absolute', margin: '0', zIndex: '0', pointerEvents: 'none',
+      left: (r.left - cr.left) + 'px', top: (r.top - cr.top) + 'px',
+      width: r.width + 'px', height: r.height + 'px',
+    });
+    cont.appendChild(el);
+    const an = el.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.86)' }],
+                          { duration: 280, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    an.onfinish = () => el.remove();
+  });
 }
 
 // ══════════════════════════════════════════════════════════

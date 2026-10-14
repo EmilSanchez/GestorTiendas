@@ -2331,14 +2331,15 @@ async function _renderEnviosSkyPanel() {
 </div>
 
 <!-- ═══════════════════ MODAL: PROBLEMA ═══════════════════ -->
-<div class="overlay" id="modal-problema">
-  <div class="modal modal-lg" style="max-width:640px;">
+<div class="overlay" id="modal-problema" style="align-items:flex-start;padding-top:4vh;">
+  <div class="modal modal-lg" style="max-width:640px;max-height:95vh;">
     <div class="mh" style="background:#fff;border-bottom:none;padding-bottom:.35rem;"><div class="mh-title" id="mp-title" style="font-size:1.05rem;">Registrar problema</div><button class="mclose" onclick="closeModal('modal-problema')">✕</button></div>
     <div class="mp-tabs">
       <button type="button" class="mp-tab active" id="mp-tab-form" onclick="_mpTab('form')">Registrar</button>
       <button type="button" class="mp-tab" id="mp-tab-prev" onclick="_mpTab('prev')" style="display:none;">Problemas anteriores <span class="mp-tab-count" id="mp-prev-count">0</span></button>
     </div>
-    <div class="mc mp-body" id="mp-pane-form">
+    <div id="mp-body-wrap" style="position:relative;">
+    <div class="mc mp-body" id="mp-pane-form" style="overflow-y:auto;max-height:calc(95vh - 210px);">
       <div class="fg"><label class="fl2 mp-lbl">Buscar venta relacionada</label><div class="frow" style="gap:8px;"><input type="text" id="p-buscar" placeholder="ID de la venta, producto o cliente" style="flex:1;" onkeydown="if(event.key==='Enter')buscarVentaProblema()"><button class="btn btn-ghost" onclick="buscarVentaProblema()">Buscar</button></div><div id="p-buscar-resultado" style="margin-top:8px;"></div></div>
       <div class="fg"><label class="fl2 mp-lbl">Número de venta <small class="c-dim">(opcional)</small></label><input type="text" id="p-num-venta-manual" placeholder="Ej: 2000015788963928 o referencia propia"></div>
       <div class="grid2">
@@ -2350,8 +2351,9 @@ async function _renderEnviosSkyPanel() {
         <div class="fg" id="p-perdida-wrap" style="display:none;"><label class="fl2 mp-lbl">Valor de la pérdida (COP)</label><input type="number" id="p-perdida" placeholder="0"></div>
       </div>
     </div>
-    <div class="mc mp-body" id="mp-pane-prev" style="display:none;"></div>
-    <div class="mf" id="mp-footer"><button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button><button class="btn btn-success" onclick="saveProblema()">Guardar problema</button></div>
+    <div class="mc mp-body" id="mp-pane-prev" style="display:none;overflow-y:auto;max-height:calc(95vh - 210px);"></div>
+    </div>
+    <div class="mf" id="mp-footer"><button class="btn btn-ghost" onclick="closeModal('modal-problema')">Cancelar</button><button class="btn btn-success" id="mp-btn-guardar" onclick="saveProblema()">Guardar problema</button><button class="btn btn-success" id="mp-btn-nuevo" onclick="_mpTab('form')" style="display:none;">+ Registrar nuevo problema</button></div>
   </div>
 </div>
 
