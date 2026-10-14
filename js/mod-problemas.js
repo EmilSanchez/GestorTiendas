@@ -432,6 +432,9 @@ async function renderProblemas() {
       <div class="empty-title">Sin problemas registrados</div>
       <div class="c-dim" style="font-size:12px;">Puedes registrar novedades desde aquí o desde el detalle de cada venta</div></div>`;
     _probAnimar(c0, antes0);
+    if (antes0.size && Element.prototype.animate)
+      c0.querySelector('.empty-state')?.animate([{ opacity: 0, transform: 'scale(.97)' }, { opacity: 1, transform: 'none' }],
+        { duration: 320, delay: 160, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'backwards' });
     return;
   }
 
@@ -477,54 +480,103 @@ function _probLayout(forzar) {
 }
 
 // ── Animación al filtrar / reacomodar (técnica FLIP) ──
-// Antes de cambiar el contenido se guarda dónde está cada tarjeta; después:
-//  · las que siguen se deslizan desde su posición anterior a la nueva,
-//  · las que salen se encogen y desvanecen en su sitio,
-//  · las que entran aparecen creciendo suavemente.
+// Antes de cambiar el contenido se guarda dónde está cada tarjeta y cómo se ve;
+// después de pintar lo nuevo:
+//  · las que salen se encogen y desvanecen en su mismo sitio,
+//  · las que siguen se deslizan en línea recta a su nueva posición (sin rebote),
+//  · las que entran crecen de pequeñas a su tamaño normal en su sitio.
+// Si se cambia de filtro a mitad de una animación, cada tarjeta continúa desde
+// donde va (posición, tamaño y opacidad actuales), sin saltos.
+const _PA = {
+  mover:  { dur: 440, ease: 'cubic-bezier(.25,.8,.25,1)' },
+  salir:  { dur: 230, ease: 'cubic-bezier(.4,0,.7,.2)'  },
+  // Si hay tarjetas saliendo, las nuevas esperan a que casi desaparezcan (reemplazo limpio)
+  entrar: { dur: 360, ease: 'cubic-bezier(.2,.75,.25,1)', delay: 40, delayTrasSalida: 190, paso: 28, maxPasos: 6 },
+  escala: 0.6,
+};
+
 function _probCapturar(cont) {
   const m = new Map();
   if (!cont || !cont.clientWidth) return m;
-  cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)').forEach(el =>
-    m.set(el.dataset.probId, { el, r: el.getBoundingClientRect() }));
+  cont.querySelectorAll('.pc[data-prob-id]').forEach(el => {
+    const id = el.dataset.probId;
+    const ghost = el.classList.contains('pc-ghost');
+    if (m.has(id) && !m.get(id).ghost) return;  // si hay tarjeta viva y fantasma, manda la viva
+    m.set(id, { el, ghost, r: el.getBoundingClientRect(), op: parseFloat(getComputedStyle(el).opacity) || 0 });
+  });
+  m.alto = cont.offsetHeight;
   return m;
 }
 
 function _probAnimar(cont, antes) {
-  if (!antes || !antes.size || !cont.clientWidth || !Element.prototype.animate) return;
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-  const EASE = 'cubic-bezier(.22,.8,.26,1)';
+  if (!antes || !antes.size) return;
+  const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (reducir || !cont.clientWidth || !Element.prototype.animate) {
+    antes.forEach(a => { if (a.ghost) a.el.remove(); });
+    return;
+  }
   if (getComputedStyle(cont).position === 'static') cont.style.position = 'relative';
   const cr = cont.getBoundingClientRect();
+  const centro = r => [r.left + r.width / 2, r.top + r.height / 2];
+  const vivas = [...cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)')];
+  const ids = new Set(vivas.map(el => el.dataset.probId));
+  const haySalida = [...antes].some(([id, a]) => !a.ghost && !ids.has(id));
+  const delayEntrada = haySalida ? _PA.entrar.delayTrasSalida : _PA.entrar.delay;
   const siguen = new Set();
-  let entra = 0;
-  cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)').forEach(el => {
+  let entran = 0;
+
+  vivas.forEach(el => {
     const id = el.dataset.probId;
     siguen.add(id);
     const a = antes.get(id);
-    const r = el.getBoundingClientRect();
-    if (a) {
-      const dx = a.r.left - r.left, dy = a.r.top - r.top;
-      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-      el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }],
-                 { duration: 450, easing: EASE });
-    } else {
-      el.animate([{ opacity: 0, transform: 'scale(.94) translateY(8px)' }, { opacity: 1, transform: 'none' }],
-                 { duration: 380, delay: 140 + Math.min(entra++, 8) * 35, easing: EASE, fill: 'backwards' });
+    if (!a) {
+      // Nueva: crece desde pequeña en su lugar
+      el.animate(
+        [{ opacity: 0, transform: `scale(${_PA.escala})` }, { opacity: 1, transform: 'none' }],
+        { duration: _PA.entrar.dur, easing: _PA.entrar.ease, fill: 'backwards',
+          delay: delayEntrada + Math.min(entran++, _PA.entrar.maxPasos) * _PA.entrar.paso });
+      return;
     }
+    // Sigue (o vuelve mientras se estaba yendo): parte de donde se veía y llega a su sitio
+    const r = el.getBoundingClientRect();
+    const [ax, ay] = centro(a.r), [bx, by] = centro(r);
+    const dx = ax - bx, dy = ay - by;
+    const s  = a.ghost && r.width ? Math.min(1, a.r.width / r.width) : 1;
+    if (a.ghost) { a.el.getAnimations().forEach(x => x.cancel()); a.el.remove(); }
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && s === 1 && a.op > 0.99) return;
+    el.animate(
+      [{ transform: `translate(${dx}px,${dy}px) scale(${s})`, opacity: a.op }, { transform: 'none', opacity: 1 }],
+      { duration: _PA.mover.dur, easing: _PA.mover.ease });
   });
-  antes.forEach(({ el, r }, id) => {
+
+  antes.forEach((a, id) => {
     if (siguen.has(id)) return;
+    const el = a.el;
+    if (a.ghost) {                       // ya se estaba yendo: que termine
+      if (!el.isConnected) cont.appendChild(el);
+      return;
+    }
+    // Sale: se queda en su sitio y se encoge hasta desaparecer
+    el.getAnimations().forEach(x => x.cancel());
     el.classList.add('pc-ghost');
     Object.assign(el.style, {
-      position: 'absolute', margin: '0', zIndex: '0', pointerEvents: 'none',
-      left: (r.left - cr.left) + 'px', top: (r.top - cr.top) + 'px',
-      width: r.width + 'px', height: r.height + 'px',
+      position: 'absolute', margin: '0', zIndex: '0', pointerEvents: 'none', transformOrigin: 'center',
+      left: (a.r.left - cr.left) + 'px', top: (a.r.top - cr.top) + 'px',
+      width: a.r.width + 'px', height: a.r.height + 'px',
     });
     cont.appendChild(el);
-    const an = el.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.86)' }],
-                          { duration: 280, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    const an = el.animate(
+      [{ opacity: a.op, transform: 'scale(1)' }, { opacity: 0, transform: `scale(${_PA.escala})` }],
+      { duration: _PA.salir.dur, easing: _PA.salir.ease, fill: 'forwards' });
     an.onfinish = () => el.remove();
   });
+
+  // El alto del contenedor baja suave en vez de golpe (evita saltos de scroll)
+  const altoNuevo = cont.offsetHeight;
+  if (antes.alto > altoNuevo + 1) {
+    cont.animate([{ height: antes.alto + 'px' }, { height: altoNuevo + 'px' }],
+                 { duration: _PA.mover.dur, easing: _PA.mover.ease });
+  }
 }
 
 // ══════════════════════════════════════════════════════════
