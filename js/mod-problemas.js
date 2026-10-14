@@ -426,12 +426,16 @@ async function renderProblemas() {
   if (!problemas.length) {
     const c0 = document.getElementById('problemas-container');
     const antes0 = _probCapturar(c0);
+    _probFijarAlto(c0, antes0);
     c0._probCards = null;
     c0.innerHTML = `
       <div class="empty-state"><div class="empty-icon"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
       <div class="empty-title">Sin problemas registrados</div>
       <div class="c-dim" style="font-size:12px;">Puedes registrar novedades desde aquí o desde el detalle de cada venta</div></div>`;
     _probAnimar(c0, antes0);
+    if (antes0.size && Element.prototype.animate)
+      c0.querySelector('.empty-state')?.animate([{ opacity: 0, transform: 'scale(.97)' }, { opacity: 1, transform: 'none' }],
+        { duration: 320, delay: 160, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'backwards' });
     return;
   }
 
@@ -457,6 +461,7 @@ function _probLayout(forzar) {
   if (!forzar && n === cont._probCols) return;
   cont._probCols = n;
   const antes = _probCapturar(cont);  // antes de mover las tarjetas
+  _probFijarAlto(cont, antes);         // evita que el scroll salte al cambiar el contenido
   const wrap = document.createElement('div');
   wrap.className = 'pc-cols';
   const cols = Array.from({ length: n }, () => {
@@ -477,54 +482,128 @@ function _probLayout(forzar) {
 }
 
 // ── Animación al filtrar / reacomodar (técnica FLIP) ──
-// Antes de cambiar el contenido se guarda dónde está cada tarjeta; después:
-//  · las que siguen se deslizan desde su posición anterior a la nueva,
-//  · las que salen se encogen y desvanecen en su sitio,
-//  · las que entran aparecen creciendo suavemente.
+// Antes de cambiar el contenido se guarda dónde está cada tarjeta y cómo se ve;
+// después de pintar lo nuevo:
+//  · las que salen se encogen y desvanecen en su mismo sitio,
+//  · las que siguen se deslizan en línea recta a su nueva posición (sin rebote),
+//    justo después de que las demás empiezan a irse,
+//  · las que entran crecen de pequeñas a su tamaño normal en su sitio, en orden
+//    de lectura, cuando las que salen ya casi desaparecieron.
+// Si se cambia de filtro a mitad de una animación, cada tarjeta continúa desde
+// donde va (posición, tamaño y opacidad actuales), sin saltos.
+const _PA = {
+  salir:  { dur: 220, ease: 'cubic-bezier(.2,0,.2,1)' },
+  mover:  { delay: 90, ease: 'cubic-bezier(.4,0,.2,1)', min: 360, max: 600, porPx: 0.15 },
+  entrar: { dur: 360, ease: 'cubic-bezier(.2,.75,.25,1)', delay: 40, delayTrasSalida: 180, paso: 30, maxPasos: 10 },
+  alto:   { dur: 380, ease: 'cubic-bezier(.4,0,.2,1)' },
+  escala: 0.6,
+};
+
 function _probCapturar(cont) {
   const m = new Map();
   if (!cont || !cont.clientWidth) return m;
-  cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)').forEach(el =>
-    m.set(el.dataset.probId, { el, r: el.getBoundingClientRect() }));
+  cont.querySelectorAll('.pc[data-prob-id]').forEach(el => {
+    const id = el.dataset.probId;
+    const ghost = el.classList.contains('pc-ghost');
+    if (m.has(id) && !m.get(id).ghost) return;  // si hay tarjeta viva y fantasma, manda la viva
+    const r = el.getBoundingClientRect();
+    const lw = el.offsetWidth || r.width, lh = el.offsetHeight || r.height;  // tamaño sin transformar
+    m.set(id, { el, ghost, r, lw, lh, sc: lw ? r.width / lw : 1,
+                cx: r.left + r.width / 2, cy: r.top + r.height / 2,
+                op: parseFloat(getComputedStyle(el).opacity) || 0 });
+  });
+  m.vacio = !!cont.querySelector('.empty-state');
+  m.alto  = cont.getBoundingClientRect().height;
   return m;
 }
 
+// Mantiene el alto actual del contenedor mientras se cambia el contenido, para
+// que el navegador no recorte el scroll de golpe; luego se anima al alto nuevo.
+function _probFijarAlto(cont, antes) {
+  if (!antes || (!antes.size && !antes.vacio)) return;
+  cont._probAltoAnim?.cancel();
+  cont.style.height = antes.alto + 'px';
+}
+
 function _probAnimar(cont, antes) {
-  if (!antes || !antes.size || !cont.clientWidth || !Element.prototype.animate) return;
-  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
-  const EASE = 'cubic-bezier(.22,.8,.26,1)';
+  if (!antes || (!antes.size && !antes.vacio)) return;
+  const liberarAlto = () => { cont.style.height = ''; };
+  const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  if (reducir || !cont.clientWidth || !Element.prototype.animate) {
+    antes.forEach(a => { if (a.ghost) a.el.remove(); });
+    liberarAlto();
+    return;
+  }
   if (getComputedStyle(cont).position === 'static') cont.style.position = 'relative';
   const cr = cont.getBoundingClientRect();
-  const siguen = new Set();
-  let entra = 0;
-  cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)').forEach(el => {
-    const id = el.dataset.probId;
-    siguen.add(id);
-    const a = antes.get(id);
+  const vivas = [...cont.querySelectorAll('.pc[data-prob-id]:not(.pc-ghost)')];
+  const ids = new Set(vivas.map(el => el.dataset.probId));
+  const haySalida = antes.vacio || [...antes].some(([id, a]) => !a.ghost && !ids.has(id));
+  const delayEntrada = haySalida ? _PA.entrar.delayTrasSalida : _PA.entrar.delay;
+  const delayMover   = haySalida ? _PA.mover.delay : 0;
+  const orden = new Map((cont._probCards || []).map((c, i) => [c, i]));  // orden de lectura
+
+  // 1) Las que siguen: de donde se veían a su nuevo sitio
+  const entrantes = [];
+  vivas.forEach(el => {
+    const a = antes.get(el.dataset.probId);
+    if (!a) { entrantes.push(el); return; }
     const r = el.getBoundingClientRect();
-    if (a) {
-      const dx = a.r.left - r.left, dy = a.r.top - r.top;
-      if (Math.abs(dx) < 1 && Math.abs(dy) < 1) return;
-      el.animate([{ transform: `translate(${dx}px,${dy}px)` }, { transform: 'none' }],
-                 { duration: 450, easing: EASE });
-    } else {
-      el.animate([{ opacity: 0, transform: 'scale(.94) translateY(8px)' }, { opacity: 1, transform: 'none' }],
-                 { duration: 380, delay: 140 + Math.min(entra++, 8) * 35, easing: EASE, fill: 'backwards' });
-    }
+    const dx = a.cx - (r.left + r.width / 2), dy = a.cy - (r.top + r.height / 2);
+    const s  = r.width ? Math.min(1, a.r.width / r.width) : 1;
+    if (a.ghost) { a.el.getAnimations().forEach(x => x.cancel()); a.el.remove(); }
+    if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5 && Math.abs(1 - s) < 0.005 && a.op > 0.99) return;
+    const dist = Math.hypot(dx, dy);
+    const dur = Math.max(_PA.mover.min, Math.min(_PA.mover.max, _PA.mover.min + dist * _PA.mover.porPx));
+    el.animate(
+      [{ transform: `translate(${dx}px,${dy}px) scale(${s})`, opacity: a.op }, { transform: 'none', opacity: 1 }],
+      { duration: dur, delay: delayMover, easing: _PA.mover.ease, fill: 'backwards' });
   });
-  antes.forEach(({ el, r }, id) => {
-    if (siguen.has(id)) return;
+
+  // 2) Las que entran: crecen en su sitio, en orden de lectura; no se pueden
+  //    pulsar mientras aún son invisibles
+  entrantes.sort((x, y) => (orden.get(x) ?? 0) - (orden.get(y) ?? 0)).forEach((el, i) => {
+    el.style.pointerEvents = 'none';
+    const an = el.animate(
+      [{ opacity: 0, transform: `scale(${_PA.escala})` }, { opacity: 1, transform: 'none' }],
+      { duration: _PA.entrar.dur, easing: _PA.entrar.ease, fill: 'backwards',
+        delay: delayEntrada + Math.min(i, _PA.entrar.maxPasos) * _PA.entrar.paso });
+    const listo = () => { el.style.pointerEvents = ''; };
+    an.finished.then(listo, listo);
+  });
+
+  // 3) Las que salen: se quedan en su sitio (mismo centro y tamaño visual) y se encogen
+  antes.forEach((a, id) => {
+    if (ids.has(id)) return;
+    const el = a.el;
+    if (a.ghost) { if (!el.isConnected) cont.appendChild(el); return; }  // ya se estaba yendo
+    el.getAnimations().forEach(x => x.cancel());
     el.classList.add('pc-ghost');
     Object.assign(el.style, {
-      position: 'absolute', margin: '0', zIndex: '0', pointerEvents: 'none',
-      left: (r.left - cr.left) + 'px', top: (r.top - cr.top) + 'px',
-      width: r.width + 'px', height: r.height + 'px',
+      position: 'absolute', margin: '0', zIndex: '0', pointerEvents: 'none', transformOrigin: 'center',
+      width: a.lw + 'px', height: a.lh + 'px',
+      left: (a.cx - a.lw / 2 - cr.left) + 'px', top: (a.cy - a.lh / 2 - cr.top) + 'px',
     });
     cont.appendChild(el);
-    const an = el.animate([{ opacity: 1, transform: 'scale(1)' }, { opacity: 0, transform: 'scale(.86)' }],
-                          { duration: 280, easing: 'cubic-bezier(.4,0,1,1)', fill: 'forwards' });
+    const an = el.animate(
+      [{ opacity: a.op, transform: `scale(${a.sc})` }, { opacity: 0, transform: `scale(${a.sc * _PA.escala})` }],
+      { duration: _PA.salir.dur, easing: _PA.salir.ease, fill: 'forwards' });
     an.onfinish = () => el.remove();
   });
+
+  // 4) Alto del contenedor: del anterior al nuevo, suave (después de la salida)
+  const contenido = cont.querySelector(':scope > .pc-cols, :scope > .empty-state');
+  const altoNuevo = contenido ? contenido.getBoundingClientRect().height : 0;
+  if (Math.abs(antes.alto - altoNuevo) > 1) {
+    const an = cont.animate([{ height: antes.alto + 'px' }, { height: altoNuevo + 'px' }],
+      { duration: _PA.alto.dur, easing: _PA.alto.ease, fill: 'backwards',
+        delay: altoNuevo < antes.alto && haySalida ? _PA.salir.dur : 0 });
+    cont._probAltoAnim = an;
+    liberarAlto();
+    an.finished.then(() => { if (cont._probAltoAnim === an) cont._probAltoAnim = null; }, () => {});
+  } else {
+    liberarAlto();
+  }
 }
 
 // ══════════════════════════════════════════════════════════
