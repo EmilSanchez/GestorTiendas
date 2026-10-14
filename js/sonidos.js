@@ -17,6 +17,7 @@
  *   entrada     → "pling" de dos notas (el problema entra a Pendientes)
  *   filtro      → clic muy corto (se eligió un filtro)
  *   barajar     → roce suave (las tarjetas se reacomodan)
+ *   encoger / deslizar / aparecer → las 3 fases del filtrado en Pendientes
  *
  * Se respeta el audio del navegador: el contexto se crea/activa con el primer
  * gesto del usuario (clic o tecla). Si el navegador no permite audio, no suena.
@@ -103,14 +104,36 @@ const Sonido = (() => {
     entrada(t, o)   { nota(o, N.E6, t, 0.32); nota(o, N.B6, t + 0.075, 0.42); },
     filtro(t, o)    { nota(o, 2400, t, 0.05, { tipo: 'triangle', pico: .45, ataque: .002 }); },
     barajar(t, o)   { soplido(o, t, 0.34, { desde: 900, hasta: 3200, q: 1.1, pico: .35 }); },
+    // ── Animación de filtrado en Pendientes (sincronizada con cada fase) ──
+    // Las tarjetas que no aplican se encogen: tono que baja y se apaga
+    encoger(t, o, { dur = 0.22 } = {}) {
+      nota(o, 980, t, dur + 0.06, { glide: 520, pico: .55 });
+      soplido(o, t, dur, { desde: 2600, hasta: 900, q: 1.4, pico: .4 });
+    },
+    // Las que quedan se deslizan a su lugar: barrido que dura lo mismo que el movimiento
+    deslizar(t, o, { dur = 0.45 } = {}) {
+      soplido(o, t, dur, { desde: 500, hasta: 2400, q: 0.8, pico: .7 });
+      nota(o, 330, t, dur, { glide: 520, pico: .25, ataque: dur * 0.4 });
+    },
+    // Cada tarjeta nueva aparece con un "pop" suave; el tono sube con el orden
+    aparecer(t, o, { i = 0 } = {}) {
+      const f = 880 * Math.pow(2, Math.min(i, 7) / 12 * 2);   // sube un tono por tarjeta
+      nota(o, f, t, 0.16, { pico: .55, ataque: .006 });
+      nota(o, f * 2, t, 0.09, { tipo: 'triangle', pico: .15, ataque: .004 });
+    },
   };
   // Volumen relativo por sonido (los roces/soplidos van más bajos)
-  const VOLUMEN = { viaje: .7, barajar: .55, filtro: .6, eliminar: .9 };
+  const VOLUMEN = { viaje: .7, barajar: .55, filtro: .6, eliminar: .9, encoger: .8, deslizar: .85, aparecer: .6 };
 
-  function play(nombre) {
+  // play(nombre, opciones): opciones.retraso (ms) agenda el sonido con precisión
+  // de audio, para que caiga exacto con una animación; el resto va al generador.
+  function play(nombre, opc = {}) {
     const c = listo() || preparar();
     if (!c || c.state !== 'running' || !SONIDOS[nombre]) return;
-    try { SONIDOS[nombre](c.currentTime + 0.005, salida(VOLUMEN[nombre])); } catch (e) {}
+    try {
+      const t = c.currentTime + 0.005 + (opc.retraso || 0) / 1000;
+      SONIDOS[nombre](t, salida(VOLUMEN[nombre]), opc);
+    } catch (e) {}
   }
 
   return { play, preparar };
