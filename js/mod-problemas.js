@@ -417,8 +417,9 @@ async function saveProblema() {
     else if (typeof renderVentas === 'function') await renderVentas();
   })();
 
+  // Valor real del sistema, listo antes de la llegada para que el número cambie justo al entrar
+  try { await updatePendientesCount(); } catch(e) {}
   const llego = await viaje;
-  try { await updatePendientesCount(); } catch(e) {}   // valor real del sistema
   _probBadgeHold = false;
   _probContadorAnimar(conteoAntes, _probAbiertosTotal, llego);
   if (btn) { btn.disabled = false; btn.textContent = btnTxt; }
@@ -455,10 +456,16 @@ function _probAnimarHaciaModulo() {
   }
 
   const mr = modal.getBoundingClientRect();
-  const dx = (ir.left + ir.width / 2) - (mr.left + mr.width / 2);
-  const dy = (ir.top + ir.height / 2) - (mr.top + mr.height / 2);
+  const icx = ir.left + ir.width / 2, icy = ir.top + ir.height / 2;
+  const dx = icx - (mr.left + mr.width / 2);
+  const dy = icy - (mr.top + mr.height / 2);
   const sFin = Math.max(0.02, Math.min(ir.width / mr.width, ir.height / mr.height));
-  const DUR = 720;
+  // Línea de tiempo (~1,4 s en total):
+  //  0 → 30%  el modal se minimiza en su sitio
+  //  30 → 85% viaja hacia el ícono de Pendientes (acelera y frena)
+  //  85% (≈900 ms) entra al ícono → el módulo lo "absorbe": impacto, brillo y contador
+  //  85 → 100% el modal termina de desaparecer dentro; la reacción dura ~560 ms más
+  const DUR = 1060, ENTRADA = 0.85;
 
   ov.style.pointerEvents = 'none';
   modal.style.transformOrigin = 'center center';
@@ -466,31 +473,57 @@ function _probAnimarHaciaModulo() {
 
   // El fondo oscuro se aclara mientras el modal se va
   const fondo = ov.animate([{ backgroundColor: getComputedStyle(ov).backgroundColor }, { backgroundColor: 'rgba(0,0,0,0)' }],
-    { duration: DUR * 0.7, easing: 'ease-out', fill: 'forwards' });
+    { duration: DUR * 0.75, easing: 'ease-out', fill: 'forwards' });
 
-  // Minimizar + viajar (ease-in-out) y "entrar" al ícono al final
   const viaje = modal.animate([
-    { offset: 0,    transform: 'translate(0,0) scale(1)', opacity: 1, borderRadius: '14px' },
-    { offset: 0.28, transform: `translate(${dx * 0.06}px,${dy * 0.06}px) scale(.62)`, opacity: 1, borderRadius: '18px' },
-    { offset: 0.86, transform: `translate(${dx}px,${dy}px) scale(${sFin * 1.8})`, opacity: .85, borderRadius: '40px' },
-    { offset: 1,    transform: `translate(${dx}px,${dy}px) scale(${sFin * 0.4})`, opacity: 0, borderRadius: '50%' },
-  ], { duration: DUR, easing: 'cubic-bezier(.65,0,.35,1)', fill: 'forwards' });
+    // Cada tramo con su propia curva, así el 85% del tiempo es exactamente el instante de entrada
+    { offset: 0,       easing: 'cubic-bezier(.4,0,.2,1)',
+      transform: 'translate(0,0) scale(1)', opacity: 1, borderRadius: '14px', boxShadow: '0 8px 30px rgba(0,0,0,.15)' },
+    { offset: 0.30,    easing: 'cubic-bezier(.55,0,.3,1)',
+      transform: `translate(${dx * 0.05}px,${dy * 0.05}px) scale(.55)`, opacity: 1, borderRadius: '18px', boxShadow: '0 12px 34px rgba(26,79,168,.25)' },
+    { offset: ENTRADA, easing: 'cubic-bezier(.5,0,.75,0)',
+      transform: `translate(${dx}px,${dy}px) scale(${sFin * 1.7})`, opacity: .9, borderRadius: '40px', boxShadow: '0 0 22px rgba(96,165,250,.55)' },
+    { offset: 1,
+      transform: `translate(${dx}px,${dy}px) scale(${sFin * 0.3})`, opacity: 0, borderRadius: '50%', boxShadow: '0 0 0 rgba(96,165,250,0)' },
+  ], { duration: DUR, easing: 'linear', fill: 'forwards' });
 
-  // El módulo reacciona justo cuando el modal entra
-  setTimeout(() => {
+  // Recepción: el módulo absorbe el problema (impacto + leve empuje + brillo de acento)
+  const recibir = () => {
     nav.animate([
-      { transform: 'scale(1)',    boxShadow: '0 0 0 0 rgba(96,165,250,0)',  backgroundColor: 'rgba(255,255,255,0)' },
-      { transform: 'scale(1.05)', boxShadow: '0 0 18px 2px rgba(96,165,250,.45)', backgroundColor: 'rgba(255,255,255,.12)', offset: .4 },
-      { transform: 'scale(1)',    boxShadow: '0 0 0 0 rgba(96,165,250,0)',  backgroundColor: 'rgba(255,255,255,0)' },
-    ], { duration: 520, easing: 'cubic-bezier(.4,0,.2,1)' });
-  }, DUR * 0.84);
+      { transform: 'translateX(0) scale(1)' },
+      { transform: 'translateX(-2px) scale(.96)', offset: .14 },   // impacto
+      { transform: 'translateX(3px) scale(1.06)', offset: .42 },   // absorbe y se expande
+      { transform: 'translateX(0) scale(1)' },
+    ], { duration: 560, easing: 'cubic-bezier(.3,.7,.3,1)' });
+    nav.animate([
+      { boxShadow: '0 0 0 0 rgba(96,165,250,0)',            backgroundColor: 'rgba(96,165,250,0)' },
+      { boxShadow: '0 0 22px 4px rgba(96,165,250,.55)',      backgroundColor: 'rgba(96,165,250,.18)', offset: .25 },
+      { boxShadow: '0 0 0 0 rgba(96,165,250,0)',            backgroundColor: 'rgba(96,165,250,0)' },
+    ], { duration: 900, easing: 'ease-out' });
+    ico.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.25)', offset: .35 }, { transform: 'scale(1)' }],
+      { duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)' });
+    // Onda suave que sale del ícono
+    const onda = document.createElement('div');
+    onda.style.cssText = `position:fixed;left:${icx - 14}px;top:${icy - 14}px;width:28px;height:28px;border-radius:50%;` +
+      'border:2px solid rgba(96,165,250,.7);pointer-events:none;z-index:9999;';
+    document.body.appendChild(onda);
+    onda.animate([{ transform: 'scale(.4)', opacity: .9 }, { transform: 'scale(2.4)', opacity: 0 }],
+      { duration: 700, easing: 'cubic-bezier(.2,.6,.3,1)', fill: 'forwards' }).finished.then(() => onda.remove(), () => onda.remove());
+  };
 
   const limpiar = () => {
     cerrar();
     viaje.cancel(); fondo.cancel();
     ov.style.pointerEvents = ''; modal.style.transformOrigin = ''; modal.style.willChange = '';
   };
-  return viaje.finished.then(() => { limpiar(); return true; }, () => { limpiar(); return false; });
+  viaje.finished.then(limpiar, limpiar);
+
+  // Se resuelve en el instante en que el modal entra al módulo (ahí sube el contador)
+  return new Promise(res => setTimeout(() => {
+    if (viaje.playState === 'idle') { res(false); return; }
+    recibir();
+    res(true);
+  }, DUR * ENTRADA));
 }
 
 // Contador del menú: cambia con un pequeño "giro" del número y un destello sutil.
@@ -511,7 +544,7 @@ function _probContadorAnimar(desde, hasta, destacar) {
 
   if (aparece) {
     b.animate([{ transform: 'scale(.4)', opacity: 0 }, { transform: 'scale(1.18)', opacity: 1, offset: .65 }, { transform: 'scale(1)', opacity: 1 }],
-      { duration: 360, easing: 'cubic-bezier(.2,.8,.3,1)' }).finished.then(() => { b.style.overflow = ''; fin(); }, fin);
+      { duration: 460, easing: 'cubic-bezier(.2,.8,.3,1)' }).finished.then(() => { b.style.overflow = ''; fin(); }, fin);
     return;
   }
   // Pulso + halo del badge
@@ -519,13 +552,13 @@ function _probContadorAnimar(desde, hasta, destacar) {
     { transform: 'scale(1)',    boxShadow: '0 0 0 0 rgba(239,68,68,.55)' },
     { transform: 'scale(1.22)', boxShadow: '0 0 0 5px rgba(239,68,68,.25)', offset: .45 },
     { transform: 'scale(1)',    boxShadow: '0 0 0 8px rgba(239,68,68,0)' },
-  ], { duration: 460, easing: 'cubic-bezier(.4,0,.2,1)' });
+  ], { duration: 620, easing: 'cubic-bezier(.4,0,.2,1)' });
   // El número viejo sale y entra el nuevo
   num.animate([{ transform: 'translateY(0)', opacity: 1 }, { transform: `translateY(${sube * 9}px)`, opacity: 0 }],
-    { duration: 150, easing: 'ease-in', fill: 'forwards' }).finished.then(() => {
+    { duration: 180, easing: 'ease-in', fill: 'forwards' }).finished.then(() => {
       num.textContent = hasta;
       return num.animate([{ transform: `translateY(${-sube * 9}px)`, opacity: 0 }, { transform: 'translateY(0)', opacity: 1 }],
-        { duration: 220, easing: 'cubic-bezier(.2,.8,.3,1)' }).finished;
+        { duration: 280, easing: 'cubic-bezier(.2,.8,.3,1)' }).finished;
     }).then(() => { b.style.overflow = ''; fin(); }, () => { b.style.overflow = ''; fin(); });
 }
 
