@@ -675,6 +675,7 @@ async function guardarDolarCompras() {
     const badge = document.getElementById('trm-auto-badge');
     if(badge) { badge.textContent = 'FIJO BD'; badge.style.background = 'var(--green-bg)'; badge.style.color = 'var(--green)'; }
     showToast('Dólar actualizado: $ ' + Number(val).toLocaleString('es-CO'), 'success');
+    Sonido.play('dolar');
     await cargarDolarComprasEnConfig();
   } catch(e) {
     console.error(e);
@@ -804,6 +805,7 @@ async function saveVenta() {
     });
   }
 
+  Sonido.play(_editVentaId ? 'guardar' : 'registrar');
   closeModal('modal-venta');
   if (!_editVentaId) showConfirmAnim('venta', false);
   await renderVentasGanancias();
@@ -1103,6 +1105,7 @@ async function _confirmDeleteVenta() {
 
     if(hashIngresado === hashGuardado) {
       await DB.deleteVenta(_pendingDeleteId);
+      Sonido.play('eliminar');
       _cancelDeleteVenta();
       await renderVentasGanancias();
       await updateAlertaBadge();
@@ -1329,6 +1332,7 @@ async function _confirmarValidarEnvio() {
     }
 
     showConfirmAnim('validado', false);
+    Sonido.play('validar');
     await renderVentasGanancias();
   }
   _cancelValidarEnvio();

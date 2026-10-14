@@ -390,7 +390,7 @@ async function saveProblema() {
   if (btn?.disabled) return;                  // evita doble guardado (y doble conteo)
   const btnTxt = btn?.textContent;
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
-  _probAudioPreparar();
+  Sonido.preparar();
   const esNuevo = !existingProb;
   const conteoAntes = _probAbiertosTotal;
   _probBadgeHold = esNuevo;
@@ -406,6 +406,7 @@ async function saveProblema() {
   }
 
   // 2) Guardado: el modal "viaja" al módulo Pendientes del menú (solo al registrar uno nuevo)
+  if (!esNuevo) Sonido.play('editar');
   const viaje = esNuevo ? _probAnimarHaciaModulo() : (closeModal('modal-problema'), Promise.resolve(false));
 
   // Refrescos en paralelo con la animación (el contador del menú espera a que llegue)
@@ -470,6 +471,8 @@ function _probAnimarHaciaModulo() {
 
   ov.style.pointerEvents = 'none';
   modal.style.transformOrigin = 'center center';
+  // Soplido que acompaña el viaje (empieza al despegar y crece al acercarse)
+  setTimeout(() => Sonido.play('viaje'), DUR * 0.22);
   modal.style.willChange = 'transform, opacity';
 
   // El fondo oscuro se aclara mientras el modal se va
@@ -490,7 +493,7 @@ function _probAnimarHaciaModulo() {
 
   // Recepción: el módulo absorbe el problema (impacto + leve empuje + brillo de acento)
   const recibir = () => {
-    _probSonidoEntrada();
+    Sonido.play('entrada');
     nav.animate([
       { transform: 'translateX(0) scale(1)' },
       { transform: 'translateX(-2px) scale(.96)', offset: .14 },   // impacto
@@ -526,41 +529,6 @@ function _probAnimarHaciaModulo() {
     recibir();
     res(true);
   }, DUR * ENTRADA));
-}
-
-// ── Sonido de entrada al módulo ──
-// Un "pling" suave de dos notas sintetizado con Web Audio (sin archivos externos).
-// El contexto se crea en el clic de "Guardar" para que el navegador permita el sonido.
-let _probAudioCtx = null;
-function _probAudioPreparar() {
-  try {
-    const AC = window.AudioContext || window.webkitAudioContext;
-    if (!AC) return;
-    _probAudioCtx = _probAudioCtx || new AC();
-    if (_probAudioCtx.state === 'suspended') _probAudioCtx.resume();
-  } catch (e) { _probAudioCtx = null; }
-}
-function _probSonidoEntrada() {
-  const ctx = _probAudioCtx;
-  if (!ctx || ctx.state !== 'running') return;
-  try {
-    const t0 = ctx.currentTime + 0.005;
-    const salida = ctx.createGain();
-    salida.gain.value = 0.18;                       // volumen general discreto
-    salida.connect(ctx.destination);
-    // Dos notas ascendentes (Mi6 → Si6) con ataque rápido y caída suave
-    [[1318.5, 0, 0.32], [1975.5, 0.075, 0.42]].forEach(([freq, desfase, dur]) => {
-      const osc = ctx.createOscillator(), env = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(freq, t0 + desfase);
-      env.gain.setValueAtTime(0.0001, t0 + desfase);
-      env.gain.exponentialRampToValueAtTime(1, t0 + desfase + 0.012);
-      env.gain.exponentialRampToValueAtTime(0.0001, t0 + desfase + dur);
-      osc.connect(env).connect(salida);
-      osc.start(t0 + desfase);
-      osc.stop(t0 + desfase + dur + 0.05);
-    });
-  } catch (e) { /* sin sonido si el navegador no lo permite */ }
 }
 
 // Contador del menú: cambia con un pequeño "giro" del número y un destello sutil.
@@ -796,6 +764,12 @@ function _probAnimar(cont, antes) {
       { duration: _PA.salir.dur, easing: _PA.salir.ease, fill: 'forwards' });
     an.onfinish = () => el.remove();
   });
+
+  // Roce suave cuando las tarjetas se mueven por un cambio de filtro
+  if ((Date.now() - (window._probFiltroTs || 0)) < 1500 && (haySalida || entrantes.length)) {
+    window._probFiltroTs = 0;
+    setTimeout(() => Sonido.play('barajar'), haySalida ? 60 : 0);
+  }
 
   // 4) Alto del contenedor: del anterior al nuevo, suave (después de la salida)
   const contenido = cont.querySelector(':scope > .pc-cols, :scope > .empty-state');
@@ -1069,6 +1043,7 @@ async function confirmarResolver() {
   await DB.saveProblemas(probs);
   closeModal('modal-resolver-problema');
   showConfirmAnim('resuelto', false);
+  Sonido.play('resolver');
   await renderProblemas();
   await updateAlertaBadge();
   try { await _actualizarBotonesProblema(); } catch(e) {}
@@ -1111,6 +1086,7 @@ async function _confirmDeleteProb() {
     }
     closeModal('modal-delete-problema');
     await DB.deleteProblema(_deleteProbId);
+    Sonido.play('eliminar');
     _deleteProbId = null;
     await renderProblemas();
     await updateAlertaBadge();
