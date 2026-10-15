@@ -6,6 +6,7 @@
  *   guardar     → dos notas cortas que suben (cambios guardados)
  *   editar      → un toque suave (se ajustó algo existente)
  *   validar     → "tic" + nota firme (verificado / aprobado)
+ *   desmarcar   → "tic" + nota que baja (se deshizo un pago)
  *   eliminar    → dos notas que bajan, opacas (algo se quitó)
  *   salir       → tres notas que bajan despacio (despedida)
  *   dolar       → destello metálico tipo moneda (un valor se actualizó)
@@ -89,6 +90,8 @@ const Sonido = (() => {
     editar(t, o)    { nota(o, N.A5, t, 0.2, { pico: .8 }); nota(o, N.D6, t + 0.05, 0.24, { pico: .55 }); },
     validar(t, o)   { nota(o, 3200, t, 0.04, { tipo: 'triangle', pico: .35, ataque: .003 });
                       nota(o, N.E6, t + 0.04, 0.36); nota(o, N.B6, t + 0.04, 0.3, { pico: .25 }); },
+    desmarcar(t, o) { nota(o, 2400, t, 0.04, { tipo: 'triangle', pico: .3, ataque: .003 });
+                      nota(o, N.B5, t + 0.04, 0.3, { glide: N.E5, pico: .75 }); },
     eliminar(t, o)  { nota(o, N.E5, t, 0.22, { tipo: 'triangle', pico: .7 });
                       nota(o, N.A4, t + 0.09, 0.32, { tipo: 'triangle', pico: .7, glide: 392 }); },
     salir(t, o)     { [N.G5, N.E5, N.C5].forEach((f, i) => nota(o, f, t + i * 0.12, 0.42, { pico: .8 })); },

@@ -276,12 +276,31 @@ async function guardarPagoEnvio() {
 
   _cerrarPagoEnvioAnimado();
   showConfirmAnim('pago', false);
+  Sonido.play('validar');
   await renderEnvios();
   if (typeof renderFinanzas === 'function') { try { await renderFinanzas(); } catch(e){} }
 }
 
+// Pide confirmación con un modal del sistema (antes era un confirm() del navegador)
+var _desmarcarPagoVentaId = null;
 async function desmarcarPagoEnvio(ventaId) {
-  if(!confirm('¿Desmarcar este envío como pagado?')) return;
+  _desmarcarPagoVentaId = ventaId;
+  const v = (await DB.ventas()).find(x => x.id === ventaId);
+  const mov = (await DB.movimientos()).find(m => m._envio_pago_venta === ventaId);
+  document.getElementById('dmp-venta-label').textContent = v ? `Venta ${v.id_ml || v.id}` : '—';
+  document.getElementById('dmp-detalle').innerHTML = mov
+    ? `El envío volverá a quedar pendiente de pago y se devolverán <strong>${fmt(parseFloat(mov.valor)||0)}</strong> a la billetera de donde salió.`
+    : 'El envío volverá a quedar pendiente de pago.';
+  const btn = document.getElementById('dmp-btn');
+  btn.disabled = false; btn.textContent = 'Desmarcar';
+  openModal('modal-desmarcar-pago');
+}
+
+async function _confirmarDesmarcarPago() {
+  const ventaId = _desmarcarPagoVentaId;
+  const btn = document.getElementById('dmp-btn');
+  if (!ventaId || btn.disabled) return;
+  btn.disabled = true; btn.textContent = 'Desmarcando…';
   const ventas = await DB.ventas();
   const v = ventas.find(x=>x.id===ventaId);
   if(v) {
@@ -299,9 +318,14 @@ async function desmarcarPagoEnvio(ventaId) {
       await DB.deleteMovimiento(mov.id);
     }
 
+    closeModal('modal-desmarcar-pago');
+    Sonido.play('desmarcar');
     await renderEnvios();
     if (typeof renderFinanzas === 'function') { try { await renderFinanzas(); } catch(e){} }
+  } else {
+    closeModal('modal-desmarcar-pago');
   }
+  _desmarcarPagoVentaId = null;
 }
 
 async function renderEnvios() {
