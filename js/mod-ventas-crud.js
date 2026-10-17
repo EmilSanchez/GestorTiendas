@@ -1860,3 +1860,103 @@ async function _repararGastosExtraDuplicadosMigracion() {
 }
 
 document.addEventListener('DOMContentLoaded', () => { _drpInit(); });
+
+// ══════════════════════════════════════════════════════════
+// MODAL RÁPIDO: INGRESO / GASTO EXTRA DE UNA VENTA
+// Muestra los extras que ya tiene la venta y permite agregar uno nuevo (en COP
+// o USD) sin abrir el formulario completo. Se guarda en ingresos_extra /
+// gastos_extra de la venta, igual que los que se agregan desde "Editar venta".
+// ══════════════════════════════════════════════════════════
+let _mevVentaId = null, _mevTipoSel = 'ingreso', _mevMon = 'cop';
+
+function _mevTrm(v) { return parseFloat(v?.trm) || getDolarComprasConfigurado() || (typeof TRM_ACTUAL !== 'undefined' ? TRM_ACTUAL : 0); }
+
+async function openModalExtraVenta(ventaId, tipo) {
+  const v = (await DB.ventas()).find(x => x.id === ventaId);
+  if (!v) { showToast('No se encontró la venta', 'error', 2500); return; }
+  _mevVentaId = ventaId;
+  document.getElementById('mev-sub').textContent = `Venta ${v.id_ml || v.id}${v.producto ? ' · ' + v.producto : ''}`;
+  sv('mev-valor', ''); sv('mev-motivo', '');
+  document.getElementById('mev-err').textContent = '';
+  const btn = document.getElementById('mev-btn'); btn.disabled = false;
+  _mevMoneda('cop');
+  _mevPintarListas(v);
+  _mevTipo(tipo === 'gasto' ? 'gasto' : 'ingreso');
+  openModal('modal-extra-venta');
+  setTimeout(() => document.getElementById('mev-valor')?.focus(), 150);
+}
+
+function _mevPintarListas(v) {
+  ['ingreso', 'gasto'].forEach(t => {
+    const arr = (t === 'ingreso' ? v.ingresos_extra : v.gastos_extra) || [];
+    const el = document.getElementById('mev-list-' + t);
+    const tot = arr.reduce((s, i) => s + (parseFloat(i.valor) || 0), 0);
+    document.getElementById('mev-tot-' + t).textContent = arr.length ? fmt(tot) : '';
+    el.innerHTML = arr.length
+      ? arr.map(i => `<div class="mev-it"><span class="m" title="${_esc2(i.motivo || '')}">${_esc2(i.motivo || 'Sin motivo')}</span><span class="v">${fmt(parseFloat(i.valor) || 0)}</span></div>`).join('')
+      : '<div class="mev-vacio">Sin registros</div>';
+  });
+}
+
+function _mevTipo(tipo) {
+  _mevTipoSel = tipo;
+  const seg = document.getElementById('mev-tipo-seg');
+  seg.dataset.tipo = tipo;
+  seg.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.tipo === tipo));
+  const ing = tipo === 'ingreso';
+  document.getElementById('mev-title').textContent = ing ? 'Registrar ingreso extra' : 'Registrar gasto extra';
+  document.getElementById('mev-nuevo-t').textContent = ing ? 'Nuevo ingreso extra' : 'Nuevo gasto extra';
+  const btn = document.getElementById('mev-btn');
+  btn.textContent = ing ? 'Agregar ingreso' : 'Agregar gasto';
+  btn.className = ing ? 'btn btn-success' : 'btn btn-danger';
+}
+
+function _mevMoneda(mon) {
+  _mevMon = mon;
+  document.querySelectorAll('#mev-moneda-seg button').forEach(b => b.classList.toggle('on', b.dataset.mon === mon));
+  document.getElementById('mev-valor').placeholder = mon === 'usd' ? '0.00' : '0';
+  _mevPreview();
+}
+
+async function _mevPreview() {
+  const el = document.getElementById('mev-preview');
+  const n = _parseNum(gv('mev-valor'));
+  if (_mevMon !== 'usd') { el.textContent = n ? fmt(n) : ''; return; }
+  const v = (await DB.ventas()).find(x => x.id === _mevVentaId);
+  const trm = _mevTrm(v);
+  el.textContent = n ? `≈ ${fmt(Math.round(n * trm))} COP · US$ ${n} × TRM ${Number(trm).toLocaleString('es-CO')}` : `TRM de la venta: ${Number(trm).toLocaleString('es-CO')}`;
+}
+
+async function _mevGuardar() {
+  const btn = document.getElementById('mev-btn');
+  const err = document.getElementById('mev-err');
+  if (btn.disabled) return;
+  const n = _parseNum(gv('mev-valor'));
+  const motivo = gv('mev-motivo').trim();
+  if (!n || n <= 0) { err.textContent = 'Ingresa un valor mayor a 0.'; document.getElementById('mev-valor').focus(); return; }
+  if (!motivo)      { err.textContent = 'Escribe el motivo.';        document.getElementById('mev-motivo').focus(); return; }
+  err.textContent = '';
+  btn.disabled = true;
+  const txt = btn.textContent; btn.textContent = 'Guardando…';
+  try {
+    const ventas = await DB.ventas();
+    const v = ventas.find(x => x.id === _mevVentaId);
+    if (!v) throw new Error('Venta no encontrada');
+    const trm = _mevTrm(v);
+    const valorCop = _mevMon === 'usd' ? Math.round(n * trm) : n;
+    const item = { id: uid(), valor: valorCop, motivo: _mevMon === 'usd' ? `${motivo} (US$ ${n})` : motivo, fecha: new Date().toISOString() };
+    const campo = _mevTipoSel === 'ingreso' ? 'ingresos_extra' : 'gastos_extra';
+    const actualizada = { ...v, [campo]: [...(Array.isArray(v[campo]) ? v[campo] : []), item], fecha_actualizacion: new Date().toISOString() };
+    await DB.upsertVenta(actualizada);
+    Sonido.play('guardar');
+    showToast(`${_mevTipoSel === 'ingreso' ? 'Ingreso' : 'Gasto'} extra de ${fmt(valorCop)} agregado`, 'success', 2500);
+    closeModal('modal-extra-venta');
+    if (typeof renderProblemas === 'function' && location.hash === '#problemas') { try { await renderProblemas(); } catch(e){} }
+    if (typeof renderVentasGanancias === 'function') { try { await renderVentasGanancias(); } catch(e){} }
+  } catch (e) {
+    console.error('Extra venta:', e);
+    err.textContent = 'No se pudo guardar. Revisa tu conexión e intenta de nuevo.';
+  } finally {
+    btn.disabled = false; btn.textContent = txt;
+  }
+}

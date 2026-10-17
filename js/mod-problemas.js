@@ -894,21 +894,15 @@ function _probFechaCorta(f) {
   return `${String(d.getDate()).padStart(2, '0')} ${MESES[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-// Abre la venta del problema en el mismo modal del Gestor de ventas.
-// extra = 'ingreso' | 'gasto': agrega una fila nueva en esa sección y la enfoca.
-async function _probAbrirVenta(ventaId, extra) {
+// Abre la venta del problema en el mismo modal del Gestor de ventas
+async function _probAbrirVenta(ventaId) {
   document.querySelectorAll('.pc-menu').forEach(m => m.remove());
-  if (!ventaId || typeof openModalVenta !== 'function') return;
-  await openModalVenta(ventaId);
-  if (!extra || typeof _addExtra !== 'function') return;
-  _addExtra(extra);
-  setTimeout(() => {
-    const list = document.getElementById(extra === 'ingreso' ? 'v-ingresos-extra-list' : 'v-gastos-extra-list');
-    if (!list) return;
-    list.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    const ins = list.querySelectorAll('input');
-    ins[ins.length - 2]?.focus();   // monto de la fila recién agregada
-  }, 250);
+  if (ventaId && typeof openModalVenta === 'function') await openModalVenta(ventaId);
+}
+
+function _probExtra(ventaId, tipo) {
+  document.querySelectorAll('.pc-menu').forEach(m => m.remove());
+  if (typeof openModalExtraVenta === 'function') openModalExtraVenta(ventaId, tipo);
 }
 
 function _probMenu(btn, id) {
@@ -918,8 +912,8 @@ function _probMenu(btn, id) {
   const vid = btn.closest('.pc')?.dataset.ventaId || '';
   const ic = d => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
   const opcVenta = vid ? `
-    <button onclick="_probAbrirVenta('${vid}','ingreso')">${ic('<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>')} Registrar ingreso extra</button>
-    <button onclick="_probAbrirVenta('${vid}','gasto')">${ic('<circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>')} Registrar gasto extra</button>
+    <button onclick="_probExtra('${vid}','ingreso')">${ic('<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>')} Registrar ingreso extra</button>
+    <button onclick="_probExtra('${vid}','gasto')">${ic('<circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>')} Registrar gasto extra</button>
     <button onclick="_probAbrirVenta('${vid}')">${ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>')} Editar venta</button>
     <div class="pc-menu-sep"></div>` : '';
   m.innerHTML = opcVenta + `
