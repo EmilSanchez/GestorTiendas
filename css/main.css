@@ -662,3 +662,11 @@ body.sb-collapsed #nav-envios-toggle:has(+ .nav-submenu .nav-item.active){backgr
 .pc-tienda{font-size:11px;font-weight:600;color:var(--text2);max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .pc-hr{border:none;border-top:1px solid var(--border);margin:6px 0 5px;}
 .pc-venta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+/* Ingresos/gastos extra con motivos largos: el texto baja en varias líneas
+   dentro de su columna y el valor queda alineado arriba a la derecha */
+.mev-hist{grid-template-columns:minmax(0,1fr) minmax(0,1fr);}
+.mev-col{min-width:0;max-height:220px;overflow-y:auto;}
+.mev-it{align-items:flex-start;}
+.mev-it .m{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.4;min-width:0;flex:1;}
+.mev-it .v{flex-shrink:0;}
+@media(max-width:600px){ .mev-hist{grid-template-columns:minmax(0,1fr);} }
