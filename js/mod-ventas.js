@@ -130,17 +130,25 @@ async function renderVentasGanancias() {
   const totalCostos = ventasPer.reduce((s,v) => s + calcVenta(v).totalCostos, 0);
 
   // Solo descontar envíos Skydropx que NO están ligados a una venta registrada
+  // Envíos sueltos y ajustes se toman del MISMO período que las ventas. Antes, con
+  // un rango de fechas, las ventas eran del rango pero estos ajustes se tomaban
+  // siempre del mes actual, y la ganancia no coincidía con la de Finanzas.
   const mesPer = periodo.mes || mes(); // fecha LOCAL — ver nota junto a mes() en core.js
+  const enPeriodo = f => periodo.tipo === 'rango'
+    ? (!!f && (!periodo.desde || f >= periodo.desde) && (!periodo.hasta || f <= periodo.hasta))
+    : (f || '').startsWith(mesPer);
+  const mesEnPeriodo = m => periodo.tipo === 'rango'
+    ? (!!m && (!periodo.desde || m >= periodo.desde.slice(0, 7)) && (!periodo.hasta || m <= periodo.hasta.slice(0, 7)))
+    : m === mesPer;
   const idsMlSet = new Set(ventas.map(v => v.id_ml).filter(Boolean));
   const egresosSky = enviosSky
-    .filter(e => (e.fecha||'').startsWith(mesPer) && !idsMlSet.has(e.num_venta))
+    .filter(e => enPeriodo(e.fecha) && !idsMlSet.has(e.num_venta))
     .reduce((s,e) => s + (parseFloat(e.valor)||0), 0);
 
-  // Include cierre adjustments + movimientos manuales marcados para afectar este mes
-  const ajustesCierreBanner = (typeof _cmAjusteCierreMes === 'function')
-    ? _cmAjusteCierreMes(movs, mesPer)
-    : movs.filter(m => m._ajuste_cierre && (m.fecha||'').startsWith(mesPer))
-          .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
+  // Ajustes de cierre (diferencias aplicadas) + movimientos marcados para afectar la ganancia
+  const ajustesCierreBanner = movs
+    .filter(m => (m._ajuste_cierre && enPeriodo(m.fecha)) || mesEnPeriodo(m.afecta_ganancia_mes))
+    .reduce((s,m) => s + (m.tipo==='ingreso' ? (parseFloat(m.valor)||0) : -(parseFloat(m.valor)||0)), 0);
   const totalGan = ganVentas - egresosSky + ajustesCierreBanner;
   const marGen   = totalVenta > 0 ? (totalGan / totalVenta) * 100 : 0;
 
