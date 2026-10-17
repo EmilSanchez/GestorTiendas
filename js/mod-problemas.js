@@ -380,6 +380,12 @@ async function saveProblema() {
     estado:       gv('p-estado'),
     valor_perdida: parseFloat(gv('p-perdida')) || 0,
     fecha_registro: existingProb?.fecha_registro || new Date().toISOString(),
+    // Fecha/hora de resolución: se conserva; si se marca resuelto desde aquí, se fija ahora
+    ...(gv('p-estado') !== 'abierto'
+      ? (existingProb && existingProb.estado !== 'abierto' && existingProb.fecha_resolucion
+          ? { fecha_resolucion: existingProb.fecha_resolucion, fecha_resolucion_ts: existingProb.fecha_resolucion_ts || null }
+          : { fecha_resolucion: hoy(), fecha_resolucion_ts: new Date().toISOString() })
+      : {}),
     // Fecha/hora de la última edición — nunca toca fecha_registro (la fecha original de creación)
     fecha_actualizacion: new Date().toISOString(),
   };
@@ -832,13 +838,15 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
   <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}" data-prob-id="${p.id}" data-venta-id="${v ? v.id : ''}">
     <div class="pc-head">
       <div class="pc-estado-wrap">
+        <span class="pc-tienda">${t ? esc(t.nombre) : '—'}</span>
         <span class="pc-estado" style="background:${ec.bg};color:${ec.color};">${p.estado === 'abierto' ? _PI.clock : _PI.check}${ec.label}</span>
         <span class="pc-fecha">${_probFechaCorta(p.fecha_registro || p.fecha)}</span>
       </div>
       <div class="pc-sep"></div>
       <div style="min-width:0;">
         <div class="pc-title">${esc(tipoLabel)}</div>
-        <div class="pc-sub">${t ? esc(t.nombre) : '—'}</div>
+        <hr class="pc-hr">
+        <div class="pc-sub pc-venta">${idVenta ? `Venta <span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar">${esc(idVenta)}</span>` : 'Sin venta vinculada'}</div>
       </div>
       <button class="pc-menu-btn pc-toggle" title="Ver detalles" onclick="_probToggle(this,'${p.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
       <button class="pc-menu-btn" style="margin-left:0;" title="Más opciones" onclick="event.stopPropagation();_probMenu(this,'${p.id}')">${_PI.dots}</button>
@@ -862,7 +870,7 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
       <div style="min-width:0;"><div class="pc-box-t" style="color:${p.solucion ? '#047857' : 'var(--text3)'};">Solución</div>
         <div class="pc-box-d" style="${p.solucion ? '' : 'color:var(--text3);font-style:italic;'}">${p.solucion ? esc(p.solucion) : 'Sin solución planteada'}</div>
         ${p.valor_perdida > 0 ? `<div style="font-size:11px;font-weight:700;color:#b91c1c;margin-top:4px;">Pérdida registrada: ${fmt(p.valor_perdida)}</div>` : ''}
-        ${p.fecha_resolucion ? `<div style="font-size:10.5px;color:var(--text3);margin-top:4px;">Resuelta el ${p.fecha_resolucion}</div>` : ''}
+        ${p.estado !== 'abierto' && _probResueltoEn(p) ? `<div style="font-size:10.5px;color:var(--text3);margin-top:4px;">Resuelta el ${_probResueltoEn(p)}</div>` : ''}
       </div>
     </div>
     <div class="pc-foot">
@@ -885,6 +893,22 @@ function _probToggle(btn, id) {
 }
 
 // Menú de los 3 puntos de la tarjeta
+// Cuándo se resolvió: "03 octubre 2026 · 3:40 p. m.". Usa la hora exacta guardada;
+// para problemas resueltos antes de guardarla, la toma del historial de cambios y
+// si tampoco existe, muestra solo la fecha.
+function _probResueltoEn(p) {
+  let ts = p.fecha_resolucion_ts;
+  if (!ts && Array.isArray(p.historial)) {
+    const h = [...p.historial].reverse().find(x => x.accion === 'resuelto' || x.accion === 'perdida');
+    ts = h?.fecha;
+  }
+  if (ts) {
+    const d = new Date(ts);
+    if (!isNaN(d)) return `${_probFechaCorta(ts)} · ${d.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' })}`;
+  }
+  return p.fecha_resolucion ? _probFechaCorta(p.fecha_resolucion) : '';
+}
+
 // Fecha de registro corta: "03 octubre 2026"
 function _probFechaCorta(f) {
   if (!f) return '';
@@ -1072,6 +1096,7 @@ async function confirmarResolver() {
   p.estado   = estado;
   p.solucion = solucion;
   p.fecha_resolucion = hoy(); // fecha LOCAL — ver nota junto a mes() en core.js
+  p.fecha_resolucion_ts = new Date().toISOString();
   p.fecha_actualizacion = new Date().toISOString();
   if (estado === 'perdida') p.valor_perdida = perdida;
   p.historial = _probHistorialCon(antes, p, estado);
