@@ -2944,6 +2944,45 @@ async function _renderEnviosSkyPanel() {
 
 
 <!-- ═══════════════════ MODAL REVERTIR DIFERENCIA CIERRE ═══════════════════ -->
+<!-- MODAL: INGRESO / GASTO EXTRA DE UNA VENTA -->
+<div class="overlay" id="modal-extra-venta" style="align-items:flex-start;padding-top:6vh;">
+  <div class="modal" style="max-width:520px;">
+    <div class="mh" style="background:#fff;">
+      <div><div class="mh-title" id="mev-title">Registrar ingreso extra</div><div id="mev-sub" style="font-size:11px;color:var(--text3);margin-top:2px;">—</div></div>
+      <button class="mclose" onclick="closeModal('modal-extra-venta')">✕</button>
+    </div>
+    <div class="mc" style="padding:16px 20px;">
+      <div class="mev-seg" id="mev-tipo-seg">
+        <button type="button" data-tipo="ingreso" onclick="_mevTipo('ingreso')">Ingreso extra</button>
+        <button type="button" data-tipo="gasto" onclick="_mevTipo('gasto')">Gasto extra</button>
+      </div>
+      <div class="mev-hist">
+        <div class="mev-col"><div class="mev-col-t" style="color:#047857;">Ingresos extra <span id="mev-tot-ingreso"></span></div><div id="mev-list-ingreso"></div></div>
+        <div class="mev-col"><div class="mev-col-t" style="color:#b91c1c;">Gastos extra <span id="mev-tot-gasto"></span></div><div id="mev-list-gasto"></div></div>
+      </div>
+      <div class="mev-nuevo">
+        <div class="mev-nuevo-t" id="mev-nuevo-t">Nuevo ingreso extra</div>
+        <div style="display:flex;gap:8px;align-items:flex-end;">
+          <div class="fg" style="margin:0;flex:1;">
+            <label class="fl2">Valor</label>
+            <div style="display:flex;gap:6px;">
+              <div class="mev-seg mev-seg-sm" id="mev-moneda-seg">
+                <button type="button" data-mon="cop" onclick="_mevMoneda('cop')">COP</button>
+                <button type="button" data-mon="usd" onclick="_mevMoneda('usd')">USD</button>
+              </div>
+              <input type="text" inputmode="decimal" id="mev-valor" placeholder="0" style="flex:1;" oninput="_mevPreview()" onkeydown="if(event.key==='Enter')_mevGuardar()">
+            </div>
+          </div>
+        </div>
+        <div id="mev-preview" style="font-size:11px;color:var(--text3);min-height:15px;margin:4px 0 8px;"></div>
+        <div class="fg" style="margin:0;"><label class="fl2">Motivo</label><input type="text" id="mev-motivo" placeholder="Ej: reembolso del cliente, envío adicional…" onkeydown="if(event.key==='Enter')_mevGuardar()"></div>
+        <div id="mev-err" style="color:var(--red);font-size:11px;min-height:14px;margin-top:6px;"></div>
+      </div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-extra-venta')">Cancelar</button><button class="btn btn-success" id="mev-btn" onclick="_mevGuardar()">Agregar ingreso</button></div>
+  </div>
+</div>
+
 <!-- MODAL: DESMARCAR PAGO DE ENVÍO -->
 <div class="overlay" id="modal-desmarcar-pago">
   <div class="modal" style="max-width:400px;">
