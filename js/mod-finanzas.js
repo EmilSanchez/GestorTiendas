@@ -120,7 +120,12 @@ async function renderFinanzas() {
     if (df !== 0) return df;
     return (b.fecha_registro||'').localeCompare(a.fecha_registro||'');
   });
-  _renderMovimientos(movMes, mesAct);
+  // Movimientos que afectan la ganancia de este mes: ajustes de cierre (diferencias
+  // de otro mes aplicadas aquí) y movimientos marcados "Afecta la ganancia de" este
+  // mes — estos últimos pueden tener fecha de otro mes, por eso se buscan en todos.
+  const movGanancia = movs.filter(m => (m._ajuste_cierre && m.fecha?.startsWith(mesAct)) || m.afecta_ganancia_mes === mesAct)
+    .sort((a,b) => (b.fecha||'').localeCompare(a.fecha||'') || (b.fecha_registro||'').localeCompare(a.fecha_registro||''));
+  _renderMovimientos(movMes, mesAct, movGanancia);
 }
 
 // ── BILLETERAS (tabla) ──
@@ -445,7 +450,7 @@ function _finMovRowHtml(m) {
       ${iconEl}
     </span>
     <div style="flex:1;min-width:0;">
-      <div style="font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}${isSkyAuto?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AUTO</span>':''}${isPendiente?' <span style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;border:1px solid #f0c040;">PENDIENTE INGRESO</span>':''}</div>
+      <div style="font-size:13.5px;font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${m.concepto}${isSkyAuto?' <span style="font-size:9px;background:#dbeafe;color:#1d4ed8;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AUTO</span>':''}${m._ajuste_cierre?' <span style="font-size:9px;background:#ede9fe;color:#6d28d9;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">DIFERENCIA DE MES</span>':''}${m.afecta_ganancia_mes?` <span style="font-size:9px;background:#fef3c7;color:#92400e;padding:1px 5px;border-radius:3px;font-weight:700;vertical-align:middle;">AFECTA GANANCIA · ${_mesLabel(m.afecta_ganancia_mes).toUpperCase()}</span>`:''}${isPendiente?' <span style="font-size:9px;background:var(--yellow-bg);color:var(--yellow);padding:1px 6px;border-radius:3px;font-weight:700;vertical-align:middle;border:1px solid #f0c040;">PENDIENTE INGRESO</span>':''}</div>
       <div style="font-size:11px;color:var(--text3);margin-top:2px;">${m.fecha}${horaReg?` · ${horaReg}`:''} <span style="opacity:.35;">·</span> <span style="color:var(--teal);font-weight:600;">${fl}</span>${isTransfer && m.notas ? ` <span style="opacity:.35;">·</span> ${m.notas}` : ''}${isPendiente?` <span style="opacity:.35;">·</span> <span style="color:var(--yellow);">Disponible ${fmtFecha(m.fecha_disponible)}</span>`:''}</div>
     </div>
     <span style="font-size:15.5px;font-weight:800;color:${isTransfer?'#4338ca':(isIng?'#16a34a':'#dc2626')};white-space:nowrap;">${isTransfer?'⇄':(isIng?'+':'−')}${fmt(m.valor)}</span>
@@ -456,7 +461,7 @@ function _finMovRowHtml(m) {
   </div>`;
 }
 
-function _renderMovimientos(movMes, mesAct) {
+function _renderMovimientos(movMes, mesAct, movGanancia = []) {
   const el = document.getElementById('fin-movimientos');
   if (!el) return;
   _finMesActualLabel = _mesLabel(mesAct);
@@ -467,7 +472,8 @@ function _renderMovimientos(movMes, mesAct) {
   // fuente='mercadopago' → pago de venta ML (auto)
   // _sky_id presente       → egreso de envío Skydropx (auto)
   // todo lo demás          → movimiento externo manual
-  const _isVentaML  = m => (m.fuente === 'mercadopago' || m.fuente?.startsWith('mercadopago_')) && !m._sky_id && m.tipo !== 'transferencia';
+  // (las diferencias de cierre se guardan con fuente 'mercadopago' pero no son pagos de ventas)
+  const _isVentaML  = m => (m.fuente === 'mercadopago' || m.fuente?.startsWith('mercadopago_')) && !m._sky_id && m.tipo !== 'transferencia' && !m._ajuste_cierre;
   const _isSkyMov   = m => !!m._sky_id;
   const _isTransfer = m => m.tipo === 'transferencia';
   const _isExterno  = m => !_isVentaML(m) && !_isSkyMov(m) && !_isTransfer(m);
@@ -475,11 +481,12 @@ function _renderMovimientos(movMes, mesAct) {
   if (activeTab === 'skydropx')     filtrados = movMes.filter(_isSkyMov);
   if (activeTab === 'externo')      filtrados = movMes.filter(_isExterno);
   if (activeTab === 'transferencia') filtrados = movMes.filter(_isTransfer);
+  if (activeTab === 'ganancia')     filtrados = movGanancia;
 
   const tabs = `
-    <div style="display:flex;gap:4px;margin-bottom:12px;flex-shrink:0;">
-      ${['todos','venta','skydropx','externo','transferencia'].map(t=>{
-        const labels={todos:'Todos',venta:'Ventas ML',skydropx:'Skydropx',externo:'Externos',transferencia:'Transferencias'};
+    <div style="display:flex;gap:4px;margin-bottom:12px;flex-shrink:0;flex-wrap:wrap;">
+      ${['todos','venta','skydropx','externo','transferencia','ganancia'].map(t=>{
+        const labels={todos:'Todos',venta:'Ventas ML',skydropx:'Skydropx',externo:'Externos',transferencia:'Transferencias',ganancia:'Afectan ganancia'+(movGanancia.length?` (${movGanancia.length})`:'')};
         const isActive = activeTab===t;
         return `<button class="fin-mov-tab ${isActive?'active':''}" data-tab="${t}"
           onclick="document.querySelectorAll('.fin-mov-tab').forEach(b=>{b.classList.remove('active');b.style.background='';b.style.color='var(--text2)';b.style.borderColor='var(--border)';});this.classList.add('active');this.style.background='var(--teal)';this.style.color='#fff';this.style.borderColor='var(--teal)';renderFinanzas();"
@@ -497,21 +504,24 @@ function _renderMovimientos(movMes, mesAct) {
   const totalEgr = movMes.filter(m=>m.tipo==='egreso').reduce((s,m)=>s+m.valor,0);
   const net = totalIng - totalEgr;
 
+  const esGan = activeTab === 'ganancia';
   const resumen = `
     <div style="display:flex;gap:0;margin-bottom:14px;border:1px solid var(--border);border-radius:8px;overflow:hidden;flex-shrink:0;">
       <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border);">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">Ingresos</div>
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">${esGan?'Suman a la ganancia':'Ingresos'}</div>
         <div style="font-size:19px;font-weight:800;color:#065f46;">${fmt(totalIng)}</div>
       </div>
       <div style="flex:1;padding:12px 16px;border-right:1px solid var(--border);">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">Egresos</div>
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">${esGan?'Restan a la ganancia':'Egresos'}</div>
         <div style="font-size:19px;font-weight:800;color:#7f1d1d;">${fmt(totalEgr)}</div>
       </div>
       <div style="flex:1;padding:12px 16px;">
-        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">Neto</div>
+        <div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:5px;">${esGan?'Efecto en la ganancia':'Neto'}</div>
         <div style="font-size:19px;font-weight:800;color:${net>=0?'#065f46':'#7f1d1d'};">${net>=0?'+':''}${fmt(net)}</div>
       </div>
     </div>`;
+  const vacioGan = esGan && !movMes.length
+    ? `<div style="font-size:12px;color:var(--text3);text-align:center;padding:18px 10px;">Ningún movimiento afectó la ganancia de ${_mesLabel(mesAct)}.<br><span style="font-size:11px;">Aquí aparecen las diferencias aplicadas de meses cerrados y los movimientos marcados “Afecta la ganancia de”.</span></div>` : '';
 
   if (!movMes.length) {
     el.innerHTML += resumen + `<div style="text-align:center;padding:24px;color:var(--text3);font-size:12px;">Sin movimientos en ${_mesLabel(mesAct)}</div>`;
@@ -525,7 +535,7 @@ function _renderMovimientos(movMes, mesAct) {
     ? `<button class="btn btn-ghost btn-sm" style="width:100%;justify-content:center;margin-top:10px;flex-shrink:0;" onclick="_abrirModalMovimientos()">Ver todos los movimientos (${movMes.length})</button>`
     : '';
 
-  el.innerHTML += resumen + `<div style="flex:1;min-height:0;overflow-y:auto;padding-right:2px;">${rows}</div>` + verTodos;
+  el.innerHTML += resumen + `<div style="flex:1;min-height:0;overflow-y:auto;padding-right:2px;">${rows || vacioGan}</div>` + verTodos;
 }
 
 // ── Modal: ver todos los movimientos del mes (respeta el filtro de pestaña activo) ──
