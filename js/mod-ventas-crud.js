@@ -810,6 +810,8 @@ async function saveVenta() {
   if (!_editVentaId) showConfirmAnim('venta', false);
   await renderVentasGanancias();
   await updateAlertaBadge();
+  // Si se editó desde Pendientes, refrescar sus tarjetas (venta / ganancia)
+  if (location.hash === '#problemas' && typeof renderProblemas === 'function') { try { await renderProblemas(); } catch(e){} }
   } catch(err) {
     console.error('saveVenta error:', err);
     showToast('Error al guardar — verifica tu conexión', 'error', 4500);

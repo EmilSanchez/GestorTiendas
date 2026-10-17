@@ -632,3 +632,8 @@ body.sb-collapsed #nav-envios-toggle:has(+ .nav-submenu .nav-item.active){backgr
 .pc-col{flex:1 1 0;min-width:0;display:flex;flex-direction:column;gap:16px;}
 .pc-col .pc{height:auto;}
 .pc-cols{position:relative;z-index:1;}
+
+/* Estado + fecha de registro en la tarjeta de problema */
+.pc-estado-wrap{display:flex;flex-direction:column;align-items:center;gap:4px;flex-shrink:0;}
+.pc-fecha{font-size:10.5px;color:var(--text3);white-space:nowrap;}
+.pc-menu-sep{height:1px;background:var(--border);margin:4px 6px;}

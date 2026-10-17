@@ -829,9 +829,12 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
   const actualizado = p.fecha_actualizacion && p.fecha_actualizacion !== p.fecha_registro;
 
   return `
-  <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}" data-prob-id="${p.id}">
+  <div class="pc${_probAbiertas.has(p.id) ? ' open' : ''}" data-prob-id="${p.id}" data-venta-id="${v ? v.id : ''}">
     <div class="pc-head">
-      <span class="pc-estado" style="background:${ec.bg};color:${ec.color};">${p.estado === 'abierto' ? _PI.clock : _PI.check}${ec.label}</span>
+      <div class="pc-estado-wrap">
+        <span class="pc-estado" style="background:${ec.bg};color:${ec.color};">${p.estado === 'abierto' ? _PI.clock : _PI.check}${ec.label}</span>
+        <span class="pc-fecha">${_probFechaCorta(p.fecha_registro || p.fecha)}</span>
+      </div>
       <div class="pc-sep"></div>
       <div style="min-width:0;">
         <div class="pc-title">${esc(tipoLabel)}</div>
@@ -882,11 +885,44 @@ function _probToggle(btn, id) {
 }
 
 // Menú de los 3 puntos de la tarjeta
+// Fecha de registro corta: "03 octubre 2026"
+function _probFechaCorta(f) {
+  if (!f) return '';
+  const MESES = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const d = /^\d{4}-\d{2}-\d{2}$/.test(f) ? new Date(f + 'T12:00:00') : new Date(f);  // fecha sola: sin desfase de zona
+  if (isNaN(d)) return '';
+  return `${String(d.getDate()).padStart(2, '0')} ${MESES[d.getMonth()]} ${d.getFullYear()}`;
+}
+
+// Abre la venta del problema en el mismo modal del Gestor de ventas.
+// extra = 'ingreso' | 'gasto': agrega una fila nueva en esa sección y la enfoca.
+async function _probAbrirVenta(ventaId, extra) {
+  document.querySelectorAll('.pc-menu').forEach(m => m.remove());
+  if (!ventaId || typeof openModalVenta !== 'function') return;
+  await openModalVenta(ventaId);
+  if (!extra || typeof _addExtra !== 'function') return;
+  _addExtra(extra);
+  setTimeout(() => {
+    const list = document.getElementById(extra === 'ingreso' ? 'v-ingresos-extra-list' : 'v-gastos-extra-list');
+    if (!list) return;
+    list.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    const ins = list.querySelectorAll('input');
+    ins[ins.length - 2]?.focus();   // monto de la fila recién agregada
+  }, 250);
+}
+
 function _probMenu(btn, id) {
   document.querySelectorAll('.pc-menu').forEach(m => m.remove());
   const m = document.createElement('div');
   m.className = 'pc-menu';
-  m.innerHTML = `
+  const vid = btn.closest('.pc')?.dataset.ventaId || '';
+  const ic = d => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+  const opcVenta = vid ? `
+    <button onclick="_probAbrirVenta('${vid}','ingreso')">${ic('<circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/>')} Registrar ingreso extra</button>
+    <button onclick="_probAbrirVenta('${vid}','gasto')">${ic('<circle cx="12" cy="12" r="10"/><line x1="8" y1="12" x2="16" y2="12"/>')} Registrar gasto extra</button>
+    <button onclick="_probAbrirVenta('${vid}')">${ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>')} Editar venta</button>
+    <div class="pc-menu-sep"></div>` : '';
+  m.innerHTML = opcVenta + `
     <button onclick="verHistorialProblema('${id}')">${_PI.sync.replace('class="pc-ico"','width="15" height="15"')} Ver historial de cambios</button>
     <button class="danger" onclick="deleteProb('${id}')"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Eliminar</button>`;
   document.body.appendChild(m);
