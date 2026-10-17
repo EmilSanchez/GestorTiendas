@@ -1867,7 +1867,25 @@ document.addEventListener('DOMContentLoaded', () => { _drpInit(); });
 // o USD) sin abrir el formulario completo. Se guarda en ingresos_extra /
 // gastos_extra de la venta, igual que los que se agregan desde "Editar venta".
 // ══════════════════════════════════════════════════════════
-let _mevVentaId = null, _mevTipoSel = 'ingreso', _mevMon = 'cop';
+let _mevVentaId = null, _mevVenta = null, _mevTipoSel = 'ingreso', _mevMon = 'cop';
+
+// Ingresos / costos / ganancia de la venta. Si ya se escribió un valor, muestra
+// cómo quedaría la venta al agregarlo (valores subrayados = vista previa).
+function _mevResumen() {
+  const v = _mevVenta;
+  if (!v) return;
+  const n = _parseNum(gv('mev-valor'));
+  const cop = n > 0 ? (_mevMon === 'usd' ? Math.round(n * _mevTrm(v)) : n) : 0;
+  const campo = _mevTipoSel === 'ingreso' ? 'ingresos_extra' : 'gastos_extra';
+  const sim = cop ? { ...v, [campo]: [...(v[campo] || []), { valor: cop }] } : v;
+  const c = calcVenta(sim);
+  const set = (id, val, cambia) => { const el = document.getElementById(id); el.textContent = fmt(val); el.classList.toggle('cambio', !!cambia); };
+  set('mev-r-ing', c.totalVenta,  cop && _mevTipoSel === 'ingreso');
+  set('mev-r-cos', c.totalCostos, cop && _mevTipoSel === 'gasto');
+  set('mev-r-gan', c.ganancia,    !!cop);
+  document.getElementById('mev-r-gan').style.color = c.ganancia >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('mev-r-gan-l').textContent = c.ganancia >= 0 ? 'Ganancia' : 'Pérdida';
+}
 
 function _mevTrm(v) { return parseFloat(v?.trm) || getDolarComprasConfigurado() || (typeof TRM_ACTUAL !== 'undefined' ? TRM_ACTUAL : 0); }
 
@@ -1875,6 +1893,7 @@ async function openModalExtraVenta(ventaId, tipo) {
   const v = (await DB.ventas()).find(x => x.id === ventaId);
   if (!v) { showToast('No se encontró la venta', 'error', 2500); return; }
   _mevVentaId = ventaId;
+  _mevVenta = v;
   document.getElementById('mev-sub').textContent = `Venta ${v.id_ml || v.id}${v.producto ? ' · ' + v.producto : ''}`;
   sv('mev-valor', ''); sv('mev-motivo', '');
   document.getElementById('mev-err').textContent = '';
@@ -1909,6 +1928,7 @@ function _mevTipo(tipo) {
   const btn = document.getElementById('mev-btn');
   btn.textContent = ing ? 'Agregar ingreso' : 'Agregar gasto';
   btn.className = ing ? 'btn btn-success' : 'btn btn-danger';
+  _mevResumen();
 }
 
 function _mevMoneda(mon) {
@@ -1919,6 +1939,7 @@ function _mevMoneda(mon) {
 }
 
 async function _mevPreview() {
+  _mevResumen();
   const el = document.getElementById('mev-preview');
   const n = _parseNum(gv('mev-valor'));
   if (_mevMon !== 'usd') { el.textContent = n ? fmt(n) : ''; return; }

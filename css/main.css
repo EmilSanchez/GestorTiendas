@@ -670,3 +670,13 @@ body.sb-collapsed #nav-envios-toggle:has(+ .nav-submenu .nav-item.active){backgr
 .mev-it .m{white-space:normal;overflow:visible;text-overflow:clip;overflow-wrap:anywhere;line-height:1.4;min-width:0;flex:1;}
 .mev-it .v{flex-shrink:0;}
 @media(max-width:600px){ .mev-hist{grid-template-columns:minmax(0,1fr);} }
+
+/* Resumen de la venta en el modal de ingreso/gasto extra */
+#modal-extra-venta .mh{gap:14px;}
+.mev-resumen{display:flex;align-items:center;gap:12px;margin-left:auto;padding:6px 12px;background:var(--bg);border:1px solid var(--border);border-radius:10px;}
+.mev-r{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1;}
+.mev-r-l{font-size:9px;font-weight:600;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);margin-bottom:3px;}
+.mev-r-v{font-size:15px;font-weight:700;color:var(--text);white-space:nowrap;transition:color .2s;}
+.mev-r-v.cambio{text-decoration:underline dotted;text-underline-offset:3px;}
+.mev-r-sep{width:1px;height:26px;background:var(--border);}
+@media(max-width:600px){ #modal-extra-venta .mh{flex-wrap:wrap;} .mev-resumen{margin-left:0;width:100%;justify-content:space-between;order:3;} }
