@@ -846,7 +846,7 @@ function _probCardHTML(p, tiendas, ventas, compacto) {
       <div style="min-width:0;">
         <div class="pc-title">${esc(tipoLabel)}</div>
         <hr class="pc-hr">
-        <div class="pc-sub pc-venta">${idVenta ? `Venta <span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar">${esc(idVenta)}</span>` : 'Sin venta vinculada'}</div>
+        <div class="pc-sub pc-venta">${idVenta ? `Venta <span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar">${esc(idVenta)}</span>${_btnVerEnML(p.id_ml_venta, true)}` : 'Sin venta vinculada'}</div>
       </div>
       <button class="pc-menu-btn pc-toggle" title="Ver detalles" onclick="_probToggle(this,'${p.id}')"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
       <button class="pc-menu-btn" style="margin-left:0;" title="Más opciones" onclick="event.stopPropagation();_probMenu(this,'${p.id}')">${_PI.dots}</button>
