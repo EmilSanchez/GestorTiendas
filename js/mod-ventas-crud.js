@@ -44,13 +44,13 @@ function _renderExtrasList(tipo) {
     return;
   }
   const rows = arr.map((item, i) => `
-    <div style="display:flex;align-items:center;gap:8px;padding:6px 10px;${i < arr.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}" data-extra-row="${item.id}">
+    <div style="display:flex;align-items:flex-start;gap:8px;padding:6px 10px;${i < arr.length - 1 ? 'border-bottom:1px solid var(--border);' : ''}" data-extra-row="${item.id}">
       <input type="text" inputmode="numeric" placeholder="0" value="${item.valor !== undefined && item.valor !== null ? item.valor : ''}"
         oninput="_updExtra('${tipo}','${item.id}','valor',this.value)"
         style="width:92px;flex-shrink:0;padding:5px 8px;border:none;border-radius:6px;background:var(--bg);text-align:right;font-size:12px;font-weight:600;color:var(--text);font-family:var(--font-mono,inherit);outline:none;">
-      <input type="text" placeholder="Motivo (ej: reembolso del cliente)" value="${(item.motivo||'').replace(/"/g,'&quot;')}"
-        oninput="_updExtra('${tipo}','${item.id}','motivo',this.value)"
-        style="flex:1;min-width:0;padding:5px 8px;border:none;background:none;font-size:12px;font-family:inherit;color:var(--text2);outline:none;">
+      <textarea rows="1" class="extra-motivo" placeholder="Motivo (ej: reembolso del cliente)"
+        oninput="_updExtra('${tipo}','${item.id}','motivo',this.value);_autoAltoMotivo(this)"
+        style="flex:1;min-width:0;padding:5px 8px;border:none;background:none;font-size:12px;font-family:inherit;color:var(--text2);outline:none;resize:none;overflow:hidden;line-height:1.45;">${(item.motivo||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</textarea>
       <button type="button" onclick="_removeExtra('${tipo}','${item.id}')" title="Eliminar"
         style="flex-shrink:0;border:none;background:none;cursor:default;color:var(--text3);padding:4px;display:flex;align-items:center;justify-content:center;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
@@ -65,6 +65,15 @@ function _renderExtrasList(tipo) {
       </div>
       ${rows}
     </div>`;
+  // Ajustar el alto al texto cuando ya se vea (el modal puede abrirse justo después)
+  requestAnimationFrame(() => wrap.querySelectorAll('.extra-motivo').forEach(_autoAltoMotivo));
+}
+
+// El motivo crece hacia abajo para mostrar todo el texto (sin cortarse)
+function _autoAltoMotivo(el) {
+  if (!el.offsetParent) return;           // oculto: se ajusta al mostrarse
+  el.style.height = 'auto';
+  el.style.height = el.scrollHeight + 'px';
 }
 
 function _addExtra(tipo) {
