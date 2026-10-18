@@ -230,7 +230,10 @@
         <span class="nb-label">Pendientes</span>
       </span>
       <span style="display:flex;align-items:center;gap:6px;">
-        <span class="nav-count" id="nav-prob-count" style="display:none;"></span>
+        <span class="nav-counts">
+          <span class="nav-count" id="nav-prob-count" style="display:none;" title="Problemas abiertos"></span>
+          <span class="nav-count nav-count-dem" id="nav-dem-count-top" style="display:none;" title="Productos demorados"></span>
+        </span>
         <svg id="pend-chevron" class="nb-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .22s ease;flex-shrink:0;opacity:.6;"><polyline points="6 9 12 15 18 9"/></svg>
       </span>
     </div>
@@ -823,7 +826,7 @@
           <span class="fl">Estado</span>
           <select id="df-estado" onchange="renderDemorados()" style="min-width:110px;">
             <option value="activo" selected>En seguimiento</option>
-            <option value="entregado">Entregados</option>
+            <option value="entregado">Ya llegaron</option>
             <option value="">Todos</option>
           </select>
         </div>
@@ -3123,6 +3126,28 @@ async function _renderEnviosSkyPanel() {
         <input type="text" id="md2-guia" placeholder="Ej: 1Z999AA10123456784">
       </div>
 
+      <div class="fg">
+        <label class="fl2 mp-lbl">¿Mercado Libre ya muestra días de demora?</label>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <div class="mev-seg mev-seg-sm" id="md2-ml-seg" style="margin:0;">
+            <button type="button" data-v="no" onclick="_demMl('no')">No</button>
+            <button type="button" data-v="si" onclick="_demMl('si')">Sí</button>
+          </div>
+          <div id="md2-ml-wrap" style="display:none;align-items:center;gap:8px;">
+            <input type="number" id="md2-ml-dias" min="0" placeholder="0" style="width:90px;">
+            <span style="font-size:12px;color:var(--text2);">días hoy <small class="c-dim">(sube solo cada día)</small></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl2 mp-lbl">Imagen del producto <small class="c-dim">(dirección / URL)</small></label>
+        <div style="display:flex;gap:10px;align-items:center;">
+          <input type="url" id="md2-img" placeholder="https://m.media-amazon.com/images/…" style="flex:1;" oninput="_demPrevImg()">
+          <div class="dem-img-prev" id="md2-img-prev"></div>
+        </div>
+      </div>
+
       <label class="dem-check">
         <input type="checkbox" id="md2-cliente">
         <span><b>El cliente ya conoce la demora</b><small>Marca si ya se le avisó al comprador</small></span>
@@ -3138,17 +3163,17 @@ async function _renderEnviosSkyPanel() {
   </div>
 </div>
 
-<!-- MODAL: CONFIRMAR ELIMINAR DEMORADO -->
-<div class="overlay" id="modal-del-demorado">
+<!-- MODAL: CONFIRMAR QUE EL PRODUCTO DEMORADO YA LLEGÓ -->
+<div class="overlay" id="modal-llego-demorado">
   <div class="modal" style="max-width:380px;">
     <div class="mc" style="text-align:center;padding:24px 22px 10px;">
-      <div style="width:46px;height:46px;border-radius:50%;background:var(--red-bg);color:var(--red);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      <div style="width:50px;height:50px;border-radius:50%;background:#d1fae5;color:#047857;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="7.5 12 10.5 15 16.5 9"/></svg>
       </div>
-      <div style="font-size:14px;font-weight:700;margin-bottom:6px;">¿Eliminar este seguimiento?</div>
-      <div style="font-size:12px;color:var(--text2);">Se borrará el registro del producto demorado. La venta no se modifica.</div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px;">¿El producto ya llegó?</div>
+      <div style="font-size:12px;color:var(--text2);line-height:1.5;" id="mld-detalle">Se marcará como recibido y saldrá de la lista de demorados en seguimiento.</div>
     </div>
-    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" style="flex:1;" onclick="closeModal('modal-del-demorado')">Cancelar</button><button class="btn btn-danger" style="flex:1;" onclick="_demConfirmarEliminar()">Eliminar</button></div>
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" style="flex:1;" onclick="closeModal('modal-llego-demorado')">Todavía no</button><button class="btn btn-success" style="flex:1;" id="mld-btn" onclick="_demConfirmarLlego()">Sí, ya llegó</button></div>
   </div>
 </div>
 
