@@ -98,6 +98,7 @@ body.sb-collapsed #app-content-loader{left:var(--sidebar-w-col);}
 @keyframes appDotBounce{0%,80%,100%{transform:translateY(0);opacity:.45;}40%{transform:translateY(-11px);opacity:1;}}
 body.sb-collapsed #envios-chevron,
 body.sb-collapsed .nav-submenu{display:none;}
+body.sb-collapsed #pend-chevron{display:none;}
 .nb{margin-left:auto;background:#e53935;color:#fff;font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:10px;min-width:16px;text-align:center;}
 .sb-bottom{margin-top:auto;padding:0.75rem 1rem;border-top:1px solid rgba(255,255,255,0.06);}
 .sb-ver{font-size:0.6rem;color:rgba(255,255,255,0.2);text-transform:uppercase;letter-spacing:.5px;font-family:var(--font-mono);}
@@ -615,14 +616,14 @@ body.sb-collapsed #sb-logout-menu .nb-label{opacity:1;width:auto;overflow:visibl
 .pc.open .pc-toggle svg{transform:rotate(180deg);}
 
 /* Panel flotante de Envíos con el menú lateral plegado */
-#envios-flyout{position:fixed;z-index:9999;min-width:210px;background:var(--sidebar-bg,#0f1c3f);border:1px solid rgba(255,255,255,.1);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.35);padding:6px;
+.nav-flyout{position:fixed;z-index:9999;min-width:210px;background:var(--sidebar-bg,#0f1c3f);border:1px solid rgba(255,255,255,.1);border-radius:10px;box-shadow:0 10px 28px rgba(0,0,0,.35);padding:6px;
   opacity:0;visibility:hidden;transform:translateX(-8px) scale(.97);transform-origin:left top;
   transition:opacity .2s ease,transform .2s ease,visibility 0s linear .2s;}
-#envios-flyout.open{opacity:1;visibility:visible;transform:none;transition:opacity .2s ease,transform .2s ease,visibility 0s;}
-#envios-flyout .ef-title{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(255,255,255,.4);padding:6px 10px 4px;}
-#envios-flyout button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-radius:7px;padding:9px 10px;color:rgba(255,255,255,.75);font-size:.82rem;font-weight:500;font-family:inherit;text-align:left;cursor:default;transition:background .15s,color .15s;}
-#envios-flyout button:hover{background:rgba(255,255,255,.08);color:#fff;}
-#envios-flyout button.active{background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;font-weight:600;}
+.nav-flyout.open{opacity:1;visibility:visible;transform:none;transition:opacity .2s ease,transform .2s ease,visibility 0s;}
+.nav-flyout .ef-title{font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:rgba(255,255,255,.4);padding:6px 10px 4px;}
+.nav-flyout button{display:flex;align-items:center;gap:10px;width:100%;background:none;border:none;border-radius:7px;padding:9px 10px;color:rgba(255,255,255,.75);font-size:.82rem;font-weight:500;font-family:inherit;text-align:left;cursor:default;transition:background .15s,color .15s;}
+.nav-flyout button:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-flyout button.active{background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;font-weight:600;}
 body.sb-collapsed .nav-item.flyout-open::after{display:none;}
 /* Con el menú plegado, el ícono de Envíos se ve activo si uno de sus submódulos lo está */
 body.sb-collapsed #nav-envios-toggle:has(+ .nav-submenu .nav-item.active){background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;box-shadow:0 2px 8px rgba(26,79,168,.4);}
@@ -680,3 +681,41 @@ body.sb-collapsed #nav-envios-toggle:has(+ .nav-submenu .nav-item.active){backgr
 .mev-r-v.cambio{text-decoration:underline dotted;text-underline-offset:3px;}
 .mev-r-sep{width:1px;height:26px;background:var(--border);}
 @media(max-width:600px){ #modal-extra-venta .mh{flex-wrap:wrap;} .mev-resumen{margin-left:0;width:100%;justify-content:space-between;order:3;} }
+
+/* Submenú Pendientes (Problemas / Demorados) */
+.nav-count-dem{background:#f59e0b;}
+body.sb-collapsed #nav-pend-toggle:has(+ .nav-submenu .nav-item.active){background:linear-gradient(135deg,#1a4fa8,#1e3a8a);color:#fff;box-shadow:0 2px 8px rgba(26,79,168,.4);}
+
+/* ── Productos demorados ── */
+.dem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(420px,1fr));gap:16px;align-items:start;}
+@media(max-width:600px){ .dem-grid{grid-template-columns:1fr;} }
+.dem-producto{font-size:12.5px;color:var(--text2);margin-top:-4px;}
+.dem-pasos{display:flex;align-items:center;gap:6px;padding:4px 2px;}
+.dem-paso{display:flex;flex-direction:column;align-items:center;gap:5px;min-width:64px;}
+.dem-punto{width:14px;height:14px;border-radius:50%;border:2px solid var(--border);background:#fff;transition:all .2s;}
+.dem-paso-l{font-size:10.5px;font-weight:600;color:var(--text3);}
+.dem-paso.hecho .dem-punto{background:var(--c);border-color:var(--c);}
+.dem-paso.actual .dem-punto{background:var(--bg);border-color:var(--c);box-shadow:0 0 0 4px var(--bg);}
+.dem-paso.hecho .dem-paso-l,.dem-paso.actual .dem-paso-l{color:var(--c);}
+.dem-linea{flex:1;height:2px;background:var(--border);margin-bottom:16px;border-radius:2px;}
+.dem-datos{display:grid;grid-template-columns:1.4fr 1fr .8fr;gap:10px;padding:10px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+.dem-dato{display:flex;flex-direction:column;gap:3px;min-width:0;}
+.dem-chip{display:inline-flex;align-self:flex-start;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap;}
+.dem-chip.si{background:#d1fae5;color:#047857;}
+.dem-chip.no{background:#fee2e2;color:#b91c1c;}
+/* Modal */
+.dem-etapas{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.dem-etapas button{display:flex;flex-direction:column;align-items:flex-start;gap:6px;text-align:left;border:1.5px solid var(--border);background:#fff;border-radius:10px;padding:10px 11px;font-family:inherit;cursor:default;transition:border-color .15s,background .15s,box-shadow .15s;}
+.dem-etapas button b{display:block;font-size:12.5px;color:var(--text);}
+.dem-etapas button small{display:block;font-size:10.5px;color:var(--text3);margin-top:2px;line-height:1.3;}
+.dem-etapas button:hover{border-color:#94a3b8;}
+.dem-etapas button.on{border-color:var(--teal);background:var(--teal-bg);box-shadow:0 0 0 3px rgba(0,137,123,.12);}
+.dem-et-ico{font-size:18px;line-height:1;}
+.dem-check{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border:1.5px solid var(--border);border-radius:10px;cursor:default;}
+.dem-check input{width:17px;height:17px;margin-top:1px;flex-shrink:0;}
+.dem-check b{display:block;font-size:12.5px;color:var(--text);}
+.dem-check small{display:block;font-size:10.5px;color:var(--text3);margin-top:1px;}
+.dem-res{padding:7px 10px;background:var(--bg);border:1px solid var(--border);border-radius:8px;margin-top:4px;font-size:12px;cursor:default;}
+.dem-res:hover{background:var(--teal-bg);}
+@media(max-width:600px){ .dem-etapas{grid-template-columns:1fr;} .dem-datos{grid-template-columns:1fr 1fr;} }
+.nav-flyout .nav-count{position:static !important;margin-left:auto;min-width:18px;height:18px;line-height:18px;font-size:10.5px;padding:0 5px;}

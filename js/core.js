@@ -231,6 +231,7 @@ const PAGES = {
   ventas:         { title:'Gestor de Ventas', icon:'' },
   envios:         { title:'Envíos', icon:'' },
   problemas:      { title:'Pendientes', icon:'' },
+  demorados:      { title:'Productos demorados', icon:'' },
   finanzas:       { title:'Finanzas', icon:'' },
   configuracion:  { title:'Configuración', icon:'' },
   ayudas:         { title:'Ayudas', icon:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>' },
@@ -446,6 +447,8 @@ async function navigate(page) {
   if(document.getElementById('tb-icon'))  document.getElementById('tb-icon').textContent  = p.icon||'';
   // Guardar página actual en el hash para sobrevivir recargas
   if(location.hash !== '#' + page) history.replaceState(null, '', '#' + page);
+  // El submenú de Pendientes queda abierto mientras se está en uno de sus módulos
+  if (typeof _pendMenuOpen === 'function') _pendMenuOpen(page === 'problemas' || page === 'demorados');
   await render(page);
   // Update mobile bottom nav
   if (typeof setActiveMobileNav === 'function') setActiveMobileNav(page);
@@ -456,6 +459,7 @@ async function render(page) {
     case 'ventas':        await renderVentasGanancias(); break;
     case 'envios':        await renderEnvios();          break;
     case 'problemas':     await renderProblemas();       break;
+    case 'demorados':     await renderDemorados();       break;
     case 'finanzas':      await renderFinanzas();        break;
     case 'configuracion': await renderConfiguracion(); setTimeout(async()=>{ if(typeof _repCargarMesesDisponibles==='function'){await _repCargarMesesDisponibles();await _repActualizarInfo();} },100); break;
     case 'ayudas':        await renderAyudas();          break;

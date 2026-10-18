@@ -317,6 +317,7 @@ async function init() {
     el.addEventListener('click', async () => {
       const page = el.dataset.page;
       if (typeof _enviosMenuOpen === 'function') _enviosMenuOpen(false);
+      if (typeof _navFlyoutCerrar === 'function') _navFlyoutCerrar();
       if (typeof _showAppLoader === 'function') _showAppLoader(true);
       await new Promise(r => setTimeout(r, 550));
       await navigate(page);
@@ -486,6 +487,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (permisos[page] === false) el.style.display = 'none';
     });
     // El submenú de Envíos no tiene data-page: se oculta con su ítem padre
+    // Pendientes agrupa Problemas y Demorados: se oculta si no tiene acceso a ninguno
+    if (permisos.problemas === false && permisos.demorados === false) {
+      document.getElementById('nav-pend-toggle')?.style.setProperty('display','none');
+      document.getElementById('pend-submenu')?.style.setProperty('display','none');
+    }
     if (permisos.envios === false) {
       document.getElementById('nav-envios-toggle')?.style.setProperty('display','none');
       document.getElementById('envios-submenu')?.style.setProperty('display','none');

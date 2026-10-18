@@ -224,7 +224,27 @@
         <span class="nb-label">Envíos Externos</span>
       </div>
     </div>
-    <div class="nav-item" data-page="problemas" data-label="Pendientes"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span><span class="nb-label">Pendientes</span><span class="nav-count" id="nav-prob-count" style="display:none;"></span></div>
+    <div class="nav-item" id="nav-pend-toggle" data-label="Pendientes" onclick="togglePendMenu()" style="justify-content:space-between;">
+      <span style="display:flex;align-items:center;gap:0.55rem;min-width:0;">
+        <span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
+        <span class="nb-label">Pendientes</span>
+      </span>
+      <span style="display:flex;align-items:center;gap:6px;">
+        <span class="nav-count" id="nav-prob-count" style="display:none;"></span>
+        <svg id="pend-chevron" class="nb-chevron" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="transition:transform .22s ease;flex-shrink:0;opacity:.6;"><polyline points="6 9 12 15 18 9"/></svg>
+      </span>
+    </div>
+    <div class="nav-submenu" id="pend-submenu">
+      <div class="nav-item nav-subitem" data-page="problemas" data-label="Problemas">
+        <span class="ni"><span class="nav-subdot"></span></span>
+        <span class="nb-label">Problemas</span>
+      </div>
+      <div class="nav-item nav-subitem" data-page="demorados" data-label="Demorados">
+        <span class="ni"><span class="nav-subdot"></span></span>
+        <span class="nb-label">Demorados</span>
+        <span class="nav-count nav-count-dem" id="nav-dem-count" style="display:none;"></span>
+      </div>
+    </div>
     <div class="nav-item" data-page="ayudas" data-label="Ayudas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span><span class="nb-label">Ayudas</span></div>
     <div class="nav-item" data-page="finanzas" data-label="Finanzas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/><line x1="12" y1="12" x2="12" y2="16"/><line x1="10" y1="14" x2="14" y2="14"/></svg></span><span class="nb-label">Finanzas</span></div>
     <div class="nav-item" data-page="tareas" data-label="Tareas"><span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span><span class="nb-label">Tareas</span></div>
@@ -774,6 +794,59 @@
       </div>
 
       <div id="problemas-container"></div>
+    </section>
+
+    <!-- ══════════════ PRODUCTOS DEMORADOS ══════════════ -->
+    <section class="page-section" id="page-demorados">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <div style="font-size:20px;font-weight:800;color:var(--text);letter-spacing:-.4px;">Productos demorados</div>
+          <div style="font-size:12px;color:var(--text3);margin-top:2px;">Seguimiento de productos que aún no llegan al cliente</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <button class="btn btn-ghost btn-sm" id="btn-actualizar-demorados" onclick="refreshModulo('demorados')" title="Actualizar" style="width:36px;height:36px;padding:0;display:inline-flex;align-items:center;justify-content:center;border-radius:8px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          </button>
+          <button class="btn btn-primary btn-sm" onclick="openModalDemorado()" style="display:flex;align-items:center;gap:5px;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Registrar demorado
+          </button>
+        </div>
+      </div>
+
+      <div class="filters-bar" style="margin-bottom:16px;">
+        <div style="position:relative;flex:1;min-width:200px;">
+          <svg style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" placeholder="Buscar por ID de venta, guía o nota..." id="df-search" style="padding-left:32px;width:100%;" oninput="renderDemorados()">
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="fl">Estado</span>
+          <select id="df-estado" onchange="renderDemorados()" style="min-width:110px;">
+            <option value="activo" selected>En seguimiento</option>
+            <option value="entregado">Entregados</option>
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="fl">Etapa</span>
+          <select id="df-etapa" onchange="renderDemorados()" style="min-width:150px;">
+            <option value="">Todas</option>
+            <option value="amazon">Amazon aún no envía</option>
+            <option value="usa">Salió de EE.UU.</option>
+            <option value="colombia">Ya está en Colombia</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <span class="fl">Cliente</span>
+          <select id="df-cliente" onchange="renderDemorados()" style="min-width:130px;">
+            <option value="">Todos</option>
+            <option value="si">Ya está informado</option>
+            <option value="no">No sabe aún</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="demorados-container"></div>
     </section>
 
     <!-- ══════════════ FINANZAS ══════════════ -->
@@ -1894,41 +1967,71 @@ function toggleEnviosMenu() {
   _enviosMenuOpen(!sub.classList.contains('open'));
 }
 
-// Panel flotante de "Envíos" para el menú lateral plegado
-function _enviosFlyout(forzarCerrar) {
-  const item = document.getElementById('nav-envios-toggle');
-  let fly = document.getElementById('envios-flyout');
-  const cerrar = () => {
-    if (!fly || !fly.classList.contains('open')) return;
-    fly.classList.remove('open');
-    item?.classList.remove('flyout-open');
-    document.removeEventListener('click', fly._fuera, true);
-  };
-  if (forzarCerrar || fly?.classList.contains('open')) { cerrar(); return; }
+// ── Panel flotante del menú lateral plegado (Envíos, Pendientes) ──
+// Con el menú plegado los submenús no caben: el ítem abre a su derecha un panel
+// con sus submódulos, que entra y sale con animación suave.
+function _navFlyoutCerrar() {
+  const fly = document.getElementById('nav-flyout');
+  if (!fly || !fly.classList.contains('open')) return;
+  fly.classList.remove('open');
+  document.querySelectorAll('.nav-item.flyout-open').forEach(i => i.classList.remove('flyout-open'));
+  document.removeEventListener('click', fly._fuera, true);
+  fly._dueno = null;
+}
+function _navFlyout(itemId, titulo, opciones) {
+  const item = document.getElementById(itemId);
+  let fly = document.getElementById('nav-flyout');
+  if (fly?.classList.contains('open') && fly._dueno === itemId) { _navFlyoutCerrar(); return; }
+  _navFlyoutCerrar();
   if (!fly) {
     fly = document.createElement('div');
-    fly.id = 'envios-flyout';
-    fly.innerHTML = `
-      <div class="ef-title">Envíos</div>
-      <button type="button" data-tab="internacionales"><span class="nav-subdot"></span>Envíos Internacionales</button>
-      <button type="button" data-tab="externos"><span class="nav-subdot"></span>Envíos Externos</button>`;
-    fly.querySelectorAll('button').forEach(b => b.onclick = () => {
-      _enviosFlyout(true);
-      b.dataset.tab === 'internacionales' ? goEnviosInternos() : goEnviosExternos();
-    });
+    fly.id = 'nav-flyout';
+    fly.className = 'nav-flyout';
     document.body.appendChild(fly);
   }
-  const activo = document.querySelector('#nav-envios-internos.active') ? 'internacionales'
-               : document.querySelector('#nav-envios-externos.active') ? 'externos' : '';
-  fly.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.tab === activo));
+  fly._dueno = itemId;
+  fly.innerHTML = `<div class="ef-title">${titulo}</div>` + opciones.map((o, i) =>
+    `<button type="button" data-i="${i}" class="${o.activo ? 'active' : ''}"><span class="nav-subdot"></span>${o.label}${o.extra || ''}</button>`).join('');
+  fly.querySelectorAll('button').forEach(b => b.onclick = () => { _navFlyoutCerrar(); opciones[+b.dataset.i].accion(); });
   const r = item.getBoundingClientRect();
   fly.style.left = (r.right + 8) + 'px';
   fly.style.top  = r.top + 'px';
   void fly.offsetWidth; // para que la transición arranque desde el estado cerrado
   fly.classList.add('open');
   item.classList.add('flyout-open');
-  fly._fuera = e => { if (!fly.contains(e.target) && !item.contains(e.target)) cerrar(); };
+  fly._fuera = e => { if (!fly.contains(e.target) && !item.contains(e.target)) _navFlyoutCerrar(); };
   setTimeout(() => document.addEventListener('click', fly._fuera, true), 0);
+}
+function _enviosFlyout() {
+  _navFlyout('nav-envios-toggle', 'Envíos', [
+    { label: 'Envíos Internacionales', activo: !!document.querySelector('#nav-envios-internos.active'), accion: goEnviosInternos },
+    { label: 'Envíos Externos',        activo: !!document.querySelector('#nav-envios-externos.active'), accion: goEnviosExternos },
+  ]);
+}
+
+// ── Menú acordeón "Pendientes" (Problemas / Demorados) ──
+function _pendMenuOpen(open) {
+  const sub = document.getElementById('pend-submenu');
+  const chev = document.getElementById('pend-chevron');
+  if (!sub) return;
+  sub.classList.toggle('open', open);
+  if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+}
+function _irAPendientes(page) {
+  document.querySelector(`.nav-item[data-page="${page}"]`)?.click();
+}
+function togglePendMenu() {
+  if (document.body.classList.contains('sb-collapsed')) {
+    const dem = document.getElementById('nav-dem-count');
+    _navFlyout('nav-pend-toggle', 'Pendientes', [
+      { label: 'Problemas', activo: !!document.querySelector('.nav-item[data-page="problemas"].active'), accion: () => _irAPendientes('problemas') },
+      { label: 'Demorados', activo: !!document.querySelector('.nav-item[data-page="demorados"].active'), accion: () => _irAPendientes('demorados'),
+        extra: dem && dem.style.display !== 'none' ? `<span class="nav-count nav-count-dem" style="margin-left:auto;">${dem.textContent}</span>` : '' },
+    ]);
+    return;
+  }
+  const sub = document.getElementById('pend-submenu');
+  if (sub) _pendMenuOpen(!sub.classList.contains('open'));
 }
 
 // Marca el sub-ítem activo con el mismo fondo azul que los demás módulos.
@@ -2041,6 +2144,7 @@ async function _renderEnviosSkyPanel() {
 <script src="js/mod-configuracion.js?v=360415"></script>
 <script src="js/mod-ventas-crud.js?v=360415"></script>
 <script src="js/mod-problemas.js?v=360415"></script>
+<script src="js/mod-demorados.js?v=360415"></script>
 <script src="js/mod-envios.js?v=360415"></script>
 <script src="js/mod-ayudas.js?v=360415"></script>
 <script src="js/mod-tareas.js?v=360415"></script>
@@ -2988,6 +3092,63 @@ async function _renderEnviosSkyPanel() {
       </div>
     </div>
     <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-extra-venta')">Cancelar</button><button class="btn btn-success" id="mev-btn" onclick="_mevGuardar()">Agregar ingreso</button></div>
+  </div>
+</div>
+
+<!-- MODAL: PRODUCTO DEMORADO -->
+<div class="overlay" id="modal-demorado" style="align-items:flex-start;padding-top:5vh;">
+  <div class="modal" style="max-width:600px;">
+    <div class="mh" style="background:#fff;">
+      <div style="min-width:0;"><div class="mh-title" id="md2-title">Registrar producto demorado</div><div id="md2-sub" style="font-size:11px;color:var(--text3);margin-top:2px;">Seguimiento del envío hasta que llegue al cliente</div></div>
+      <button class="mclose" onclick="closeModal('modal-demorado')">✕</button>
+    </div>
+    <div class="mc" style="padding:16px 20px;max-height:calc(90vh - 140px);overflow-y:auto;">
+      <div class="fg" id="md2-buscar-wrap">
+        <label class="fl2 mp-lbl">Venta</label>
+        <div class="frow" style="gap:8px;"><input type="text" id="md2-buscar" placeholder="ID de la venta, producto o cliente" style="flex:1;" onkeydown="if(event.key==='Enter')_demBuscarVenta()"><button class="btn btn-ghost" onclick="_demBuscarVenta()">Buscar</button></div>
+        <div id="md2-buscar-res" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="fg">
+        <label class="fl2 mp-lbl">¿Dónde va el producto?</label>
+        <div class="dem-etapas" id="md2-etapas">
+          <button type="button" data-etapa="amazon" onclick="_demEtapa('amazon')"><span class="dem-et-ico">📦</span><span><b>Amazon aún no lo envía</b><small>Pendiente de despacho en EE.UU.</small></span></button>
+          <button type="button" data-etapa="usa" onclick="_demEtapa('usa')"><span class="dem-et-ico">✈️</span><span><b>Ya salió de EE.UU.</b><small>En tránsito internacional</small></span></button>
+          <button type="button" data-etapa="colombia" onclick="_demEtapa('colombia')"><span class="dem-et-ico">🇨🇴</span><span><b>Ya está en Colombia</b><small>En la importadora o en reparto local</small></span></button>
+        </div>
+      </div>
+
+      <div class="fg" id="md2-guia-wrap" style="display:none;">
+        <label class="fl2 mp-lbl">Número de guía internacional</label>
+        <input type="text" id="md2-guia" placeholder="Ej: 1Z999AA10123456784">
+      </div>
+
+      <label class="dem-check">
+        <input type="checkbox" id="md2-cliente">
+        <span><b>El cliente ya conoce la demora</b><small>Marca si ya se le avisó al comprador</small></span>
+      </label>
+
+      <div class="fg" style="margin-top:12px;">
+        <label class="fl2 mp-lbl">Nota</label>
+        <textarea id="md2-nota" rows="3" style="width:100%;resize:vertical;" placeholder="Ej: Amazon dice que llega el 25, se le escribió al cliente por ML…"></textarea>
+      </div>
+      <div id="md2-err" style="color:var(--red);font-size:11px;min-height:14px;"></div>
+    </div>
+    <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-demorado')">Cancelar</button><button class="btn btn-success" id="md2-btn" onclick="guardarDemorado()">Guardar</button></div>
+  </div>
+</div>
+
+<!-- MODAL: CONFIRMAR ELIMINAR DEMORADO -->
+<div class="overlay" id="modal-del-demorado">
+  <div class="modal" style="max-width:380px;">
+    <div class="mc" style="text-align:center;padding:24px 22px 10px;">
+      <div style="width:46px;height:46px;border-radius:50%;background:var(--red-bg);color:var(--red);display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+      </div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:6px;">¿Eliminar este seguimiento?</div>
+      <div style="font-size:12px;color:var(--text2);">Se borrará el registro del producto demorado. La venta no se modifica.</div>
+    </div>
+    <div class="mf" style="gap:8px;"><button class="btn btn-ghost" style="flex:1;" onclick="closeModal('modal-del-demorado')">Cancelar</button><button class="btn btn-danger" style="flex:1;" onclick="_demConfirmarEliminar()">Eliminar</button></div>
   </div>
 </div>
 

@@ -835,6 +835,7 @@ async function renderVentas() {
   const tiendas   = await DB.tiendas();
   let ventas      = await DB.ventas();
   const problemas = await DB.problemas();
+  const demorados = (typeof DB.demorados === 'function') ? await DB.demorados() : [];
   // Load closed months to freeze ganancia display
   let _mesesCerrados = new Set();
   try { const cierres = await _getCierres(); cierres.forEach(cl => _mesesCerrados.add(cl.mes)); } catch(e) {}
@@ -985,6 +986,9 @@ async function renderVentas() {
             const imgFilter = !hasProb ? '' : solved ? 'filter:sepia(1) saturate(4) hue-rotate(80deg);' : 'filter:sepia(1) saturate(5) hue-rotate(-30deg);';
             const btnTitle = !hasProb ? 'Registrar problema' : solved ? `${probsV.length} problema(s) resuelto(s) ✓ — registrar otro` : 'Ver problema activo';
             return `<button class="btn btn-ghost btn-icon btn-sm btn-prob" data-venta-id="${v.id}" title="${btnTitle}" onclick="${onclick}" style="${btnStyle}"><img src="img/advertencia.png" alt="Problema" style="width:1rem;height:1rem;object-fit:contain;${imgFilter}"></button>`; })()}
+          ${(()=>{ const dem = demorados.find(d => d.venta_id === v.id && d.estado !== 'entregado');
+            const est = dem ? 'background:#fef3c7;border-color:#fcd34d;color:#b45309;' : 'color:var(--text2);';
+            return `<button class="btn btn-ghost btn-icon btn-sm btn-dem" data-venta-id="${v.id}" title="${dem ? 'Producto demorado — ver seguimiento' : 'Registrar producto demorado'}" onclick="openModalDemorado('${v.id}')" style="${est}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><polyline points="12 9 12 13 14.5 14.5"/><path d="M9 2h6"/></svg></button>`; })()}
           <button class="btn btn-ghost btn-icon btn-sm" title="Eliminar" onclick="deleteVenta('${v.id}')"><img src="img/eliminar.png" alt="Ver" style="width:1rem;height:1rem;object-fit:contain;"></button>
         </div>
       </td>
