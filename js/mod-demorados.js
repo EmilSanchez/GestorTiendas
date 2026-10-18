@@ -342,6 +342,7 @@ function _demCardHTML(d, tiendas, ventas) {
   const guia = d.guia_internacional ? esc(d.guia_internacional) : '';
   const img = d.imagen ? esc(d.imagen) : '';
   const producto = d.producto || v?.producto || '';
+  const numMl = d.id_ml_venta || v?.id_ml;
   const nHist = Array.isArray(d.historial) ? d.historial.length : 0;  // "Ver anteriores" si hay más de una
   return `
   <div class="pc dem-card" data-dem-id="${d.id}">
@@ -358,7 +359,11 @@ function _demCardHTML(d, tiendas, ventas) {
       <div style="min-width:0;flex:1;">
         <div class="pc-title" style="color:${entregado ? 'var(--text)' : et.color};">${esc(entregado ? 'El producto ya llegó' : et.label)}</div>
         <hr class="pc-hr">
-        <div class="pc-sub pc-venta">${idVenta ? `Venta <span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar">${esc(idVenta)}</span>${_btnVerEnML(d.id_ml_venta || v?.id_ml, true)}` : 'Sin venta vinculada'}</div>
+        ${idVenta ? `<div class="dem-venta">
+          <span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar el número de venta">${esc(idVenta)}</span>
+          ${numMl ? `<a class="dem-ml-btn" href="${_mlVentaUrl(numMl)}" target="_blank" rel="noopener" onclick="event.stopPropagation();" title="Ver la venta en Mercado Libre">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>Ver en Mercado Libre</a>` : ''}
+        </div>` : '<div class="pc-sub">Sin venta vinculada</div>'}
         ${producto ? `<div class="dem-producto" title="${esc(producto)}">${esc(producto)}</div>` : ''}
       </div>
       <button class="pc-menu-btn" title="Más opciones" onclick="event.stopPropagation();_demMenu(this,'${d.id}')">${_PI.dots}</button>
