@@ -774,3 +774,8 @@ body.sb-collapsed #pend-submenu .nav-count{display:none;}
 .dem-nota-pie a:hover{text-decoration:underline;}
 .dem-hist-etapa{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:5px;}
 .dem-hist-nota{font-size:12.5px;color:var(--text);background:var(--bg);border-left:3px solid var(--border);border-radius:6px;padding:6px 10px;margin:2px 0 5px;white-space:pre-wrap;}
+/* Número de venta con el botón de ML debajo, del mismo ancho */
+.dem-venta{display:inline-flex;flex-direction:column;align-items:stretch;gap:5px;margin-top:2px;}
+.dem-venta .venta-id{text-align:center;}
+.dem-ml-btn{display:flex;align-items:center;justify-content:center;gap:5px;height:24px;padding:0 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text2);font-size:10.5px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
+.dem-ml-btn:hover{background:#fff9db;border-color:#facc15;color:#1e3a8a;}
