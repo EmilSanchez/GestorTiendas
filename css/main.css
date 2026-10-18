@@ -749,5 +749,28 @@ body.sb-collapsed #nav-pend-toggle:has(+ .nav-submenu .nav-item.active){backgrou
 /* Contadores de Pendientes: con el submenú cerrado van juntos en "Pendientes";
    abierto, cada número va solo en su sub-ítem. Con el menú plegado no se muestran. */
 #nav-pend-toggle:has(+ #pend-submenu.open) .nav-counts{display:none;}
+body.sb-collapsed #nav-pend-toggle .nav-tg-right{display:none !important;}  /* centra el ícono */
 body.sb-collapsed #nav-pend-toggle .nav-counts,
 body.sb-collapsed #pend-submenu .nav-count{display:none;}
+
+/* Tarjeta de demorado: foto | estado | título, todo alineado */
+.dem-card .dem-thumb{width:64px;height:64px;}
+.dem-thumb.vacio{background:var(--bg);color:var(--text3);border-style:dashed;}
+.dem-thumb > svg{display:none;}
+.dem-thumb.vacio > svg{display:block;}
+.dem-card .dem-producto{margin-top:3px;font-size:11.5px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dem-hitos{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.dem-hito{justify-content:center;}
+.dem-datos{grid-template-columns:1.5fr 1fr 1fr;gap:0;}
+.dem-dato{align-items:center;text-align:center;padding:0 8px;}
+.dem-dato + .dem-dato{border-left:1px solid var(--border);}
+.dem-dato .dem-chip{align-self:center;}
+.dem-guia{justify-content:center;gap:2px;}
+.dem-guia .venta-id{margin-right:2px;}
+.dem-ico-btn{width:26px;height:26px;border:none;background:transparent;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;color:var(--text3);cursor:default;padding:0;transition:background .15s,color .15s;}
+.dem-ico-btn:hover{background:var(--bg);color:var(--text);}
+.dem-nota-pie{font-size:10.5px;color:var(--text3);margin-top:4px;}
+.dem-nota-pie a{color:var(--teal);font-weight:600;cursor:default;}
+.dem-nota-pie a:hover{text-decoration:underline;}
+.dem-hist-etapa{display:inline-block;font-size:10.5px;font-weight:700;padding:2px 8px;border-radius:20px;margin-bottom:5px;}
+.dem-hist-nota{font-size:12.5px;color:var(--text);background:var(--bg);border-left:3px solid var(--border);border-radius:6px;padding:6px 10px;margin:2px 0 5px;white-space:pre-wrap;}

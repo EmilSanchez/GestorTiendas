@@ -229,7 +229,7 @@
         <span class="ni"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>
         <span class="nb-label">Pendientes</span>
       </span>
-      <span style="display:flex;align-items:center;gap:6px;">
+      <span class="nav-tg-right" style="display:flex;align-items:center;gap:6px;">
         <span class="nav-counts">
           <span class="nav-count" id="nav-prob-count" style="display:none;" title="Problemas abiertos"></span>
           <span class="nav-count nav-count-dem" id="nav-dem-count-top" style="display:none;" title="Productos demorados"></span>
@@ -1963,6 +1963,49 @@ function _enviosMenuOpen(open) {
   sub.classList.toggle('open', open);
   if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
 }
+// ── Menú acordeón "Pendientes" (Problemas / Demorados) ──
+function _pendMenuOpen(open) {
+  const sub = document.getElementById('pend-submenu');
+  const chev = document.getElementById('pend-chevron');
+  if (!sub) return;
+  const cambia = sub.classList.contains('open') !== !!open;
+  const volar = cambia ? _pendContadoresVolar(open) : null;
+  sub.classList.toggle('open', open);
+  if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
+  if (volar) volar();
+}
+// Al abrir/cerrar Pendientes los números "viajan" suavemente entre "Pendientes"
+// y su sub-ítem (Problemas / Demorados). Se mide el origen antes del cambio y
+// el destino después; una copia del número hace el recorrido.
+function _pendContadoresVolar(abrir) {
+  if (document.body.classList.contains('sb-collapsed')) return null;
+  if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return null;
+  const pares = [['nav-prob-count', 'nav-prob-count-sub'], ['nav-dem-count-top', 'nav-dem-count']];
+  const visible = el => el && el.style.display !== 'none' && el.getClientRects().length;
+  const origen = pares.map(([arriba, sub]) => {
+    const el = document.getElementById(abrir ? arriba : sub);
+    return visible(el) ? el.getBoundingClientRect() : null;
+  });
+  return () => pares.forEach(([arriba, sub], i) => {
+    const r = origen[i];
+    const dest = document.getElementById(abrir ? sub : arriba);
+    if (!r || !visible(dest) || !dest.animate) return;
+    const r2 = dest.getBoundingClientRect();
+    const copia = dest.cloneNode(true);
+    copia.removeAttribute('id');
+    Object.assign(copia.style, { position: 'fixed', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px',
+      height: r.height + 'px', margin: '0', zIndex: '9999', pointerEvents: 'none', boxSizing: 'border-box' });
+    document.body.appendChild(copia);
+    dest.style.visibility = 'hidden';
+    const dx = r2.left - r.left, dy = r2.top - r.top;
+    copia.animate([
+      { transform: 'translate(0,0) scale(1)' },
+      { transform: `translate(${dx * .5}px,${dy * .5}px) scale(1.12)`, offset: .5 },
+      { transform: `translate(${dx}px,${dy}px) scale(1)` },
+    ], { duration: 460, delay: i * 70, easing: 'cubic-bezier(.45,0,.25,1)', fill: 'both' })
+      .finished.catch(() => {}).then(() => { dest.style.visibility = ''; copia.remove(); });
+  });
+}
 function toggleEnviosMenu() {
   // Con el menú lateral plegado el submenú no cabe: se abre un panel flotante a la derecha
   if (document.body.classList.contains('sb-collapsed')) { _enviosFlyout(); return; }
@@ -2011,15 +2054,6 @@ function _enviosFlyout() {
     { label: 'Envíos Internacionales', activo: !!document.querySelector('#nav-envios-internos.active'), accion: goEnviosInternos },
     { label: 'Envíos Externos',        activo: !!document.querySelector('#nav-envios-externos.active'), accion: goEnviosExternos },
   ]);
-}
-
-// ── Menú acordeón "Pendientes" (Problemas / Demorados) ──
-function _pendMenuOpen(open) {
-  const sub = document.getElementById('pend-submenu');
-  const chev = document.getElementById('pend-chevron');
-  if (!sub) return;
-  sub.classList.toggle('open', open);
-  if (chev) chev.style.transform = open ? 'rotate(180deg)' : 'rotate(0deg)';
 }
 function _irAPendientes(page) {
   document.querySelector(`.nav-item[data-page="${page}"]`)?.click();
@@ -2471,7 +2505,7 @@ async function _renderEnviosSkyPanel() {
 <!-- MODAL: HISTORIAL DE UN PROBLEMA -->
 <div class="overlay" id="modal-historial-problema">
   <div class="modal" style="max-width:520px;">
-    <div class="mh" style="background:#fff;"><div><div class="mh-title">Historial de cambios</div><div id="mhp-sub" style="font-size:11px;color:var(--text3);margin-top:2px;"></div></div><button class="mclose" onclick="closeModal('modal-historial-problema')">✕</button></div>
+    <div class="mh" style="background:#fff;"><div><div class="mh-title" id="mhp-title">Historial de cambios</div><div id="mhp-sub" style="font-size:11px;color:var(--text3);margin-top:2px;"></div></div><button class="mclose" onclick="closeModal('modal-historial-problema')">✕</button></div>
     <div class="mc" id="mhp-body" style="max-height:65vh;overflow-y:auto;"></div>
     <div class="mf"><button class="btn btn-ghost" onclick="closeModal('modal-historial-problema')">Cerrar</button></div>
   </div>

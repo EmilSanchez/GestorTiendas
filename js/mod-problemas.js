@@ -1014,6 +1014,7 @@ async function verHistorialProblema(id) {
   hist.sort((a,b) => (b.fecha||'').localeCompare(a.fecha||''));
 
   const esc = s => _esc2(s == null ? '' : s);
+  document.getElementById('mhp-title').textContent = 'Historial de cambios';
   document.getElementById('mhp-sub').textContent =
     `${TIPO_LABELS[p.tipo] || p.tipo_label || p.tipo || ''}${p.id_ml_venta ? ' · Venta ' + p.id_ml_venta : ''}`;
   document.getElementById('mhp-body').innerHTML = hist.length ? hist.map(h => {
