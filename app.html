@@ -241,6 +241,7 @@
       <div class="nav-item nav-subitem" data-page="problemas" data-label="Problemas">
         <span class="ni"><span class="nav-subdot"></span></span>
         <span class="nb-label">Problemas</span>
+        <span class="nav-count" id="nav-prob-count-sub" style="display:none;"></span>
       </div>
       <div class="nav-item nav-subitem" data-page="demorados" data-label="Demorados">
         <span class="ni"><span class="nav-subdot"></span></span>
@@ -2026,8 +2027,10 @@ function _irAPendientes(page) {
 function togglePendMenu() {
   if (document.body.classList.contains('sb-collapsed')) {
     const dem = document.getElementById('nav-dem-count');
+    const prob = document.getElementById('nav-prob-count');
     _navFlyout('nav-pend-toggle', 'Pendientes', [
-      { label: 'Problemas', activo: !!document.querySelector('.nav-item[data-page="problemas"].active'), accion: () => _irAPendientes('problemas') },
+      { label: 'Problemas', activo: !!document.querySelector('.nav-item[data-page="problemas"].active'), accion: () => _irAPendientes('problemas'),
+        extra: prob && prob.style.display !== 'none' ? `<span class="nav-count" style="margin-left:auto;">${prob.textContent}</span>` : '' },
       { label: 'Demorados', activo: !!document.querySelector('.nav-item[data-page="demorados"].active'), accion: () => _irAPendientes('demorados'),
         extra: dem && dem.style.display !== 'none' ? `<span class="nav-count nav-count-dem" style="margin-left:auto;">${dem.textContent}</span>` : '' },
     ]);

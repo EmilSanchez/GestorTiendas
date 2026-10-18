@@ -746,5 +746,8 @@ body.sb-collapsed #nav-pend-toggle:has(+ .nav-submenu .nav-item.active){backgrou
 /* Pendientes: contadores de problemas y demorados juntos */
 .nav-counts{display:inline-flex;gap:4px;}
 .nav-counts .nav-count{margin-left:0;}
-body.sb-collapsed #nav-pend-toggle .nav-counts{position:absolute;top:2px;left:30px;flex-direction:column;gap:2px;}
-body.sb-collapsed #nav-pend-toggle .nav-counts .nav-count{position:static;}
+/* Contadores de Pendientes: con el submenú cerrado van juntos en "Pendientes";
+   abierto, cada número va solo en su sub-ítem. Con el menú plegado no se muestran. */
+#nav-pend-toggle:has(+ #pend-submenu.open) .nav-counts{display:none;}
+body.sb-collapsed #nav-pend-toggle .nav-counts,
+body.sb-collapsed #pend-submenu .nav-count{display:none;}

@@ -87,9 +87,11 @@ async function updatePendientesCount(problemas) {
   });
   _probAbiertosPorTipo = porTipo;
   _probAbiertosTotal = total;
-  const b = document.getElementById('nav-prob-count');
   // Mientras un problema "vuela" hacia el menú, el número espera a que llegue
-  if (b && !_probBadgeHold) { b.textContent = total; b.style.display = total ? '' : 'none'; }
+  if (!_probBadgeHold) ['nav-prob-count', 'nav-prob-count-sub'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) { b.textContent = total; b.style.display = total ? '' : 'none'; }
+  });
   _fillTipoSelects();
 }
 var _probBadgeHold = false;
@@ -444,7 +446,9 @@ async function saveProblema() {
 function _probAnimarHaciaModulo() {
   const ov    = document.getElementById('modal-problema');
   const modal = ov?.querySelector('.modal');
-  const nav   = document.getElementById('nav-pend-toggle') || document.querySelector('.nav-item[data-page="problemas"]');
+  // Vuela hacia donde se ve el contador: el sub-ítem si el submenú está abierto
+  const subAbierto = document.getElementById('pend-submenu')?.classList.contains('open') && !document.body.classList.contains('sb-collapsed');
+  const nav   = (subAbierto && document.querySelector('.nav-item[data-page="problemas"]')) || document.getElementById('nav-pend-toggle');
   const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const cerrar  = () => { closeModal('modal-problema'); };
 
@@ -539,9 +543,15 @@ function _probAnimarHaciaModulo() {
 
 // Contador del menú: cambia con un pequeño "giro" del número y un destello sutil.
 // Siempre termina mostrando el valor real (hasta).
+// Hay dos contadores (en "Pendientes" y en el sub-ítem "Problemas"); el CSS muestra
+// solo el que corresponde según el submenú esté abierto o cerrado.
 function _probContadorAnimar(desde, hasta, destacar) {
-  const b = document.getElementById('nav-prob-count');
-  if (!b) return;
+  ['nav-prob-count', 'nav-prob-count-sub'].forEach(id => {
+    const b = document.getElementById(id);
+    if (b) _probContadorAnimarEn(b, desde, hasta, destacar);
+  });
+}
+function _probContadorAnimarEn(b, desde, hasta, destacar) {
   const fin = () => { b.textContent = hasta; b.style.display = hasta ? '' : 'none'; };
   const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   if (!destacar || desde === hasta || reducir || !b.animate) { fin(); return; }
