@@ -51,7 +51,7 @@ function _cfg(docId) {
 const _cache = {
   tiendas:null, ventas:null, problemas:null, movimientos:null,
   membresias:null, billeteras:null, envios:null, envios_sky:null,
-  saldos:null, ajustes:null, ayudas:null, accesos:null,
+  saldos:null, ajustes:null, ayudas:null, accesos:null, demorados:null,
 };
 
 async function _fetchCol(nombre) {
@@ -146,6 +146,7 @@ function _iniciarListeners() {
       if (!cambios) return;
       console.log(`[live] cambio detectado en "${nombre}" (${cambios}) · externo=${_esExterno()}`);
       if (key === 'problemas' && typeof updatePendientesCount === 'function') updatePendientesCount();
+      if (key === 'demorados' && typeof updateDemoradosCount === 'function') updateDemoradosCount();
       if (_esExterno()) pages.forEach(p => _debouncedRender(p));
     }, err => console.warn(`Listener ${nombre}:`, err));
     _unsubscribers.push(unsub);
@@ -163,6 +164,7 @@ function _iniciarListeners() {
     { nombre:'envios',      key:'envios',      pages:['envios'] },
     { nombre:'membresias',  key:'membresias',  pages:['finanzas'] },
     { nombre:'ayudas',      key:'ayudas',      pages:['ayudas'] },
+    { nombre:'demorados',   key:'demorados',   pages:['demorados'] },
   ].forEach(_escuchar);
 
   // Config docs (1 documento cada uno → costo mínimo)
@@ -253,6 +255,8 @@ async function _cargarTodo() {
   _cache.envios      = env;
   _cache.envios_sky  = esky;
   _cache.ayudas      = ayu;
+  // Productos demorados: colección nueva; si no se puede leer, el resto de la app sigue igual
+  try { _cache.demorados = await _fetchCol('demorados'); } catch (e) { console.warn('demorados:', e); _cache.demorados = []; }
   _cache.saldos      = sDoc.exists  ? sDoc.data()  : {};
   _cache.ajustes     = ajDoc.exists ? ajDoc.data() : {};
 
@@ -396,6 +400,9 @@ const DB = {
   ayudas:       () => Promise.resolve(_cache.ayudas || []),
   upsertAyuda:  (a)  => { const arr=_cache.ayudas||[];const i=arr.findIndex(x=>x.id===a.id);i>=0?arr[i]=a:arr.push(a);_cache.ayudas=arr;return _syncDoc('ayudas',a.id,a); },
   deleteAyuda:  (id) => { _cache.ayudas=(_cache.ayudas||[]).filter(x=>x.id!==id);return _delDoc('ayudas',id); },
+  demorados:      () => Promise.resolve(_cache.demorados || []),
+  upsertDemorado: (d)  => { const a=_cache.demorados||[]; const i=a.findIndex(x=>x.id===d.id); i>=0?a[i]=d:a.push(d); _cache.demorados=a; return _syncDoc('demorados',d.id,d); },
+  deleteDemorado: (id) => { _cache.demorados=(_cache.demorados||[]).filter(x=>x.id!==id); return _delDoc('demorados',id); },
 
   // ── Gestión de usuarios (solo admin) ──
   getUsuarios: () => _db.collection('usuarios').get().then(snap =>

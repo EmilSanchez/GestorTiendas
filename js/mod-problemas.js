@@ -444,7 +444,7 @@ async function saveProblema() {
 function _probAnimarHaciaModulo() {
   const ov    = document.getElementById('modal-problema');
   const modal = ov?.querySelector('.modal');
-  const nav   = document.querySelector('.nav-item[data-page="problemas"]');
+  const nav   = document.getElementById('nav-pend-toggle') || document.querySelector('.nav-item[data-page="problemas"]');
   const reducir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   const cerrar  = () => { closeModal('modal-problema'); };
 
@@ -1240,6 +1240,7 @@ async function updateAlertaBadge() {
   const el = document.getElementById('alertas-count');
   if (el) el.textContent = (await getAlertas()).length;
   try { await updatePendientesCount(); } catch(e) {}
+  try { if (typeof updateDemoradosCount === 'function') await updateDemoradosCount(); } catch(e) {}
 }
 
 async function populateSelects() {
