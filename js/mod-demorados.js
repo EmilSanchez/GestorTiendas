@@ -166,6 +166,7 @@ async function guardarDemorado() {
     fecha_registro:     antes?.fecha_registro || ahora,
     fecha_actualizacion: ahora,
   };
+  d.historial = _demHistorialCon(antes, d);
   try {
     await DB.upsertDemorado(d);
   } catch (e) {
@@ -198,8 +199,10 @@ async function _demRefrescar() {
 async function marcarDemoradoEntregado(id, entregado = true) {
   const d = (await DB.demorados()).find(x => x.id === id);
   if (!d) return;
-  await DB.upsertDemorado({ ...d, estado: entregado ? 'entregado' : 'activo',
-    fecha_entrega: entregado ? new Date().toISOString() : null, fecha_actualizacion: new Date().toISOString() });
+  const nuevo = { ...d, estado: entregado ? 'entregado' : 'activo',
+    fecha_entrega: entregado ? new Date().toISOString() : null, fecha_actualizacion: new Date().toISOString() };
+  nuevo.historial = _demHistorialCon(d, nuevo, entregado ? 'llego' : 'reabierto');
+  await DB.upsertDemorado(nuevo);
   Sonido.play(entregado ? 'resolver' : 'editar');
   showToast(entregado ? '¡El producto ya llegó!' : 'Seguimiento reabierto', 'success', 2000);
   await _demRefrescar();
@@ -226,6 +229,77 @@ async function _demConfirmarLlego() {
   _demLlegoId = null;
 }
 
+// ══════════════════════════════════════════════════════════
+// ACTUALIZACIONES ANTERIORES (historial)
+// ══════════════════════════════════════════════════════════
+// Cada guardado deja una entrada con la etapa y la nota de ese momento, y qué cambió.
+const _DEM_HIST_CAMPOS = { etapa: 'Etapa', guia_internacional: 'Guía', cliente_informado: 'Cliente', dias: 'Días en ML', imagen: 'Imagen' };
+function _demHistValor(campo, v) {
+  if (campo === 'cliente_informado') return v ? 'Ya está informado' : 'No sabe aún';
+  if (v == null || v === '') return '—';
+  if (campo === 'etapa') return _DEM_ETAPAS[v]?.label || v;
+  return String(v);
+}
+function _demHistorialCon(antes, nuevo, accion) {
+  const hist = Array.isArray(antes?.historial) ? antes.historial.slice() : [];
+  const usuario = (typeof _currentUser !== 'undefined' && _currentUser?.usuario) || '';
+  const base = { fecha: nuevo.fecha_actualizacion || new Date().toISOString(), usuario, etapa: nuevo.etapa, nota: nuevo.nota || '' };
+  if (!antes) { hist.push({ ...base, accion: 'creado', cambios: [] }); return hist; }
+  // Registros de antes de existir el historial: lo que había queda como punto de partida
+  if (!hist.length) hist.push(..._demHistInicial(antes));
+  const usaMl = x => x.dias_ml != null && x.dias_ml !== '';
+  const val = (x, k) => k === 'dias' ? (usaMl(x) ? _demDias(x) : '') : k === 'cliente_informado' ? !!x[k] : (x[k] ?? '');
+  const cambios = Object.keys(_DEM_HIST_CAMPOS)
+    .filter(k => String(val(antes, k)) !== String(val(nuevo, k)))
+    .map(k => ({ campo: k, antes: val(antes, k), despues: val(nuevo, k) }));
+  const notaNueva = (antes.nota || '') !== (nuevo.nota || '');
+  if (!accion && !cambios.length && !notaNueva) return hist;
+  hist.push({ ...base, accion: accion || 'actualizado', nota_nueva: notaNueva, cambios });
+  return hist;
+}
+
+// Lo que se sabe de un registro sin historial: cuándo se creó y su última actualización
+function _demHistInicial(d) {
+  const editado = d.fecha_actualizacion && d.fecha_actualizacion !== d.fecha_registro;
+  const h = [{ fecha: d.fecha_registro, accion: 'creado', etapa: editado ? null : d.etapa, nota: editado ? '' : d.nota || '', cambios: [] }];
+  if (editado) h.push({ fecha: d.fecha_actualizacion, accion: 'previo', etapa: d.etapa, nota: d.nota || '', cambios: [] });
+  return h;
+}
+
+async function verHistorialDemorado(id) {
+  document.querySelectorAll('.pc-menu').forEach(m => m.remove());
+  const d = (await DB.demorados()).find(x => x.id === id);
+  if (!d) return;
+  const ACC = {
+    creado:      'Seguimiento registrado',
+    previo:      'Última actualización registrada',
+    actualizado: 'Seguimiento actualizado',
+    llego:       'El producto ya llegó',
+    reabierto:   'Seguimiento reabierto',
+  };
+  const hist = Array.isArray(d.historial) && d.historial.length ? d.historial.slice() : _demHistInicial(d);
+  hist.sort((a, b) => (b.fecha || '').localeCompare(a.fecha || ''));
+  const esc = s => _esc2(s == null ? '' : s);
+  const fh = typeof _fmtFechaHora === 'function' ? _fmtFechaHora : _probFechaCorta;
+  document.getElementById('mhp-title').textContent = 'Actualizaciones';
+  document.getElementById('mhp-sub').textContent = `Producto demorado${d.id_ml_venta ? ' · Venta ' + d.id_ml_venta : ''}`;
+  document.getElementById('mhp-body').innerHTML = hist.map(h => {
+    const et = _DEM_ETAPAS[h.etapa];
+    const color = h.accion === 'llego' ? '#10b981' : h.accion === 'reabierto' ? '#f59e0b' : (et?.color || '#64748b');
+    const verNota = h.nota && (h.accion === 'creado' || h.accion === 'previo' || h.nota_nueva);
+    const det = (h.cambios || []).filter(c => c.campo !== 'etapa' || h.accion !== 'creado')
+      .map(c => c.campo === 'imagen'
+        ? `<div class="hp-diff"><strong>Imagen:</strong> ${c.despues ? 'actualizada' : 'quitada'}</div>`
+        : `<div class="hp-diff"><strong>${_DEM_HIST_CAMPOS[c.campo]}:</strong> <s>${esc(_demHistValor(c.campo, c.antes))}</s> → ${esc(_demHistValor(c.campo, c.despues))}</div>`).join('');
+    return `<div class="hp-item"><span class="hp-dot" style="background:${color};"></span>
+      <div class="hp-when">${h.fecha ? fh(h.fecha) : ''}${h.usuario ? ' · ' + esc(h.usuario) : ''}</div>
+      <div class="hp-what">${ACC[h.accion] || 'Actualización'}</div>
+      ${et && h.accion !== 'llego' ? `<span class="dem-hist-etapa" style="background:${et.bg};color:${et.color};">${et.label}</span>` : ''}
+      ${verNota ? `<div class="dem-hist-nota">${esc(h.nota)}</div>` : ''}${det}</div>`;
+  }).join('');
+  openModal('modal-historial-problema');
+}
+
 function _demMenu(btn, id) {
   document.querySelectorAll('.pc-menu').forEach(m => m.remove());
   const d = ((typeof _cache !== 'undefined' && _cache.demorados) || []).find(x => x.id === id);
@@ -233,6 +307,7 @@ function _demMenu(btn, id) {
   m.className = 'pc-menu';
   const ic = p => `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${p}</svg>`;
   m.innerHTML = `
+    <button onclick="verHistorialDemorado('${id}')">${ic('<circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15.5 14"/>')} Actualizaciones anteriores</button>
     ${d?.venta_id && typeof openModalVenta === 'function' ? `<button onclick="document.querySelectorAll('.pc-menu').forEach(x=>x.remove());openModalVenta('${d.venta_id}')">${ic('<path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/>')} Editar venta</button>` : ''}
     ${d?.estado === 'entregado' ? `<button onclick="document.querySelectorAll('.pc-menu').forEach(x=>x.remove());marcarDemoradoEntregado('${id}', false)">${ic('<polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>')} Reabrir seguimiento</button>` : ''}
     ${d?.estado !== 'entregado' ? `<div class="pc-menu-sep"></div>
@@ -265,9 +340,15 @@ function _demCardHTML(d, tiendas, ventas) {
   ].map(([l, ok]) => `<div class="dem-hito ${ok ? 'ok' : 'no'}"><span class="dem-hito-i">${ok ? '✓' : '✕'}</span>${l}</div>`).join('');
   const usaMl = d.dias_ml != null && d.dias_ml !== '';
   const guia = d.guia_internacional ? esc(d.guia_internacional) : '';
+  const img = d.imagen ? esc(d.imagen) : '';
+  const producto = d.producto || v?.producto || '';
+  const nHist = Array.isArray(d.historial) ? d.historial.length : 0;  // "Ver anteriores" si hay más de una
   return `
   <div class="pc dem-card" data-dem-id="${d.id}">
     <div class="pc-head">
+      ${img ? `<a href="${img}" target="_blank" rel="noopener" class="dem-thumb" title="${esc(producto) || 'Ver imagen'}"><img src="${img}" alt="" loading="lazy" onerror="this.parentNode.classList.add('err','vacio')">${_DEM_ICO_CAJA}</a>`
+            : `<div class="dem-thumb vacio" title="Sin imagen">${_DEM_ICO_CAJA}</div>`}
+      <div class="pc-sep"></div>
       <div class="pc-estado-wrap">
         <span class="pc-tienda">${t ? esc(t.nombre) : '—'}</span>
         <span class="pc-estado" style="background:${entregado ? '#d1fae5' : '#fef3c7'};color:${entregado ? '#047857' : '#b45309'};">${entregado ? _PI.check : _PI.clock}${entregado ? 'YA LLEGÓ' : 'DEMORADO'}</span>
@@ -278,14 +359,10 @@ function _demCardHTML(d, tiendas, ventas) {
         <div class="pc-title" style="color:${entregado ? 'var(--text)' : et.color};">${esc(entregado ? 'El producto ya llegó' : et.label)}</div>
         <hr class="pc-hr">
         <div class="pc-sub pc-venta">${idVenta ? `Venta <span class="venta-id" onclick="copiarIdVenta('${esc(idVenta)}',this)" title="Clic para copiar">${esc(idVenta)}</span>${_btnVerEnML(d.id_ml_venta || v?.id_ml, true)}` : 'Sin venta vinculada'}</div>
+        ${producto ? `<div class="dem-producto" title="${esc(producto)}">${esc(producto)}</div>` : ''}
       </div>
       <button class="pc-menu-btn" title="Más opciones" onclick="event.stopPropagation();_demMenu(this,'${d.id}')">${_PI.dots}</button>
     </div>
-
-    ${(d.producto || v?.producto || d.imagen) ? `<div class="dem-prod-row">
-      ${d.imagen ? `<a href="${esc(d.imagen)}" target="_blank" rel="noopener" class="dem-thumb" title="Ver imagen"><img src="${esc(d.imagen)}" alt="" loading="lazy" onerror="this.parentNode.classList.add('err')"></a>` : ''}
-      <div class="dem-producto">${esc(d.producto || v?.producto || '')}</div>
-    </div>` : ''}
 
     <div class="dem-hitos">${hitos}</div>
 
@@ -294,10 +371,8 @@ function _demCardHTML(d, tiendas, ventas) {
         <span class="pc-lbl">Guía internacional</span>
         ${guia ? `<span class="dem-guia">
           <span class="venta-id" onclick="copiarIdVenta('${guia}',this)" title="Clic para copiar">${guia}</span>
-          <button class="dem-mini" title="Copiar guía" onclick="copiarIdVenta('${guia}',this)">${_PI.copy}</button>
-          <button class="dem-mini dem-servi" title="Rastrear en Servientrega Internacional (copia la guía para pegarla)" onclick="_demRastrear('${guia}', this)">
-            <img src="https://www.google.com/s2/favicons?domain=servientrega.com&sz=32" alt="" onerror="this.replaceWith(Object.assign(document.createElement('b'),{textContent:'S'}))">Rastrear
-          </button>
+          <button class="dem-ico-btn" title="Copiar guía" onclick="copiarIdVenta('${guia}',this)">${_PI.copy}</button>
+          <button class="dem-ico-btn" title="Rastrear en Servientrega Internacional (copia la guía para pegarla)" onclick="_demRastrear('${guia}', this)">${_DEM_ICO_SERVIENTREGA}</button>
         </span>` : '<span class="pc-val" style="color:var(--text3);">—</span>'}
       </div>
       <div class="dem-dato">
@@ -312,9 +387,9 @@ function _demCardHTML(d, tiendas, ventas) {
 
     <div class="pc-box" style="background:rgba(100,116,139,.08);">
       <div class="pc-box-ico" style="background:#6b7280;">${_PI.pencil}</div>
-      <div style="min-width:0;"><div class="pc-box-t" style="color:#111827;">Nota</div>
+      <div style="min-width:0;flex:1;"><div class="pc-box-t" style="color:#111827;">Nota</div>
         <div class="pc-box-d" style="${d.nota ? '' : 'color:var(--text3);font-style:italic;'}">${d.nota ? esc(d.nota) : 'Sin notas'}</div>
-        ${d.fecha_actualizacion && d.fecha_actualizacion !== d.fecha_registro ? `<div style="font-size:10.5px;color:var(--text3);margin-top:4px;">Actualizado el ${_probFechaCorta(d.fecha_actualizacion)}</div>` : ''}
+        ${d.fecha_actualizacion && d.fecha_actualizacion !== d.fecha_registro ? `<div class="dem-nota-pie">Actualizado el ${_probFechaCorta(d.fecha_actualizacion)}${nHist > 1 ? ` · <a onclick="verHistorialDemorado('${d.id}')">Ver anteriores</a>` : ''}</div>` : ''}
       </div>
     </div>
 
@@ -325,6 +400,10 @@ function _demCardHTML(d, tiendas, ventas) {
     </div>
   </div>`;
 }
+
+// Ícono de Servientrega (hoja verde con la "S") y de caja para tarjetas sin foto
+const _DEM_ICO_SERVIENTREGA = `<svg width="20" height="20" viewBox="0 0 24 24" aria-label="Servientrega"><path d="M9.5 1.5H20a2.5 2.5 0 0 1 2.5 2.5v10.5a8 8 0 0 1-8 8H4A2.5 2.5 0 0 1 1.5 20V9.5a8 8 0 0 1 8-8z" fill="#3fae49"/><path d="M15.7 8.6c-.8-1.1-2.1-1.7-3.7-1.7-2 0-3.4 1-3.4 2.5 0 1.6 1.4 2.2 3.5 2.6 2.2.4 3.6 1.1 3.6 2.8s-1.5 2.8-3.7 2.8c-1.7 0-3.1-.7-3.9-1.8" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/></svg>`;
+const _DEM_ICO_CAJA = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
 
 // Copia la guía y abre el rastreo de Servientrega Internacional (allí se pega)
 function _demRastrear(guia, btn) {
