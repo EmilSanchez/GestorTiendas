@@ -835,9 +835,11 @@
           <span class="fl">Etapa</span>
           <select id="df-etapa" onchange="renderDemorados()" style="min-width:150px;">
             <option value="">Todas</option>
-            <option value="amazon">Amazon aún no envía</option>
-            <option value="usa">Salió de EE.UU.</option>
-            <option value="colombia">Ya está en Colombia</option>
+            <option value="amazon">Amazon aún no lo envía</option>
+            <option value="enviado">Enviado por Amazon</option>
+            <option value="recibido_usa">Recibido en EE.UU.</option>
+            <option value="usa">Inició el viaje a Colombia</option>
+            <option value="colombia">Ingresó a Colombia (Aduanas)</option>
           </select>
         </div>
         <div style="display:flex;align-items:center;gap:4px;">
@@ -2502,6 +2504,15 @@ async function _renderEnviosSkyPanel() {
   </div>
 </div>
 
+<!-- MODAL: IMAGEN DE UN PRODUCTO DEMORADO -->
+<div class="overlay" id="modal-img-demorado" onclick="if(event.target===this)closeModal('modal-img-demorado')">
+  <div class="modal" style="max-width:640px;">
+    <div class="mh" style="background:#fff;"><div style="min-width:0;"><div class="mh-title" id="mid-titulo" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div><div id="mid-sub" style="font-size:11px;color:var(--text3);margin-top:2px;"></div></div><button class="mclose" onclick="closeModal('modal-img-demorado')">✕</button></div>
+    <div class="mc dem-img-grande"><img id="mid-img" alt="" onerror="this.parentNode.classList.add('err')"><span class="dem-img-err">No se pudo cargar la imagen</span></div>
+    <div class="mf"><a class="btn btn-ghost" id="mid-abrir" target="_blank" rel="noopener">Abrir original</a><div style="flex:1;"></div><button class="btn btn-primary" onclick="closeModal('modal-img-demorado')">Cerrar</button></div>
+  </div>
+</div>
+
 <!-- MODAL: HISTORIAL DE UN PROBLEMA -->
 <div class="overlay" id="modal-historial-problema">
   <div class="modal" style="max-width:520px;">
@@ -3152,9 +3163,11 @@ async function _renderEnviosSkyPanel() {
       <div class="fg">
         <label class="fl2 mp-lbl">¿Dónde va el producto?</label>
         <div class="dem-etapas" id="md2-etapas">
-          <button type="button" data-etapa="amazon" onclick="_demEtapa('amazon')"><span class="dem-et-ico">📦</span><span><b>Amazon aún no lo envía</b><small>Pendiente de despacho en EE.UU.</small></span></button>
-          <button type="button" data-etapa="usa" onclick="_demEtapa('usa')"><span class="dem-et-ico">✈️</span><span><b>Ya salió de EE.UU.</b><small>En tránsito internacional</small></span></button>
-          <button type="button" data-etapa="colombia" onclick="_demEtapa('colombia')"><span class="dem-et-ico">🇨🇴</span><span><b>Ya está en Colombia</b><small>En la importadora o en reparto local</small></span></button>
+          <button type="button" data-etapa="amazon" onclick="_demEtapa('amazon')"><span class="dem-et-ico">📦</span><span><b>Amazon aún no lo envía</b><small>Pendiente de despacho</small></span></button>
+          <button type="button" data-etapa="enviado" onclick="_demEtapa('enviado')"><span class="dem-et-ico">🚚</span><span><b>Enviado por Amazon</b><small>Va hacia la bodega en EE.UU.</small></span></button>
+          <button type="button" data-etapa="recibido_usa" onclick="_demEtapa('recibido_usa')"><span class="dem-et-ico">🏬</span><span><b>Recibido en EE.UU.</b><small>Llegó a la bodega</small></span></button>
+          <button type="button" data-etapa="usa" onclick="_demEtapa('usa')"><span class="dem-et-ico">✈️</span><span><b>Inició el viaje a Colombia</b><small>En tránsito internacional</small></span></button>
+          <button type="button" data-etapa="colombia" onclick="_demEtapa('colombia')"><span class="dem-et-ico">🛃</span><span><b>Ingresó a Colombia (Aduanas)</b><small>En aduana o reparto local</small></span></button>
         </div>
       </div>
 

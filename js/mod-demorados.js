@@ -2,7 +2,9 @@
  *
  * Seguimiento de productos que aún no llegan al cliente. Cada registro está
  * ligado a una venta y guarda:
- *   etapa              'amazon' (Amazon aún no lo envía) | 'usa' (ya salió de EE.UU.) | 'colombia'
+ *   etapa              'amazon' (Amazon aún no lo envía) | 'enviado' (Amazon lo envió) |
+ *                      'recibido_usa' (llegó a la bodega en EE.UU.) | 'usa' (inició el viaje a Colombia) |
+ *                      'colombia' (ingresó a Colombia, en aduanas)
  *   guia_internacional número de guía cuando ya salió de EE.UU.
  *   cliente_informado  si el comprador ya conoce la demora
  *   nota               texto libre
@@ -10,12 +12,15 @@
  * Se guarda en la colección "demorados".
  */
 
+// 'usa' conserva su clave de antes ("Ya salió de EE.UU.") para no tocar los registros guardados
 const _DEM_ETAPAS = {
-  amazon:   { label: 'Amazon aún no lo envía', corto: 'Amazon',   color: '#b45309', bg: '#fef3c7' },
-  usa:      { label: 'Ya salió de EE.UU.',     corto: 'EE.UU.',   color: '#1d4ed8', bg: '#dbeafe' },
-  colombia: { label: 'Ya está en Colombia',    corto: 'Colombia', color: '#047857', bg: '#d1fae5' },
+  amazon:       { label: 'Amazon aún no lo envía',        hito: '',                        color: '#b45309', bg: '#fef3c7' },
+  enviado:      { label: 'Enviado por Amazon',            hito: 'Enviado por Amazon',      color: '#c2410c', bg: '#ffedd5' },
+  recibido_usa: { label: 'Recibido en EE.UU.',            hito: 'Recibido en EE.UU.',      color: '#4338ca', bg: '#e0e7ff' },
+  usa:          { label: 'Inició el viaje a Colombia',    hito: 'Viaje a Colombia',        color: '#1d4ed8', bg: '#dbeafe' },
+  colombia:     { label: 'Ingresó a Colombia (Aduanas)',  hito: 'En aduanas de Colombia',  color: '#047857', bg: '#d1fae5' },
 };
-const _DEM_ORDEN = ['amazon', 'usa', 'colombia'];
+const _DEM_ORDEN = ['amazon', 'enviado', 'recibido_usa', 'usa', 'colombia'];
 
 let _demEditId = null, _demVentaSel = null, _demEtapaSel = 'amazon', _demBorrarId = null;
 
@@ -91,7 +96,7 @@ async function openModalDemorado(ventaId, demId) {
 function _demEtapa(et) {
   _demEtapaSel = et;
   document.querySelectorAll('#md2-etapas button').forEach(b => b.classList.toggle('on', b.dataset.etapa === et));
-  // La guía internacional aplica cuando el producto ya salió de EE.UU.
+  // La guía aplica desde que Amazon lo envía
   document.getElementById('md2-guia-wrap').style.display = et === 'amazon' ? 'none' : '';
 }
 
@@ -333,11 +338,7 @@ function _demCardHTML(d, tiendas, ventas) {
   const dias = _demDias(d);
   const pos = entregado ? 99 : _DEM_ORDEN.indexOf(d.etapa);
   // Lo que ya pasó (✓) y lo que aún no (✕)
-  const hitos = [
-    ['Amazon lo envió',  pos >= 1],
-    ['Salió de EE.UU.',  pos >= 1],
-    ['Llegó a Colombia', pos >= 2],
-  ].map(([l, ok]) => `<div class="dem-hito ${ok ? 'ok' : 'no'}"><span class="dem-hito-i">${ok ? '✓' : '✕'}</span>${l}</div>`).join('');
+  const hitos = _DEM_ORDEN.slice(1).map((k, i) => [_DEM_ETAPAS[k].hito, pos >= i + 1]).map(([l, ok]) => `<div class="dem-hito ${ok ? 'ok' : 'no'}"><span class="dem-hito-i">${ok ? '✓' : '✕'}</span>${l}</div>`).join('');
   const usaMl = d.dias_ml != null && d.dias_ml !== '';
   const guia = d.guia_internacional ? esc(d.guia_internacional) : '';
   const img = d.imagen ? esc(d.imagen) : '';
@@ -347,7 +348,7 @@ function _demCardHTML(d, tiendas, ventas) {
   return `
   <div class="pc dem-card" data-dem-id="${d.id}">
     <div class="pc-head">
-      ${img ? `<a href="${img}" target="_blank" rel="noopener" class="dem-thumb" title="${esc(producto) || 'Ver imagen'}"><img src="${img}" alt="" loading="lazy" onerror="this.parentNode.classList.add('err','vacio')">${_DEM_ICO_CAJA}</a>`
+      ${img ? `<div class="dem-thumb dem-thumb-zoom" title="Ver imagen" onclick="_demVerImagen('${d.id}')"><img src="${img}" alt="" loading="lazy" onerror="this.parentNode.classList.add('err','vacio')">${_DEM_ICO_CAJA}</div>`
             : `<div class="dem-thumb vacio" title="Sin imagen">${_DEM_ICO_CAJA}</div>`}
       <div class="pc-sep"></div>
       <div class="pc-estado-wrap">
@@ -376,7 +377,6 @@ function _demCardHTML(d, tiendas, ventas) {
         <span class="pc-lbl">Guía internacional</span>
         ${guia ? `<span class="dem-guia">
           <span class="venta-id" onclick="copiarIdVenta('${guia}',this)" title="Clic para copiar">${guia}</span>
-          <button class="dem-ico-btn" title="Copiar guía" onclick="copiarIdVenta('${guia}',this)">${_PI.copy}</button>
           <button class="dem-ico-btn" title="Rastrear en Servientrega Internacional (copia la guía para pegarla)" onclick="_demRastrear('${guia}', this)">${_DEM_ICO_SERVIENTREGA}</button>
         </span>` : '<span class="pc-val" style="color:var(--text3);">—</span>'}
       </div>
@@ -409,6 +409,20 @@ function _demCardHTML(d, tiendas, ventas) {
 // Ícono de Servientrega (hoja verde con la "S") y de caja para tarjetas sin foto
 const _DEM_ICO_SERVIENTREGA = `<svg width="20" height="20" viewBox="0 0 24 24" aria-label="Servientrega"><path d="M9.5 1.5H20a2.5 2.5 0 0 1 2.5 2.5v10.5a8 8 0 0 1-8 8H4A2.5 2.5 0 0 1 1.5 20V9.5a8 8 0 0 1 8-8z" fill="#3fae49"/><path d="M15.7 8.6c-.8-1.1-2.1-1.7-3.7-1.7-2 0-3.4 1-3.4 2.5 0 1.6 1.4 2.2 3.5 2.6 2.2.4 3.6 1.1 3.6 2.8s-1.5 2.8-3.7 2.8c-1.7 0-3.1-.7-3.9-1.8" fill="none" stroke="#fff" stroke-width="2.3" stroke-linecap="round"/></svg>`;
 const _DEM_ICO_CAJA = `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`;
+
+// Imagen del producto en grande
+async function _demVerImagen(id) {
+  const d = (await DB.demorados()).find(x => x.id === id);
+  if (!d?.imagen) return;
+  const v = d.venta_id ? (await DB.ventas()).find(x => x.id === d.venta_id) : null;
+  const img = document.getElementById('mid-img');
+  img.parentNode.classList.remove('err');
+  img.src = d.imagen;
+  document.getElementById('mid-titulo').textContent = d.producto || v?.producto || 'Imagen del producto';
+  document.getElementById('mid-sub').textContent = d.id_ml_venta ? 'Venta ' + d.id_ml_venta : '';
+  document.getElementById('mid-abrir').href = d.imagen;
+  openModal('modal-img-demorado');
+}
 
 // Copia la guía y abre el rastreo de Servientrega Internacional (allí se pega)
 function _demRastrear(guia, btn) {

@@ -779,3 +779,20 @@ body.sb-collapsed #pend-submenu .nav-count{display:none;}
 .dem-venta .venta-id{text-align:center;}
 .dem-ml-btn{display:flex;align-items:center;justify-content:center;gap:5px;height:24px;padding:0 8px;border:1px solid var(--border);border-radius:6px;background:#fff;color:var(--text2);font-size:10.5px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background .15s,border-color .15s,color .15s;}
 .dem-ml-btn:hover{background:#fff9db;border-color:#facc15;color:#1e3a8a;}
+/* 5 etapas: elección compacta en una fila, y 4 hitos en la tarjeta */
+.dem-etapas{grid-template-columns:repeat(5,1fr);gap:6px;}
+.dem-etapas button{align-items:center;text-align:center;padding:10px 6px;gap:5px;}
+.dem-etapas button b{font-size:11.5px;line-height:1.25;}
+.dem-etapas button small{font-size:10px;}
+@media(max-width:600px){ .dem-etapas{grid-template-columns:1fr 1fr;} }
+.dem-hitos{grid-template-columns:repeat(4,1fr);gap:6px;}
+.dem-hito{padding:5px 8px 5px 5px;font-size:11px;line-height:1.2;text-align:left;}
+.dem-hito-i{flex-shrink:0;}
+.dem-thumb-zoom{cursor:zoom-in;transition:box-shadow .15s,transform .15s;}
+.dem-thumb-zoom:hover{box-shadow:0 4px 12px rgba(0,0,0,.12);transform:scale(1.03);}
+.dem-img-grande{display:flex;align-items:center;justify-content:center;background:#fff;min-height:240px;padding:16px;}
+.dem-img-grande img{width:100%;height:auto;max-height:65vh;object-fit:contain;border-radius:8px;}
+#mid-abrir{text-decoration:none;}
+.dem-img-err{display:none;color:var(--text3);font-size:13px;}
+.dem-img-grande.err img{display:none;}
+.dem-img-grande.err .dem-img-err{display:block;}
