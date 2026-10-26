@@ -796,3 +796,9 @@ body.sb-collapsed #pend-submenu .nav-count{display:none;}
 .dem-img-err{display:none;color:var(--text3);font-size:13px;}
 .dem-img-grande.err img{display:none;}
 .dem-img-grande.err .dem-img-err{display:block;}
+/* Costo del producto en USD o COP: selector dentro del campo */
+.v-costo{position:relative;}
+.v-costo input{width:100%;padding-right:96px;}
+.v-costo-mon{position:absolute;right:4px;top:50%;transform:translateY(-50%);padding:2px;gap:2px;border-radius:7px;}
+.v-costo-mon button{padding:3px 8px;font-size:10.5px;border-radius:5px;}
+.v-costo-eq{font-size:10.5px;color:var(--text3);margin-top:4px;min-height:13px;}
