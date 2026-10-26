@@ -158,7 +158,9 @@ async function openModalVenta(id) {
       const copVenta = v.precio_cop || (v.precio_usd ? v.precio_usd * trm : '');
       sv('v-cop-venta', copVenta || '');
       sv('v-trm', trm);  // Usar el TRM guardado en la venta, no el actual
-      sv('v-costo-usd', v.costo_usd||'');
+      // El costo se muestra en la moneda en que se escribió
+      if (v.costo_moneda === 'cop' && v.costo_cop_ingresado) { _vCostoMoneda('cop', true); sv('v-costo-val', v.costo_cop_ingresado); }
+      else { _vCostoMoneda('usd', true); sv('v-costo-val', v.costo_usd||''); }
       // Si el envío está validado, mostrar el valor real; si no, el estimado original
       sv('v-envio-int-usd', v.envio_validado && v.envio_real_cop ? v.envio_real_cop : (v.envio_int_usd||''));
       // Financiación
@@ -176,7 +178,8 @@ async function openModalVenta(id) {
       };
     }
   } else {
-    ['v-id','v-tel','v-costo-usd','v-envio-int-usd','v-cop-venta','v-nota','v-fuente-pago'].forEach(i=>sv(i,''));
+    ['v-id','v-tel','v-costo-val','v-envio-int-usd','v-cop-venta','v-nota','v-fuente-pago'].forEach(i=>sv(i,''));
+    _vCostoMoneda(_vCostoMonedaPreferida(), true);
     sv('v-fecha', hoy()); sv('v-udes',1);
     sv('v-envio-tipo','aguachica');
     sv('v-envio-validado','0');
@@ -603,13 +606,14 @@ async function _saveMvEnvio() {
 function recalcVenta() {
   const copVenta = _parseNum(gv('v-cop-venta'))    || 0;
   const trm      = _parseNum(gv('v-trm')) || getDolarComprasConfigurado();
-  const costoUsd = _parseNum(gv('v-costo-usd'))     || 0;
+  const costoUsd = _vCostoUsd(trm);
   const envioVal = _parseNum(gv('v-envio-int-usd')) || 0;
   const udes     = _parseNum(gv('v-udes'))           || 1;
   const envTipo  = gv('v-envio-tipo');
 
   // Costo producto: USD × TRM
   const costoCOP = costoUsd * trm;
+  _vCostoEquivalente(costoUsd, trm);
 
   // Envío: ahora TODOS los tipos ingresan en COP en el registro
   const envioIntCOP = envioVal; // ya es COP para todos
@@ -655,6 +659,46 @@ function recalcVenta() {
   const elMontoPago = document.getElementById('v-monto-pago');
   if(elMontoPago) elMontoPago.value = Math.round(costoCOP) || '';
   if(typeof recalcFuente === 'function') recalcFuente();
+}
+
+// ── Costo del producto: se puede escribir en USD o en COP ──
+// Siempre se guarda costo_usd (lo que usa el resto del sistema). Si se escribió en
+// pesos, costo_usd = pesos / TRM, así costo_usd × TRM da exactamente los pesos escritos.
+let _vCostoMonedaSel = 'usd';
+function _vCostoMonedaPreferida() {
+  try { return localStorage.getItem('venta_costo_moneda') === 'cop' ? 'cop' : 'usd'; } catch (e) { return 'usd'; }
+}
+function _vCostoUsd(trm) {
+  const val = _parseNum(gv('v-costo-val')) || 0;
+  if (_vCostoMonedaSel !== 'cop') return val;
+  return trm > 0 ? val / trm : 0;
+}
+// Cambia la moneda del campo. Si ya había un valor, lo convierte para que el costo no cambie.
+function _vCostoMoneda(m, sinConvertir) {
+  const antes = _vCostoMonedaSel;
+  _vCostoMonedaSel = m === 'cop' ? 'cop' : 'usd';
+  document.querySelectorAll('#v-costo-moneda button').forEach(b => b.classList.toggle('on', b.dataset.m === _vCostoMonedaSel));
+  const inp = document.getElementById('v-costo-val');
+  if (inp) inp.placeholder = _vCostoMonedaSel === 'cop' ? '0' : '0.00';
+  if (!sinConvertir && antes !== _vCostoMonedaSel) {
+    const trm = _parseNum(gv('v-trm')) || getDolarComprasConfigurado();
+    const val = _parseNum(gv('v-costo-val')) || 0;
+    if (val && trm > 0) sv('v-costo-val', _vCostoMonedaSel === 'cop'
+      ? Math.round(val * trm).toLocaleString('es-CO')
+      : (Math.round(val / trm * 100) / 100).toFixed(2));
+    try { localStorage.setItem('venta_costo_moneda', _vCostoMonedaSel); } catch (e) {}
+    Sonido.play('filtro');
+    recalcVenta();
+  }
+}
+// Equivalencia en la otra moneda, debajo del campo
+function _vCostoEquivalente(costoUsd, trm) {
+  const el = document.getElementById('v-costo-eq');
+  if (!el) return;
+  if (!costoUsd) { el.textContent = ''; return; }
+  el.textContent = _vCostoMonedaSel === 'cop'
+    ? `≈ US$ ${costoUsd.toFixed(2)} con TRM ${Math.round(trm).toLocaleString('es-CO')}`
+    : `≈ COP ${fmt(Math.round(costoUsd * trm))}`;
 }
 
 function getDolarComprasConfigurado() {
@@ -737,8 +781,9 @@ async function saveVenta() {
 
   const fuentePago = gv('v-fuente-pago');
   const montoPago  = _parseNum(gv('v-monto-pago'))||0;
-  const costoUsd   = _parseNum(gv('v-costo-usd'))||0;
+  const costoUsd   = _vCostoUsd(trm);
   const costoCOP   = costoUsd * trm;
+  const costoEnCop = _vCostoMonedaSel === 'cop';
 
   await DB.upsertVenta({
     id:            _editVentaId || uid(),
@@ -756,6 +801,8 @@ async function saveVenta() {
     trm,
     precio_venta:  copVenta,
     costo_usd:     costoUsd,
+    costo_moneda:  costoEnCop ? 'cop' : 'usd',            // en qué moneda se escribió el costo
+    costo_cop_ingresado: costoEnCop ? _parseNum(gv('v-costo-val')) || 0 : null,
     envio_int_usd: envioVal,            // en COP para todos los tipos (registro inicial)
     envio_int_es_cop: true,             // siempre COP al registrar
     envio_estimado_cop: envioEstimadoCOP,
