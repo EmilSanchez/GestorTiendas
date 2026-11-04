@@ -636,13 +636,26 @@ async function _initEnviosSkyPanel() {
   await _renderEnviosSkyPanel();
 }
 
+// Cambiar el estado de la venta desde Envíos externos. Al cambiar la venta, el envío
+// se sincroniza solo (ver _sincronizarEstadoEnvioSky), así que se vuelve a pintar la tabla.
+async function _cambiarEstadoVentaSky(id, estado) {
+  await cambiarEstado(id, estado);
+  if (typeof Sonido !== 'undefined') Sonido.play('editar');
+  await _renderEnviosSkyPanel();
+}
+
 async function _renderEnviosSkyPanel() {
   const el  = document.getElementById('envios-sky-panel');
   const mesFiltro = document.getElementById('sky-filtro-mes')?.value || '';
   const busq = (document.getElementById('sky-search')?.value || '').trim().toLowerCase();
   if (!el) return;
 
-  const enviosSky = await DB.envios_sky();
+  const [enviosSky, ventas] = await Promise.all([DB.envios_sky(), DB.ventas()]);
+  // Venta de cada envío (por número de ML o id), para mostrar cliente y estado de la venta
+  const ventaPorNum = {};
+  ventas.forEach(v => { if (v.id_ml) ventaPorNum[v.id_ml] = v; ventaPorNum[v.id] = v; });
+  const ventaDe = e => (e.num_venta && ventaPorNum[e.num_venta]) || null;
+  const nombreDe = v => (v && (v.nombre_cliente || v.cliente)) || '';
   let skyMes = (mesFiltro
     ? enviosSky.filter(e => (e.fecha||'').startsWith(mesFiltro))
     : [...enviosSky]
@@ -651,7 +664,9 @@ async function _renderEnviosSkyPanel() {
     skyMes = skyMes.filter(e =>
       (e.num_guia||'').toLowerCase().includes(busq) ||
       (e.producto||'').toLowerCase().includes(busq) ||
-      (e.num_venta||'').toLowerCase().includes(busq)
+      (e.num_venta||'').toLowerCase().includes(busq) ||
+      nombreDe(ventaDe(e)).toLowerCase().includes(busq) ||
+      (ventaDe(e)?.telefono||'').toLowerCase().includes(busq)
     );
   }
   skyMes = skyMes.sort((a,b) => {
@@ -678,16 +693,21 @@ async function _renderEnviosSkyPanel() {
     return;
   }
 
-  const rows = skyMes.map(e => `
+  const _vacio = '<span style="color:var(--text3);">—</span>';
+  const _esc = t => String(t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const rows = skyMes.map(e => { const v = ventaDe(e); const nom = nombreDe(v); const tel = (v?.telefono || '').trim(); return `
     <tr style="border-bottom:1px solid var(--border);">
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${fmtFecha(e.fecha)}</td>
       <td style="padding:8px 10px;">${e.envio_aparte
           ? (e.num_venta ? `<span style="color:var(--text2);">${e.num_venta}</span>` : '<span style="color:var(--text3);">—</span>')
           : (e.num_venta ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_venta}',this)">${e.num_venta}</span>${_btnVerEnML(e.num_venta, true)}</span>` : '<span style="color:var(--text3);">—</span>')}</td>
+      <td style="padding:8px 10px;font-size:12.5px;font-family:Arial,sans-serif;white-space:nowrap;max-width:180px;overflow:hidden;text-overflow:ellipsis;" title="${_esc(nom)}">${nom ? _esc(nom) : _vacio}</td>
+      <td style="padding:8px 10px;white-space:nowrap;">${tel ? `<span class="venta-id" onclick="copiarIdVenta('${_esc(tel)}',this)" title="Clic para copiar">${_esc(tel)}</span>` : _vacio}</td>
       <td style="padding:8px 10px;">${e.num_guia  ? `<span style="display:inline-flex;align-items:center;gap:4px;"><span class="venta-id" onclick="copiarIdVenta('${e.num_guia}',this)">${e.num_guia}</span>${_btnRastreoGuia(e.transportadora)}</span>`   : '<span style="color:var(--text3);">—</span>'}</td>
       <td style="padding:8px 10px;font-size:13px;font-weight:600;font-family:Arial,sans-serif;">${e.transportadora||'—'}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text2);font-family:Arial,sans-serif;">${e.producto||'<span style="color:var(--text3);">—</span>'}</td>
-      <td style="padding:8px 10px;">${_buildEstadoDrop(e.estado||'Pendiente',['Pendiente','En camino','Despachado','Entregado','Novedad'],'_cambiarEstadoSky',e.id)}</td>
+      <td style="padding:8px 10px;">${_buildEstadoDrop(e.estado||'Pendiente',['Pendiente','En camino','Despachado','Entregado','Novedad','Cancelado','Devuelto'],'_cambiarEstadoSky',e.id)}</td>
+      <td style="padding:8px 10px;">${v ? _buildEstadoDrop(v.estado||'pendiente',['pendiente','en_camino','entregado','cancelado','problema','devuelto','error'],'_cambiarEstadoVentaSky',v.id) : _vacio}</td>
       <td style="padding:8px 10px;font-size:13px;font-family:Arial,sans-serif;">${fmt(e.valor)}</td>
       <td style="padding:8px 10px;font-size:12px;color:var(--text3);font-family:Arial,sans-serif;">${FUENTES_LABEL[e.fuente_pago]||e.fuente_pago||'Skydropx'}</td>
       <td style="padding:8px 6px;text-align:center;white-space:nowrap;">
@@ -698,13 +718,13 @@ async function _renderEnviosSkyPanel() {
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg>
         </button>
       </td>
-    </tr>`).join('');
+    </tr>`; }).join('');
 
   el.innerHTML = `
     <div style="overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="border-bottom:2px solid var(--border);">
-          ${['Fecha','N° Venta','Guía','Transportadora','Producto','Estado','Valor','Pagado desde',''].map(h =>
+          ${['Fecha','N° Venta','Nombre','Teléfono','Guía','Transportadora','Producto','Estado envío','Estado venta','Valor','Pagado desde',''].map(h =>
             `<th style="padding:6px 10px;text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.5px;color:var(--text3);font-weight:700;">${h}</th>`
           ).join('')}
         </tr></thead>
